@@ -2,6 +2,9 @@ import { _decorator, Component, Node, Vec3 } from 'cc';
 import { GameState, GameEvents } from '../types/GameTypes';
 import { GAME_CONFIG } from '../types/GameConstants';
 import { BaseUnit } from '../components/base/BaseUnit';
+import { BattleManager } from './BattleManager';
+import { WaveManager } from './WaveManager';
+import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 
 const { ccclass, property } = _decorator;
 
@@ -33,6 +36,15 @@ export class GameManager extends Component {
     // 事件回调
     private _eventCallbacks = new Map<keyof GameEvents, Function[]>();
     
+    // 休息阶段相关（参考老项目）
+    private _restTimer: number = 0;
+    private _restDuration: number = 3.0;
+    
+    // 组件引用缓存（参考老项目）
+    private _battleManagerCache: BattleManager | null = null;
+    private _waveManagerCache: WaveManager | null = null;
+    private _gridSystemCache: GridDeploymentSystem | null = null;
+    
     // 获取游戏状态
     public get gameState(): GameState {
         return this._gameState;
@@ -51,6 +63,15 @@ export class GameManager extends Component {
     // 获取活跃敌人列表
     public get activeEnemies(): Node[] {
         return [...this._activeEnemies];
+    }
+    
+    // 获取休息计时器
+    public get restTimer(): number {
+        return this._restTimer;
+    }
+    
+    public get restDuration(): number {
+        return this._restDuration;
     }
     
     // 单例实例
@@ -76,6 +97,18 @@ export class GameManager extends Component {
         console.log("GameManager初始化完成");
     }
     
+    protected start(): void {
+        // 设置游戏为部署状态
+        this.setGameState(GameState.DEPLOYMENT);
+    }
+    
+    protected update(dt: number): void {
+        // 更新休息阶段计时器
+        if (this._gameState === GameState.RESTING) {
+            this.updateRestPhase(dt);
+        }
+    }
+    
     protected onDestroy(): void {
         if (GameManager._instance === this) {
             GameManager._instance = null;
@@ -91,18 +124,30 @@ export class GameManager extends Component {
     
     // 开始游戏
     public startGame(): void {
-        if (this._gameState !== GameState.MENU) {
-            console.warn("游戏已经开始或处于其他状态");
+        console.log("游戏开始！");
+        this.setGameState(GameState.DEPLOYMENT);
+    }
+    
+    // 开始战斗
+    public startBattle(): void {
+        if (this._gameState !== GameState.DEPLOYMENT) {
+            console.warn("只能在部署状态开始战斗");
             return;
         }
         
-        this.setGameState(GameState.PLAYING);
-        console.log("游戏开始！");
+        this.setGameState(GameState.BATTLE);
+        console.log("战斗开始！");
+        
+        // 启动波次管理器
+        const waveManager = this.getWaveManager();
+        if (waveManager) {
+            waveManager.startWave(this.currentWave);
+        }
     }
     
     // 暂停游戏
     public pauseGame(): void {
-        if (this._gameState === GameState.PLAYING) {
+        if (this._gameState === GameState.BATTLE) {
             this.setGameState(GameState.PAUSED);
             console.log("游戏暂停");
         }
@@ -111,7 +156,7 @@ export class GameManager extends Component {
     // 恢复游戏
     public resumeGame(): void {
         if (this._gameState === GameState.PAUSED) {
-            this.setGameState(GameState.PLAYING);
+            this.setGameState(GameState.BATTLE);
             console.log("游戏恢复");
         }
     }
@@ -184,10 +229,34 @@ export class GameManager extends Component {
         }
     }
     
+    // 波次完成（参考老项目）
+    public onWaveComplete(): void {
+        console.log(`第 ${this.currentWave} 波完成`);
+        this.addGold(50); // 每波奖励50金币
+        this.setGameState(GameState.RESTING);
+        this._restTimer = this._restDuration;
+        this.clearAllHeroes(); // 清空英雄重新部署
+    }
+    
+    // 更新休息阶段
+    private updateRestPhase(dt: number): void {
+        this._restTimer -= dt;
+        if (this._restTimer <= 0) {
+            this.nextWave();
+        }
+    }
+    
     // 进入下一波
     public nextWave(): void {
         this.currentWave++;
-        console.log(`进入第 ${this.currentWave} 波`);
+        
+        // 检查是否达到最大波次
+        if (this.currentWave > GAME_CONFIG.waves.length) {
+            this.endGame(true);
+        } else {
+            console.log(`进入第 ${this.currentWave} 波`);
+            this.setGameState(GameState.DEPLOYMENT);
+        }
     }
     
     // 添加英雄到已部署列表
@@ -300,5 +369,34 @@ export class GameManager extends Component {
             enemiesCount: this._activeEnemies.length,
             gameState: this._gameState
         };
+    }
+    
+    // 获取组件引用（参考老项目的缓存机制）
+    public getBattleManager(): BattleManager | null {
+        if (this._battleManagerCache && this._battleManagerCache.isValid) {
+            return this._battleManagerCache;
+        }
+        
+        // 从父节点查找
+        this._battleManagerCache = this.node.parent?.getComponentInChildren(BattleManager) || null;
+        return this._battleManagerCache;
+    }
+    
+    public getWaveManager(): WaveManager | null {
+        if (this._waveManagerCache && this._waveManagerCache.isValid) {
+            return this._waveManagerCache;
+        }
+        
+        this._waveManagerCache = this.node.parent?.getComponentInChildren(WaveManager) || null;
+        return this._waveManagerCache;
+    }
+    
+    public getGridSystem(): GridDeploymentSystem | null {
+        if (this._gridSystemCache && this._gridSystemCache.isValid) {
+            return this._gridSystemCache;
+        }
+        
+        this._gridSystemCache = this.node.parent?.getComponentInChildren(GridDeploymentSystem) || null;
+        return this._gridSystemCache;
     }
 }

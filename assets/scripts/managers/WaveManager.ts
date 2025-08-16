@@ -2,7 +2,9 @@ import { _decorator, Component, Node, Vec3, instantiate } from 'cc';
 import { WaveConfig, EnemyType } from '../types/GameTypes';
 import { GAME_CONFIG, GAME_CONSTANTS } from '../types/GameConstants';
 import { GameManager } from './GameManager';
+import { BattleManager } from './BattleManager';
 import { ResourceManager, ResourceManagerHelper } from './ResourceManager';
+import { BasicMouse } from '../components/enemies/BasicMouse';
 
 const { ccclass, property } = _decorator;
 
@@ -46,6 +48,7 @@ export class WaveManager extends Component {
     
     // 引用其他管理器
     private _gameManager: GameManager | null = null;
+    private _battleManager: BattleManager | null = null;
     private _resourceManager: ResourceManager | null = null;
     
     // 获取当前波次状态
@@ -88,10 +91,14 @@ export class WaveManager extends Component {
     protected start(): void {
         // 获取管理器引用
         this._gameManager = GameManager.instance;
+        this._battleManager = BattleManager.instance;
         this._resourceManager = ResourceManager.instance;
         
         if (!this._gameManager) {
             console.error("未找到GameManager实例");
+        }
+        if (!this._battleManager) {
+            console.error("未找到BattleManager实例");
         }
         if (!this._resourceManager) {
             console.error("未找到ResourceManager实例");
@@ -128,20 +135,18 @@ export class WaveManager extends Component {
         }
     }
     
-    // 开始波次
-    public startWave(waveIndex?: number): void {
+    // 开始波次（参考老项目接口）
+    public startWave(waveNumber: number): void {
         if (this._waveState === WaveState.SPAWNING) {
             console.warn("波次已经在进行中");
             return;
         }
         
-        if (waveIndex !== undefined) {
-            this._currentWaveIndex = waveIndex;
-        }
+        // 使用传入的波次编号
+        this._currentWaveIndex = waveNumber - 1; // 转换为索引
         
-        if (this._currentWaveIndex >= GAME_CONFIG.waves.length) {
-            console.log("所有波次已完成！");
-            this.onAllWavesCompleted();
+        if (this._currentWaveIndex >= GAME_CONFIG.waves.length || this._currentWaveIndex < 0) {
+            console.log(`无效的波次编号: ${waveNumber}`);
             return;
         }
         
@@ -150,7 +155,7 @@ export class WaveManager extends Component {
         this._waveState = WaveState.SPAWNING;
         this._waveTimer = 0;
         
-        console.log(`开始第 ${this.currentWaveNumber} 波`);
+        console.log(`[WaveManager] 开始第 ${this.currentWaveNumber} 波`);
         
         // 通知GameManager
         if (this._gameManager) {
@@ -241,26 +246,31 @@ export class WaveManager extends Component {
             // 添加到活跃敌人列表
             this._gameManager.addActiveEnemy(enemyNode);
             
-            console.log(`生成敌人: ${enemyType}`);
+            // 注册到BattleManager
+            if (this._battleManager) {
+                this._battleManager.registerEnemy(enemyNode);
+            }
+            
+            console.log(`[WaveManager] 生成敌人: ${enemyType}`);
             
         } catch (error) {
             console.error(`生成敌人异常: ${enemyType}`, error);
         }
     }
     
-    // 创建敌人节点（临时实现，后续改为加载预制体）
+    // 创建敌人节点（参考老项目）
     private async createEnemyNode(enemyType: EnemyType): Promise<Node | null> {
-        const enemyNode = new Node(`Enemy_${enemyType}`);
+        const enemyNode = new Node(`Enemy_${enemyType}_${Date.now()}`);
         
         // 根据敌人类型添加对应组件
-        // 暂时返回基础节点，后续添加具体敌人组件
         switch (enemyType) {
             case EnemyType.BASIC_MOUSE:
-                // 后续添加BasicMouse组件
+                enemyNode.addComponent(BasicMouse);
                 break;
             default:
                 console.warn(`未知的敌人类型: ${enemyType}`);
-                break;
+                enemyNode.destroy();
+                return null;
         }
         
         return enemyNode;

@@ -1,6 +1,8 @@
 import { _decorator, Component, Node, Vec3 } from 'cc';
 import { BaseUnit } from '../components/base/BaseUnit';
 import { GameManager } from './GameManager';
+import { GridPosition } from '../types/GameTypes';
+import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 
 const { ccclass, property } = _decorator;
 
@@ -20,9 +22,19 @@ export class BattleManager extends Component {
     @property({ tooltip: "目标搜索范围" })
     public targetSearchRange: number = 500;
     
+    @property({ tooltip: "是否启用网格定位" })
+    public enableGridPositioning: boolean = true;
+    
     // 私有属性
     private _updateTimer: number = 0;
     private _gameManager: GameManager | null = null;
+    
+    // 注册的英雄和敌人列表（参考老项目）
+    private _registeredHeroes: Node[] = [];
+    private _registeredEnemies: Node[] = [];
+    
+    // 组件引用缓存
+    private _gridSystemCache: GridDeploymentSystem | null = null;
     
     // 单例实例
     private static _instance: BattleManager | null = null;
@@ -350,5 +362,122 @@ export class BattleManager extends Component {
         }
         
         return validUnits > 0 ? totalHealth / validUnits : 0;
+    }
+    
+    // 注册系统方法（参考老项目）
+    public registerHero(heroNode: Node): void {
+        if (!this._registeredHeroes.includes(heroNode)) {
+            this._registeredHeroes.push(heroNode);
+            
+            // 如果启用网格定位，记录网格坐标
+            if (this.enableGridPositioning) {
+                const gridSystem = this.getGridSystem();
+                if (gridSystem) {
+                    const gridPos = gridSystem.findHeroPosition(heroNode);
+                    if (gridPos) {
+                        // 为英雄节点添加网格位置信息
+                        (heroNode as any).gridRow = gridPos.row;
+                        (heroNode as any).gridCol = gridPos.col;
+                    }
+                }
+            }
+            
+            console.log(`[BattleManager] 英雄注册: ${heroNode.name}, 网格坐标: (${(heroNode as any).gridRow}, ${(heroNode as any).gridCol})`);
+        }
+    }
+    
+    public unregisterHero(heroNode: Node): void {
+        const index = this._registeredHeroes.indexOf(heroNode);
+        if (index >= 0) {
+            this._registeredHeroes.splice(index, 1);
+            
+            // 清除网格位置信息
+            if (this.enableGridPositioning) {
+                delete (heroNode as any).gridRow;
+                delete (heroNode as any).gridCol;
+            }
+            
+            console.log(`[BattleManager] 英雄取消注册: ${heroNode.name}`);
+        }
+    }
+    
+    public registerEnemy(enemyNode: Node): void {
+        if (!this._registeredEnemies.includes(enemyNode)) {
+            this._registeredEnemies.push(enemyNode);
+            console.log(`[BattleManager] 敌人注册: ${enemyNode.name}, 当前敌人数: ${this._registeredEnemies.length}`);
+        }
+    }
+    
+    public unregisterEnemy(enemyNode: Node): void {
+        const index = this._registeredEnemies.indexOf(enemyNode);
+        if (index >= 0) {
+            this._registeredEnemies.splice(index, 1);
+            console.log(`[BattleManager] 敌人取消注册: ${enemyNode.name}, 剩余敌人数: ${this._registeredEnemies.length}`);
+            
+            // 检查是否所有敌人都被消灭
+            if (this._registeredEnemies.length === 0) {
+                this.onAllEnemiesDefeated();
+            }
+        }
+    }
+    
+    // 所有敌人被消灭
+    private onAllEnemiesDefeated(): void {
+        console.log("[BattleManager] 所有敌人已被消灭！");
+        
+        if (this._gameManager) {
+            this._gameManager.onWaveComplete();
+        }
+    }
+    
+    // 查找最近的敌人（参考老项目）
+    public findNearestEnemy(fromPosition: Vec3, maxRange: number = Number.MAX_VALUE): Node | null {
+        let nearestEnemy: Node | null = null;
+        let minDistance = maxRange;
+        
+        for (const enemy of this._registeredEnemies) {
+            if (!enemy || !enemy.isValid) continue;
+            
+            const enemyUnit = enemy.getComponent(BaseUnit);
+            if (!enemyUnit || !enemyUnit.isAlive) continue;
+            
+            const distance = Vec3.distance(fromPosition, enemy.position);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestEnemy = enemy;
+            }
+        }
+        
+        return nearestEnemy;
+    }
+    
+    // 查找指定网格位置的英雄
+    public findHeroAtGridPosition(gridPos: GridPosition): Node | null {
+        if (!this.enableGridPositioning) return null;
+        
+        for (const hero of this._registeredHeroes) {
+            const heroGridRow = (hero as any).gridRow;
+            const heroGridCol = (hero as any).gridCol;
+            
+            if (heroGridRow === gridPos.row && heroGridCol === gridPos.col) {
+                return hero;
+            }
+        }
+        
+        return null;
+    }
+    
+    // 获取注册的英雄和敌人列表
+    public get registeredHeroes(): Node[] { return [...this._registeredHeroes]; }
+    public get registeredEnemies(): Node[] { return [...this._registeredEnemies]; }
+    
+    // 获取网格系统引用
+    private getGridSystem(): GridDeploymentSystem | null {
+        if (this._gridSystemCache && this._gridSystemCache.isValid) {
+            return this._gridSystemCache;
+        }
+        
+        this._gridSystemCache = this.node.parent?.getComponentInChildren(GridDeploymentSystem) || null;
+        return this._gridSystemCache;
     }
 }

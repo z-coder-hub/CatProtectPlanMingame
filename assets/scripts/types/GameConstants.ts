@@ -84,7 +84,7 @@ export const GAME_CONFIG: GameConfig = {
     gridConfig: {
         rows: 13,
         cols: 7,
-        cellSize: 64,
+        cellSize: 85,
         startPosition: { x: 0, y: -200 }
     },
     heroConfigs: HERO_CONFIGS,
@@ -106,7 +106,7 @@ export const UI_CONSTANTS = {
 // 游戏常量
 export const GAME_CONSTANTS = {
     CANVAS_DESIGN_SIZE: { width: 720, height: 1280 },  // 竖屏设计分辨率
-    GRID_OFFSET_Y: -200,                               // 网格Y轴偏移
+    GRID_OFFSET_Y: 0,                               // 网格Y轴偏移
     HERO_PANEL_HEIGHT: 120,                           // 英雄面板高度
     CASTLE_POSITION: { x: 0, y: -400 },               // 城堡位置
     ENEMY_SPAWN_Y: 500                                // 敌人生成Y坐标

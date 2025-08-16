@@ -3,6 +3,7 @@ import { BaseUnit } from '../base/BaseUnit';
 import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS, GAME_CONSTANTS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
+import { BattleManager } from '../../managers/BattleManager';
 
 const { ccclass, property } = _decorator;
 
@@ -35,6 +36,12 @@ export class BasicMouse extends BaseUnit {
         
         // 获取GameManager引用
         this._gameManager = GameManager.instance;
+        
+        // 注册到BattleManager
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            battleManager.registerEnemy(this.node);
+        }
     }
     
     // 初始化老鼠属性
@@ -196,6 +203,12 @@ export class BasicMouse extends BaseUnit {
     // 重写死亡方法
     protected onDie(): void {
         console.log(`基础老鼠死亡，奖励 ${this.goldReward} 金币`);
+        
+        // 从BattleManager注销
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            battleManager.unregisterEnemy(this.node);
+        }
         
         // 给予金币奖励
         if (this._gameManager) {

@@ -169,25 +169,23 @@ export class GameHUD extends Component {
         
         // 按钮背景
         const buttonBg = buttonNode.addComponent(Graphics);
-        buttonBg.fillColor = Color.fromHEX(new Color(), UI_CONSTANTS.PANEL_COLORS.BUTTON_NORMAL);
-        buttonBg.roundedRect(
+        buttonBg.fillColor = new Color(70, 130, 180); // 钢蓝色
+        buttonBg.rect(
             -UI_CONSTANTS.BUTTON_SIZE.width / 2,
             -UI_CONSTANTS.BUTTON_SIZE.height / 2,
             UI_CONSTANTS.BUTTON_SIZE.width,
-            UI_CONSTANTS.BUTTON_SIZE.height,
-            10
+            UI_CONSTANTS.BUTTON_SIZE.height
         );
         buttonBg.fill();
         
         // 按钮边框
         buttonBg.strokeColor = new Color(255, 255, 255);
         buttonBg.lineWidth = 2;
-        buttonBg.roundedRect(
+        buttonBg.rect(
             -UI_CONSTANTS.BUTTON_SIZE.width / 2,
             -UI_CONSTANTS.BUTTON_SIZE.height / 2,
             UI_CONSTANTS.BUTTON_SIZE.width,
-            UI_CONSTANTS.BUTTON_SIZE.height,
-            10
+            UI_CONSTANTS.BUTTON_SIZE.height
         );
         buttonBg.stroke();
         
@@ -212,26 +210,24 @@ export class GameHUD extends Component {
     private playButtonPressEffect(graphics: Graphics): void {
         // 临时变色表示按下
         graphics.clear();
-        graphics.fillColor = Color.fromHEX(new Color(), UI_CONSTANTS.PANEL_COLORS.BUTTON_PRESSED);
-        graphics.roundedRect(
+        graphics.fillColor = new Color(100, 100, 100); // 按下时变灰
+        graphics.rect(
             -UI_CONSTANTS.BUTTON_SIZE.width / 2,
             -UI_CONSTANTS.BUTTON_SIZE.height / 2,
             UI_CONSTANTS.BUTTON_SIZE.width,
-            UI_CONSTANTS.BUTTON_SIZE.height,
-            10
+            UI_CONSTANTS.BUTTON_SIZE.height
         );
         graphics.fill();
         
         // 200ms后恢复
         setTimeout(() => {
             graphics.clear();
-            graphics.fillColor = Color.fromHEX(new Color(), UI_CONSTANTS.PANEL_COLORS.BUTTON_NORMAL);
-            graphics.roundedRect(
+            graphics.fillColor = new Color(70, 130, 180); // 恢复原色
+            graphics.rect(
                 -UI_CONSTANTS.BUTTON_SIZE.width / 2,
                 -UI_CONSTANTS.BUTTON_SIZE.height / 2,
                 UI_CONSTANTS.BUTTON_SIZE.width,
-                UI_CONSTANTS.BUTTON_SIZE.height,
-                10
+                UI_CONSTANTS.BUTTON_SIZE.height
             );
             graphics.fill();
         }, 200);
@@ -284,6 +280,30 @@ export class GameHUD extends Component {
                 this.setButtonText(this._startButton, "开始游戏");
                 break;
                 
+            case GameState.DEPLOYMENT:
+                this.setButtonEnabled(this._startButton, true);
+                this.setButtonEnabled(this._pauseButton, false);
+                this.setButtonEnabled(this._restartButton, true);
+                this.setButtonText(this._startButton, "开始战斗");
+                break;
+                
+            case GameState.BATTLE:
+                this.setButtonEnabled(this._startButton, false);
+                this.setButtonEnabled(this._pauseButton, true);
+                this.setButtonEnabled(this._restartButton, true);
+                this.setButtonText(this._startButton, "战斗中");
+                this.setButtonText(this._pauseButton, "暂停");
+                break;
+                
+            case GameState.RESTING:
+                this.setButtonEnabled(this._startButton, false);
+                this.setButtonEnabled(this._pauseButton, false);
+                this.setButtonEnabled(this._restartButton, true);
+                if (this._gameManager) {
+                    this.setButtonText(this._startButton, `休息中 ${Math.ceil(this._gameManager.restTimer)}s`);
+                }
+                break;
+                
             case GameState.PLAYING:
                 this.setButtonEnabled(this._startButton, false);
                 this.setButtonEnabled(this._pauseButton, true);
@@ -312,17 +332,16 @@ export class GameHUD extends Component {
         const graphics = button.getComponent(Graphics);
         if (graphics) {
             const color = enabled ? 
-                Color.fromHEX(new Color(), UI_CONSTANTS.PANEL_COLORS.BUTTON_NORMAL) :
-                new Color(100, 100, 100);
+                new Color(70, 130, 180) : // 启用状态：钢蓝色
+                new Color(100, 100, 100); // 禁用状态：灰色
             
             graphics.clear();
             graphics.fillColor = color;
-            graphics.roundedRect(
+            graphics.rect(
                 -UI_CONSTANTS.BUTTON_SIZE.width / 2,
                 -UI_CONSTANTS.BUTTON_SIZE.height / 2,
                 UI_CONSTANTS.BUTTON_SIZE.width,
-                UI_CONSTANTS.BUTTON_SIZE.height,
-                10
+                UI_CONSTANTS.BUTTON_SIZE.height
             );
             graphics.fill();
         }
@@ -349,11 +368,14 @@ export class GameHUD extends Component {
     // 按钮点击事件处理
     private onStartButtonClicked(): void {
         console.log("开始按钮被点击");
-        if (this._gameManager) {
+        if (!this._gameManager) return;
+        
+        const gameState = this._gameManager.gameState;
+        
+        if (gameState === GameState.MENU) {
             this._gameManager.startGame();
-        }
-        if (this._waveManager) {
-            this._waveManager.startWave();
+        } else if (gameState === GameState.DEPLOYMENT) {
+            this._gameManager.startBattle();
         }
     }
     
@@ -362,7 +384,7 @@ export class GameHUD extends Component {
         if (!this._gameManager) return;
         
         const gameState = this._gameManager.gameState;
-        if (gameState === GameState.PLAYING) {
+        if (gameState === GameState.BATTLE || gameState === GameState.PLAYING) {
             this._gameManager.pauseGame();
         } else if (gameState === GameState.PAUSED) {
             this._gameManager.resumeGame();

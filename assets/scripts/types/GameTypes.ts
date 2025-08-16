@@ -21,6 +21,9 @@ export enum EnemyType {
 // 游戏状态枚举
 export enum GameState {
     MENU = "menu",
+    DEPLOYMENT = "deployment",     // 部署阶段
+    BATTLE = "battle",            // 战斗阶段
+    RESTING = "resting",          // 休息阶段
     PLAYING = "playing",
     PAUSED = "paused",
     GAME_OVER = "game_over",

@@ -37,6 +37,16 @@ export class OrangeCat extends BaseUnit {
         this.initializeAnimation();
     }
     
+    protected start(): void {
+        super.start();
+        
+        // 注册到BattleManager
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            battleManager.registerHero(this.node);
+        }
+    }
+    
     // 初始化橘猫属性
     private initializeOrangeCatStats(): void {
         const config = HERO_CONFIGS[HeroType.ORANGE_CAT];
@@ -111,6 +121,21 @@ export class OrangeCat extends BaseUnit {
         // 更新技能冷却
         if (this._skillTimer > 0) {
             this._skillTimer -= dt;
+        }
+    }
+    
+    // 重写待机状态，自动搜索和攻击敌人
+    protected onIdleState(dt: number): void {
+        if (!this.isAlive) return;
+        
+        // 寻找最近的敌人
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            if (nearestEnemy) {
+                this.currentTarget = nearestEnemy;
+                this.unitState = 2; // 攻击状态
+            }
         }
     }
     
@@ -314,6 +339,12 @@ export class OrangeCat extends BaseUnit {
     // 重写死亡方法，添加橘猫特有的死亡效果
     protected onDie(): void {
         console.log("橘猫射手阵亡");
+        
+        // 从BattleManager注销
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            battleManager.unregisterHero(this.node);
+        }
         
         // 创建死亡特效
         if (this._graphics) {

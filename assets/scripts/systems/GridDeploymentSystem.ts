@@ -1,6 +1,6 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, UITransform } from 'cc';
-import { GridPosition, WorldPosition } from '../types/GameTypes';
-import { GAME_CONSTANTS } from '../types/GameConstants';
+import { _decorator, Component, Node, Vec3, Graphics, Color } from 'cc';
+import { GridPosition } from '../types/GameTypes';
+import { GAME_CONSTANTS, GAME_CONFIG } from '../types/GameConstants';
 
 const { ccclass, property } = _decorator;
 
@@ -22,13 +22,13 @@ export interface GridSlot {
 export class GridDeploymentSystem extends Component {
     
     @property({ tooltip: "网格行数" })
-    public gridRows: number = 5;
+    public gridRows: number = GAME_CONFIG.gridConfig.rows;
     
     @property({ tooltip: "网格列数" })  
-    public gridColumns: number = 5;
+    public gridColumns: number = GAME_CONFIG.gridConfig.cols;
     
     @property({ tooltip: "单元格大小" })
-    public cellSize: number = 64;
+    public cellSize: number = GAME_CONFIG.gridConfig.cellSize;
     
     @property({ tooltip: "是否显示调试网格" })
     public showDebugGrid: boolean = true;
@@ -57,6 +57,8 @@ export class GridDeploymentSystem extends Component {
     }
     
     protected onLoad(): void {
+        GridDeploymentSystem._instance = this;
+        
         this.initializeGrid();
         this.calculateGridBounds();
         
@@ -65,6 +67,12 @@ export class GridDeploymentSystem extends Component {
         }
         
         console.log(`网格部署系统初始化完成: ${this.gridColumns}x${this.gridRows}, 单元格大小: ${this.cellSize}`);
+    }
+    
+    protected onDestroy(): void {
+        if (GridDeploymentSystem._instance === this) {
+            GridDeploymentSystem._instance = null;
+        }
     }
     
     // 初始化网格数据
@@ -270,16 +278,13 @@ export class GridDeploymentSystem extends Component {
                 // 根据状态设置颜色
                 switch (slot.state) {
                     case GridSlotState.EMPTY:
-                        this._debugGraphics.fillColor = Color.GREEN.clone();
-                        this._debugGraphics.fillColor.a = 100;
+                        this._debugGraphics.fillColor = new Color(0, 255, 0, 100);
                         break;
                     case GridSlotState.OCCUPIED:
-                        this._debugGraphics.fillColor = Color.RED.clone();
-                        this._debugGraphics.fillColor.a = 150;
+                        this._debugGraphics.fillColor = new Color(255, 0, 0, 150);
                         break;
                     case GridSlotState.FORBIDDEN:
-                        this._debugGraphics.fillColor = Color.BLACK.clone();
-                        this._debugGraphics.fillColor.a = 200;
+                        this._debugGraphics.fillColor = new Color(0, 0, 0, 200);
                         break;
                 }
                 
@@ -302,15 +307,11 @@ export class GridDeploymentSystem extends Component {
         }
     }
     
-    // 重新初始化网格（当配置更新后调用）
-    public reinitializeGrid(): void {
-        this.initializeGrid();
-        this.calculateGridBounds();
-        
-        if (this.showDebugGrid && this._debugGraphics) {
-            this.drawDebugGrid();
-        }
-        
-        console.log(`网格重新初始化完成: ${this.gridColumns}x${this.gridRows}, 单元格大小: ${this.cellSize}`);
+    // 静态实例（为了让其他组件能访问）
+    private static _instance: GridDeploymentSystem | null = null;
+    
+    public static get instance(): GridDeploymentSystem | null {
+        return GridDeploymentSystem._instance;
     }
+    
 }
