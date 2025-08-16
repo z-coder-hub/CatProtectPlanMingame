@@ -1,0 +1,213 @@
+import { _decorator, Component, Node, Canvas, find } from 'cc';
+import { ResourceManager } from '../managers/ResourceManager';
+import { GridDeploymentSystem } from './GridDeploymentSystem';
+import { GAME_CONFIG } from '../types/GameConstants';
+
+const { ccclass, property } = _decorator;
+
+// 初始化阶段枚举
+enum InitPhase {
+    STARTING = "starting",
+    LOADING_RESOURCES = "loading_resources",
+    CREATING_SYSTEMS = "creating_systems", 
+    CREATING_MANAGERS = "creating_managers",
+    CREATING_UI = "creating_ui",
+    COMPLETED = "completed",
+    FAILED = "failed"
+}
+
+@ccclass('GameBootstrap')
+export class GameBootstrap extends Component {
+    
+    @property({ tooltip: "是否启用调试日志" })
+    public enableDebugLogs: boolean = true;
+    
+    @property({ tooltip: "初始化超时时间(秒)" })
+    public initTimeout: number = 10;
+    
+    // 当前初始化阶段
+    private _currentPhase: InitPhase = InitPhase.STARTING;
+    
+    // Canvas节点引用
+    private _canvasNode: Node | null = null;
+    
+    // 系统组件引用
+    private _resourceManager: ResourceManager | null = null;
+    private _gridSystem: GridDeploymentSystem | null = null;
+    
+    // 获取Canvas节点
+    public get canvasNode(): Node | null {
+        return this._canvasNode;
+    }
+    
+    // 获取资源管理器
+    public get resourceManager(): ResourceManager | null {
+        return this._resourceManager;
+    }
+    
+    // 获取网格系统
+    public get gridSystem(): GridDeploymentSystem | null {
+        return this._gridSystem;
+    }
+    
+    protected onLoad(): void {
+        this.log("GameBootstrap开始初始化...");
+        
+        // 获取Canvas节点
+        this._canvasNode = find("Canvas");
+        if (!this._canvasNode) {
+            this.error("未找到Canvas节点");
+            this._currentPhase = InitPhase.FAILED;
+            return;
+        }
+        
+        // 开始初始化流程
+        this.startInitialization();
+    }
+    
+    // 开始初始化流程
+    private async startInitialization(): Promise<void> {
+        try {
+            // 执行初始化步骤
+            await this.runInitializationSteps();
+            
+            this._currentPhase = InitPhase.COMPLETED;
+            this.log("游戏初始化完成！");
+            
+        } catch (error) {
+            this._currentPhase = InitPhase.FAILED;
+            this.error("游戏初始化失败:", error);
+        }
+    }
+    
+    // 执行初始化步骤
+    private async runInitializationSteps(): Promise<void> {
+        
+        // 第一阶段：创建基础系统
+        this._currentPhase = InitPhase.CREATING_SYSTEMS;
+        this.log("创建基础系统...");
+        this.createBasicSystems();
+        
+        // 第二阶段：加载资源
+        this._currentPhase = InitPhase.LOADING_RESOURCES;
+        this.log("加载游戏资源...");
+        await this.loadGameResources();
+        
+        // 第三阶段：创建管理器
+        this._currentPhase = InitPhase.CREATING_MANAGERS;
+        this.log("创建游戏管理器...");
+        this.createGameManagers();
+        
+        // 第四阶段：创建UI
+        this._currentPhase = InitPhase.CREATING_UI;
+        this.log("创建游戏界面...");
+        this.createGameUI();
+        
+        this.log("所有初始化步骤完成");
+    }
+    
+    // 创建基础系统
+    private createBasicSystems(): void {
+        if (!this._canvasNode) return;
+        
+        // 创建ResourceManager
+        const resourceNode = new Node("ResourceManager");
+        resourceNode.parent = this._canvasNode;
+        this._resourceManager = resourceNode.addComponent(ResourceManager);
+        
+        // 创建GridDeploymentSystem
+        const gridNode = new Node("GridDeploymentSystem");
+        gridNode.parent = this._canvasNode;
+        this._gridSystem = gridNode.addComponent(GridDeploymentSystem);
+        
+        // 使用游戏配置初始化网格
+        if (this._gridSystem) {
+            this._gridSystem.gridRows = GAME_CONFIG.gridConfig.rows;
+            this._gridSystem.gridColumns = GAME_CONFIG.gridConfig.cols;
+            this._gridSystem.cellSize = GAME_CONFIG.gridConfig.cellSize;
+            // 重新初始化网格以应用新配置
+            this._gridSystem.reinitializeGrid();
+        }
+        
+        this.log("基础系统创建完成");
+    }
+    
+    // 加载游戏资源
+    private async loadGameResources(): Promise<void> {
+        if (!this._resourceManager) return;
+        
+        // 定义需要预加载的资源
+        const resourcesToLoad = [
+            // 暂时注释预制体加载，后续添加
+            // { path: "prefabs/heroes/OrangeCat", type: ResourceType.PREFAB },
+            // { path: "prefabs/enemies/BasicMouse", type: ResourceType.PREFAB },
+        ];
+        
+        if (resourcesToLoad.length > 0) {
+            await this._resourceManager.preloadResources(resourcesToLoad);
+        }
+        
+        this.log("游戏资源加载完成");
+    }
+    
+    // 创建游戏管理器
+    private createGameManagers(): void {
+        if (!this._canvasNode) return;
+        
+        // 后续添加GameManager、BattleManager、WaveManager等
+        // 暂时保持简单
+        
+        this.log("游戏管理器创建完成");
+    }
+    
+    // 创建游戏UI
+    private createGameUI(): void {
+        if (!this._canvasNode) return;
+        
+        // 后续添加GameHUD、HeroDeployment等UI组件
+        // 暂时保持简单
+        
+        this.log("游戏界面创建完成");
+    }
+    
+    // 获取当前初始化状态
+    public getInitializationState(): {
+        phase: InitPhase;
+        isCompleted: boolean;
+        isFailed: boolean;
+    } {
+        return {
+            phase: this._currentPhase,
+            isCompleted: this._currentPhase === InitPhase.COMPLETED,
+            isFailed: this._currentPhase === InitPhase.FAILED
+        };
+    }
+    
+    // 日志输出方法
+    private log(message: string, ...args: any[]): void {
+        if (this.enableDebugLogs) {
+            console.log(`[GameBootstrap] ${message}`, ...args);
+        }
+    }
+    
+    private error(message: string, ...args: any[]): void {
+        console.error(`[GameBootstrap] ${message}`, ...args);
+    }
+    
+    // 静态方法，方便其他组件访问
+    private static _instance: GameBootstrap | null = null;
+    
+    public static get instance(): GameBootstrap | null {
+        return GameBootstrap._instance;
+    }
+    
+    protected start(): void {
+        GameBootstrap._instance = this;
+    }
+    
+    protected onDestroy(): void {
+        if (GameBootstrap._instance === this) {
+            GameBootstrap._instance = null;
+        }
+    }
+}
