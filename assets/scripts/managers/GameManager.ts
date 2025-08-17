@@ -140,12 +140,15 @@ export class GameManager extends Component {
         }
         
         this.setGameState(GameState.BATTLE);
-        console.log("战斗开始！");
+        console.log(`[GameManager] 战斗开始！当前波次: ${this.currentWave}`);
         
         // 启动波次管理器
         const waveManager = this.getWaveManager();
         if (waveManager) {
+            console.log(`[GameManager] 启动第 ${this.currentWave} 波`);
             waveManager.startWave(this.currentWave);
+        } else {
+            console.error("[GameManager] 未找到WaveManager，无法启动波次");
         }
     }
     
@@ -189,10 +192,16 @@ export class GameManager extends Component {
         // 清理敌人
         this.clearAllEnemies();
         
+        // 重置波次管理器
+        const waveManager = this.getWaveManager();
+        if (waveManager) {
+            waveManager.resetWaves();
+        }
+        
         // 重置游戏状态
         this.setGameState(GameState.MENU);
         
-        console.log("游戏重新开始");
+        console.log(`游戏重新开始，当前波次: ${this.currentWave}`);
     }
     
     // 设置游戏状态
@@ -256,6 +265,8 @@ export class GameManager extends Component {
         const waveManager = this.getWaveManager();
         if (waveManager) {
             waveManager.prepareNextWave();
+            // 同步当前波次到GameManager
+            this.currentWave = waveManager.currentWaveNumber;
         }
         
         // 检查是否达到最大波次
@@ -286,13 +297,47 @@ export class GameManager extends Component {
     
     // 清理所有英雄
     public clearAllHeroes(): void {
+        const gridSystem = this.getGridSystem();
+        
+        this.cleanupIndividualHeroes(gridSystem);
+        this.clearHeroArrayAndGrid(gridSystem);
+        
+        console.log("所有英雄已清理");
+    }
+    
+    // 清理单个英雄
+    private cleanupIndividualHeroes(gridSystem: GridDeploymentSystem | null): void {
         for (const hero of this._deployedHeroes) {
             if (hero && hero.isValid) {
-                hero.destroy();
+                this.cleanupSingleHero(hero, gridSystem);
             }
         }
+    }
+    
+    // 清理单个英雄的所有关联
+    private cleanupSingleHero(hero: Node, gridSystem: GridDeploymentSystem | null): void {
+        // 清理网格占用状态
+        if (gridSystem) {
+            gridSystem.clearHeroFromGrid(hero);
+        }
+        
+        // 从BattleManager注销
+        const battleManager = this.getBattleManager();
+        if (battleManager) {
+            battleManager.unregisterHero(hero);
+        }
+        
+        hero.destroy();
+    }
+    
+    // 清理英雄数组和网格系统
+    private clearHeroArrayAndGrid(gridSystem: GridDeploymentSystem | null): void {
         this._deployedHeroes = [];
-        console.log("所有英雄已清理");
+        
+        // 双重保险：确保网格系统完全清理
+        if (gridSystem) {
+            gridSystem.clearAllGridPositions();
+        }
     }
     
     // 添加敌人到活跃列表
@@ -381,30 +426,26 @@ export class GameManager extends Component {
     
     // 获取组件引用（参考老项目的缓存机制）
     public getBattleManager(): BattleManager | null {
-        if (this._battleManagerCache && this._battleManagerCache.isValid) {
-            return this._battleManagerCache;
-        }
-        
-        // 从父节点查找
-        this._battleManagerCache = this.node.parent?.getComponentInChildren(BattleManager) || null;
-        return this._battleManagerCache;
+        return this.getCachedComponent('_battleManagerCache', BattleManager);
     }
     
     public getWaveManager(): WaveManager | null {
-        if (this._waveManagerCache && this._waveManagerCache.isValid) {
-            return this._waveManagerCache;
-        }
-        
-        this._waveManagerCache = this.node.parent?.getComponentInChildren(WaveManager) || null;
-        return this._waveManagerCache;
+        return this.getCachedComponent('_waveManagerCache', WaveManager);
     }
     
     public getGridSystem(): GridDeploymentSystem | null {
-        if (this._gridSystemCache && this._gridSystemCache.isValid) {
-            return this._gridSystemCache;
+        return this.getCachedComponent('_gridSystemCache', GridDeploymentSystem);
+    }
+    
+    // 统一的组件缓存获取方法
+    private getCachedComponent<T extends Component>(cacheKey: string, componentClass: new() => T): T | null {
+        const cache = (this as any)[cacheKey];
+        if (cache && cache.isValid) {
+            return cache;
         }
         
-        this._gridSystemCache = this.node.parent?.getComponentInChildren(GridDeploymentSystem) || null;
-        return this._gridSystemCache;
+        const component = this.node.parent?.getComponentInChildren(componentClass) || null;
+        (this as any)[cacheKey] = component;
+        return component;
     }
 }

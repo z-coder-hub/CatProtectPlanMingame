@@ -1,8 +1,13 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, UITransform } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween, Tween } from 'cc';
 import { BaseUnit } from '../base/BaseUnit';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
+import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
+import { GameManager } from '../../managers/GameManager';
+import { EffectHelper } from '../../utils/EffectHelper';
+import { DrawingHelper } from '../../utils/DrawingHelper';
+import { SimpleObjectPool } from '../../utils/SimpleObjectPool';
 
 const { ccclass, property } = _decorator;
 
@@ -20,7 +25,8 @@ export class OrangeCat extends BaseUnit {
     private _graphics: Graphics | null = null;
     private _animation: Animation | null = null;
     private _nameLabel: Label | null = null;
-    private _activeBullets: Set<Node> = new Set(); // 跟踪活跃的子弹
+    private _activeBullets: Set<Node> | null = new Set(); // 跟踪活跃的子弹
+    private _isPlayingAttackAnimation: boolean = false; // 防止攻击动画重叠
     
     // 英雄类型
     public readonly heroType: HeroType = HeroType.ORANGE_CAT;
@@ -84,54 +90,18 @@ export class OrangeCat extends BaseUnit {
     // 绘制橘猫外观
     private drawOrangeCatAppearance(): void {
         if (!this._graphics) return;
-        
-        this._graphics.clear();
-        
-        // 绘制橘猫身体（橘色圆形）
-        this._graphics.fillColor = new Color(255, 165, 0); // 橘色
-        this._graphics.circle(0, 0, 20);
-        this._graphics.fill();
-        
-        // 绘制轮廓
-        this._graphics.strokeColor = new Color(255, 140, 0);
-        this._graphics.lineWidth = 2;
-        this._graphics.circle(0, 0, 20);
-        this._graphics.stroke();
-        
-        // 绘制弓箭标识（表示射手）
-        this._graphics.strokeColor = new Color(139, 69, 19); // 棕色
-        this._graphics.lineWidth = 3;
-        this._graphics.moveTo(-10, 0);
-        this._graphics.lineTo(10, 0);
-        this._graphics.stroke();
-        
-        // 绘制箭头
-        this._graphics.moveTo(7, -3);
-        this._graphics.lineTo(10, 0);
-        this._graphics.lineTo(7, 3);
-        this._graphics.stroke();
+        DrawingHelper.drawHeroAppearance(this._graphics, 'orange');
     }
     
     // 创建名称标签
     private createNameLabel(): void {
-        // 创建标签节点
-        const labelNode = new Node("NameLabel");
-        labelNode.parent = this.node;
-        
-        // 设置标签位置（在橘猫上方）
-        labelNode.setPosition(0, 30, 0);
-        
-        // 添加UITransform组件
-        const uiTransform = labelNode.addComponent(UITransform);
-        uiTransform.setContentSize(50, 20);
-        
-        // 添加Label组件
-        this._nameLabel = labelNode.addComponent(Label);
-        this._nameLabel.string = "橘猫";
-        this._nameLabel.fontSize = 12;
-        this._nameLabel.color = new Color(255, 255, 255); // 白色文字
-        this._nameLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        this._nameLabel.verticalAlign = Label.VerticalAlign.CENTER;
+        this._nameLabel = DrawingHelper.createLabel(this.node, {
+            text: "橘猫",
+            fontSize: 12,
+            color: new Color(255, 255, 255),
+            position: { x: 0, y: 30, z: 0 },
+            size: { width: 50, height: 20 }
+        });
     }
     
     // 初始化动画
@@ -186,19 +156,15 @@ export class OrangeCat extends BaseUnit {
         const direction = Vec3.subtract(new Vec3(), target.position, this.node.position);
         direction.normalize();
         
-        // 创建子弹节点
-        const bulletNode = new Node("Bullet");
+        // 从对象池获取子弹节点
+        const bulletNode = SimpleObjectPool.getBulletNode();
         bulletNode.parent = this.node.parent;
         bulletNode.setPosition(this.node.position);
         
-        // 添加子弹图形
-        const bulletGraphics = bulletNode.addComponent(Graphics);
-        bulletGraphics.fillColor = new Color(255, 255, 0); // 黄色子弹
-        bulletGraphics.circle(0, 0, 3);
-        bulletGraphics.fill();
-        
         // 跟踪子弹
-        this._activeBullets.add(bulletNode);
+        if (this._activeBullets) {
+            this._activeBullets.add(bulletNode);
+        }
         
         // 移动子弹
         this.moveBulletToTarget(bulletNode, target, direction);
@@ -206,49 +172,82 @@ export class OrangeCat extends BaseUnit {
     
     // 移动子弹到目标
     private moveBulletToTarget(bulletNode: Node, target: Node, direction: Vec3): void {
-        const startPosition = Vec3.clone(this.node.position); // 保存英雄的初始位置
+        const startPosition = Vec3.clone(this.node.position);
         const maxRange = this.attackRange + 100;
         
-        const updateBullet = (dt: number) => {
-            // 检查子弹和英雄节点是否仍然有效
-            if (!bulletNode || !bulletNode.isValid || !this.node || !this.node.isValid) {
-                if (bulletNode && bulletNode.isValid) {
-                    this.destroyBullet(bulletNode);
+        // 计算目标位置：目标当前位置 + 预测移动
+        let targetPosition = Vec3.clone(target.position);
+        
+        // 如果目标在移动，进行简单的预测
+        const targetUnit = target.getComponent(BaseUnit);
+        if (targetUnit && targetUnit.moveSpeed > 0) {
+            const timeToReach = Vec3.distance(startPosition, targetPosition) / this.bulletSpeed;
+            const predictedOffset = Vec3.multiplyScalar(new Vec3(), direction, targetUnit.moveSpeed * timeToReach * 0.5);
+            targetPosition = Vec3.add(targetPosition, targetPosition, predictedOffset);
+        }
+        
+        // 确保目标位置不超出射程
+        const directionToTarget = Vec3.subtract(new Vec3(), targetPosition, startPosition);
+        const distanceToTarget = directionToTarget.length();
+        if (distanceToTarget > maxRange) {
+            directionToTarget.normalize();
+            targetPosition = Vec3.add(new Vec3(), startPosition, Vec3.multiplyScalar(new Vec3(), directionToTarget, maxRange));
+        }
+        
+        // 计算移动时间
+        const distance = Vec3.distance(startPosition, targetPosition);
+        const duration = distance / this.bulletSpeed;
+        
+        // 存储tween引用以便可能的清理
+        const bulletTween = tween(bulletNode)
+            .to(duration, { position: targetPosition })
+            .call(() => {
+                // 检查是否击中目标
+                if (target && target.isValid) {
+                    const finalDistance = Vec3.distance(bulletNode.position, target.position);
+                    if (finalDistance <= 35) { // 稍微放宽击中判定
+                        this.onBulletHitTarget(bulletNode, target);
+                        return;
+                    }
                 }
-                return;
-            }
+                
+                // 未击中或目标已消失，安全销毁子弹
+                this.safeDestroyBullet(bulletNode);
+            });
+        
+        // 添加中途检查，如果目标消失则提前结束
+        let checkCount = 0;
+        const maxChecks = Math.floor(duration * 10); // 每0.1秒检查一次
+        
+        const addPeriodicCheck = () => {
+            if (checkCount >= maxChecks) return;
             
-            // 移动子弹
-            const moveDistance = this.bulletSpeed * dt;
-            const moveVector = Vec3.multiplyScalar(new Vec3(), direction, moveDistance);
-            const newPos = Vec3.add(new Vec3(), bulletNode.position, moveVector);
-            bulletNode.setPosition(newPos);
-            
-            // 检查是否击中目标
-            if (target && target.isValid) {
-                const distance = Vec3.distance(newPos, target.position);
-                if (distance <= 25) { // 击中判定
+            bulletTween.delay(0.1).call(() => {
+                // 检查目标是否仍然存在
+                if (!target || !target.isValid) {
+                    // 目标消失，停止tween并清理子弹
+                    Tween.stopAllByTarget(bulletNode);
+                    this.safeDestroyBullet(bulletNode);
+                    return;
+                }
+                
+                // 检查是否提前击中（对于移动目标）
+                const currentDistance = Vec3.distance(bulletNode.position, target.position);
+                if (currentDistance <= 25) {
+                    Tween.stopAllByTarget(bulletNode);
                     this.onBulletHitTarget(bulletNode, target);
                     return;
                 }
-            } else {
-                // 目标已经不存在，销毁子弹
-                this.destroyBullet(bulletNode);
-                return;
-            }
-            
-            // 检查子弹是否超出范围（使用保存的起始位置）
-            const travelDistance = Vec3.distance(newPos, startPosition);
-            if (travelDistance > maxRange) {
-                this.destroyBullet(bulletNode);
-                return;
-            }
-            
-            // 继续移动
-            requestAnimationFrame(() => updateBullet(0.016)); // 假设60FPS
+                
+                checkCount++;
+                if (checkCount < maxChecks) {
+                    addPeriodicCheck();
+                }
+            });
         };
         
-        updateBullet(0.016);
+        addPeriodicCheck();
+        bulletTween.start();
     }
     
     // 子弹击中目标
@@ -262,51 +261,51 @@ export class OrangeCat extends BaseUnit {
         // 创建击中特效
         this.createHitEffect(target.position);
         
-        // 销毁子弹
-        this.destroyBullet(bulletNode);
+        // 安全销毁子弹
+        this.safeDestroyBullet(bulletNode);
     }
     
     // 创建击中特效
     private createHitEffect(position: Vec3): void {
-        const effectNode = new Node("HitEffect");
-        effectNode.parent = this.node.parent;
-        effectNode.setPosition(position);
-        
-        const effectGraphics = effectNode.addComponent(Graphics);
-        effectGraphics.fillColor = new Color(255, 255, 0, 150);
-        effectGraphics.circle(0, 0, 15);
-        effectGraphics.fill();
-        
-        // 特效淡出并销毁
-        setTimeout(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 200);
+        if (this.node.parent) {
+            EffectHelper.createHitEffect(position, this.node.parent);
+        }
     }
     
-    // 销毁子弹
-    private destroyBullet(bulletNode: Node): void {
+    
+    // 安全销毁子弹（用于异步回调中）
+    private safeDestroyBullet(bulletNode: Node): void {
         if (bulletNode && bulletNode.isValid) {
-            // 从跟踪集合中移除
-            this._activeBullets.delete(bulletNode);
-            bulletNode.destroy();
+            // 停止所有与此子弹相关的tween动画
+            Tween.stopAllByTarget(bulletNode);
+            
+            // 只有在对象仍然有效时才尝试从集合中移除
+            if (this && this._activeBullets) {
+                this._activeBullets.delete(bulletNode);
+            }
+            // 回收到对象池而不是直接销毁
+            SimpleObjectPool.recycleBulletNode(bulletNode);
         }
     }
     
     // 播放攻击动画
     private playAttackAnimation(): void {
-        // 简单的攻击反馈 - 缩放效果
-        if (this.node) {
-            const originalScale = this.node.scale;
-            this.node.setScale(originalScale.x * 1.2, originalScale.y * 1.2);
-            
-            setTimeout(() => {
-                if (this.node && this.node.isValid) {
-                    this.node.setScale(originalScale);
-                }
-            }, 100);
+        // 如果正在播放攻击动画，跳过避免重叠
+        if (this._isPlayingAttackAnimation || !this.node) {
+            return;
         }
+        
+        this._isPlayingAttackAnimation = true;
+        const originalScale = Vec3.clone(this.node.scale);
+        
+        // 使用Tween系统制作更流畅的攻击动画
+        tween(this.node)
+            .to(0.05, { scale: new Vec3(originalScale.x * 1.15, originalScale.y * 1.15, originalScale.z) }) // 快速放大
+            .to(0.05, { scale: originalScale }) // 快速恢复
+            .call(() => {
+                this._isPlayingAttackAnimation = false; // 动画完成，重置标志
+            })
+            .start();
     }
     
     // 精准射击技能
@@ -319,7 +318,6 @@ export class OrangeCat extends BaseUnit {
         const battleManager = BattleManager.instance;
         if (!battleManager) return false;
         
-        const enemies = battleManager.getBattleStats();
         // 暂时简化，直接对当前目标造成额外伤害
         if (this.currentTarget) {
             const targetUnit = this.currentTarget.getComponent(BaseUnit);
@@ -343,35 +341,9 @@ export class OrangeCat extends BaseUnit {
     
     // 创建技能特效
     private createSkillEffect(): void {
-        const effectNode = new Node("SkillEffect");
-        effectNode.parent = this.node.parent;
-        effectNode.setPosition(this.node.position);
-        
-        const effectGraphics = effectNode.addComponent(Graphics);
-        effectGraphics.strokeColor = new Color(255, 215, 0); // 金色
-        effectGraphics.lineWidth = 3;
-        effectGraphics.circle(0, 0, 30);
-        effectGraphics.stroke();
-        
-        // 特效扩散并销毁
-        let radius = 30;
-        const expandEffect = () => {
-            radius += 5;
-            if (effectGraphics && effectNode.isValid) {
-                effectGraphics.clear();
-                effectGraphics.strokeColor = new Color(255, 215, 0, 255 - radius * 3);
-                effectGraphics.lineWidth = 3;
-                effectGraphics.circle(0, 0, radius);
-                effectGraphics.stroke();
-                
-                if (radius < 80) {
-                    requestAnimationFrame(expandEffect);
-                } else {
-                    effectNode.destroy();
-                }
-            }
-        };
-        expandEffect();
+        if (this.node.parent) {
+            EffectHelper.createSkillEffect(this.node.position, this.node.parent);
+        }
     }
     
     // 获取技能冷却剩余时间
@@ -389,17 +361,33 @@ export class OrangeCat extends BaseUnit {
         console.log("橘猫射手阵亡");
         
         // 清理所有活跃的子弹
-        this._activeBullets.forEach(bullet => {
-            if (bullet && bullet.isValid) {
-                bullet.destroy();
-            }
-        });
-        this._activeBullets.clear();
+        if (this._activeBullets) {
+            this._activeBullets.forEach(bullet => {
+                if (bullet && bullet.isValid) {
+                    bullet.destroy();
+                }
+            });
+            this._activeBullets.clear();
+            // 将引用设为null，防止异步回调访问
+            this._activeBullets = null;
+        }
         
         // 从BattleManager注销
         const battleManager = BattleManager.instance;
         if (battleManager) {
             battleManager.unregisterHero(this.node);
+        }
+        
+        // 从网格系统中清理位置
+        const gridSystem = GridDeploymentSystem.instance;
+        if (gridSystem) {
+            gridSystem.clearHeroFromGrid(this.node);
+        }
+        
+        // 从GameManager的英雄列表中移除
+        const gameManager = GameManager.instance;
+        if (gameManager) {
+            gameManager.removeDeployedHero(this.node);
         }
         
         // 创建死亡特效
@@ -443,63 +431,33 @@ export class OrangeCat extends BaseUnit {
     
     // 创建点击反馈特效
     private createClickFeedback(): void {
-        const effectNode = new Node("ClickFeedback");
-        effectNode.parent = this.node.parent;
-        effectNode.setPosition(Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0)));
-        
-        const effectGraphics = effectNode.addComponent(Graphics);
-        effectGraphics.fillColor = new Color(255, 215, 0, 200); // 金色
-        effectGraphics.circle(0, 0, 15);
-        effectGraphics.fill();
-        
-        // 特效动画
-        let scale = 1;
-        let opacity = 200;
-        const animateEffect = () => {
-            scale += 0.1;
-            opacity -= 15;
-            
-            if (effectGraphics && effectNode.isValid && opacity > 0) {
-                effectGraphics.clear();
-                effectGraphics.fillColor = new Color(255, 215, 0, opacity);
-                effectGraphics.circle(0, 0, 15 * scale);
-                effectGraphics.fill();
-                
-                requestAnimationFrame(animateEffect);
-            } else {
-                effectNode.destroy();
-            }
-        };
-        animateEffect();
+        if (this.node.parent) {
+            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
+            EffectHelper.createClickFeedback(feedbackPos, this.node.parent);
+        }
     }
     
     // 创建冷却反馈特效
     private createCooldownFeedback(): void {
-        const effectNode = new Node("CooldownFeedback");
-        effectNode.parent = this.node.parent;
-        effectNode.setPosition(Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0)));
-        
-        const effectGraphics = effectNode.addComponent(Graphics);
-        effectGraphics.fillColor = new Color(128, 128, 128, 150); // 灰色
-        effectGraphics.circle(0, 0, 12);
-        effectGraphics.fill();
-        
-        // 简单淡出
-        setTimeout(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 300);
+        if (this.node.parent) {
+            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
+            EffectHelper.createCooldownFeedback(feedbackPos, this.node.parent);
+        }
     }
     
     // 组件销毁时清理资源
     protected onDestroy(): void {
         // 清理所有活跃的子弹
-        this._activeBullets.forEach(bullet => {
-            if (bullet && bullet.isValid) {
-                bullet.destroy();
-            }
-        });
-        this._activeBullets.clear();
+        if (this._activeBullets) {
+            this._activeBullets.forEach(bullet => {
+                if (bullet && bullet.isValid) {
+                    // 停止tween动画并回收到对象池
+                    Tween.stopAllByTarget(bullet);
+                    SimpleObjectPool.recycleBulletNode(bullet);
+                }
+            });
+            this._activeBullets.clear();
+            this._activeBullets = null;
+        }
     }
 }

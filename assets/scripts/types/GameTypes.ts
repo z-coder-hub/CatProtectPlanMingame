@@ -6,16 +6,71 @@ export enum UnitType {
     ENEMY = "enemy"
 }
 
+// 英雄分类枚举
+export enum HeroCategory {
+    RANGED = "ranged",     // 远程
+    MAGE = "mage",         // 法师
+    MELEE = "melee",       // 近战
+    SUPPORT = "support",   // 辅助
+    SPECIAL = "special"    // 特殊
+}
+
 // 英雄类型枚举
 export enum HeroType {
-    ORANGE_CAT = "OrangeCat",      // 橘猫射手
-    SIAMESE_CAT = "SiameseCat",    // 暹罗猫法师
-    MAINE_CAT = "MaineCat"         // 缅因猫重炮
+    // 远程英雄
+    ORANGE_CAT = "OrangeCat",              // 橘猫射手
+    PERSIAN_SNIPER = "PersianSniper",      // 波斯猫狙击手
+    BENGAL_HUNTER = "BengalHunter",        // 孟加拉猫猎手
+    
+    // 法师英雄
+    SIAMESE_MAGE = "SiameseMage",          // 暹罗猫法师
+    MAINE_THUNDER = "MaineThunder",        // 缅因猫雷法
+    NORWEGIAN_ICE = "NorwegianIce",        // 挪威森林猫冰法
+    
+    // 近战英雄
+    BRITISH_KNIGHT = "BritishKnight",      // 英国短毛猫骑士
+    RAGDOLL_GUARDIAN = "RagdollGuardian",  // 布偶猫守护者
+    
+    // 辅助英雄
+    SCOTTISH_ENGINEER = "ScottishEngineer",     // 苏格兰折耳猫工程师
+    ABYSSINIAN_SCOUT = "AbyssinianScout",       // 阿比西尼亚猫侦察兵
+    
+    // 特殊英雄
+    RUSSIAN_BLUE = "RussianBlue",          // 俄罗斯蓝猫精英
+    AMERICAN_BOMBER = "AmericanBomber"     // 美国短毛猫爆破兵
+}
+
+// 敌人分类枚举
+export enum EnemyCategory {
+    BASIC = "basic",       // 基础单位
+    FAST = "fast",         // 快速单位
+    ARMORED = "armored",   // 装甲单位
+    SPECIAL = "special",   // 特殊单位
+    BOSS = "boss"          // BOSS单位
 }
 
 // 敌人类型枚举
 export enum EnemyType {
-    BASIC_MOUSE = "BasicMouse"     // 基础老鼠
+    // 基础单位
+    BASIC_MOUSE = "BasicMouse",         // 基础老鼠
+    GIANT_MOUSE = "GiantMouse",         // 巨型老鼠
+    
+    // 快速单位
+    FAST_MOUSE = "FastMouse",           // 快速老鼠
+    SPEED_MOUSE = "SpeedMouse",         // 疾速老鼠
+    
+    // 装甲单位
+    ARMORED_MOUSE = "ArmoredMouse",     // 装甲老鼠
+    TANK_MOUSE = "TankMouse",           // 坦克老鼠
+    
+    // 特殊单位
+    FLYING_MOUSE = "FlyingMouse",       // 飞行老鼠
+    BOMB_MOUSE = "BombMouse",           // 爆炸老鼠
+    STEALTH_MOUSE = "StealthMouse",     // 潜行老鼠
+    
+    // BOSS单位
+    MOUSE_KING = "MouseKing",           // 老鼠王
+    MECH_MOUSE = "MechMouse"            // 机械老鼠
 }
 
 // 游戏状态枚举
@@ -49,14 +104,34 @@ export interface UnitStats {
 // 英雄配置接口
 export interface HeroConfig extends UnitStats {
     readonly type: HeroType;       // 英雄类型
+    cost: number;                  // 部署费用
+    category: HeroCategory;        // 英雄分类
     bulletSpeed?: number;          // 子弹速度(射手类英雄)
     skillCooldown?: number;        // 技能冷却时间
+    aoeDamage?: number;            // AOE伤害倍率(法师英雄)
+    aoeRange?: number;             // AOE攻击范围
+    critChance?: number;           // 暴击几率(0-1)
+    critMultiplier?: number;       // 暴击倍率
+    slowEffect?: number;           // 减速效果(0-1)
+    chainTargets?: number;         // 链式攻击目标数
+    buffRange?: number;            // 增益光环范围
+    attackSpeedBuff?: number;      // 攻击速度增益倍率
+    attackRangeBuff?: number;      // 攻击范围增益值
+    penetration?: number;          // 穿透攻击目标数
 }
 
 // 敌人配置接口
 export interface EnemyConfig extends UnitStats {
     readonly type: EnemyType;      // 敌人类型
+    category: EnemyCategory;       // 敌人分类
     goldReward: number;            // 击败奖励金币
+    isFlying?: boolean;            // 是否飞行单位
+    explosionDamage?: number;      // 爆炸伤害
+    explosionRange?: number;       // 爆炸范围
+    summonCount?: number;          // 召唤数量
+    summonType?: EnemyType;        // 召唤单位类型
+    stealthChance?: number;        // 潜行躲避几率(0-1)
+    armorValue?: number;           // 护甲值(减少伤害)
 }
 
 // 位置相关接口

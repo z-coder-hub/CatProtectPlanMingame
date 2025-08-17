@@ -3,6 +3,8 @@ import { BaseUnit } from '../base/BaseUnit';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
+import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
+import { GameManager } from '../../managers/GameManager';
 
 const { ccclass, property } = _decorator;
 
@@ -476,6 +478,18 @@ export class MaineCat extends BaseUnit {
         const battleManager = BattleManager.instance;
         if (battleManager) {
             battleManager.unregisterHero(this.node);
+        }
+        
+        // 从网格系统中清理位置
+        const gridSystem = GridDeploymentSystem.instance;
+        if (gridSystem) {
+            gridSystem.clearHeroFromGrid(this.node);
+        }
+        
+        // 从GameManager的英雄列表中移除
+        const gameManager = GameManager.instance;
+        if (gameManager) {
+            gameManager.removeDeployedHero(this.node);
         }
         
         // 创建死亡特效

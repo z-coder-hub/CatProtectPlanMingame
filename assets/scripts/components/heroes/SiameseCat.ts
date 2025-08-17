@@ -3,6 +3,8 @@ import { BaseUnit } from '../base/BaseUnit';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
+import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
+import { GameManager } from '../../managers/GameManager';
 
 const { ccclass, property } = _decorator;
 
@@ -23,6 +25,7 @@ export class SiameseCat extends BaseUnit {
     private _graphics: Graphics | null = null;
     private _animation: Animation | null = null;
     private _nameLabel: Label | null = null;
+    private _activeBolts: Set<Node> = new Set(); // 跟踪活跃的魔法弹
     
     // 英雄类型
     public readonly heroType: HeroType = HeroType.SIAMESE_CAT;
@@ -271,6 +274,9 @@ export class SiameseCat extends BaseUnit {
         boltGraphics.circle(0, 0, 8);
         boltGraphics.stroke();
         
+        // 跟踪魔法弹
+        this._activeBolts.add(boltNode);
+        
         // 移动魔法弹到目标
         this.moveMagicBoltToTarget(boltNode, target);
     }
@@ -280,9 +286,17 @@ export class SiameseCat extends BaseUnit {
         const targetPosition = Vec3.clone(target.position);
         const direction = Vec3.subtract(new Vec3(), targetPosition, boltNode.position);
         direction.normalize();
+        const startPosition = Vec3.clone(this.node.position); // 保存英雄的初始位置
+        const maxRange = this.attackRange + 100;
         
         const updateBolt = (dt: number) => {
-            if (!boltNode || !boltNode.isValid) return;
+            // 检查魔法弹和英雄节点是否仍然有效
+            if (!boltNode || !boltNode.isValid || !this.node || !this.node.isValid) {
+                if (boltNode && boltNode.isValid) {
+                    this.destroyMagicBolt(boltNode);
+                }
+                return;
+            }
             
             // 移动魔法弹
             const moveDistance = this.magicBoltSpeed * dt;
@@ -297,9 +311,9 @@ export class SiameseCat extends BaseUnit {
                 return;
             }
             
-            // 检查魔法弹是否超出范围
-            const travelDistance = Vec3.distance(newPos, this.node.position);
-            if (travelDistance > this.attackRange + 100) {
+            // 检查魔法弹是否超出范围（使用保存的起始位置）
+            const travelDistance = Vec3.distance(newPos, startPosition);
+            if (travelDistance > maxRange) {
                 this.destroyMagicBolt(boltNode);
                 return;
             }
@@ -379,6 +393,8 @@ export class SiameseCat extends BaseUnit {
     // 销毁魔法弹
     private destroyMagicBolt(boltNode: Node): void {
         if (boltNode && boltNode.isValid) {
+            // 从跟踪集合中移除
+            this._activeBolts.delete(boltNode);
             boltNode.destroy();
         }
     }
@@ -491,10 +507,30 @@ export class SiameseCat extends BaseUnit {
     protected onDie(): void {
         console.log("暹罗猫法师阵亡");
         
+        // 清理所有活跃的魔法弹
+        this._activeBolts.forEach(bolt => {
+            if (bolt && bolt.isValid) {
+                bolt.destroy();
+            }
+        });
+        this._activeBolts.clear();
+        
         // 从BattleManager注销
         const battleManager = BattleManager.instance;
         if (battleManager) {
             battleManager.unregisterHero(this.node);
+        }
+        
+        // 从网格系统中清理位置
+        const gridSystem = GridDeploymentSystem.instance;
+        if (gridSystem) {
+            gridSystem.clearHeroFromGrid(this.node);
+        }
+        
+        // 从GameManager的英雄列表中移除
+        const gameManager = GameManager.instance;
+        if (gameManager) {
+            gameManager.removeDeployedHero(this.node);
         }
         
         // 创建死亡特效
@@ -585,5 +621,16 @@ export class SiameseCat extends BaseUnit {
                 effectNode.destroy();
             }
         }, 300);
+    }
+    
+    // 组件销毁时清理资源
+    protected onDestroy(): void {
+        // 清理所有活跃的魔法弹
+        this._activeBolts.forEach(bolt => {
+            if (bolt && bolt.isValid) {
+                bolt.destroy();
+            }
+        });
+        this._activeBolts.clear();
     }
 }

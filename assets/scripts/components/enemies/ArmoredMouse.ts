@@ -9,11 +9,14 @@ import { EffectHelper } from '../../utils/EffectHelper';
 
 const { ccclass, property } = _decorator;
 
-@ccclass('BasicMouse')
-export class BasicMouse extends BaseUnit {
+@ccclass('ArmoredMouse')
+export class ArmoredMouse extends BaseUnit {
     
     @property({ tooltip: "金币奖励" })
-    public goldReward: number = 3;
+    public goldReward: number = 6;
+    
+    @property({ tooltip: "护甲值（减伤）" })
+    public armor: number = 3;
     
     // 私有属性
     private _graphics: Graphics | null = null;
@@ -26,26 +29,24 @@ export class BasicMouse extends BaseUnit {
     private _movementTimer: number = 0;
     private _currentDirection: Vec3 = new Vec3(0, -1, 0); // 当前移动方向
     private _baseDirection: Vec3 = new Vec3(0, -1, 0);    // 基础向下方向
-    private _zigzagAmplitude: number = 0;                 // 蜿蜒幅度
-    private _zigzagFrequency: number = 0;                 // 蜿蜒频率
     private _pauseTimer: number = 0;                      // 停顿计时器
     private _isPaused: boolean = false;                   // 是否处于停顿状态
     private _nextPauseTime: number = 0;                   // 下次停顿时间
-    private _movementPattern: 'zigzag' | 'curves' = 'zigzag'; // 移动模式
+    private _movementPattern: 'steady' | 'defensive' = 'steady'; // 装甲老鼠移动稳重
     
     // 性能优化相关
-    private _movementUpdateInterval: number = 0.1;       // 移动更新间隔(10fps)
+    private _movementUpdateInterval: number = 0.15;      // 装甲老鼠更新较慢(6.7fps)
     private _lastMovementUpdate: number = 0;              // 上次移动更新时间
     
     // 敌人类型
-    public readonly enemyType: EnemyType = EnemyType.BASIC_MOUSE;
+    public readonly enemyType: EnemyType = EnemyType.ARMORED_MOUSE;
     
     protected onLoad(): void {
         // 先调用父类初始化
         super.onLoad();
         
-        // 设置基础老鼠属性
-        this.initializeMouseStats();
+        // 设置装甲老鼠属性
+        this.initializeArmoredMouseStats();
         
         // 初始化外观
         this.initializeVisuals();
@@ -67,9 +68,9 @@ export class BasicMouse extends BaseUnit {
         }
     }
     
-    // 初始化老鼠属性
-    private initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.BASIC_MOUSE];
+    // 初始化装甲老鼠属性
+    private initializeArmoredMouseStats(): void {
+        const config = ENEMY_CONFIGS[EnemyType.ARMORED_MOUSE];
         
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
@@ -80,24 +81,20 @@ export class BasicMouse extends BaseUnit {
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
         
-        // 初始化随机移动行为参数
+        // 初始化移动行为参数
         this.initializeMovementBehavior();
     }
     
     // 初始化移动行为
     private initializeMovementBehavior(): void {
-        // 随机选择移动模式（移除冲刺模式）
-        const patterns: ('zigzag' | 'curves')[] = ['zigzag', 'curves'];
+        // 装甲老鼠移动稳重，很少变化方向
+        const patterns: ('steady' | 'defensive')[] = ['steady', 'defensive'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
         
-        // 设置蜿蜒参数（减小幅度，提高流畅度）
-        this._zigzagAmplitude = 10 + Math.random() * 15; // 10-25像素的摆动幅度（减小）
-        this._zigzagFrequency = 0.5 + Math.random() * 1;   // 0.5-1.5的频率（减小）
+        // 装甲老鼠停顿更频繁（展示坚固防御）
+        this._nextPauseTime = 3 + Math.random() * 5; // 3-8秒后第一次停顿
         
-        // 大幅减少停顿频率
-        this._nextPauseTime = 8 + Math.random() * 12; // 8-20秒后第一次停顿（大幅增加）
-        
-        console.log(`老鼠移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}`);
+        console.log(`装甲老鼠移动模式: ${this._movementPattern}`);
     }
     
     // 初始化外观
@@ -108,7 +105,7 @@ export class BasicMouse extends BaseUnit {
             this._graphics = this.node.addComponent(Graphics);
         }
         
-        this.drawMouseAppearance();
+        this.drawArmoredMouseAppearance();
         
         // 创建名称标签
         this.createNameLabel();
@@ -117,13 +114,13 @@ export class BasicMouse extends BaseUnit {
     // 初始化血条
     private initializeHealthBar(): void {
         const healthBarData = DrawingHelper.createHealthBar(this.node, {
-            width: 30,
-            height: 4,
-            position: { x: 0, y: 25, z: 0 }, // 在老鼠上方
+            width: 35,              // 更宽的血条
+            height: 5,              // 更厚的血条
+            position: { x: 0, y: 30, z: 0 }, // 在装甲老鼠上方
             backgroundColor: new Color(60, 60, 60), // 深灰色背景
-            foregroundColor: new Color(0, 255, 0), // 绿色前景
-            borderColor: new Color(255, 255, 255), // 白色边框
-            borderWidth: 1
+            foregroundColor: new Color(255, 0, 0), // 红色前景（表示危险）
+            borderColor: new Color(255, 215, 0), // 金色边框（表示装甲）
+            borderWidth: 2
         });
         
         this._healthBarContainer = healthBarData.container;
@@ -136,18 +133,79 @@ export class BasicMouse extends BaseUnit {
         this.updateHealthBarDisplay();
     }
     
-    // 绘制老鼠外观
-    private drawMouseAppearance(): void {
+    // 绘制装甲老鼠外观
+    private drawArmoredMouseAppearance(): void {
         if (!this._graphics) return;
-        DrawingHelper.drawEnemyAppearance(this._graphics, 'basicMouse', 1.2);
+        
+        this._graphics.clear();
+        
+        // 绘制装甲老鼠身体（深灰色，表示金属）
+        this._graphics.fillColor = new Color(105, 105, 105); // 深灰色
+        this._graphics.rect(-18, -18, 36, 36);
+        this._graphics.fill();
+        
+        // 绘制装甲边框（金色）
+        this._graphics.strokeColor = new Color(255, 215, 0); // 金色
+        this._graphics.lineWidth = 3;
+        this._graphics.rect(-18, -18, 36, 36);
+        this._graphics.stroke();
+        
+        // 绘制装甲细节（装甲板）
+        this._graphics.strokeColor = new Color(192, 192, 192); // 银色细节
+        this._graphics.lineWidth = 2;
+        // 水平装甲线
+        this._graphics.moveTo(-15, -8);
+        this._graphics.lineTo(15, -8);
+        this._graphics.moveTo(-15, 0);
+        this._graphics.lineTo(15, 0);
+        this._graphics.moveTo(-15, 8);
+        this._graphics.lineTo(15, 8);
+        // 垂直装甲线
+        this._graphics.moveTo(-8, -15);
+        this._graphics.lineTo(-8, 15);
+        this._graphics.moveTo(0, -15);
+        this._graphics.lineTo(0, 15);
+        this._graphics.moveTo(8, -15);
+        this._graphics.lineTo(8, 15);
+        this._graphics.stroke();
+        
+        // 绘制盾牌标识
+        this._graphics.fillColor = new Color(255, 215, 0); // 金色盾牌
+        this._graphics.moveTo(0, -15);
+        this._graphics.lineTo(-8, -8);
+        this._graphics.lineTo(-8, 8);
+        this._graphics.lineTo(0, 15);
+        this._graphics.lineTo(8, 8);
+        this._graphics.lineTo(8, -8);
+        this._graphics.close();
+        this._graphics.fill();
+        
+        // 盾牌轮廓
+        this._graphics.strokeColor = new Color(184, 134, 11); // 深金色
+        this._graphics.lineWidth = 2;
+        this._graphics.moveTo(0, -15);
+        this._graphics.lineTo(-8, -8);
+        this._graphics.lineTo(-8, 8);
+        this._graphics.lineTo(0, 15);
+        this._graphics.lineTo(8, 8);
+        this._graphics.lineTo(8, -8);
+        this._graphics.close();
+        this._graphics.stroke();
+        
+        // 绘制眼睛（蓝色，表示冷静）
+        this._graphics.fillColor = new Color(0, 0, 255); // 蓝色眼睛
+        this._graphics.circle(-6, -6, 2);
+        this._graphics.fill();
+        this._graphics.circle(6, -6, 2);
+        this._graphics.fill();
     }
     
     // 创建名称标签
     private createNameLabel(): void {
         this._nameLabel = DrawingHelper.createLabel(this.node, {
-            text: "鼠",
+            text: "甲鼠",
             fontSize: 16,
-            color: new Color(255, 255, 255),
+            color: new Color(255, 215, 0), // 金色文字
             position: { x: 0, y: 0, z: 0 },
             size: { width: 40, height: 20 }
         });
@@ -169,14 +227,14 @@ export class BasicMouse extends BaseUnit {
         }
     }
     
-    // 朝城堡移动 - 老鼠式移动行为
+    // 朝城堡移动 - 装甲老鼠稳重移动
     private moveTowardsCastle(dt: number): void {
         if (!this._gameManager) return;
         
         const currentPos = this.node.position;
         const castleY = GAME_CONSTANTS.CASTLE_POSITION.y;
         
-        // 检查是否到达城堡Y位置（城堡是横跨整个屏幕的）
+        // 检查是否到达城堡Y位置
         if (currentPos.y <= castleY + 50) {
             this.attackCastle();
             return;
@@ -185,34 +243,34 @@ export class BasicMouse extends BaseUnit {
         // 更新移动计时器
         this._movementTimer += dt;
         
-        // 处理随机停顿
+        // 处理随机停顿（装甲老鼠会停下来观察）
         if (this.handleRandomPause(dt)) {
-            return; // 如果在停顿中，不执行移动
+            return;
         }
         
         // 根据移动模式计算移动方向
         this.updateMovementDirection();
         
-        // 执行移动
+        // 执行移动（装甲老鼠移动较慢但稳定）
         const moveDistance = this.moveSpeed * dt;
         const moveVector = Vec3.multiplyScalar(new Vec3(), this._currentDirection, moveDistance);
         const newPos = Vec3.add(new Vec3(), currentPos, moveVector);
         
         // 限制X坐标不要移动到屏幕外
-        const maxX = 300; // 屏幕边界限制
+        const maxX = 300;
         newPos.x = Math.max(-maxX, Math.min(maxX, newPos.x));
         
         this.node.setPosition(newPos);
     }
     
-    // 处理随机停顿（减少频率和时长）
+    // 处理随机停顿（装甲老鼠停顿较频繁）
     private handleRandomPause(dt: number): boolean {
         if (this._isPaused) {
             this._pauseTimer -= dt;
             if (this._pauseTimer <= 0) {
                 this._isPaused = false;
-                // 设置下次停顿时间（大幅增加间隔）
-                this._nextPauseTime = this._movementTimer + 10 + Math.random() * 15; // 10-25秒后再次停顿
+                // 设置下次停顿时间
+                this._nextPauseTime = this._movementTimer + 5 + Math.random() * 8; // 5-13秒后再次停顿
             }
             return true;
         }
@@ -220,7 +278,7 @@ export class BasicMouse extends BaseUnit {
         // 检查是否该停顿了
         if (this._movementTimer >= this._nextPauseTime) {
             this._isPaused = true;
-            this._pauseTimer = 0.1 + Math.random() * 0.2; // 停顿0.1-0.3秒（大幅减少）
+            this._pauseTimer = 0.5 + Math.random() * 1.0; // 停顿0.5-1.5秒（较长）
             return true;
         }
         
@@ -230,33 +288,90 @@ export class BasicMouse extends BaseUnit {
     // 更新移动方向
     private updateMovementDirection(): void {
         switch (this._movementPattern) {
-            case 'zigzag':
-                this.updateZigzagMovement();
+            case 'steady':
+                this.updateSteadyMovement();
                 break;
-            case 'curves':
-                this.updateCurvedMovement();
+            case 'defensive':
+                this.updateDefensiveMovement();
                 break;
         }
     }
     
-    // 蜿蜒移动（Z字形）- 保持匀速
-    private updateZigzagMovement(): void {
-        const xDirection = Math.sin(this._movementTimer * this._zigzagFrequency) * 0.3; // 横向分量
+    // 稳重移动
+    private updateSteadyMovement(): void {
+        // 装甲老鼠直线向下移动，偶尔轻微调整
+        const xDirection = Math.sin(this._movementTimer * 0.2) * 0.1; // 非常轻微的摆动
         
-        // 设置方向向量并归一化，确保匀速移动
         this._currentDirection.set(xDirection, -1, 0);
         this._currentDirection.normalize();
     }
     
-    // 曲线移动（S形）- 保持匀速
-    private updateCurvedMovement(): void {
-        const curveOffset = Math.sin(this._movementTimer * this._zigzagFrequency * 0.8) * 0.4; // 更明显的曲线
-        
-        // 设置方向向量并归一化，确保匀速移动
-        this._currentDirection.set(curveOffset, -1, 0);
+    // 防御移动
+    private updateDefensiveMovement(): void {
+        // 完全直线向下，无任何摆动
+        this._currentDirection.set(0, -1, 0);
         this._currentDirection.normalize();
     }
     
+    // 重写受伤方法，添加护甲减伤机制
+    public takeDamage(damage: number): void {
+        if (!this.isAlive) return;
+        
+        // 护甲减伤计算
+        const actualDamage = Math.max(1, damage - this.armor); // 至少造成1点伤害
+        const blockedDamage = damage - actualDamage;
+        
+        // 调用父类方法但传入减伤后的伤害
+        this.currentHealth = Math.max(0, this.currentHealth - actualDamage);
+        this.updateHealthBar();
+        
+        // 触发受伤回调
+        this.onTakeDamage(actualDamage);
+        
+        // 显示护甲阻挡效果
+        if (blockedDamage > 0) {
+            this.showArmorBlockEffect(blockedDamage);
+        }
+        
+        console.log(`装甲老鼠受到 ${damage} 点伤害，护甲阻挡 ${blockedDamage} 点，实际受到 ${actualDamage} 点伤害`);
+        
+        // 检查死亡
+        if (this.currentHealth <= 0) {
+            this.die();
+        }
+    }
+    
+    // 显示护甲阻挡效果
+    private showArmorBlockEffect(blockedDamage: number): void {
+        const effectNode = new Node("ArmorBlockEffect");
+        effectNode.parent = this.node.parent;
+        effectNode.setPosition(Vec3.add(new Vec3(), this.node.position, new Vec3(0, 20, 0)));
+        
+        const effectGraphics = effectNode.addComponent(Graphics);
+        effectGraphics.fillColor = new Color(255, 215, 0, 200); // 金色护甲效果
+        effectGraphics.circle(0, 0, 15);
+        effectGraphics.fill();
+        
+        // 护甲闪光效果
+        let scale = 1;
+        let opacity = 200;
+        const armorEffect = () => {
+            scale += 0.1;
+            opacity -= 20;
+            
+            if (effectGraphics && effectNode.isValid && opacity > 0) {
+                effectGraphics.clear();
+                effectGraphics.fillColor = new Color(255, 215, 0, opacity);
+                effectGraphics.circle(0, 0, 15 * scale);
+                effectGraphics.fill();
+                
+                requestAnimationFrame(armorEffect);
+            } else {
+                effectNode.destroy();
+            }
+        };
+        armorEffect();
+    }
     
     // 攻击城堡
     private attackCastle(): void {
@@ -272,7 +387,7 @@ export class BasicMouse extends BaseUnit {
         this._gameManager.removeActiveEnemy(this.node);
         this.die();
         
-        console.log(`老鼠攻击城堡，造成 ${this.attackDamage} 点伤害`);
+        console.log(`装甲老鼠攻击城堡，造成 ${this.attackDamage} 点伤害`);
     }
     
     // 创建攻击特效
@@ -284,7 +399,7 @@ export class BasicMouse extends BaseUnit {
     
     // 重写受伤方法，添加受伤反馈
     protected onTakeDamage(damage: number): void {
-        console.log(`基础老鼠受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
+        console.log(`装甲老鼠实际受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
         
         // 更新血条显示
         this.updateHealthBarDisplay();
@@ -297,7 +412,7 @@ export class BasicMouse extends BaseUnit {
     private updateHealthBarDisplay(): void {
         if (this._healthBarForeground && this._healthBarContainer) {
             const healthPercent = this.currentHealth / this.maxHealth;
-            DrawingHelper.updateHealthBar(this._healthBarForeground, healthPercent, 30, 4);
+            DrawingHelper.updateHealthBar(this._healthBarForeground, healthPercent, 35, 5);
             
             // 血条始终显示，只有死亡时才隐藏
             this._healthBarContainer.active = healthPercent > 0;
@@ -308,20 +423,23 @@ export class BasicMouse extends BaseUnit {
     private playHurtEffect(): void {
         if (!this._graphics) return;
         
-        // 使用DrawingHelper绘制受伤效果
-        DrawingHelper.drawHurtEffect(this._graphics, 'basicMouse', 1.2);
+        // 装甲受伤效果 - 金色闪光
+        this._graphics.clear();
+        this._graphics.fillColor = new Color(255, 215, 100); // 亮金色受伤效果
+        this._graphics.rect(-18, -18, 36, 36);
+        this._graphics.fill();
         
-        // 200ms后恢复原色
+        // 300ms后恢复原色
         this.scheduleOnce(() => {
             if (this._graphics && this.node.isValid) {
-                this.drawMouseAppearance();
+                this.drawArmoredMouseAppearance();
             }
-        }, 0.2);
+        }, 0.3);
     }
     
     // 重写死亡方法
     protected onDie(): void {
-        console.log(`基础老鼠死亡，奖励 ${this.goldReward} 金币`);
+        console.log(`装甲老鼠死亡，奖励 ${this.goldReward} 金币`);
         
         // 从BattleManager注销
         const battleManager = BattleManager.instance;
@@ -347,7 +465,8 @@ export class BasicMouse extends BaseUnit {
         if (this._graphics) {
             this._graphics.clear();
             this._graphics.fillColor = new Color(64, 64, 64); // 变暗
-            DrawingHelper.drawEnemyAppearance(this._graphics, 'basicMouse', 1.2);
+            this._graphics.rect(-18, -18, 36, 36);
+            this._graphics.fill();
         }
     }
     
@@ -355,16 +474,46 @@ export class BasicMouse extends BaseUnit {
     private createDeathEffect(): void {
         if (this.node.parent) {
             EffectHelper.createDeathEffect(this.node.position, this.node.parent);
+            
+            // 额外的装甲破碎特效
+            this.createArmorBreakEffect();
         }
     }
     
-    // 重写待机状态，老鼠总是朝城堡移动
+    // 创建装甲破碎特效
+    private createArmorBreakEffect(): void {
+        const effectNode = new Node("ArmorBreakEffect");
+        effectNode.parent = this.node.parent;
+        effectNode.setPosition(this.node.position);
+        
+        const effectGraphics = effectNode.addComponent(Graphics);
+        
+        // 创建多个破碎片段
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const x = Math.cos(angle) * 20;
+            const y = Math.sin(angle) * 20;
+            
+            effectGraphics.fillColor = new Color(255, 215, 0, 150); // 半透明金色
+            effectGraphics.rect(x - 3, y - 3, 6, 6);
+            effectGraphics.fill();
+        }
+        
+        // 破碎效果消失
+        setTimeout(() => {
+            if (effectNode && effectNode.isValid) {
+                effectNode.destroy();
+            }
+        }, 500);
+    }
+    
+    // 重写待机状态
     protected onIdleState(dt: number): void {
-        // 老鼠在待机状态下总是移动向城堡
+        // 装甲老鼠在待机状态下总是移动向城堡
         // moveTowardsCastle已在update中调用
     }
     
-    // 重写攻击状态，老鼠可以攻击英雄
+    // 重写攻击状态
     protected onAttackState(dt: number): void {
         if (!this.currentTarget || !this.currentTarget.isValid) {
             this.unitState = 0; // 回到待机状态
@@ -393,6 +542,6 @@ export class BasicMouse extends BaseUnit {
         target.takeDamage(this.attackDamage);
         this.attackTarget(target.node);
         
-        console.log(`老鼠攻击英雄，造成 ${this.attackDamage} 点伤害`);
+        console.log(`装甲老鼠攻击英雄，造成 ${this.attackDamage} 点伤害`);
     }
 }

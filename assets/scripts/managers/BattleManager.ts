@@ -17,7 +17,7 @@ export interface BattleTarget {
 export class BattleManager extends Component {
     
     @property({ tooltip: "战斗更新间隔(秒)" })
-    public battleUpdateInterval: number = 0.1;
+    public battleUpdateInterval: number = 0.2;
     
     @property({ tooltip: "目标搜索范围" })
     public targetSearchRange: number = 500;

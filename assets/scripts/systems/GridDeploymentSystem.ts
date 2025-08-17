@@ -38,6 +38,12 @@ export class GridDeploymentSystem extends Component {
     private _gridStartPos: Vec3 = new Vec3();
     private _debugGraphics: Graphics | null = null;
     
+    // 拖拽预览相关
+    private _previewGraphics: Graphics | null = null;
+    private _currentHoverGrid: GridPosition | null = null;
+    private _isDragMode: boolean = false;
+    private _previewAnimationTimer: number = 0;
+    
     // 获取网格总数
     public get totalSlots(): number {
         return this.gridRows * this.gridColumns;
@@ -65,6 +71,9 @@ export class GridDeploymentSystem extends Component {
         if (this.showDebugGrid) {
             this.createDebugGraphics();
         }
+        
+        // 创建拖拽预览Graphics
+        this.createPreviewGraphics();
         
         console.log(`网格部署系统初始化完成: ${this.gridColumns}x${this.gridRows}, 单元格大小: ${this.cellSize}`);
     }
@@ -195,6 +204,40 @@ export class GridDeploymentSystem extends Component {
         return null;
     }
     
+    // 根据英雄节点清理网格位置
+    public clearHeroFromGrid(heroNode: Node): boolean {
+        const position = this.findHeroPosition(heroNode);
+        if (position) {
+            const removedHero = this.removeHero(position);
+            if (removedHero) {
+                console.log(`网格位置 (${position.row}, ${position.col}) 已清理，英雄: ${heroNode.name}`);
+                this.updateDebugDisplay();
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // 清理所有网格位置（波次重置时使用）
+    public clearAllGridPositions(): void {
+        let clearedCount = 0;
+        for (let row = 0; row < this.gridRows; row++) {
+            for (let col = 0; col < this.gridColumns; col++) {
+                const slot = this._gridData[row][col];
+                if (slot.state === GridSlotState.OCCUPIED) {
+                    slot.state = GridSlotState.EMPTY;
+                    slot.heroNode = null;
+                    clearedCount++;
+                }
+            }
+        }
+        
+        if (clearedCount > 0) {
+            console.log(`已清理 ${clearedCount} 个网格位置`);
+            this.updateDebugDisplay();
+        }
+    }
+    
     // 获取所有已部署的英雄
     public getAllDeployedHeroes(): Node[] {
         const heroes: Node[] = [];
@@ -237,74 +280,291 @@ export class GridDeploymentSystem extends Component {
         this.drawDebugGrid();
     }
     
+    // 创建拖拽预览Graphics
+    private createPreviewGraphics(): void {
+        const previewNode = new Node("GridPreview");
+        previewNode.parent = this.node;
+        
+        this._previewGraphics = previewNode.addComponent(Graphics);
+        // 设置较高的渲染层级，确保预览在网格之上
+        previewNode.setSiblingIndex(999);
+    }
+    
     // 绘制调试网格
     private drawDebugGrid(): void {
         if (!this._debugGraphics) return;
         
         this._debugGraphics.clear();
-        this._debugGraphics.strokeColor = Color.GREEN;
-        this._debugGraphics.lineWidth = 1;
+        this._debugGraphics.strokeColor = Color.WHITE;
+        this._debugGraphics.lineWidth = 2; // 增加线宽提高可见性
         
-        // 绘制网格线
-        for (let row = 0; row <= this.gridRows; row++) {
-            const y = this._gridStartPos.y - row * this.cellSize;
-            this._debugGraphics.moveTo(this._gridStartPos.x, y);
-            this._debugGraphics.lineTo(this._gridStartPos.x + this.gridColumns * this.cellSize, y);
-        }
-        
-        for (let col = 0; col <= this.gridColumns; col++) {
-            const x = this._gridStartPos.x + col * this.cellSize;
-            this._debugGraphics.moveTo(x, this._gridStartPos.y);
-            this._debugGraphics.lineTo(x, this._gridStartPos.y - this.gridRows * this.cellSize);
-        }
-        
-        this._debugGraphics.stroke();
-        
-        // 绘制槽位状态
-        this.drawSlotStates();
+        // 绘制改进的虚线网格
+        this.drawImprovedDashedGrid();
     }
     
-    // 绘制槽位状态
-    private drawSlotStates(): void {
+    // 绘制改进的虚线网格
+    private drawImprovedDashedGrid(): void {
         if (!this._debugGraphics) return;
         
-        const halfCell = this.cellSize * 0.4;
+        const dashLength = 6;
+        const gapLength = 6;
         
-        for (let row = 0; row < this.gridRows; row++) {
-            for (let col = 0; col < this.gridColumns; col++) {
-                const slot = this._gridData[row][col];
-                const pos = slot.worldPosition;
-                
-                // 根据状态设置颜色
-                switch (slot.state) {
-                    case GridSlotState.EMPTY:
-                        this._debugGraphics.fillColor = new Color(0, 255, 0, 100);
-                        break;
-                    case GridSlotState.OCCUPIED:
-                        this._debugGraphics.fillColor = new Color(255, 0, 0, 150);
-                        break;
-                    case GridSlotState.FORBIDDEN:
-                        this._debugGraphics.fillColor = new Color(0, 0, 0, 200);
-                        break;
-                }
-                
-                // 绘制槽位状态矩形
-                this._debugGraphics.rect(
-                    pos.x - halfCell,
-                    pos.y - halfCell,
-                    halfCell * 2,
-                    halfCell * 2
-                );
-                this._debugGraphics.fill();
+        // 统一收集所有线段，然后一次性绘制
+        this._debugGraphics.moveTo(0, 0); // 重置画笔
+        
+        // 绘制水平线
+        for (let row = 0; row <= this.gridRows; row++) {
+            const y = this._gridStartPos.y - row * this.cellSize;
+            const startX = this._gridStartPos.x;
+            const endX = this._gridStartPos.x + this.gridColumns * this.cellSize;
+            this.drawContinuousDashedLine(startX, y, endX, y, dashLength, gapLength);
+        }
+        
+        // 绘制垂直线
+        for (let col = 0; col <= this.gridColumns; col++) {
+            const x = this._gridStartPos.x + col * this.cellSize;
+            const startY = this._gridStartPos.y;
+            const endY = this._gridStartPos.y - this.gridRows * this.cellSize;
+            this.drawContinuousDashedLine(x, startY, x, endY, dashLength, gapLength);
+        }
+        
+        // 一次性绘制所有线段
+        this._debugGraphics.stroke();
+    }
+    
+    // 绘制连续的虚线（改进版本）
+    private drawContinuousDashedLine(x1: number, y1: number, x2: number, y2: number, dashLength: number, gapLength: number): void {
+        if (!this._debugGraphics) return;
+        
+        const totalLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        
+        // 计算方向向量
+        const dirX = (x2 - x1) / totalLength;
+        const dirY = (y2 - y1) / totalLength;
+        
+        let currentDistance = 0;
+        let isDrawing = true; // 开始时绘制虚线段
+        
+        while (currentDistance < totalLength) {
+            const segmentLength = isDrawing ? dashLength : gapLength;
+            const segmentEnd = Math.min(currentDistance + segmentLength, totalLength);
+            
+            const startX = x1 + dirX * currentDistance;
+            const startY = y1 + dirY * currentDistance;
+            const endX = x1 + dirX * segmentEnd;
+            const endY = y1 + dirY * segmentEnd;
+            
+            if (isDrawing) {
+                // 绘制实线段
+                this._debugGraphics.moveTo(startX, startY);
+                this._debugGraphics.lineTo(endX, endY);
             }
+            
+            currentDistance = segmentEnd;
+            isDrawing = !isDrawing; // 切换绘制/间隔状态
         }
     }
+    
+    
     
     // 更新调试显示
     public updateDebugDisplay(): void {
         if (this.showDebugGrid && this._debugGraphics) {
             this.drawDebugGrid();
         }
+    }
+    
+    // ========== 拖拽预览功能 ==========
+    
+    // 开始拖拽模式
+    public startDragMode(): void {
+        this._isDragMode = true;
+        this._previewAnimationTimer = 0;
+        console.log("网格拖拽模式已开启");
+    }
+    
+    // 结束拖拽模式
+    public endDragMode(): void {
+        this._isDragMode = false;
+        this._currentHoverGrid = null;
+        this.clearPreview();
+        console.log("网格拖拽模式已关闭");
+    }
+    
+    // 更新鼠标悬停位置
+    public updateHoverPosition(worldPosition: Vec3): void {
+        if (!this._isDragMode) return;
+        
+        const gridPos = this.worldToGridPosition(worldPosition);
+        
+        // 检查是否切换到新的网格
+        if (!this.isGridPositionEqual(gridPos, this._currentHoverGrid)) {
+            this._currentHoverGrid = gridPos;
+            this.updatePreview();
+        }
+    }
+    
+    // 检查两个网格位置是否相等
+    private isGridPositionEqual(pos1: GridPosition | null, pos2: GridPosition | null): boolean {
+        if (pos1 === null && pos2 === null) return true;
+        if (pos1 === null || pos2 === null) return false;
+        return pos1.row === pos2.row && pos1.col === pos2.col;
+    }
+    
+    // 更新预览显示
+    private updatePreview(): void {
+        if (!this._previewGraphics) return;
+        
+        this._previewGraphics.clear();
+        
+        if (!this._currentHoverGrid) return;
+        
+        const worldPos = this.gridToWorldPosition(this._currentHoverGrid);
+        const canDeploy = this.canDeployAt(this._currentHoverGrid);
+        
+        // 根据是否可部署选择颜色
+        const color = canDeploy ? 
+            new Color(0, 255, 0, 150) :  // 绿色半透明 - 可部署
+            new Color(255, 0, 0, 150);   // 红色半透明 - 不可部署
+        
+        // 绘制高亮网格
+        this.drawHighlightGrid(worldPos, color, canDeploy);
+    }
+    
+    // 绘制高亮网格
+    private drawHighlightGrid(worldPos: Vec3, color: Color, canDeploy: boolean): void {
+        if (!this._previewGraphics) return;
+        
+        const halfCell = this.cellSize / 2;
+        
+        // 绘制填充背景
+        this._previewGraphics.fillColor = color;
+        this._previewGraphics.rect(
+            worldPos.x - halfCell, 
+            worldPos.y - halfCell, 
+            this.cellSize, 
+            this.cellSize
+        );
+        this._previewGraphics.fill();
+        
+        // 绘制边框
+        const borderColor = canDeploy ? 
+            new Color(0, 200, 0, 255) :  // 深绿色 - 可部署
+            new Color(200, 0, 0, 255);   // 深红色 - 不可部署
+        
+        this._previewGraphics.strokeColor = borderColor;
+        this._previewGraphics.lineWidth = 3;
+        this._previewGraphics.rect(
+            worldPos.x - halfCell, 
+            worldPos.y - halfCell, 
+            this.cellSize, 
+            this.cellSize
+        );
+        this._previewGraphics.stroke();
+        
+        // 如果可部署，添加额外的装饰
+        if (canDeploy) {
+            this.drawDeployIndicator(worldPos);
+        } else {
+            this.drawForbiddenIndicator(worldPos);
+        }
+    }
+    
+    // 绘制部署指示器（可部署时）
+    private drawDeployIndicator(worldPos: Vec3): void {
+        if (!this._previewGraphics) return;
+        
+        const indicatorSize = this.cellSize * 0.3;
+        
+        // 绘制加号符号
+        this._previewGraphics.strokeColor = new Color(0, 150, 0, 255);
+        this._previewGraphics.lineWidth = 4;
+        
+        // 横线
+        this._previewGraphics.moveTo(worldPos.x - indicatorSize/2, worldPos.y);
+        this._previewGraphics.lineTo(worldPos.x + indicatorSize/2, worldPos.y);
+        
+        // 竖线
+        this._previewGraphics.moveTo(worldPos.x, worldPos.y - indicatorSize/2);
+        this._previewGraphics.lineTo(worldPos.x, worldPos.y + indicatorSize/2);
+        
+        this._previewGraphics.stroke();
+    }
+    
+    // 绘制禁止指示器（不可部署时）
+    private drawForbiddenIndicator(worldPos: Vec3): void {
+        if (!this._previewGraphics) return;
+        
+        const indicatorSize = this.cellSize * 0.4;
+        
+        // 绘制X符号
+        this._previewGraphics.strokeColor = new Color(150, 0, 0, 255);
+        this._previewGraphics.lineWidth = 4;
+        
+        // 左上到右下的斜线
+        this._previewGraphics.moveTo(worldPos.x - indicatorSize/2, worldPos.y - indicatorSize/2);
+        this._previewGraphics.lineTo(worldPos.x + indicatorSize/2, worldPos.y + indicatorSize/2);
+        
+        // 右上到左下的斜线
+        this._previewGraphics.moveTo(worldPos.x + indicatorSize/2, worldPos.y - indicatorSize/2);
+        this._previewGraphics.lineTo(worldPos.x - indicatorSize/2, worldPos.y + indicatorSize/2);
+        
+        this._previewGraphics.stroke();
+    }
+    
+    // 清除预览
+    private clearPreview(): void {
+        if (this._previewGraphics) {
+            this._previewGraphics.clear();
+        }
+    }
+    
+    // 获取当前悬停的网格位置
+    public getCurrentHoverGrid(): GridPosition | null {
+        return this._currentHoverGrid;
+    }
+    
+    // 检查是否在拖拽模式
+    public isDragMode(): boolean {
+        return this._isDragMode;
+    }
+    
+    // 添加update方法来处理动画
+    protected update(dt: number): void {
+        if (this._isDragMode) {
+            this._previewAnimationTimer += dt;
+            this.updatePreviewAnimation();
+        }
+    }
+    
+    // 更新预览动画效果
+    private updatePreviewAnimation(): void {
+        if (!this._previewGraphics || !this._currentHoverGrid) return;
+        
+        // 创建呼吸效果：通过改变透明度来实现脉动效果
+        const pulseSpeed = 3.0; // 脉动速度
+        const alpha = 0.3 + 0.2 * Math.sin(this._previewAnimationTimer * pulseSpeed);
+        
+        // 重新绘制预览，应用新的透明度
+        this.updatePreviewWithAlpha(alpha);
+    }
+    
+    // 使用指定透明度更新预览
+    private updatePreviewWithAlpha(alpha: number): void {
+        if (!this._previewGraphics || !this._currentHoverGrid) return;
+        
+        this._previewGraphics.clear();
+        
+        const worldPos = this.gridToWorldPosition(this._currentHoverGrid);
+        const canDeploy = this.canDeployAt(this._currentHoverGrid);
+        
+        // 根据是否可部署选择颜色，应用动态透明度
+        const color = canDeploy ? 
+            new Color(0, 255, 0, Math.floor(alpha * 255)) :  
+            new Color(255, 0, 0, Math.floor(alpha * 255));   
+        
+        // 绘制带动画效果的高亮网格
+        this.drawHighlightGrid(worldPos, color, canDeploy);
     }
     
     // 静态实例（为了让其他组件能访问）

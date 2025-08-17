@@ -5,6 +5,8 @@ import { GameManager } from './GameManager';
 import { BattleManager } from './BattleManager';
 import { ResourceManager, ResourceManagerHelper } from './ResourceManager';
 import { BasicMouse } from '../components/enemies/BasicMouse';
+import { FastMouse } from '../components/enemies/FastMouse';
+import { ArmoredMouse } from '../components/enemies/ArmoredMouse';
 
 const { ccclass, property } = _decorator;
 
@@ -27,8 +29,6 @@ interface EnemySpawnInfo {
 @ccclass('WaveManager')
 export class WaveManager extends Component {
     
-    @property({ tooltip: "敌人生成位置", type: Node })
-    public enemySpawnPoint: Node | null = null;
     
     @property({ tooltip: "波次间隔时间(秒)" })
     public wavePrepareTime: number = 5;
@@ -84,7 +84,6 @@ export class WaveManager extends Component {
         }
         
         WaveManager._instance = this;
-        this.initializeEnemySpawnPoint();
         console.log("WaveManager初始化完成");
     }
     
@@ -125,15 +124,6 @@ export class WaveManager extends Component {
         }
     }
     
-    // 初始化敌人生成点
-    private initializeEnemySpawnPoint(): void {
-        if (!this.enemySpawnPoint) {
-            // 创建默认生成点
-            this.enemySpawnPoint = new Node("EnemySpawnPoint");
-            this.enemySpawnPoint.parent = this.node;
-            this.enemySpawnPoint.setPosition(new Vec3(0, GAME_CONSTANTS.ENEMY_SPAWN_Y, 0));
-        }
-    }
     
     // 开始波次（参考老项目接口）
     public startWave(waveNumber: number): void {
@@ -155,9 +145,9 @@ export class WaveManager extends Component {
         this._waveState = WaveState.SPAWNING;
         this._waveTimer = 0;
         
-        console.log(`[WaveManager] 开始第 ${this.currentWaveNumber} 波`);
+        console.log(`[WaveManager] 开始第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}）`);
         
-        // 通知GameManager
+        // 通知GameManager同步当前波次
         if (this._gameManager) {
             this._gameManager.currentWave = this.currentWaveNumber;
         }
@@ -238,7 +228,7 @@ export class WaveManager extends Component {
     
     // 生成敌人
     private async spawnEnemy(enemyType: EnemyType): Promise<void> {
-        if (!this.enemySpawnPoint || !this._gameManager) return;
+        if (!this._gameManager) return;
         
         try {
             // 动态创建敌人（暂时简化，后续可从预制体加载）
@@ -248,8 +238,9 @@ export class WaveManager extends Component {
                 return;
             }
             
-            // 设置生成位置
-            enemyNode.setPosition(this.enemySpawnPoint.position);
+            // 设置生成位置为网格上方的随机位置
+            const spawnPosition = this.getRandomSpawnPosition();
+            enemyNode.setPosition(spawnPosition);
             enemyNode.parent = this.node.parent; // 添加到场景
             
             // 添加到活跃敌人列表
@@ -260,11 +251,31 @@ export class WaveManager extends Component {
                 this._battleManager.registerEnemy(enemyNode);
             }
             
-            console.log(`[WaveManager] 生成敌人: ${enemyType}`);
+            console.log(`[WaveManager] 生成敌人: ${enemyType} 位置: (${spawnPosition.x}, ${spawnPosition.y})`);
             
         } catch (error) {
             console.error(`生成敌人异常: ${enemyType}`, error);
         }
+    }
+    
+    // 获取网格上方的随机生成位置
+    private getRandomSpawnPosition(): Vec3 {
+        // 获取网格配置信息
+        const gridConfig = GAME_CONFIG.gridConfig;
+        const totalGridWidth = gridConfig.cols * gridConfig.cellSize;
+        
+        // 计算网格的X范围（网格居中，所以是 -totalWidth/2 到 +totalWidth/2）
+        const minX = -totalGridWidth / 2;
+        const maxX = totalGridWidth / 2;
+        
+        // 在网格X范围内随机选择位置
+        const randomX = minX + Math.random() * (maxX - minX);
+        
+        // Y坐标设置为网格正上方一点的位置（网格顶部 + 100像素）
+        const gridTopY = GAME_CONSTANTS.GRID_OFFSET_Y + (gridConfig.rows * gridConfig.cellSize) / 2;
+        const spawnY = gridTopY + 100;
+        
+        return new Vec3(randomX, spawnY, 0);
     }
     
     // 创建敌人节点（参考老项目）
@@ -275,6 +286,12 @@ export class WaveManager extends Component {
         switch (enemyType) {
             case EnemyType.BASIC_MOUSE:
                 enemyNode.addComponent(BasicMouse);
+                break;
+            case EnemyType.FAST_MOUSE:
+                enemyNode.addComponent(FastMouse);
+                break;
+            case EnemyType.ARMORED_MOUSE:
+                enemyNode.addComponent(ArmoredMouse);
                 break;
             default:
                 console.warn(`未知的敌人类型: ${enemyType}`);
@@ -295,14 +312,17 @@ export class WaveManager extends Component {
     public prepareNextWave(): void {
         this._currentWaveIndex++;
         
+        console.log(`[WaveManager] prepareNextWave调用，当前索引增加到: ${this._currentWaveIndex}，波次号: ${this.currentWaveNumber}`);
+        
         if (this._currentWaveIndex >= GAME_CONFIG.waves.length) {
             // 所有波次完成
+            console.log("所有波次已完成，准备结束游戏");
             this.onAllWavesCompleted();
         } else {
             // 准备下一波
             this._waveState = WaveState.WAITING;
             this._prepareTimer = 0;
-            console.log(`准备第 ${this.currentWaveNumber} 波，等待手动开始`);
+            console.log(`准备第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}），等待手动开始`);
         }
     }
     
@@ -336,7 +356,7 @@ export class WaveManager extends Component {
         this._enemySpawnQueue = [];
         this._waveTimer = 0;
         this._prepareTimer = 0;
-        console.log("波次管理器已重置");
+        console.log(`[WaveManager] 波次管理器已重置，当前索引: ${this._currentWaveIndex}，波次号: ${this.currentWaveNumber}`);
     }
     
     // 获取波次统计信息

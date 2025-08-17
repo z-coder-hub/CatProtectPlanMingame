@@ -11,6 +11,8 @@ export class GameHUD extends Component {
     // UI组件引用
     private _goldLabel: Label | null = null;
     private _waveLabel: Label | null = null;
+    private _castleHealthLabel: Label | null = null;
+    private _castleHealthBar: Graphics | null = null;
     private _playPauseButton: Node | null = null;
     private _restartButton: Node | null = null;
 
@@ -74,18 +76,24 @@ export class GameHUD extends Component {
         const screenWidth = view.getVisibleSize().width;
         infoPanelNode.setPosition(-screenWidth/4, 0); // 位于屏幕左侧1/4处
 
+        // 根据屏幕宽度调整元素间距
+        const elementSpacing = Math.max(80, screenWidth * 0.15); // 自适应间距
+
         // 金币显示
-        this.createGoldDisplay(infoPanelNode);
+        this.createGoldDisplay(infoPanelNode, -elementSpacing);
 
         // 波次显示
-        this.createWaveDisplay(infoPanelNode);
+        this.createWaveDisplay(infoPanelNode, elementSpacing);
+        
+        // 城堡血量显示
+        this.createCastleHealthDisplay(infoPanelNode);
     }
 
     // 创建金币显示
-    private createGoldDisplay(parent: Node): void {
+    private createGoldDisplay(parent: Node, xPosition: number = -120): void {
         const goldNode = new Node("GoldDisplay");
         goldNode.parent = parent;
-        goldNode.setPosition(-120, 0); // 放大3倍间距
+        goldNode.setPosition(xPosition, 0); // 使用传入的位置参数
 
         // 金币图标 (适中大小)
         const goldIcon = goldNode.addComponent(Graphics);
@@ -105,15 +113,48 @@ export class GameHUD extends Component {
     }
 
     // 创建波次显示
-    private createWaveDisplay(parent: Node): void {
+    private createWaveDisplay(parent: Node, xPosition: number = 120): void {
         const waveNode = new Node("WaveDisplay");
         waveNode.parent = parent;
-        waveNode.setPosition(120, 0); // 放大3倍间距
+        waveNode.setPosition(xPosition, 0); // 使用传入的位置参数
 
         this._waveLabel = waveNode.addComponent(Label);
         this._waveLabel.string = "第1/3波";
         this._waveLabel.fontSize = 24; // 适中字体
         this._waveLabel.color = new Color(255, 255, 255);
+    }
+    
+    // 创建城堡血量显示
+    private createCastleHealthDisplay(parent: Node): void {
+        const healthNode = new Node("CastleHealthDisplay");
+        healthNode.parent = parent;
+        healthNode.setPosition(0, -30); // 在波次下方
+        
+        // 血量条背景
+        const healthBgNode = new Node("HealthBarBg");
+        healthBgNode.parent = healthNode;
+        const healthBg = healthBgNode.addComponent(Graphics);
+        healthBg.fillColor = new Color(100, 100, 100); // 灰色背景
+        healthBg.rect(-60, -8, 120, 16);
+        healthBg.fill();
+        
+        // 血量条前景
+        const healthBarNode = new Node("HealthBar");
+        healthBarNode.parent = healthNode;
+        this._castleHealthBar = healthBarNode.addComponent(Graphics);
+        this._castleHealthBar.fillColor = new Color(255, 0, 0); // 红色血量
+        this._castleHealthBar.rect(-60, -8, 120, 16);
+        this._castleHealthBar.fill();
+        
+        // 血量文本
+        const healthLabelNode = new Node("HealthLabel");
+        healthLabelNode.parent = healthNode;
+        healthLabelNode.setPosition(0, -25);
+        
+        this._castleHealthLabel = healthLabelNode.addComponent(Label);
+        this._castleHealthLabel.string = "城堡: 100/100";
+        this._castleHealthLabel.fontSize = 18;
+        this._castleHealthLabel.color = new Color(255, 255, 255);
     }
 
 
@@ -124,14 +165,17 @@ export class GameHUD extends Component {
         const screenWidth = view.getVisibleSize().width;
         controlPanelNode.setPosition(screenWidth/4, 0); // 位于屏幕右侧1/4处
 
+        // 根据屏幕宽度调整按钮间距
+        const buttonSpacing = Math.max(50, screenWidth * 0.08); // 自适应按钮间距
+
         // 播放/暂停切换按钮 (简化文字)
-        this._playPauseButton = this.createButton("开始", -60, () => {
+        this._playPauseButton = this.createButton("开始", -buttonSpacing, () => {
             this.onPlayPauseButtonClicked();
         });
         this._playPauseButton.parent = controlPanelNode;
 
         // 重新开始按钮 (简化文字)
-        this._restartButton = this.createButton("重启", 60, () => {
+        this._restartButton = this.createButton("重启", buttonSpacing, () => {
             this.onRestartButtonClicked();
         });
         this._restartButton.parent = controlPanelNode;
@@ -142,9 +186,10 @@ export class GameHUD extends Component {
         const buttonNode = new Node(`Button_${text}`);
         buttonNode.setPosition(xPos, 0);
 
-        // 设置按钮尺寸
-        const buttonWidth = 100;
-        const buttonHeight = 50;
+        // 设置按钮尺寸 - 增大以适合手机触摸
+        const screenWidth = view.getVisibleSize().width;
+        const buttonWidth = Math.max(80, screenWidth * 0.12); // 自适应宽度
+        const buttonHeight = Math.max(40, screenWidth * 0.06); // 自适应高度
         const transform = buttonNode.addComponent(UITransform);
         transform.setContentSize(buttonWidth, buttonHeight);
 
@@ -158,12 +203,12 @@ export class GameHUD extends Component {
         // 设置Button组件的目标
         button.target = buttonNode;
 
-        // 按钮文本
+        // 按钮文本 - 根据按钮大小调整字体
         const labelNode = new Node("Label");
         labelNode.parent = buttonNode;
         const label = labelNode.addComponent(Label);
         label.string = text;
-        label.fontSize = 20;
+        label.fontSize = Math.max(16, buttonHeight * 0.4); // 自适应字体大小
         label.color = new Color(255, 255, 255);
 
         // 添加点击事件
@@ -203,10 +248,40 @@ export class GameHUD extends Component {
             const waveStats = this._waveManager.getWaveStats();
             this._waveLabel.string = `第${waveStats.currentWave}/${waveStats.totalWaves}波`;
         }
-
+        
+        // 更新城堡血量显示
+        this.updateCastleHealthDisplay(stats.castleHealth);
 
         // 更新按钮状态
         this.updateButtonStates(stats.gameState);
+    }
+    
+    // 更新城堡血量显示
+    private updateCastleHealthDisplay(currentHealth: number): void {
+        if (!this._castleHealthLabel || !this._castleHealthBar || !this._gameManager) return;
+        
+        const maxHealth = 100; // 从GameManager获取最大血量
+        const healthPercent = Math.max(0, currentHealth / maxHealth);
+        
+        // 更新血量文本
+        this._castleHealthLabel.string = `城堡: ${Math.round(currentHealth)}/${maxHealth}`;
+        
+        // 更新血量条
+        this._castleHealthBar.clear();
+        
+        // 根据血量百分比改变颜色
+        if (healthPercent > 0.6) {
+            this._castleHealthBar.fillColor = new Color(0, 255, 0); // 绿色
+        } else if (healthPercent > 0.3) {
+            this._castleHealthBar.fillColor = new Color(255, 255, 0); // 黄色
+        } else {
+            this._castleHealthBar.fillColor = new Color(255, 0, 0); // 红色
+        }
+        
+        // 绘制当前血量条
+        const healthWidth = 120 * healthPercent;
+        this._castleHealthBar.rect(-60, -8, healthWidth, 16);
+        this._castleHealthBar.fill();
     }
 
     // 更新按钮状态
@@ -269,7 +344,10 @@ export class GameHUD extends Component {
                 new Color(70, 130, 180) : // 启用状态：钢蓝色
                 new Color(100, 100, 100); // 禁用状态：灰色
 
-            this.drawButtonBackground(graphics, 100, 50, color);
+            // 获取按钮实际尺寸进行重绘
+            const transform = buttonNode.getComponent(UITransform);
+            const size = transform ? transform.contentSize : { width: 100, height: 50 };
+            this.drawButtonBackground(graphics, size.width, size.height, color);
         }
 
         // 设置文本透明度

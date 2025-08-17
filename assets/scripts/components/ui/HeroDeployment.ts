@@ -13,7 +13,7 @@ const { ccclass, property } = _decorator;
 export class HeroDeployment extends Component {
     
     @property({ tooltip: "英雄选择面板高度" })
-    public panelHeight: number = 120;
+    public panelHeight: number = 170; // 进一步增加高度以适应更大的按钮和间距
     
     @property({ tooltip: "拖拽预览透明度" })
     public dragPreviewOpacity: number = 180;
@@ -82,6 +82,11 @@ export class HeroDeployment extends Component {
                 this._deploymentPanel.active = shouldBeActive;
                 this.log(`面板显示状态更新: ${shouldBeActive ? '显示' : '隐藏'}, 游戏状态: ${gameState}`);
             }
+            
+            // 更新英雄按钮的视觉状态（基于当前金币）
+            if (shouldBeActive) {
+                this.updateHeroButtonStates();
+            }
         }
     }
     
@@ -133,24 +138,42 @@ export class HeroDeployment extends Component {
     
     // 创建英雄选择按钮
     private createHeroButtons(): void {
+        // 获取Canvas尺寸进行自适应布局
+        const canvas = this.node.parent;
+        const canvasTransform = canvas?.getComponent(UITransform);
+        const canvasWidth = canvasTransform ? canvasTransform.contentSize.width : 720;
+        
         const heroTypes = [HeroType.ORANGE_CAT, HeroType.SIAMESE_CAT, HeroType.MAINE_CAT];
-        const buttonWidth = 80;
-        const buttonHeight = 80;
-        const buttonSpacing = 20;
-        const startX = -(heroTypes.length * (buttonWidth + buttonSpacing) - buttonSpacing) / 2;
+        
+        // 根据屏幕宽度自适应按钮尺寸和间距
+        const availableWidth = canvasWidth * 0.8; // 使用80%的屏幕宽度
+        const buttonCount = heroTypes.length;
+        const minButtonSize = 100;
+        const maxButtonSize = 130;
+        const minSpacing = 20;
+        
+        // 计算最优按钮尺寸和间距
+        let buttonSize = Math.min(maxButtonSize, (availableWidth - minSpacing * (buttonCount - 1)) / buttonCount);
+        buttonSize = Math.max(minButtonSize, buttonSize);
+        
+        const totalButtonWidth = buttonSize * buttonCount;
+        const remainingSpace = availableWidth - totalButtonWidth;
+        const buttonSpacing = Math.max(minSpacing, remainingSpace / (buttonCount - 1));
+        
+        const startX = -(buttonCount * (buttonSize + buttonSpacing) - buttonSpacing) / 2;
         
         heroTypes.forEach((heroType, index) => {
             const buttonNode = this.createHeroButton(
                 heroType,
-                startX + index * (buttonWidth + buttonSpacing),
+                startX + index * (buttonSize + buttonSpacing),
                 this.panelHeight / 2,
-                buttonWidth,
-                buttonHeight
+                buttonSize,
+                buttonSize
             );
             
             buttonNode.parent = this._deploymentPanel;
             this._heroButtons.set(heroType, buttonNode);
-            this.log(`创建英雄按钮: ${heroType}, 位置: (${startX + index * (buttonWidth + buttonSpacing)}, ${this.panelHeight / 2})`);
+            this.log(`创建英雄按钮: ${heroType}, 位置: (${startX + index * (buttonSize + buttonSpacing)}, ${this.panelHeight / 2}), 尺寸: ${buttonSize}x${buttonSize}`);
         });
         
         this.log(`所有英雄按钮创建完成，总计: ${this._heroButtons.size} 个`);
@@ -175,7 +198,7 @@ export class HeroDeployment extends Component {
         this.drawHeroIcon(buttonNode, heroType, width, height);
         
         // 添加价格文本
-        this.addHeroPriceText(buttonNode, heroConfig.attackDamage, width, height); // 暂时用攻击力作为价格
+        this.addHeroPriceText(buttonNode, heroConfig.cost, width, height);
         
         // 添加拖拽事件监听
         this.setupButtonDragEvents(buttonNode, heroType);
@@ -187,9 +210,14 @@ export class HeroDeployment extends Component {
     private drawHeroButton(graphics: Graphics, heroType: HeroType, isSelected: boolean, width: number, height: number): void {
         graphics.clear();
         
+        // 检查是否能够购买
+        const canAfford = this.canAffordHero(heroType);
+        
         // 背景颜色
         if (isSelected) {
             graphics.fillColor = new Color(100, 150, 255, 200);
+        } else if (!canAfford) {
+            graphics.fillColor = new Color(80, 50, 50, 200); // 金币不足时暗红色
         } else {
             graphics.fillColor = new Color(70, 70, 70, 200);
         }
@@ -198,8 +226,14 @@ export class HeroDeployment extends Component {
         graphics.fill();
         
         // 边框
-        graphics.strokeColor = isSelected ? new Color(255, 255, 0) : new Color(200, 200, 200);
-        graphics.lineWidth = isSelected ? 3 : 2;
+        if (!canAfford) {
+            graphics.strokeColor = new Color(200, 100, 100); // 金币不足时红色边框
+            graphics.lineWidth = 2;
+        } else {
+            graphics.strokeColor = isSelected ? new Color(255, 255, 0) : new Color(200, 200, 200);
+            graphics.lineWidth = isSelected ? 3 : 2;
+        }
+        
         graphics.rect(-width / 2, -height / 2, width, height);
         graphics.stroke();
     }
@@ -308,7 +342,7 @@ export class HeroDeployment extends Component {
         if (!this._gameManager) return false;
         
         const heroConfig = HERO_CONFIGS[heroType];
-        const cost = heroConfig.attackDamage; // 暂时用攻击力作为成本
+        const cost = heroConfig.cost; // 使用正确的cost字段
         
         return this._gameManager.currentGold >= cost;
     }
@@ -318,7 +352,7 @@ export class HeroDeployment extends Component {
         if (!this._gameManager || !this._gridSystem) return false;
         
         const heroConfig = HERO_CONFIGS[heroType];
-        const cost = heroConfig.attackDamage; // 暂时用攻击力作为成本
+        const cost = heroConfig.cost; // 使用正确的cost字段
         
         // 扣除金币
         if (!this._gameManager.spendGold(cost)) {
@@ -467,6 +501,12 @@ export class HeroDeployment extends Component {
         this._currentDragHero = heroType;
         this._lastTouchPosition = new Vec3(event.getUILocation().x, event.getUILocation().y, 0);
         
+        // 启动网格预览模式
+        const gridSystem = GridDeploymentSystem.instance;
+        if (gridSystem) {
+            gridSystem.startDragMode();
+        }
+        
         // 创建拖拽预览
         this.createDragPreview(heroType, buttonNode);
         
@@ -590,8 +630,29 @@ export class HeroDeployment extends Component {
             const worldPos = parentNode.getComponent(UITransform)?.convertToNodeSpaceAR(new Vec3(touchLocation.x, touchLocation.y, 0));
             if (worldPos) {
                 this._dragPreviewNode.setPosition(worldPos);
+                
+                // 更新网格预览
+                const gridSystem = GridDeploymentSystem.instance;
+                if (gridSystem) {
+                    // 将UI坐标转换为游戏世界坐标
+                    const gameWorldPos = this.convertUIToGameWorld(worldPos);
+                    if (gameWorldPos) {
+                        gridSystem.updateHoverPosition(gameWorldPos);
+                    }
+                }
             }
         }
+    }
+    
+    // 将UI坐标转换为游戏世界坐标
+    private convertUIToGameWorld(uiPos: Vec3): Vec3 | null {
+        // 获取游戏场景节点（通常是Canvas的子节点）
+        const canvas = this.node.scene?.getChildByName("Canvas");
+        if (!canvas) return null;
+        
+        // 在Cocos Creator中，UI坐标系和游戏世界坐标系通常是一致的
+        // 这里直接返回坐标，但可能需要根据具体的坐标系统进行调整
+        return new Vec3(uiPos.x, uiPos.y, 0);
     }
     
     // 完成拖拽部署
@@ -665,6 +726,12 @@ export class HeroDeployment extends Component {
     
     // 清理拖拽状态
     private cleanupDragState(): void {
+        // 关闭网格预览模式
+        const gridSystem = GridDeploymentSystem.instance;
+        if (gridSystem) {
+            gridSystem.endDragMode();
+        }
+        
         // 销毁预览节点
         if (this._dragPreviewNode && this._dragPreviewNode.isValid) {
             this._dragPreviewNode.destroy();
@@ -677,6 +744,20 @@ export class HeroDeployment extends Component {
         this._lastTouchPosition = null;
         
         this.log("拖拽状态已清理");
+    }
+    
+    // 更新英雄按钮状态（基于当前金币）
+    private updateHeroButtonStates(): void {
+        this._heroButtons.forEach((buttonNode, heroType) => {
+            const buttonGraphics = buttonNode.getComponent(Graphics);
+            if (buttonGraphics) {
+                const buttonTransform = buttonNode.getComponent(UITransform);
+                if (buttonTransform) {
+                    const size = buttonTransform.contentSize;
+                    this.drawHeroButton(buttonGraphics, heroType, false, size.width, size.height);
+                }
+            }
+        });
     }
     
     // 显示金币不足效果

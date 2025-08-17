@@ -173,7 +173,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 467.5121951219512,
+    "_orthoHeight": 640,
     "_near": 0,
     "_far": 2000,
     "_color": {
@@ -274,7 +274,7 @@
     "_id": "c5V1EV8IpMtrIvY1OE9t2u"
   },
   {
-    "__type__": "aa83bak0uFLqovY1SheFouC",
+    "__type__": "d607b3AyslGVaijICkYsR02",
     "_name": "",
     "_objFlags": 0,
     "__editorExtras__": {},
@@ -283,9 +283,8 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "enableDebugLogs": true,
-    "initTimeout": 10,
-    "_id": "17qD21k1REebOIYeGdgIlM"
+    "gameBootstrap": null,
+    "_id": "d0SitrTAlM87udg2h/nRFO"
   },
   {
     "__type__": "cc.SceneGlobals",
