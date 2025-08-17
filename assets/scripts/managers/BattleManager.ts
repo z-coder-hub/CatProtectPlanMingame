@@ -471,6 +471,15 @@ export class BattleManager extends Component {
     public get registeredHeroes(): Node[] { return [...this._registeredHeroes]; }
     public get registeredEnemies(): Node[] { return [...this._registeredEnemies]; }
     
+    // 获取所有活跃敌人（为新英雄技能系统提供支持）
+    public getAllEnemies(): Node[] {
+        return this._registeredEnemies.filter(enemy => {
+            if (!enemy || !enemy.isValid) return false;
+            const enemyUnit = enemy.getComponent(BaseUnit);
+            return enemyUnit && enemyUnit.isAlive;
+        });
+    }
+    
     // 获取网格系统引用
     private getGridSystem(): GridDeploymentSystem | null {
         if (this._gridSystemCache && this._gridSystemCache.isValid) {

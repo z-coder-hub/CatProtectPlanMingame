@@ -98,8 +98,8 @@ export class GameManager extends Component {
     }
     
     protected start(): void {
-        // 设置游戏为部署状态
-        this.setGameState(GameState.DEPLOYMENT);
+        // 游戏开始时保持菜单状态，等待玩家操作
+        console.log("游戏已加载，等待玩家开始");
     }
     
     protected update(dt: number): void {
@@ -120,6 +120,10 @@ export class GameManager extends Component {
         this.currentGold = GAME_CONFIG.initialGold;
         this.castleHealth = GAME_CONFIG.castleHealth;
         this._maxCastleHealth = GAME_CONFIG.castleHealth;
+        
+        // 设置初始游戏状态为部署阶段，这样英雄面板会显示
+        this._gameState = GameState.DEPLOYMENT;
+        console.log("游戏状态设置为部署阶段");
     }
     
     // 开始游戏
@@ -248,13 +252,17 @@ export class GameManager extends Component {
     
     // 进入下一波
     public nextWave(): void {
-        this.currentWave++;
+        // 通知WaveManager准备下一波
+        const waveManager = this.getWaveManager();
+        if (waveManager) {
+            waveManager.prepareNextWave();
+        }
         
         // 检查是否达到最大波次
         if (this.currentWave > GAME_CONFIG.waves.length) {
             this.endGame(true);
         } else {
-            console.log(`进入第 ${this.currentWave} 波`);
+            console.log(`进入第 ${this.currentWave} 波部署阶段`);
             this.setGameState(GameState.DEPLOYMENT);
         }
     }

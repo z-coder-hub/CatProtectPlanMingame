@@ -34,7 +34,7 @@ export class WaveManager extends Component {
     public wavePrepareTime: number = 5;
     
     @property({ tooltip: "是否自动开始下一波" })
-    public autoStartNextWave: boolean = true;
+    public autoStartNextWave: boolean = false;
     
     // 当前波次状态
     private _currentWaveIndex: number = 0;
@@ -188,7 +188,7 @@ export class WaveManager extends Component {
         if (this._prepareTimer >= this.wavePrepareTime) {
             this._prepareTimer = 0;
             if (this.autoStartNextWave) {
-                this.startWave();
+                this.startWave(this.currentWaveNumber);
             }
         }
     }
@@ -222,8 +222,17 @@ export class WaveManager extends Component {
     private updateCompletedState(dt: number): void {
         // 检查是否还有活跃的敌人
         if (this._gameManager && this._gameManager.activeEnemies.length === 0) {
-            // 所有敌人都被清理，准备下一波
-            this.prepareNextWave();
+            // 所有敌人都被清理，通知游戏管理器波次完成
+            console.log(`第 ${this.currentWaveNumber} 波所有敌人已清理`);
+            
+            // 通知GameManager波次完成
+            if (this._gameManager) {
+                this._gameManager.onWaveComplete();
+            }
+            
+            // 重置波次状态，等待下一波开始
+            this._waveState = WaveState.WAITING;
+            this._prepareTimer = 0;
         }
     }
     
@@ -282,8 +291,8 @@ export class WaveManager extends Component {
         console.log(`第 ${this.currentWaveNumber} 波生成完成`);
     }
     
-    // 准备下一波
-    private prepareNextWave(): void {
+    // 准备下一波（现在由GameManager调用）
+    public prepareNextWave(): void {
         this._currentWaveIndex++;
         
         if (this._currentWaveIndex >= GAME_CONFIG.waves.length) {
@@ -293,7 +302,7 @@ export class WaveManager extends Component {
             // 准备下一波
             this._waveState = WaveState.WAITING;
             this._prepareTimer = 0;
-            console.log(`准备第 ${this.currentWaveNumber} 波，等待时间: ${this.wavePrepareTime}秒`);
+            console.log(`准备第 ${this.currentWaveNumber} 波，等待手动开始`);
         }
     }
     

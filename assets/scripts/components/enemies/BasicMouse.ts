@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform } from 'cc';
 import { BaseUnit } from '../base/BaseUnit';
 import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS, GAME_CONSTANTS } from '../../types/GameConstants';
@@ -16,6 +16,7 @@ export class BasicMouse extends BaseUnit {
     // 私有属性
     private _graphics: Graphics | null = null;
     private _gameManager: GameManager | null = null;
+    private _nameLabel: Label | null = null;
     
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.BASIC_MOUSE;
@@ -67,6 +68,9 @@ export class BasicMouse extends BaseUnit {
         }
         
         this.drawMouseAppearance();
+        
+        // 创建名称标签
+        this.createNameLabel();
     }
     
     // 绘制老鼠外观
@@ -75,30 +79,53 @@ export class BasicMouse extends BaseUnit {
         
         this._graphics.clear();
         
-        // 绘制老鼠身体（灰色椭圆）
+        // 绘制老鼠身体（灰色椭圆）- 再次放大1.2倍
         this._graphics.fillColor = new Color(128, 128, 128); // 灰色
-        this._graphics.ellipse(0, 0, 15, 10);
+        this._graphics.ellipse(0, 0, 26.4, 18); // 22*1.2=26.4, 15*1.2=18
         this._graphics.fill();
         
         // 绘制轮廓
         this._graphics.strokeColor = new Color(64, 64, 64);
         this._graphics.lineWidth = 1;
-        this._graphics.ellipse(0, 0, 15, 10);
+        this._graphics.ellipse(0, 0, 26.4, 18);
         this._graphics.stroke();
         
-        // 绘制耳朵
+        // 绘制耳朵 - 相应放大1.2倍
         this._graphics.fillColor = new Color(100, 100, 100);
-        this._graphics.circle(-8, 8, 3);
+        this._graphics.circle(-14.4, 14.4, 4.8); // -12*1.2=-14.4, 12*1.2=14.4, 4*1.2=4.8
         this._graphics.fill();
-        this._graphics.circle(8, 8, 3);
+        this._graphics.circle(14.4, 14.4, 4.8);
         this._graphics.fill();
         
-        // 绘制尾巴
+        // 绘制尾巴 - 相应放大1.2倍
         this._graphics.strokeColor = new Color(100, 100, 100);
         this._graphics.lineWidth = 2;
-        this._graphics.moveTo(0, -10);
-        this._graphics.lineTo(-5, -18);
+        this._graphics.moveTo(0, -18); // -15*1.2=-18
+        this._graphics.lineTo(-8.4, -30); // -7*1.2=-8.4, -25*1.2=-30
         this._graphics.stroke();
+        
+    }
+    
+    // 创建名称标签
+    private createNameLabel(): void {
+        // 创建标签节点
+        const labelNode = new Node("NameLabel");
+        labelNode.parent = this.node;
+        
+        // 设置标签位置（在老鼠身体中间）
+        labelNode.setPosition(0, 0, 0);
+        
+        // 添加UITransform组件
+        const uiTransform = labelNode.addComponent(UITransform);
+        uiTransform.setContentSize(40, 20);
+        
+        // 添加Label组件
+        this._nameLabel = labelNode.addComponent(Label);
+        this._nameLabel.string = "鼠";
+        this._nameLabel.fontSize = 16;
+        this._nameLabel.color = new Color(255, 255, 255); // 白色文字
+        this._nameLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
+        this._nameLabel.verticalAlign = Label.VerticalAlign.CENTER;
     }
     
     protected update(dt: number): void {
@@ -187,7 +214,7 @@ export class BasicMouse extends BaseUnit {
         const originalColor = new Color(128, 128, 128);
         this._graphics.clear();
         this._graphics.fillColor = new Color(255, 100, 100); // 红色
-        this._graphics.ellipse(0, 0, 15, 10);
+        this._graphics.ellipse(0, 0, 26.4, 18); // 放大1.2倍
         this._graphics.fill();
         
         // 200ms后恢复原色
@@ -223,7 +250,7 @@ export class BasicMouse extends BaseUnit {
         if (this._graphics) {
             this._graphics.clear();
             this._graphics.fillColor = new Color(64, 64, 64); // 变暗
-            this._graphics.ellipse(0, 0, 15, 10);
+            this._graphics.ellipse(0, 0, 26.4, 18); // 放大1.2倍
             this._graphics.fill();
         }
     }
