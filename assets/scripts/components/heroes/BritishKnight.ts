@@ -1,0 +1,321 @@
+import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween } from 'cc';
+import { BaseUnit } from '../base/BaseUnit';
+import { HeroType } from '../../types/GameTypes';
+import { HERO_CONFIGS } from '../../types/GameConstants';
+import { BattleManager } from '../../managers/BattleManager';
+import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
+import { GameManager } from '../../managers/GameManager';
+import { EffectHelper } from '../../utils/EffectHelper';
+import { DrawingHelper } from '../../utils/DrawingHelper';
+
+const { ccclass, property } = _decorator;
+
+@ccclass('BritishKnight')
+export class BritishKnight extends BaseUnit {
+    
+    @property({ tooltip: "技能冷却时间" })
+    public skillCooldown: number = 12;
+    
+    // 私有属性
+    private _skillTimer: number = 0;
+    private _graphics: Graphics | null = null;
+    private _animation: Animation | null = null;
+    private _nameLabel: Label | null = null;
+    private _isPlayingAttackAnimation: boolean = false;
+    private _isCharged: boolean = false; // 冲锋状态
+    
+    // 英雄类型
+    public readonly heroType: HeroType = HeroType.BRITISH_KNIGHT;
+    
+    protected onLoad(): void {
+        super.onLoad();
+        this.initializeBritishKnightStats();
+        this.initializeVisuals();
+        this.initializeAnimation();
+        this.setupClickEvents();
+    }
+    
+    protected start(): void {
+        super.start();
+        
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            battleManager.registerHero(this.node);
+        }
+    }
+    
+    private initializeBritishKnightStats(): void {
+        const config = HERO_CONFIGS[HeroType.BRITISH_KNIGHT];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.skillCooldown = config.skillCooldown || 12;
+    }
+    
+    private initializeVisuals(): void {
+        this._graphics = this.node.addComponent(Graphics);
+        
+        this.drawBritishKnightAppearance();
+        this.createNameLabel();
+    }
+    
+    private drawBritishKnightAppearance(): void {
+        if (!this._graphics) return;
+        DrawingHelper.drawHeroAppearance(this._graphics, 'british');
+    }
+    
+    private createNameLabel(): void {
+        this._nameLabel = DrawingHelper.createLabel(this.node, {
+            text: "英短骑士",
+            fontSize: 12,
+            color: new Color(255, 255, 255),
+            position: { x: 0, y: 35, z: 0 },
+            size: { width: 70, height: 20 }
+        });
+    }
+    
+    private initializeAnimation(): void {
+        this._animation = this.node.getComponent(Animation);
+        if (this._animation) {
+            if (this._animation.getState('british_knight_idle')) {
+                this._animation.play('british_knight_idle');
+            }
+        }
+    }
+    
+    protected update(dt: number): void {
+        super.update(dt);
+        
+        if (this._skillTimer > 0) {
+            this._skillTimer -= dt;
+        }
+    }
+    
+    protected onIdleState(dt: number): void {
+        if (!this.isAlive) return;
+        
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            if (nearestEnemy) {
+                this.currentTarget = nearestEnemy;
+                this.unitState = 2;
+            }
+        }
+    }
+    
+    protected onAttack(target: Node): void {
+        if (!target || !this.isAlive) return;
+        
+        this.meleeAttack(target);
+        this.playAttackAnimation();
+    }
+    
+    private meleeAttack(target: Node): void {
+        const targetUnit = target.getComponent(BaseUnit);
+        if (targetUnit) {
+            let damage = this.attackDamage;
+            
+            // 如果处于冲锋状态，造成额外伤害
+            if (this._isCharged) {
+                damage *= 1.5;
+                this._isCharged = false;
+                this.createChargeHitEffect(target.position);
+                console.log(`英短骑士冲锋攻击！造成 ${damage} 点伤害`);
+            }
+            
+            targetUnit.takeDamage(damage);
+            this.createMeleeHitEffect(target.position);
+        }
+    }
+    
+    private createMeleeHitEffect(position: Vec3): void {
+        if (this.node.parent) {
+            EffectHelper.createMeleeHitEffect(position, this.node.parent);
+        }
+    }
+    
+    private createChargeHitEffect(position: Vec3): void {
+        if (this.node.parent) {
+            EffectHelper.createChargeHitEffect(position, this.node.parent);
+        }
+    }
+    
+    private playAttackAnimation(): void {
+        if (this._isPlayingAttackAnimation || !this.node) {
+            return;
+        }
+        
+        this._isPlayingAttackAnimation = true;
+        const originalScale = Vec3.clone(this.node.scale);
+        const originalPosition = Vec3.clone(this.node.position);
+        
+        // 近战攻击动画 - 前冲攻击
+        tween(this.node)
+            .to(0.1, { 
+                scale: new Vec3(originalScale.x * 1.2, originalScale.y * 1.2, originalScale.z),
+                position: Vec3.add(new Vec3(), originalPosition, new Vec3(10, 0, 0))
+            })
+            .to(0.1, { 
+                scale: originalScale,
+                position: originalPosition
+            })
+            .call(() => {
+                this._isPlayingAttackAnimation = false;
+            })
+            .start();
+    }
+    
+    // 重装冲锋技能
+    public useSkill(): boolean {
+        if (this._skillTimer > 0 || !this.isAlive) {
+            return false;
+        }
+        
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return false;
+        
+        // 寻找范围内的敌人
+        const enemies = battleManager.getEnemiesInRange(this.node.position, this.attackRange * 1.5);
+        if (enemies.length === 0) return false;
+        
+        // 激活冲锋状态
+        this._isCharged = true;
+        this.createChargeEffect();
+        
+        // 暂时提升攻击速度和移动速度
+        const originalAttackSpeed = this.attackSpeed;
+        this.attackSpeed *= 2;
+        
+        // 3秒后恢复正常
+        this.scheduleOnce(() => {
+            this.attackSpeed = originalAttackSpeed;
+            console.log("英短骑士冲锋状态结束");
+        }, 3);
+        
+        this._skillTimer = this.skillCooldown;
+        console.log("英短骑士激活重装冲锋！");
+        return true;
+    }
+    
+    private createChargeEffect(): void {
+        if (this.node.parent) {
+            EffectHelper.createChargeEffect(this.node.position, this.node.parent);
+        }
+        
+        // 冲锋视觉效果
+        const originalColor = this._graphics?.fillColor || new Color(255, 255, 255);
+        if (this._graphics) {
+            this._graphics.fillColor = new Color(255, 200, 100); // 金色光芒
+            this.drawBritishKnightAppearance();
+            
+            // 3秒后恢复原色
+            this.scheduleOnce(() => {
+                if (this._graphics) {
+                    this._graphics.fillColor = originalColor;
+                    this.drawBritishKnightAppearance();
+                }
+            }, 3);
+        }
+    }
+    
+    private createSkillEffect(): void {
+        if (this.node.parent) {
+            EffectHelper.createSkillEffect(this.node.position, this.node.parent);
+        }
+    }
+    
+    public getSkillCooldownRemaining(): number {
+        return Math.max(0, this._skillTimer);
+    }
+    
+    public isSkillReady(): boolean {
+        return this._skillTimer <= 0 && this.isAlive;
+    }
+    
+    // 重写受伤方法，添加护甲效果
+    public takeDamage(damage: number): void {
+        // 英短骑士有天然护甲，减少10%伤害
+        const reducedDamage = damage * 0.9;
+        super.takeDamage(reducedDamage);
+        
+        // 护甲防护视觉效果
+        this.createArmorEffect();
+    }
+    
+    private createArmorEffect(): void {
+        if (this.node.parent) {
+            EffectHelper.createArmorEffect(this.node.position, this.node.parent);
+        }
+    }
+    
+    protected onDie(): void {
+        console.log("英短骑士阵亡");
+        
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            battleManager.unregisterHero(this.node);
+        }
+        
+        const gridSystem = GridDeploymentSystem.instance;
+        if (gridSystem) {
+            gridSystem.clearHeroFromGrid(this.node);
+        }
+        
+        const gameManager = GameManager.instance;
+        if (gameManager) {
+            gameManager.removeDeployedHero(this.node);
+        }
+        
+        if (this._graphics) {
+            this._graphics.fillColor = new Color(128, 128, 128);
+            this.drawBritishKnightAppearance();
+        }
+        
+        if (this._animation) {
+            this._animation.stop();
+        }
+    }
+    
+    private setupClickEvents(): void {
+        this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
+    }
+    
+    private onHeroClick(event: EventTouch): void {
+        if (!this.isAlive) return;
+        
+        event.propagationStopped = true;
+        
+        if (this.isSkillReady()) {
+            const skillUsed = this.useSkill();
+            if (skillUsed) {
+                console.log("英短骑士释放重装冲锋技能！");
+                this.createClickFeedback();
+            } else {
+                console.log("英短骑士技能释放失败");
+            }
+        } else {
+            console.log(`英短骑士技能冷却中，剩余时间: ${this.getSkillCooldownRemaining().toFixed(1)}秒`);
+            this.createCooldownFeedback();
+        }
+    }
+    
+    private createClickFeedback(): void {
+        if (this.node.parent) {
+            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
+            EffectHelper.createClickFeedback(feedbackPos, this.node.parent);
+        }
+    }
+    
+    private createCooldownFeedback(): void {
+        if (this.node.parent) {
+            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
+            EffectHelper.createCooldownFeedback(feedbackPos, this.node.parent);
+        }
+    }
+}

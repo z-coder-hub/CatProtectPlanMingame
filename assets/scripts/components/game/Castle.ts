@@ -41,10 +41,7 @@ export class Castle extends Component {
 
     // 初始化城堡外观
     private initializeCastleVisuals(): void {
-        this._graphics = this.node.getComponent(Graphics);
-        if (!this._graphics) {
-            this._graphics = this.node.addComponent(Graphics);
-        }
+        this._graphics = this.node.addComponent(Graphics);
 
         this.drawCastle();
     }

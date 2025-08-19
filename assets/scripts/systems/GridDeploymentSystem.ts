@@ -1,6 +1,7 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color } from 'cc';
+import { _decorator, Component, Node, Vec3, Vec2, Graphics, Color, EventTouch, input, Input, UITransform } from 'cc';
 import { GridPosition } from '../types/GameTypes';
 import { GAME_CONSTANTS, GAME_CONFIG } from '../types/GameConstants';
+import { GameHUD } from '../components/ui/GameHUD';
 
 const { ccclass, property } = _decorator;
 
@@ -44,6 +45,9 @@ export class GridDeploymentSystem extends Component {
     private _isDragMode: boolean = false;
     private _previewAnimationTimer: number = 0;
     
+    // UI交互相关
+    private _gameHUD: GameHUD | null = null;
+    
     // 获取网格总数
     public get totalSlots(): number {
         return this.gridRows * this.gridColumns;
@@ -75,6 +79,9 @@ export class GridDeploymentSystem extends Component {
         // 创建拖拽预览Graphics
         this.createPreviewGraphics();
         
+        // 设置输入事件监听
+        this.setupInputEvents();
+        
         console.log(`网格部署系统初始化完成: ${this.gridColumns}x${this.gridRows}, 单元格大小: ${this.cellSize}`);
     }
     
@@ -82,6 +89,9 @@ export class GridDeploymentSystem extends Component {
         if (GridDeploymentSystem._instance === this) {
             GridDeploymentSystem._instance = null;
         }
+        
+        // 清理输入事件监听
+        this.cleanupInputEvents();
     }
     
     // 初始化网格数据
@@ -102,8 +112,7 @@ export class GridDeploymentSystem extends Component {
     
     // 计算网格边界和位置
     private calculateGridBounds(): void {
-        // 使用游戏常量中的网格配置
-        const gridConfig = GAME_CONSTANTS;
+        // 使用游戏常量
         
         // 计算网格总尺寸
         const totalWidth = this.gridColumns * this.cellSize;
@@ -112,7 +121,7 @@ export class GridDeploymentSystem extends Component {
         // 设置网格起始位置（左上角）
         this._gridStartPos.set(
             -totalWidth / 2,
-            gridConfig.GRID_OFFSET_Y + totalHeight / 2,
+            GAME_CONSTANTS.GRID_OFFSET_Y + totalHeight / 2,
             0
         );
         
@@ -157,20 +166,36 @@ export class GridDeploymentSystem extends Component {
         return this._gridData[gridPos.row][gridPos.col].state === GridSlotState.EMPTY;
     }
     
+    // 检查是否可以在指定位置部署英雄（兼容方法）
+    public canDeployHero(row: number, col: number): boolean {
+        return this.canDeployAt({ row, col });
+    }
+    
     // 部署英雄到指定网格位置
-    public deployHero(heroNode: Node, gridPos: GridPosition): boolean {
-        if (!this.canDeployAt(gridPos)) {
+    public deployHero(heroNode: Node, gridPos: GridPosition | number, col?: number): boolean {
+        // 兼容两种调用方式：deployHero(node, {row, col}) 和 deployHero(node, row, col)
+        let position: GridPosition;
+        if (typeof gridPos === 'number' && col !== undefined) {
+            position = { row: gridPos, col: col };
+        } else if (typeof gridPos === 'object') {
+            position = gridPos;
+        } else {
+            console.error('Invalid parameters for deployHero');
             return false;
         }
         
-        const slot = this._gridData[gridPos.row][gridPos.col];
+        if (!this.canDeployAt(position)) {
+            return false;
+        }
+        
+        const slot = this._gridData[position.row][position.col];
         slot.state = GridSlotState.OCCUPIED;
         slot.heroNode = heroNode;
         
         // 移动英雄到网格位置
         heroNode.setPosition(slot.worldPosition);
         
-        console.log(`英雄部署成功: 位置(${gridPos.row}, ${gridPos.col})`);
+        console.log(`英雄部署成功: 位置(${position.row}, ${position.col})`);
         return true;
     }
     
@@ -572,6 +597,125 @@ export class GridDeploymentSystem extends Component {
     
     public static get instance(): GridDeploymentSystem | null {
         return GridDeploymentSystem._instance;
+    }
+    
+    // 设置GameHUD引用
+    public setGameHUD(gameHUD: GameHUD): void {
+        this._gameHUD = gameHUD;
+    }
+    
+    // 设置输入事件监听
+    private setupInputEvents(): void {
+        // 监听触摸/鼠标点击事件
+        input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
+        input.on(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        input.on(Input.EventType.TOUCH_END, this.onTouchEnd, this);
+    }
+    
+    // 清理输入事件监听
+    private cleanupInputEvents(): void {
+        input.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
+        input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this);
+    }
+    
+    // 触摸开始事件
+    private onTouchStart(event: EventTouch): void {
+        const uiTransform = this.node.getComponent(UITransform);
+        if (!uiTransform) return;
+        
+        const touchLocation = uiTransform.convertToNodeSpaceAR(event.getLocation());
+        const touchWorldPos = new Vec3(touchLocation.x, touchLocation.y, 0);
+        const gridPos = this.worldToGridPosition(touchWorldPos);
+        
+        if (gridPos && this._gameHUD) {
+            // 开始拖拽预览
+            this.startDragMode();
+            this.updateHoverPosition(touchWorldPos);
+        }
+    }
+    
+    // 触摸移动事件
+    private onTouchMove(event: EventTouch): void {
+        if (this._isDragMode) {
+            const uiTransform = this.node.getComponent(UITransform);
+            if (!uiTransform) return;
+            
+            const touchLocation = uiTransform.convertToNodeSpaceAR(event.getLocation());
+            const touchWorldPos = new Vec3(touchLocation.x, touchLocation.y, 0);
+            this.updateHoverPosition(touchWorldPos);
+        }
+    }
+    
+    // 触摸结束事件
+    private onTouchEnd(event: EventTouch): void {
+        if (this._isDragMode) {
+            const uiTransform = this.node.getComponent(UITransform);
+            if (!uiTransform) return;
+            
+            const touchLocation = uiTransform.convertToNodeSpaceAR(event.getLocation());
+            const touchWorldPos = new Vec3(touchLocation.x, touchLocation.y, 0);
+            const gridPos = this.worldToGridPosition(touchWorldPos);
+            
+            // 尝试在点击位置部署英雄
+            if (gridPos && this._gameHUD) {
+                const selectedHeroType = this._gameHUD.getSelectedHeroType();
+                if (selectedHeroType) {
+                    const success = this._gameHUD.deployHeroToGrid(selectedHeroType, gridPos.row, gridPos.col);
+                    if (success) {
+                        console.log(`英雄部署成功: 网格(${gridPos.row}, ${gridPos.col})`);
+                    } else {
+                        console.log(`英雄部署失败: 网格(${gridPos.row}, ${gridPos.col})`);
+                    }
+                }
+            }
+            
+            // 结束拖拽模式
+            this.endDragMode();
+        }
+    }
+    
+    // 手动触发点击部署（供外部调用）
+    public handleGridClick(worldPosition: Vec3): boolean {
+        const gridPos = this.worldToGridPosition(worldPosition);
+        if (!gridPos || !this._gameHUD) {
+            return false;
+        }
+        
+        const selectedHeroType = this._gameHUD.getSelectedHeroType();
+        if (!selectedHeroType) {
+            return false;
+        }
+        
+        return this._gameHUD.deployHeroToGrid(selectedHeroType, gridPos.row, gridPos.col);
+    }
+    
+    // 获取网格统计信息
+    public getGridStats(): {
+        totalSlots: number;
+        occupiedSlots: number;
+        availableSlots: number;
+        occupancyRate: number;
+    } {
+        let occupiedCount = 0;
+        for (let row = 0; row < this.gridRows; row++) {
+            for (let col = 0; col < this.gridColumns; col++) {
+                if (this._gridData[row][col].state === GridSlotState.OCCUPIED) {
+                    occupiedCount++;
+                }
+            }
+        }
+        
+        const total = this.totalSlots;
+        const available = total - occupiedCount;
+        const occupancyRate = total > 0 ? (occupiedCount / total) * 100 : 0;
+        
+        return {
+            totalSlots: total,
+            occupiedSlots: occupiedCount,
+            availableSlots: available,
+            occupancyRate: occupancyRate
+        };
     }
     
 }

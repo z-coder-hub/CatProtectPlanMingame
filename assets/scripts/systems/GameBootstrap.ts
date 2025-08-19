@@ -1,6 +1,8 @@
 import { _decorator, Component, find, Node } from 'cc';
 import { ResourceManager } from '../managers/ResourceManager';
 import { GridDeploymentSystem } from './GridDeploymentSystem';
+import { HeroSelectionPanel } from '../components/ui/HeroSelectionPanel';
+import { GameHUD } from '../components/ui/GameHUD';
 
 const { ccclass, property } = _decorator;
 
@@ -33,6 +35,10 @@ export class GameBootstrap extends Component {
     // 系统组件引用
     private _resourceManager: ResourceManager | null = null;
     private _gridSystem: GridDeploymentSystem | null = null;
+    
+    // UI组件引用
+    private _gameHUD: GameHUD | null = null;
+    private _heroSelectionPanel: HeroSelectionPanel | null = null;
 
     // 获取Canvas节点
     public get canvasNode(): Node | null {
@@ -168,15 +174,20 @@ export class GameBootstrap extends Component {
     private createGameUI(): void {
         if (!this._canvasNode) return;
 
-        // 创建GameHUD
+        // 创建GameHUD（只负责顶部信息显示）
         const hudNode = new Node("GameHUD");
         hudNode.parent = this._canvasNode;
-        hudNode.addComponent('GameHUD');
+        this._gameHUD = hudNode.addComponent(GameHUD);
 
-        // 创建HeroDeployment
-        const deploymentNode = new Node("HeroDeployment");
-        deploymentNode.parent = this._canvasNode;
-        deploymentNode.addComponent('HeroDeployment');
+        // 创建HeroSelectionPanel（独立的英雄选择面板）
+        const heroSelectionNode = new Node("HeroSelectionPanel");
+        heroSelectionNode.parent = this._canvasNode;
+        this._heroSelectionPanel = heroSelectionNode.addComponent(HeroSelectionPanel);
+
+        // 建立英雄选择面板和GameHUD之间的通信
+        if (this._heroSelectionPanel && this._gameHUD) {
+            this._heroSelectionPanel.setDeploymentHandler(this._gameHUD);
+        }
 
         // 创建Castle
         const castleNode = new Node("Castle");

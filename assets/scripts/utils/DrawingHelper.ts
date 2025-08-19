@@ -24,7 +24,7 @@ export class DrawingHelper {
     // 绘制英雄外观的通用方法
     public static drawHeroAppearance(
         graphics: Graphics, 
-        heroType: 'orange' | 'siamese' | 'maine',
+        heroType: 'orange' | 'siamese' | 'maine' | 'persian' | 'british' | 'bengal' | 'norwegian' | 'ragdoll' | 'scottish' | 'abyssinian' | 'russian' | 'american',
         scale: number = 1
     ): void {
         graphics.clear();
@@ -38,6 +38,33 @@ export class DrawingHelper {
                 break;
             case 'maine':
                 this.drawMaineCat(graphics, scale);
+                break;
+            case 'persian':
+                this.drawPersianCat(graphics, scale);
+                break;
+            case 'british':
+                this.drawBritishCat(graphics, scale);
+                break;
+            case 'bengal':
+                this.drawBengalCat(graphics, scale);
+                break;
+            case 'norwegian':
+                this.drawNorwegianCat(graphics, scale);
+                break;
+            case 'ragdoll':
+                this.drawRagdollCat(graphics, scale);
+                break;
+            case 'scottish':
+                this.drawScottishCat(graphics, scale);
+                break;
+            case 'abyssinian':
+                this.drawAbyssinianCat(graphics, scale);
+                break;
+            case 'russian':
+                this.drawRussianCat(graphics, scale);
+                break;
+            case 'american':
+                this.drawAmericanCat(graphics, scale);
                 break;
         }
     }
@@ -360,5 +387,339 @@ export class DrawingHelper {
             foregroundGraphics.rect(-width / 2, -height / 2, currentWidth, height);
             foregroundGraphics.fill();
         }
+    }
+    
+    // === 新增的英雄外观绘制方法 ===
+    
+    // 绘制波斯猫外观（狙击手）
+    private static drawPersianCat(graphics: Graphics, scale: number): void {
+        const size = 18 * scale;
+        
+        // 身体（银白色，优雅）
+        graphics.fillColor = new Color(245, 245, 245);
+        graphics.circle(0, 0, size);
+        graphics.fill();
+        
+        // 蓝色眼睛
+        graphics.fillColor = new Color(70, 130, 180);
+        graphics.circle(-size * 0.3, size * 0.2, size * 0.15);
+        graphics.fill();
+        graphics.circle(size * 0.3, size * 0.2, size * 0.15);
+        graphics.fill();
+        
+        // 狙击镜标识
+        graphics.strokeColor = new Color(64, 64, 64);
+        graphics.lineWidth = 3;
+        graphics.circle(0, 0, size * 0.6);
+        graphics.stroke();
+        graphics.circle(0, 0, size * 0.3);
+        graphics.stroke();
+        
+        // 十字准星
+        graphics.moveTo(0, -size * 0.4);
+        graphics.lineTo(0, size * 0.4);
+        graphics.moveTo(-size * 0.4, 0);
+        graphics.lineTo(size * 0.4, 0);
+        graphics.stroke();
+    }
+    
+    // 绘制英国短毛猫外观（骑士）
+    private static drawBritishCat(graphics: Graphics, scale: number): void {
+        const size = 24 * scale; // 较大体型
+        
+        // 身体（蓝灰色，厚实）
+        graphics.fillColor = new Color(100, 149, 237);
+        graphics.circle(0, 0, size);
+        graphics.fill();
+        
+        // 盔甲边框
+        graphics.strokeColor = new Color(192, 192, 192);
+        graphics.lineWidth = 4;
+        graphics.circle(0, 0, size);
+        graphics.stroke();
+        
+        // 盾牌标识
+        graphics.fillColor = new Color(255, 215, 0);
+        graphics.moveTo(0, -size * 0.7);
+        graphics.lineTo(-size * 0.4, -size * 0.2);
+        graphics.lineTo(-size * 0.4, size * 0.4);
+        graphics.lineTo(0, size * 0.7);
+        graphics.lineTo(size * 0.4, size * 0.4);
+        graphics.lineTo(size * 0.4, -size * 0.2);
+        graphics.close();
+        graphics.fill();
+        
+        // 十字标记
+        graphics.strokeColor = new Color(178, 34, 34);
+        graphics.lineWidth = 3;
+        graphics.moveTo(0, -size * 0.3);
+        graphics.lineTo(0, size * 0.3);
+        graphics.moveTo(-size * 0.2, 0);
+        graphics.lineTo(size * 0.2, 0);
+        graphics.stroke();
+    }
+    
+    // 绘制孟加拉猫外观（猎手）
+    private static drawBengalCat(graphics: Graphics, scale: number): void {
+        const size = 19 * scale;
+        
+        // 身体（金棕色豹纹）
+        graphics.fillColor = new Color(218, 165, 32);
+        graphics.circle(0, 0, size);
+        graphics.fill();
+        
+        // 豹纹图案
+        graphics.fillColor = new Color(160, 82, 45);
+        for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2;
+            const x = Math.cos(angle) * size * 0.5;
+            const y = Math.sin(angle) * size * 0.5;
+            graphics.circle(x, y, size * 0.15);
+            graphics.fill();
+        }
+        
+        // 连射标识（三支箭）
+        graphics.strokeColor = new Color(139, 69, 19);
+        graphics.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+            const offset = (i - 1) * size * 0.3;
+            graphics.moveTo(-size * 0.6, offset);
+            graphics.lineTo(size * 0.6, offset);
+            // 箭头
+            graphics.moveTo(size * 0.4, offset - size * 0.1);
+            graphics.lineTo(size * 0.6, offset);
+            graphics.lineTo(size * 0.4, offset + size * 0.1);
+        }
+        graphics.stroke();
+    }
+    
+    // 绘制挪威森林猫外观（冰法）
+    private static drawNorwegianCat(graphics: Graphics, scale: number): void {
+        const size = 21 * scale;
+        
+        // 身体（银色，长毛）
+        graphics.fillColor = new Color(192, 192, 192);
+        graphics.circle(0, 0, size);
+        graphics.fill();
+        
+        // 长毛效果
+        graphics.strokeColor = new Color(169, 169, 169);
+        graphics.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const x = Math.cos(angle) * size * 1.2;
+            const y = Math.sin(angle) * size * 1.2;
+            graphics.moveTo(0, 0);
+            graphics.lineTo(x, y);
+        }
+        graphics.stroke();
+        
+        // 冰雪标识
+        graphics.fillColor = new Color(173, 216, 230);
+        this.drawStar(graphics, 0, 0, size * 0.6, new Color(135, 206, 250));
+        
+        // 冰晶
+        graphics.strokeColor = new Color(135, 206, 250);
+        graphics.lineWidth = 3;
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const x = Math.cos(angle) * size * 0.4;
+            const y = Math.sin(angle) * size * 0.4;
+            graphics.moveTo(0, 0);
+            graphics.lineTo(x, y);
+        }
+        graphics.stroke();
+    }
+    
+    // 绘制布偶猫外观（守护者）
+    private static drawRagdollCat(graphics: Graphics, scale: number): void {
+        const size = 22 * scale;
+        
+        // 身体（奶油色）
+        graphics.fillColor = new Color(255, 228, 196);
+        graphics.circle(0, 0, size);
+        graphics.fill();
+        
+        // 深色四肢标记
+        graphics.fillColor = new Color(139, 69, 19);
+        graphics.circle(-size * 0.7, size * 0.7, size * 0.3);
+        graphics.fill();
+        graphics.circle(size * 0.7, size * 0.7, size * 0.3);
+        graphics.fill();
+        graphics.circle(-size * 0.7, -size * 0.7, size * 0.3);
+        graphics.fill();
+        graphics.circle(size * 0.7, -size * 0.7, size * 0.3);
+        graphics.fill();
+        
+        // 守护标识（环形护盾）
+        graphics.strokeColor = new Color(0, 191, 255);
+        graphics.lineWidth = 4;
+        graphics.circle(0, 0, size * 0.8);
+        graphics.stroke();
+        graphics.circle(0, 0, size * 0.6);
+        graphics.stroke();
+    }
+    
+    // 绘制苏格兰折耳猫外观（工程师）
+    private static drawScottishCat(graphics: Graphics, scale: number): void {
+        const size = 20 * scale;
+        
+        // 身体（橙白色）
+        graphics.fillColor = new Color(255, 218, 185);
+        graphics.circle(0, 0, size);
+        graphics.fill();
+        
+        // 折耳特征
+        graphics.fillColor = new Color(255, 160, 122);
+        graphics.ellipse(-size * 0.6, size * 0.6, size * 0.3, size * 0.2);
+        graphics.fill();
+        graphics.ellipse(size * 0.6, size * 0.6, size * 0.3, size * 0.2);
+        graphics.fill();
+        
+        // 工具标识（扳手）
+        graphics.strokeColor = new Color(64, 64, 64);
+        graphics.lineWidth = 3;
+        graphics.moveTo(-size * 0.5, -size * 0.3);
+        graphics.lineTo(size * 0.5, size * 0.3);
+        graphics.stroke();
+        
+        // 螺栓标识
+        graphics.fillColor = new Color(192, 192, 192);
+        graphics.circle(-size * 0.3, -size * 0.3, size * 0.1);
+        graphics.fill();
+        graphics.circle(size * 0.3, size * 0.3, size * 0.1);
+        graphics.fill();
+        graphics.circle(0, 0, size * 0.1);
+        graphics.fill();
+    }
+    
+    // 绘制阿比西尼亚猫外观（侦察兵）
+    private static drawAbyssinianCat(graphics: Graphics, scale: number): void {
+        const size = 18 * scale;
+        
+        // 身体（红棕色）
+        graphics.fillColor = new Color(205, 92, 92);
+        graphics.circle(0, 0, size);
+        graphics.fill();
+        
+        // 机警的大耳朵
+        graphics.fillColor = new Color(178, 34, 34);
+        graphics.moveTo(-size * 0.5, size * 0.3);
+        graphics.lineTo(-size * 0.8, size * 0.8);
+        graphics.lineTo(-size * 0.2, size * 0.6);
+        graphics.close();
+        graphics.fill();
+        
+        graphics.moveTo(size * 0.5, size * 0.3);
+        graphics.lineTo(size * 0.8, size * 0.8);
+        graphics.lineTo(size * 0.2, size * 0.6);
+        graphics.close();
+        graphics.fill();
+        
+        // 望远镜标识
+        graphics.strokeColor = new Color(64, 64, 64);
+        graphics.lineWidth = 3;
+        graphics.circle(-size * 0.2, 0, size * 0.2);
+        graphics.stroke();
+        graphics.circle(size * 0.2, 0, size * 0.2);
+        graphics.stroke();
+        graphics.moveTo(-size * 0.4, 0);
+        graphics.lineTo(size * 0.4, 0);
+        graphics.stroke();
+        
+        // 雷达扫描线
+        graphics.strokeColor = new Color(0, 255, 0);
+        graphics.lineWidth = 2;
+        graphics.moveTo(0, 0);
+        graphics.lineTo(size * 0.7, -size * 0.7);
+        graphics.stroke();
+    }
+    
+    // 绘制俄罗斯蓝猫外观（精英）
+    private static drawRussianCat(graphics: Graphics, scale: number): void {
+        const size = 19 * scale;
+        
+        // 身体（蓝灰色）
+        graphics.fillColor = new Color(112, 128, 144);
+        graphics.circle(0, 0, size);
+        graphics.fill();
+        
+        // 绿眼睛
+        graphics.fillColor = new Color(0, 255, 0);
+        graphics.circle(-size * 0.3, size * 0.2, size * 0.1);
+        graphics.fill();
+        graphics.circle(size * 0.3, size * 0.2, size * 0.1);
+        graphics.fill();
+        
+        // 精英标识（双箭穿透）
+        graphics.strokeColor = new Color(255, 215, 0);
+        graphics.lineWidth = 3;
+        graphics.moveTo(-size * 0.7, 0);
+        graphics.lineTo(size * 0.7, 0);
+        graphics.stroke();
+        
+        // 穿透箭头
+        graphics.moveTo(size * 0.5, -size * 0.2);
+        graphics.lineTo(size * 0.7, 0);
+        graphics.lineTo(size * 0.5, size * 0.2);
+        graphics.stroke();
+        
+        // 第二支箭
+        graphics.moveTo(-size * 0.6, -size * 0.3);
+        graphics.lineTo(size * 0.6, size * 0.3);
+        graphics.stroke();
+        graphics.moveTo(size * 0.4, size * 0.1);
+        graphics.lineTo(size * 0.6, size * 0.3);
+        graphics.lineTo(size * 0.4, size * 0.5);
+        graphics.stroke();
+    }
+    
+    // 绘制美国短毛猫外观（爆破兵）
+    private static drawAmericanCat(graphics: Graphics, scale: number): void {
+        const size = 21 * scale;
+        
+        // 身体（银色带条纹）
+        graphics.fillColor = new Color(192, 192, 192);
+        graphics.circle(0, 0, size);
+        graphics.fill();
+        
+        // 黑色条纹
+        graphics.strokeColor = new Color(64, 64, 64);
+        graphics.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+            const y = -size * 0.6 + i * size * 0.4;
+            graphics.moveTo(-size * 0.8, y);
+            graphics.lineTo(size * 0.8, y);
+        }
+        graphics.stroke();
+        
+        // 炸弹标识
+        graphics.fillColor = new Color(64, 64, 64);
+        graphics.circle(0, 0, size * 0.4);
+        graphics.fill();
+        
+        // 引信
+        graphics.strokeColor = new Color(255, 69, 0);
+        graphics.lineWidth = 3;
+        graphics.moveTo(0, -size * 0.4);
+        graphics.lineTo(-size * 0.2, -size * 0.8);
+        graphics.stroke();
+        
+        // 火花
+        graphics.fillColor = new Color(255, 255, 0);
+        graphics.circle(-size * 0.2, -size * 0.8, size * 0.08);
+        graphics.fill();
+        
+        // 爆炸标识
+        graphics.strokeColor = new Color(255, 0, 0);
+        graphics.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const x = Math.cos(angle) * size * 0.6;
+            const y = Math.sin(angle) * size * 0.6;
+            graphics.moveTo(x * 0.5, y * 0.5);
+            graphics.lineTo(x, y);
+        }
+        graphics.stroke();
     }
 }

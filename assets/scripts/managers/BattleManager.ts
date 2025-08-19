@@ -480,6 +480,110 @@ export class BattleManager extends Component {
         });
     }
     
+    // 获取指定范围内的敌人（为AOE技能提供支持）
+    public getEnemiesInRange(centerPosition: Vec3, range: number): Node[] {
+        return this._registeredEnemies.filter(enemy => {
+            if (!enemy || !enemy.isValid) return false;
+            const enemyUnit = enemy.getComponent(BaseUnit);
+            if (!enemyUnit || !enemyUnit.isAlive) return false;
+            
+            const distance = Vec3.distance(centerPosition, enemy.position);
+            return distance <= range;
+        });
+    }
+    
+    // 获取指定范围内的英雄（为辅助技能提供支持）
+    public getHeroesInRange(centerPosition: Vec3, range: number): Node[] {
+        return this._registeredHeroes.filter(hero => {
+            if (!hero || !hero.isValid) return false;
+            const heroUnit = hero.getComponent(BaseUnit);
+            if (!heroUnit || !heroUnit.isAlive) return false;
+            
+            const distance = Vec3.distance(centerPosition, hero.position);
+            return distance <= range;
+        });
+    }
+    
+    // 为英雄应用临时增益效果
+    public applyHeroBuff(hero: Node, buffType: 'attackSpeed' | 'attackRange', value: number, duration: number): void {
+        const heroUnit = hero.getComponent(BaseUnit);
+        if (!heroUnit) return;
+        
+        // 保存原始值
+        const originalValue = buffType === 'attackSpeed' ? heroUnit.attackSpeed : heroUnit.attackRange;
+        
+        // 应用增益
+        if (buffType === 'attackSpeed') {
+            heroUnit.attackSpeed *= value;
+        } else {
+            heroUnit.attackRange += value;
+        }
+        
+        console.log(`为 ${heroUnit.unitName} 应用 ${buffType} 增益: ${value}, 持续时间: ${duration}秒`);
+        
+        // 定时恢复原值
+        setTimeout(() => {
+            if (hero && hero.isValid && heroUnit && heroUnit.isAlive) {
+                if (buffType === 'attackSpeed') {
+                    heroUnit.attackSpeed = originalValue;
+                } else {
+                    heroUnit.attackRange = originalValue;
+                }
+                console.log(`${heroUnit.unitName} 的 ${buffType} 增益效果结束`);
+            }
+        }, duration * 1000);
+    }
+    
+    // 检查目标是否为飞行单位
+    public isFlying(target: Node): boolean {
+        // 这里需要根据敌人类型判断，暂时返回false
+        // 后续可以通过敌人组件或配置来判断
+        const enemyComponent = target.getComponent('FlyingMouse');
+        return enemyComponent !== null;
+    }
+    
+    // 为链式攻击寻找下一个目标
+    public findChainTargets(startPosition: Vec3, excludeTarget: Node, maxTargets: number, maxRange: number): Node[] {
+        const targets: Node[] = [];
+        const availableEnemies = this._registeredEnemies.filter(enemy => {
+            if (!enemy || !enemy.isValid || enemy === excludeTarget) return false;
+            const enemyUnit = enemy.getComponent(BaseUnit);
+            if (!enemyUnit || !enemyUnit.isAlive) return false;
+            
+            const distance = Vec3.distance(startPosition, enemy.position);
+            return distance <= maxRange;
+        });
+        
+        // 按距离排序，选择最近的几个目标
+        availableEnemies.sort((a, b) => {
+            const distA = Vec3.distance(startPosition, a.position);
+            const distB = Vec3.distance(startPosition, b.position);
+            return distA - distB;
+        });
+        
+        // 取前maxTargets个目标
+        for (let i = 0; i < Math.min(maxTargets, availableEnemies.length); i++) {
+            targets.push(availableEnemies[i]);
+        }
+        
+        return targets;
+    }
+    
+    // 对多个目标造成伤害（用于AOE攻击）
+    public damageMultipleTargets(targets: Node[], damage: number, sourcePosition?: Vec3): void {
+        for (const target of targets) {
+            const targetUnit = target.getComponent(BaseUnit);
+            if (targetUnit && targetUnit.isAlive) {
+                targetUnit.takeDamage(damage);
+                
+                // 创建击中效果
+                if (sourcePosition && this.node.parent) {
+                    // 这里可以添加特效，暂时省略
+                }
+            }
+        }
+    }
+    
     // 获取网格系统引用
     private getGridSystem(): GridDeploymentSystem | null {
         if (this._gridSystemCache && this._gridSystemCache.isValid) {

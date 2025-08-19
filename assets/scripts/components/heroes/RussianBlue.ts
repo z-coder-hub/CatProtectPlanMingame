@@ -1,0 +1,212 @@
+import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
+import { BaseUnit } from '../base/BaseUnit';
+import { HeroType } from '../../types/GameTypes';
+import { HERO_CONFIGS } from '../../types/GameConstants';
+import { BattleManager } from '../../managers/BattleManager';
+
+const { ccclass } = _decorator;
+
+@ccclass('RussianBlue')
+export class RussianBlue extends BaseUnit {
+    
+    public readonly heroType: HeroType = HeroType.RUSSIAN_BLUE;
+    private _graphics: Graphics | null = null;
+    
+    protected onLoad(): void {
+        super.onLoad();
+        this.initializeRussianBlueStats();
+        this.initializeVisuals();
+    }
+    
+    protected start(): void {
+        super.start();
+        
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            battleManager.registerHero(this.node);
+        }
+    }
+    
+    private initializeRussianBlueStats(): void {
+        const config = HERO_CONFIGS[HeroType.RUSSIAN_BLUE];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+    }
+    
+    private initializeVisuals(): void {
+        this._graphics = this.node.addComponent(Graphics);
+        
+        this.drawRussianBlueAppearance();
+    }
+    
+    private drawRussianBlueAppearance(): void {
+        if (!this._graphics) return;
+        
+        this._graphics.clear();
+        
+        // 绘制俄罗斯蓝猫身体（蓝灰色星形）
+        this._graphics.fillColor = new Color(106, 90, 205); // 板岩蓝色
+        // 八角星形
+        const points = 8;
+        const outerRadius = 18;
+        const innerRadius = 10;
+        
+        this._graphics.moveTo(outerRadius, 0);
+        for (let i = 0; i < points; i++) {
+            const outerAngle = (i * 2 * Math.PI) / points;
+            const innerAngle = ((i + 0.5) * 2 * Math.PI) / points;
+            
+            const outerX = outerRadius * Math.cos(outerAngle);
+            const outerY = outerRadius * Math.sin(outerAngle);
+            const innerX = innerRadius * Math.cos(innerAngle);
+            const innerY = innerRadius * Math.sin(innerAngle);
+            
+            this._graphics.lineTo(outerX, outerY);
+            this._graphics.lineTo(innerX, innerY);
+        }
+        this._graphics.close();
+        this._graphics.fill();
+        
+        // 精英标识（银色）
+        this._graphics.strokeColor = new Color(192, 192, 192);
+        this._graphics.lineWidth = 2;
+        this._graphics.circle(0, 0, 5);
+        this._graphics.stroke();
+        
+        // 穿透箭头
+        this._graphics.strokeColor = new Color(255, 255, 255);
+        this._graphics.lineWidth = 3;
+        this._graphics.moveTo(-15, 0);
+        this._graphics.lineTo(15, 0);
+        this._graphics.moveTo(10, -5);
+        this._graphics.lineTo(15, 0);
+        this._graphics.lineTo(10, 5);
+        this._graphics.stroke();
+    }
+    
+    protected onIdleState(dt: number): void {
+        if (!this.isAlive) return;
+        
+        const battleManager = BattleManager.instance;
+        if (battleManager) {
+            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            if (nearestEnemy) {
+                this.currentTarget = nearestEnemy;
+                this.unitState = 2;
+            }
+        }
+    }
+    
+    protected onAttack(target: Node): void {
+        if (!target || !this.isAlive) return;
+        
+        // 穿透攻击 - 攻击直线上的所有敌人
+        this.performPenetratingAttack(target);
+        this.createAttackEffect();
+    }
+    
+    private performPenetratingAttack(target: Node): void {
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return;
+        
+        const direction = Vec3.subtract(new Vec3(), target.position, this.node.position);
+        direction.normalize();
+        
+        const allEnemies = battleManager.getAllEnemies();
+        const hitTargets: Node[] = [];
+        
+        // 找到直线上的所有敌人
+        for (const enemy of allEnemies) {
+            if (!enemy || !enemy.isValid) continue;
+            
+            const toEnemy = Vec3.subtract(new Vec3(), enemy.position, this.node.position);
+            const distance = toEnemy.length();
+            
+            if (distance <= this.attackRange) {
+                toEnemy.normalize();
+                const dot = Vec3.dot(direction, toEnemy);
+                
+                // 如果敌人在攻击方向上（容忍一些角度差）
+                if (dot > 0.8) {
+                    hitTargets.push(enemy);
+                }
+            }
+        }
+        
+        // 按距离排序，近的先命中
+        hitTargets.sort((a, b) => {
+            const distA = Vec3.distance(this.node.position, a.position);
+            const distB = Vec3.distance(this.node.position, b.position);
+            return distA - distB;
+        });
+        
+        // 攻击每个目标，穿透伤害递减
+        for (let i = 0; i < hitTargets.length && i < 3; i++) { // 最多穿透3个目标
+            const enemy = hitTargets[i];
+            const enemyUnit = enemy.getComponent(BaseUnit);
+            if (enemyUnit && enemyUnit.isAlive) {
+                const damageMultiplier = Math.max(0.3, 1 - i * 0.2); // 每穿透一个目标伤害减少20%
+                const damage = this.attackDamage * damageMultiplier;
+                enemyUnit.takeDamage(damage);
+                
+                this.createPenetrationEffect(enemy.position, i);
+            }
+        }
+    }
+    
+    private createAttackEffect(): void {
+        const effectNode = new Node("AttackEffect");
+        effectNode.parent = this.node.parent;
+        effectNode.setPosition(this.node.position);
+        
+        const effectGraphics = effectNode.addComponent(Graphics);
+        effectGraphics.strokeColor = new Color(106, 90, 205, 200);
+        effectGraphics.lineWidth = 3;
+        effectGraphics.circle(0, 0, 25);
+        effectGraphics.stroke();
+        
+        setTimeout(() => {
+            if (effectNode && effectNode.isValid) {
+                effectNode.destroy();
+            }
+        }, 400);
+    }
+    
+    private createPenetrationEffect(position: Vec3, index: number): void {
+        const effectNode = new Node(`PenetrationEffect_${index}`);
+        effectNode.parent = this.node.parent;
+        effectNode.setPosition(position);
+        
+        const effectGraphics = effectNode.addComponent(Graphics);
+        const alpha = Math.max(50, 200 - index * 50); // 穿透效果递减
+        effectGraphics.fillColor = new Color(255, 255, 255, alpha);
+        effectGraphics.circle(0, 0, 15);
+        effectGraphics.fill();
+        
+        // 闪光效果
+        let scale = 1;
+        let opacity = alpha;
+        const flashEffect = () => {
+            scale += 0.2;
+            opacity -= 25;
+            
+            if (effectGraphics && effectNode.isValid && opacity > 0) {
+                effectGraphics.clear();
+                effectGraphics.fillColor = new Color(255, 255, 255, opacity);
+                effectGraphics.circle(0, 0, 15 * scale);
+                effectGraphics.fill();
+                
+                requestAnimationFrame(flashEffect);
+            } else {
+                effectNode.destroy();
+            }
+        };
+        flashEffect();
+    }
+}

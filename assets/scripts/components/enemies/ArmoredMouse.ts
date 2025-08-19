@@ -100,10 +100,7 @@ export class ArmoredMouse extends BaseUnit {
     // 初始化外观
     private initializeVisuals(): void {
         // 添加Graphics组件绘制外观
-        this._graphics = this.node.getComponent(Graphics);
-        if (!this._graphics) {
-            this._graphics = this.node.addComponent(Graphics);
-        }
+        this._graphics = this.node.addComponent(Graphics);
         
         this.drawArmoredMouseAppearance();
         

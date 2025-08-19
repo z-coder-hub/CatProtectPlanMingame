@@ -396,4 +396,150 @@ export class EffectHelper {
     public static createShield(position: Vec3, parent: Node): Node {
         return this.createEffect(EffectType.SHIELD, position, parent);
     }
+    
+    // === 新增的特效方法 ===
+    
+    // 创建暴击特效
+    public static createCriticalHitEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.HIT, position, parent, {
+            color: new Color(255, 100, 0, 200),
+            size: 25,
+            duration: 400,
+            expand: true
+        });
+    }
+    
+    // 创建魔法击中特效
+    public static createMagicHitEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.MAGIC_EXPLOSION, position, parent, {
+            color: new Color(150, 100, 255, 180),
+            size: 18,
+            duration: 300
+        });
+    }
+    
+    // 创建近战击中特效
+    public static createMeleeHitEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.ATTACK, position, parent, {
+            color: new Color(255, 150, 0, 200),
+            size: 15,
+            duration: 200
+        });
+    }
+    
+    // 创建冲锋击中特效
+    public static createChargeHitEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.CHARGE_IMPACT, position, parent);
+    }
+    
+    // 创建冲锋效果
+    public static createChargeEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.SHIELD, position, parent, {
+            color: new Color(255, 215, 0, 120),
+            size: 30,
+            duration: 3000
+        });
+    }
+    
+    // 创建护甲效果
+    public static createArmorEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.ARMOR_BLOCK, position, parent);
+    }
+    
+    // 创建城堡攻击特效
+    public static createCastleAttackEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.FIRE, position, parent, {
+            color: new Color(255, 0, 0, 220),
+            size: 30,
+            duration: 600
+        });
+    }
+    
+    // 创建敌人死亡特效
+    public static createEnemyDeathEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.DEATH, position, parent, {
+            color: new Color(255, 255, 0, 200),
+            particles: 12
+        });
+    }
+    
+    // 创建敌人受伤特效
+    public static createEnemyHurtEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.HIT, position, parent, {
+            color: new Color(255, 0, 0, 150),
+            size: 12,
+            duration: 150
+        });
+    }
+    
+    // 创建咆哮特效
+    public static createRoarEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.ATTACK, position, parent, {
+            color: new Color(255, 100, 0, 180),
+            size: 35,
+            duration: 500,
+            expand: true
+        });
+    }
+    
+    // 创建狂暴特效
+    public static createBerserkEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.FIRE, position, parent, {
+            color: new Color(200, 0, 0, 200),
+            size: 40,
+            duration: 800,
+            particles: 15
+        });
+    }
+    
+    // 创建金币掉落特效
+    public static createGoldDropEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.HEAL, position, parent, {
+            color: new Color(255, 215, 0, 255),
+            size: 20,
+            duration: 1000,
+            particles: 8
+        });
+    }
+    
+    // 创建速度爆发特效
+    public static createSpeedBurstEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.LIGHTNING, position, parent, {
+            color: new Color(255, 255, 100, 255),
+            size: 25,
+            duration: 300
+        });
+    }
+    
+    // 创建速度启动特效
+    public static createSpeedStartEffect(position: Vec3, parent: Node): Node {
+        return this.createEffect(EffectType.CLICK_FEEDBACK, position, parent, {
+            color: new Color(200, 200, 50, 200),
+            size: 20,
+            duration: 400
+        });
+    }
+    
+    // 创建爆炸效果（带范围显示）
+    public static createExplosionEffect(position: Vec3, parent: Node, range: number = 80): Node {
+        const effectNode = this.createEffect(EffectType.MAGIC_EXPLOSION, position, parent, {
+            color: new Color(255, 100, 0, 180),
+            size: range / 3,
+            duration: 800,
+            expand: true
+        });
+        
+        // 添加范围圈显示
+        setTimeout(() => {
+            if (parent && parent.isValid) {
+                this.createEffect(EffectType.SKILL, position, parent, {
+                    color: new Color(255, 100, 0, 100),
+                    size: range,
+                    duration: 200
+                });
+            }
+        }, 100);
+        
+        return effectNode;
+    }
 }
