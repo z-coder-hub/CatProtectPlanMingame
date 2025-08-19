@@ -97,22 +97,24 @@ export class HeroSelectionPanel extends Component {
         // 定位到屏幕底部
         const screenHeight = view.getVisibleSize().height;
         const screenWidth = view.getVisibleSize().width;
-        this.node.setPosition(0, -screenHeight / 2 + 100);
+        // 距离屏幕底部高100个像素单元的中间位置
+        this.node.setPosition(0, -screenHeight / 2 + 60);
 
         // 设置面板的UITransform
         const panelTransform = this.node.addComponent(UITransform);
-        panelTransform.setContentSize(screenWidth, 160);
+        // 上下50
+        panelTransform.setContentSize(screenWidth, 120);
 
-        // 面板背景
+        // 面板背景（这里边框和填充是一个路径线，主要不要使用两次rect）
         const panelBg = this.node.addComponent(Graphics);
         panelBg.fillColor = new Color(20, 20, 20, 220);
-        panelBg.rect(-screenWidth / 2, -80, screenWidth, 160);
+        // 左下角
+        panelBg.rect(-screenWidth / 2, -50, screenWidth, 120);
         panelBg.fill();
 
-        // 添加面板边框
+        // 添加面板边框（不需要重复 rect，只需 stroke）
         panelBg.strokeColor = new Color(100, 100, 100, 150);
         panelBg.lineWidth = 2;
-        panelBg.rect(-screenWidth / 2, -80, screenWidth, 160);
         panelBg.stroke();
 
         // 创建ScrollView
@@ -130,52 +132,49 @@ export class HeroSelectionPanel extends Component {
         // 创建ScrollView节点
         const scrollViewNode = new Node("HeroScrollView");
         scrollViewNode.parent = this.node;
+        // 屏幕中间位置
         scrollViewNode.setPosition(0, 0);
 
-        // 设置ScrollView的UITransform
-        const scrollTransform = scrollViewNode.addComponent(UITransform);
-        const scrollViewWidth = screenWidth - 40;
-        scrollTransform.setContentSize(scrollViewWidth, 140);
-        scrollTransform.setAnchorPoint(0.5, 0.5);
-
-        // 添加Mask组件进行裁剪
-        const mask = scrollViewNode.addComponent(Mask);
-        mask.type = Mask.Type.GRAPHICS_RECT;
 
         // 添加ScrollView组件
         const scrollView = scrollViewNode.addComponent(ScrollView);
         this._heroScrollView = scrollView;
 
+        // 设置ScrollView的UITransform
+        const scrollTransform = scrollViewNode.addComponent(UITransform);
+        const scrollViewWidth = screenWidth - 30;
+        scrollTransform.setAnchorPoint(0.5, 0.5);
+        scrollTransform.setContentSize(scrollViewWidth, 120);
+
+
         // 配置ScrollView基本属性
-        scrollView.horizontal = true;
-        scrollView.vertical = false;
-        scrollView.inertia = true;
-        scrollView.brake = 0.75;
-        scrollView.elastic = true;
-        scrollView.bounceDuration = 0.23;
+        scrollView.horizontal = true; // 启用水平滚动
+        scrollView.vertical = false; // 禁用垂直滚动
+        scrollView.inertia = true; // 启用惯性滚动
+        scrollView.brake = 0.9; // 设置刹车强度
 
-        // 显式启用ScrollView组件
-        scrollView.enabled = true;
-        scrollViewNode.active = true;
 
-        console.log("📋 ScrollView基本配置完成，启用水平滚动");
+        // 1. 创建父节点 view
+        const parentView = new Node('View');
+        const ui = parentView.addComponent(UITransform);
+        const mask = parentView.addComponent(Mask);
+        mask.type = Mask.Type.GRAPHICS_RECT;
+        ui.setAnchorPoint(0.5, 0.5);
+        ui.setContentSize(scrollViewWidth, 120);
+        parentView.parent = scrollViewNode;
 
-        // 创建Content节点
+
+        // 2. 创建Content节点
         const contentNode = new Node("Content");
 
         // 确保Content节点先添加UITransform组件，再进行后续配置
         const contentTransform = contentNode.addComponent(UITransform);
 
-        // 验证UITransform创建成功
-        if (!contentTransform) {
-            console.error("❌ 无法为Content节点创建UITransform组件");
-            return;
-        }
-
         const availableHeroes = HeroFactory.getAvailableHeroTypes();
-        const buttonSize = 80;
-        const buttonSpacing = 20;
-        const paddingTotal = buttonSpacing * 2;
+        // 将这些常量配置，抽取出来到类外部，加上注释
+        const buttonSize = 80; // 按钮大小
+        const buttonSpacing = 20; // 按钮间距
+        const paddingTotal = buttonSpacing * 2; // 内边距总和
 
         // 计算Content尺寸 - 确保可以滚动
         const minContentWidth = availableHeroes.length * (buttonSize + buttonSpacing) + paddingTotal;
@@ -189,46 +188,24 @@ export class HeroSelectionPanel extends Component {
             • 🔄 可以滚动: ${contentWidth > scrollViewWidth}
             • 英雄列表: ${availableHeroes.join(', ')}`);
 
-        // 确保ScrollView确实可以滚动
-        if (contentWidth <= scrollViewWidth) {
-            console.warn(`⚠️ Content宽度不足以启用滚动，强制设置更大的宽度`);
-            contentWidth = scrollViewWidth + 200;
-        }
+
 
         // 在设置父节点之前完成所有Content配置
-        contentTransform.setContentSize(contentWidth, 140);
-        contentTransform.setAnchorPoint(0.5, 0.5);
-        contentNode.setPosition(0, 0);
+        contentTransform.setContentSize(contentWidth, 120);
+        contentTransform.setAnchorPoint(0, 0.5);
+        contentNode.setPosition(-scrollViewWidth / 2, 0); // 确保Content在父节点中居中
+
 
         console.log(`📋 Content节点配置完成，准备设置父节点...`);
 
-        // 设置父节点
-        contentNode.parent = scrollViewNode;
 
-        // 验证所有UITransform组件存在
-        const scrollViewTransform = scrollView.node.getComponent(UITransform);
-        const panelTransform = this.node.getComponent(UITransform);
-        const parentTransform = this.node.parent?.getComponent(UITransform);
-
-        if (!scrollViewTransform || !contentTransform || !panelTransform || !parentTransform) {
-            console.error("❌ 缺少必要的UITransform组件");
-            return;
-        }
-
-        // 直接设置ScrollView content
+        contentNode.parent = parentView;
         scrollView.content = contentNode;
-
-        // 验证设置成功
-        if (scrollView.content !== contentNode) {
-            console.error("❌ ScrollView content设置失败");
-            return;
-        }
+        console.log(`✅ Content节点设置为ScrollView的内容, ${scrollView.view}`);
 
         // 创建英雄按钮
         this.createHeroButtonsManualLayout(contentNode, buttonSize, buttonSpacing);
 
-        // 强制刷新ScrollView配置
-        scrollView.node.setPosition(scrollView.node.position);
 
         console.log(`✅ Content节点设置完成`);
     }
@@ -241,7 +218,7 @@ export class HeroSelectionPanel extends Component {
 
         // 计算起始位置（左对齐）
         const contentWidth = contentNode.getComponent(UITransform)?.contentSize.width || 0;
-        const startX = -contentWidth / 2 + buttonSpacing + buttonSize / 2;
+        const startX = buttonSpacing + buttonSize / 2;
 
         availableHeroes.forEach((heroType, index) => {
             const heroConfig = HeroFactory.getHeroConfig(heroType);
@@ -267,7 +244,6 @@ export class HeroSelectionPanel extends Component {
 
         // 设置位置
         buttonNode.setPosition(x, y);
-
         const buttonTransform = buttonNode.addComponent(UITransform);
         buttonTransform.setContentSize(size, size);
         buttonTransform.setAnchorPoint(0.5, 0.5);

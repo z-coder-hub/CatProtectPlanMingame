@@ -184,7 +184,7 @@ interface IGameStateHandler {
 
 所有游戏数值配置集中在 `GameConstants.ts` 中：
 - 英雄属性配置
-- 敌人属性配置  
+- 敌人属性配置
 - 波次配置
 - UI常量
 - 游戏常量
@@ -346,7 +346,7 @@ private ensureRequiredComponents(): void {
 ### 3. 重复渲染组件警告
 - **问题**: 向已有Graphics组件的节点添加新Graphics组件
 - **解决方案**: 直接使用`addComponent(Graphics)`，Cocos Creator会自动处理重复添加
-- **检查模式**: 
+- **检查模式**:
 ```typescript
 // 推荐的模式
 const graphics = node.addComponent(Graphics);
@@ -356,7 +356,7 @@ const graphics = node.addComponent(Graphics);
 ### 4. 系统重复实现
 - **问题**: 避免创建重复的功能系统
 - **解决方案**: 统一使用GameHUD作为唯一的UI系统
-- **检查要点**: 
+- **检查要点**:
   - GameBootstrap.ts中只创建必要的系统组件
   - GameHUD.ts包含完整的英雄选择和游戏状态显示功能
   - 避免创建功能重叠的组件
@@ -364,7 +364,7 @@ const graphics = node.addComponent(Graphics);
 ### 5. 类型安全和单例模式
 - **问题**: 组件引用可能为null导致运行时错误
 - **解决方案**: 所有组件引用都通过单例模式或依赖注入获取，并进行空值检查
-- **检查模式**: 
+- **检查模式**:
 ```typescript
 const manager = ManagerName.instance;
 if (!manager) {
@@ -424,3 +424,8 @@ if (!manager) {
 ---
 
 这是一个现代化的TypeScript游戏项目，具备良好的架构设计和类型安全保障。当前版本已解决重复系统和API兼容性问题，提供了统一且功能完整的用户界面系统。
+
+
+
+添加面板边框（不需要重复 rect，只需 fill，stroke）因为填充和画边框是一条路径线
+不要使用mask组件

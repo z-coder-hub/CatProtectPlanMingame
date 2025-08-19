@@ -1,8 +1,8 @@
 import { _decorator, Component, find, Node } from 'cc';
+import { GameHUD } from '../components/ui/GameHUD';
+import { HeroSelectionPanel } from '../components/ui/HeroSelectionPanel';
 import { ResourceManager } from '../managers/ResourceManager';
 import { GridDeploymentSystem } from './GridDeploymentSystem';
-import { HeroSelectionPanel } from '../components/ui/HeroSelectionPanel';
-import { GameHUD } from '../components/ui/GameHUD';
 
 const { ccclass, property } = _decorator;
 
@@ -35,7 +35,7 @@ export class GameBootstrap extends Component {
     // 系统组件引用
     private _resourceManager: ResourceManager | null = null;
     private _gridSystem: GridDeploymentSystem | null = null;
-    
+
     // UI组件引用
     private _gameHUD: GameHUD | null = null;
     private _heroSelectionPanel: HeroSelectionPanel | null = null;
@@ -179,9 +179,10 @@ export class GameBootstrap extends Component {
         hudNode.parent = this._canvasNode;
         this._gameHUD = hudNode.addComponent(GameHUD);
 
-        // 创建HeroSelectionPanel（独立的英雄选择面板）
+        // 创建HeroSelectionPanel（独立的英雄选择面板，处于游戏界面的底部）
         const heroSelectionNode = new Node("HeroSelectionPanel");
         heroSelectionNode.parent = this._canvasNode;
+        // 添加自定义组件
         this._heroSelectionPanel = heroSelectionNode.addComponent(HeroSelectionPanel);
 
         // 建立英雄选择面板和GameHUD之间的通信
