@@ -335,7 +335,7 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -270,
+      "x": 0,
       "y": 0,
       "z": 0
     },
@@ -394,7 +394,7 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "_alignFlags": 8,
+    "_alignFlags": 18,
     "_target": null,
     "_left": 40,
     "_right": 0,

@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec2, Vec3 } from 'cc';
+import { Component } from 'cc';
 
 // 游戏单位类型枚举
 export enum UnitType {
@@ -21,20 +21,20 @@ export enum HeroType {
     ORANGE_CAT = "OrangeCat",              // 橘猫射手
     PERSIAN_SNIPER = "PersianSniper",      // 波斯猫狙击手
     BENGAL_HUNTER = "BengalHunter",        // 孟加拉猫猎手
-    
+
     // 法师英雄
     SIAMESE_MAGE = "SiameseMage",          // 暹罗猫法师
     MAINE_THUNDER = "MaineThunder",        // 缅因猫雷法
     NORWEGIAN_ICE = "NorwegianIce",        // 挪威森林猫冰法
-    
+
     // 近战英雄
     BRITISH_KNIGHT = "BritishKnight",      // 英国短毛猫骑士
     RAGDOLL_GUARDIAN = "RagdollGuardian",  // 布偶猫守护者
-    
+
     // 辅助英雄
     SCOTTISH_ENGINEER = "ScottishEngineer",     // 苏格兰折耳猫工程师
     ABYSSINIAN_SCOUT = "AbyssinianScout",       // 阿比西尼亚猫侦察兵
-    
+
     // 特殊英雄
     RUSSIAN_BLUE = "RussianBlue",          // 俄罗斯蓝猫精英
     AMERICAN_BOMBER = "AmericanBomber"     // 美国短毛猫爆破兵
@@ -54,20 +54,20 @@ export enum EnemyType {
     // 基础单位
     BASIC_MOUSE = "BasicMouse",         // 基础老鼠
     GIANT_MOUSE = "GiantMouse",         // 巨型老鼠
-    
+
     // 快速单位
     FAST_MOUSE = "FastMouse",           // 快速老鼠
     SPEED_MOUSE = "SpeedMouse",         // 疾速老鼠
-    
+
     // 装甲单位
     ARMORED_MOUSE = "ArmoredMouse",     // 装甲老鼠
     TANK_MOUSE = "TankMouse",           // 坦克老鼠
-    
+
     // 特殊单位
     FLYING_MOUSE = "FlyingMouse",       // 飞行老鼠
     BOMB_MOUSE = "BombMouse",           // 爆炸老鼠
     STEALTH_MOUSE = "StealthMouse",     // 潜行老鼠
-    
+
     // BOSS单位
     MOUSE_KING = "MouseKing",           // 老鼠王
     MECH_MOUSE = "MechMouse"            // 机械老鼠
@@ -168,8 +168,6 @@ export interface WaveConfig {
 export interface GridConfig {
     rows: number;                  // 行数
     cols: number;                  // 列数
-    cellSize: number;              // 单元格大小
-    startPosition: WorldPosition; // 网格起始位置
 }
 
 // 游戏配置接口

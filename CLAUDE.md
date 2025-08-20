@@ -377,6 +377,27 @@ if (!scrollView.node.getComponent(UITransform)) {
 scrollView.content = contentTransform;
 ```
 
+#### Widget组件的正确使用
+**重要**: 调用`widget.updateAlignment()`后，Widget的布局会立即更新完成，无需使用任何延迟：
+
+```typescript
+// ✅ 正确的做法
+const widget = node.addComponent(Widget);
+widget.isAlignTop = true;
+widget.top = 100;
+widget.updateAlignment(); // 布局立即更新完成
+
+// 可以直接使用节点尺寸和位置
+const transform = node.getComponent(UITransform);
+const width = transform.contentSize.width; // 已经是更新后的值
+
+// ❌ 错误的做法 - 不需要延迟
+widget.updateAlignment();
+this.scheduleOnce(() => {
+    // 这种延迟是多余的
+}, 0);
+```
+
 ### 🚫 避免过度使用可选链操作符（?.）
 **重要原则**: 避免过度使用可选链操作符（`?.`），因为如果预期组件或属性应该存在，使用 `?.` 只是在掩盖设计问题。
 

@@ -1,6 +1,6 @@
-import { _decorator, Color, Component, Graphics, Label, Node } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, UITransform, Widget } from 'cc';
 import { GameManager } from '../../managers/GameManager';
-import { GAME_CONSTANTS } from '../../types/GameConstants';
+import { UIHelper } from '../../utils/UIHelper';
 
 const { ccclass, property } = _decorator;
 
@@ -14,10 +14,10 @@ export class Castle extends Component {
     private _healthLabel: Label | null = null;
 
     // 城堡尺寸 - 横跨屏幕的长条形
-    private readonly _castleWidth: number = 600;
-    private readonly _castleHeight: number = 40;
+    private readonly _castleHeight: number = 48; // 自定义高度
 
     protected onLoad(): void {
+        this.setupCastlePosition();
         this.initializeCastleVisuals();
         this.createHealthLabel();
     }
@@ -30,13 +30,17 @@ export class Castle extends Component {
             return;
         }
 
-        // 设置城堡位置
-        this.node.setPosition(GAME_CONSTANTS.CASTLE_POSITION.x, GAME_CONSTANTS.CASTLE_POSITION.y);
 
         // 注册到GameManager
         this._gameManager.castleNode = this.node;
 
         console.log("城堡初始化完成");
+    }
+
+    // 设置城堡位置 - 位于英雄面板上方，距离底部200像素
+    private setupCastlePosition(): void {
+        // 使用Widget全宽底部对齐，距离底部200像素（英雄面板144px + 间距）
+        UIHelper.SetupBottomAlignWidget(this.node, this._castleHeight, 200);
     }
 
     // 初始化城堡外观
@@ -52,12 +56,16 @@ export class Castle extends Component {
 
         this._graphics.clear();
 
+        // 获取节点的实际宽度（由Widget设置）
+        const transform = this.node.getComponent(UITransform);
+        const castleWidth = transform ? transform.width : 720;
+
         // 绘制城堡主体（蓝色长条）
         this._graphics.fillColor = new Color(70, 130, 180); // 蓝色
         this._graphics.rect(
-            -this._castleWidth / 2,
+            -castleWidth / 2,
             -this._castleHeight / 2,
-            this._castleWidth,
+            castleWidth,
             this._castleHeight
         );
         this._graphics.fill();
@@ -71,7 +79,7 @@ export class Castle extends Component {
 
         this._healthLabel = labelNode.addComponent(Label);
         this._healthLabel.string = "HP: 100/100";
-        this._healthLabel.fontSize = 18;
+        this._healthLabel.fontSize = 22; // 18 * 1.2 = 21.6 ≈ 22
         this._healthLabel.color = new Color(255, 255, 255); // 白色文字
     }
 
@@ -94,7 +102,7 @@ export class Castle extends Component {
         if (!this.node) return;
 
         const originalPos = this.node.position.clone();
-        const shakeAmount = 5;
+        const shakeAmount = 6; // 5 * 1.2 = 6，放大震动幅度
         let shakeCount = 0;
         const maxShakes = 6;
 
@@ -113,7 +121,8 @@ export class Castle extends Component {
             );
 
             shakeCount++;
-            setTimeout(shake, 50);
+            // 使用Cocos Creator调度系统而不是setTimeout
+            this.scheduleOnce(shake, 0.05);
         };
 
         shake();
@@ -136,11 +145,16 @@ export class Castle extends Component {
         // 改变外观为废墟
         if (this._graphics) {
             this._graphics.clear();
+            
+            // 获取节点的实际宽度（由Widget设置）
+            const transform = this.node.getComponent(UITransform);
+            const castleWidth = transform ? transform.width : 720;
+            
             this._graphics.fillColor = new Color(64, 64, 64); // 变成灰色废墟
             this._graphics.rect(
-                -this._castleWidth / 2,
+                -castleWidth / 2,
                 -this._castleHeight / 2,
-                this._castleWidth,
+                castleWidth,
                 this._castleHeight
             );
             this._graphics.fill();

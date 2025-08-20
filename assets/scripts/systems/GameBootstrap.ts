@@ -71,10 +71,10 @@ export class GameBootstrap extends Component {
     }
 
     // 开始初始化流程
-    private async startInitialization(): Promise<void> {
+    private startInitialization(): void {
         try {
             // 执行初始化步骤
-            await this.runInitializationSteps();
+            this.runInitializationSteps();
 
             this._currentPhase = InitPhase.COMPLETED;
             this.log("游戏初始化完成！");
@@ -86,7 +86,7 @@ export class GameBootstrap extends Component {
     }
 
     // 执行初始化步骤
-    private async runInitializationSteps(): Promise<void> {
+    private runInitializationSteps(): void {
 
         // 第一阶段：创建基础系统
         this._currentPhase = InitPhase.CREATING_SYSTEMS;
@@ -96,7 +96,7 @@ export class GameBootstrap extends Component {
         // 第二阶段：加载资源
         this._currentPhase = InitPhase.LOADING_RESOURCES;
         this.log("加载游戏资源...");
-        await this.loadGameResources();
+        this.loadGameResources();
 
         // 第三阶段：创建管理器
         this._currentPhase = InitPhase.CREATING_MANAGERS;
@@ -131,7 +131,7 @@ export class GameBootstrap extends Component {
     }
 
     // 加载游戏资源
-    private async loadGameResources(): Promise<void> {
+    private loadGameResources(): void {
         if (!this._resourceManager) return;
 
         // 定义需要预加载的资源
@@ -141,9 +141,10 @@ export class GameBootstrap extends Component {
             // { path: "prefabs/enemies/BasicMouse", type: ResourceType.PREFAB },
         ];
 
-        if (resourcesToLoad.length > 0) {
-            await this._resourceManager.preloadResources(resourcesToLoad);
-        }
+        // 同步加载资源，暂时不需要异步操作
+        // if (resourcesToLoad.length > 0) {
+        //     this._resourceManager.preloadResources(resourcesToLoad);
+        // }
 
         this.log("游戏资源加载完成");
     }
