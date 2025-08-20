@@ -285,6 +285,45 @@ if (!scrollView.node.getComponent(UITransform)) {
 scrollView.content = contentTransform;
 ```
 
+### 🚫 避免过度使用可选链操作符（?.）
+**重要原则**: 避免过度使用可选链操作符（`?.`），因为如果预期组件或属性应该存在，使用 `?.` 只是在掩盖设计问题。
+
+#### 为什么要谨慎使用可选链：
+- 如果组件在逻辑上应该存在，使用 `?.` 会掩盖初始化问题
+- 当预期存在的组件不存在时，静默失败不利于问题排查
+- 应该尽早发现问题，而不是通过可选链来"容忍"问题
+- 使代码的预期行为不明确
+
+#### 正确的使用原则：
+```typescript
+// ❌ 避免：如果gridSystem应该总是存在
+if (this._gridSystem?.isValidPosition(pos)) {
+    // 静默失败，问题被掩盖
+}
+
+// ✅ 推荐：明确检查和错误处理
+if (!this._gridSystem) {
+    console.error("GridSystem未初始化");
+    return;
+}
+if (this._gridSystem.isValidPosition(pos)) {
+    // 明确的逻辑流程
+}
+
+// ✅ 适合使用可选链：真正可能为空的情况
+const parentTransform = this.node.parent?.getComponent(UITransform);
+if (!parentTransform) {
+    console.error("父节点不存在或缺少UITransform组件");
+    return;
+}
+```
+
+#### 使用指南：
+- **必须存在的组件**: 使用明确的空值检查和错误处理
+- **可能不存在的组件**: 可以使用可选链，但要有后续的错误处理
+- **DOM遍历或链式调用**: 适合使用可选链
+- **调试阶段**: 优先使用明确检查，便于发现初始化问题
+
 ### 🚫 禁止使用条件性组件添加模式
 **重要原则**: 避免使用 `getComponent` + `addComponent` 的条件性添加模式，这种写法存在潜在问题。
 

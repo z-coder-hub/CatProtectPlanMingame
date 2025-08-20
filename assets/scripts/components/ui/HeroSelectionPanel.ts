@@ -15,14 +15,13 @@ const { ccclass } = _decorator;
 export class HeroSelectionPanel extends Component {
 
     // ========== 属性定义 ==========
-    
+
     // UI组件引用
     private _heroScrollView: ScrollView | null = null;
     private _heroButtons: Node[] = [];
     private _selectedHeroType: HeroType | null = null;
     private _dragPreviewNode: Node | null = null;
     private _isDragging: boolean = false;
-    private _touchStartPos: Vec3 | null = null;
     private _touchStartTime: number = 0;
 
     // 管理器引用
@@ -577,20 +576,20 @@ export class HeroSelectionPanel extends Component {
         // 创建价格背景节点
         const priceBgNode = new Node("PriceBackground");
         priceBgNode.setPosition(0, -size / 2 + 12);
-        
+
         // 价格背景
         const priceBg = priceBgNode.addComponent(Graphics);
         priceBg.fillColor = new Color(0, 0, 0, 150);
         priceBg.rect(-20, -8, 40, 16);
         priceBg.fill();
-        
+
         // 设置背景节点的父节点
         priceBgNode.parent = parent;
 
         // 创建价格文本节点
         const priceNode = new Node("PriceLabel");
         priceNode.setPosition(0, -size / 2 + 12);
-        
+
         // 价格文本
         const priceLabel = priceNode.addComponent(Label);
         priceLabel.string = `${cost}`;
@@ -615,12 +614,10 @@ export class HeroSelectionPanel extends Component {
             this.onHeroButtonTouchMove(event);
         }, this);
 
-        buttonNode.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
-            this.onHeroButtonTouchEnd(event);
-        }, this);
-
-        buttonNode.on(Node.EventType.TOUCH_CANCEL, (_event: EventTouch) => {
-            this.onHeroButtonTouchCancel();
+        buttonNode.on(Node.EventType.TOUCH_CANCEL, (event: EventTouch) => {
+            console.log(`🟡 触摸取消: ${heroType}, event: ${event.getLocation()}`);
+            console.log(`event.currentTarget: ${event.currentTarget.ID}, event.target: ${event.target.ID}`);
+            this.onHeroButtonTouchCancel(event)
         }, this);
     }
 
@@ -641,9 +638,9 @@ export class HeroSelectionPanel extends Component {
 
         // 记录触摸开始，但不立即开始拖拽 - 允许ScrollView正常处理
         this._selectedHeroType = heroType;
-        this._touchStartPos = new Vec3(event.getUILocation().x, event.getUILocation().y, 0);
         this._touchStartTime = Date.now();
-        console.log(`✅ 选中英雄: ${heroType}, 位置: (${this._touchStartPos.x}, ${this._touchStartPos.y})`);
+        const startLocation = event.getStartLocation();
+        console.log(`✅ 选中英雄: ${heroType}, 位置: (${startLocation.x}, ${startLocation.y})`);
     }
 
     /**
@@ -651,26 +648,22 @@ export class HeroSelectionPanel extends Component {
      */
     private onHeroButtonTouchMove(event: EventTouch): void {
         // 如果还没开始拖拽，检查拖动方向来决定是滚动还是拖拽
-        if (!this._isDragging && this._selectedHeroType && this._touchStartPos) {
-            const currentPos = new Vec3(event.getUILocation().x, event.getUILocation().y, 0);
-            const deltaX = currentPos.x - this._touchStartPos.x;
-            const deltaY = currentPos.y - this._touchStartPos.y;
-            const distance = Vec3.distance(this._touchStartPos, currentPos);
-            const currentTime = Date.now();
-            const holdTime = currentTime - this._touchStartTime;
+        if (!this._isDragging && this._selectedHeroType) {
+            // 使用累积距离来判断拖拽方向
+            const startLocation = event.getStartLocation();
+            const currentLocation = event.getUILocation();
+            const deltaX = currentLocation.x - startLocation.x;
+            const deltaY = currentLocation.y - startLocation.y;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const holdTime = Date.now() - this._touchStartTime;
 
             // 只有在移动距离足够大时才判断方向
-            if (distance > 8) {
-                const isHorizontalMove = Math.abs(deltaX) > Math.abs(deltaY);
-                const isVerticalMove = Math.abs(deltaY) > Math.abs(deltaX);
-
-                if (isHorizontalMove) {
-                    // 水平移动：允许ScrollView处理滚动
-                    console.log(`➡️ 水平滑动检测，允许ScrollView处理，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
-                    return;
-                } else if (isVerticalMove && Math.abs(deltaY) > 15) {
-                    // 垂直移动且超过阈值：开始英雄拖拽
-                    console.log(`⬇️ 垂直拖拽检测，开始拖拽英雄，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
+            if (distance > 100) {
+                console.log(`📱 检测到移动距离: ${distance.toFixed(1)}px, ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}, 时间: ${holdTime}ms`);
+                const isVerticalMove = Math.abs(deltaY) - 50 > Math.abs(deltaX);
+                if (isVerticalMove) {
+                    // 垂直移动：开始英雄拖拽
+                    console.log(`distance, ${distance} ⬇️ 垂直拖拽检测，开始拖拽英雄，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
                     this.startHeroDrag(this._selectedHeroType, event);
                     event.propagationStopped = true;
                     return;
@@ -699,28 +692,15 @@ export class HeroSelectionPanel extends Component {
     /**
      * 英雄按钮触摸结束
      */
-    private onHeroButtonTouchEnd(event: EventTouch): void {
+    private onHeroButtonTouchCancel(event: EventTouch): void {
         console.log(`🔚 英雄按钮触摸结束: 拖拽=${this._isDragging}, 选中=${this._selectedHeroType}`);
-
         if (this._isDragging) {
             // 如果正在拖拽，完成拖拽
             console.log("🎯 完成拖拽部署");
             this.finishHeroDrag(event);
-        } else if (this._selectedHeroType) {
-            // 如果只是点击（没有拖拽），清理选择状态，允许ScrollView处理
-            console.log(`📱 简单点击，清理选择: ${this._selectedHeroType}`);
-            this._selectedHeroType = null;
-            this._touchStartPos = null;
-            this._touchStartTime = 0;
         }
     }
 
-    /**
-     * 英雄按钮触摸取消
-     */
-    private onHeroButtonTouchCancel(): void {
-        this.cleanupDrag();
-    }
 
     // ========== 拖拽系统方法 ==========
 
@@ -732,6 +712,11 @@ export class HeroSelectionPanel extends Component {
         this._isDragging = true;
 
         console.log(`开始拖拽英雄: ${heroType}`);
+
+        // 禁用ScrollView滚动
+        if (this._heroScrollView) {
+            this._heroScrollView.enabled = false;
+        }
 
         // 更新按钮状态
         this.updateHeroButtonStates();
@@ -757,7 +742,7 @@ export class HeroSelectionPanel extends Component {
         }
 
         this._dragPreviewNode = new Node(`DragPreview_${heroType}`);
-        this._dragPreviewNode.parent = this.node.parent; // 设置为GameHUD的子节点
+        this._dragPreviewNode.parent = this.node.parent; // 设置为Canvas的子节点
 
         const previewSize = 50;
         const previewTransform = this._dragPreviewNode.addComponent(UITransform);
@@ -873,17 +858,16 @@ export class HeroSelectionPanel extends Component {
         if (!this._dragPreviewNode || !this._isDragging) return;
 
         const touchLocation = event.getUILocation();
-        const parentTransform = this.node.parent?.getComponent(UITransform);
+        const parentTransform = this.node.parent.getComponent(UITransform);
 
-        if (parentTransform) {
-            const worldPos = parentTransform.convertToNodeSpaceAR(new Vec3(touchLocation.x, touchLocation.y, 0));
-            this._dragPreviewNode.setPosition(worldPos);
-
-            // 更新网格预览
-            if (this._gridSystem) {
-                this._gridSystem.updateHoverPosition(worldPos);
-            }
+        const worldPos = parentTransform.convertToNodeSpaceAR(new Vec3(touchLocation.x, touchLocation.y, 0));
+        this._dragPreviewNode.setPosition(worldPos);
+        console.log(`📍 更新拖拽预览位置: (${worldPos.x.toFixed(1)}, ${worldPos.y.toFixed(1)})`);
+        // 更新网格预览
+        if (this._gridSystem) {
+            this._gridSystem.updateHoverPosition(worldPos);
         }
+
     }
 
     /**
@@ -943,9 +927,14 @@ export class HeroSelectionPanel extends Component {
      * 清理拖拽状态
      */
     private cleanupDrag(): void {
+        // 如果已经清理过了，直接返回
+        if (!this._isDragging && !this._selectedHeroType && !this._dragPreviewNode) {
+            return;
+        }
+
+        console.log("🧹 清理拖拽状态");
         this._isDragging = false;
         this._selectedHeroType = null;
-        this._touchStartPos = null;
         this._touchStartTime = 0;
 
         // 销毁拖拽预览
@@ -957,6 +946,11 @@ export class HeroSelectionPanel extends Component {
         // 结束网格预览模式
         if (this._gridSystem) {
             this._gridSystem.endDragMode();
+        }
+
+        // 重新启用ScrollView滚动
+        if (this._heroScrollView) {
+            this._heroScrollView.enabled = true;
         }
 
         // 更新按钮状态
