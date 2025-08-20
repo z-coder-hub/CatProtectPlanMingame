@@ -1,7 +1,8 @@
-import { _decorator, Button, Color, Component, Graphics, Label, Node, UITransform, view } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, UITransform } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { WaveManager } from '../../managers/WaveManager';
 import { GameState } from '../../types/GameTypes';
+import { UIHelper } from '../../utils/UIHelper';
 
 const { ccclass } = _decorator;
 
@@ -22,6 +23,9 @@ export class GameHUD extends Component {
     private _waveManager: WaveManager | null = null;
 
     protected onLoad(): void {
+        // 使用UIHelper设置GameHUD节点的全屏顶部对齐
+        UIHelper.SetupFullWidthTopWidget(this.node, 60);
+
         this.createCompleteInterface();
         console.log("GameHUD初始化完成 - 完整版本");
     }
@@ -53,19 +57,17 @@ export class GameHUD extends Component {
         this.createTopInfoArea();
     }
 
+
     // 创建顶部信息区域
     private createTopInfoArea(): void {
         const topAreaNode = new Node("TopInfoArea");
         topAreaNode.parent = this.node;
-        // topAreaNode的初始位置在屏幕顶部左边，下方50
-        topAreaNode.setPosition(-view.getVisibleSize().width / 2, view.getVisibleSize().height / 2 - 50);
 
-        // 顶部区域背景 - 根据topAreaNode的范围确定
-        const topBg = topAreaNode.addComponent(Graphics);
-        topBg.fillColor = new Color(30, 30, 30, 200);
-        const screenWidth = view.getVisibleSize().width;
-        topBg.rect(0, 0, screenWidth, 50);
-        topBg.fill();
+        // 使用UIHelper设置布局
+        UIHelper.SetupFullWidthTopWidget(topAreaNode, 58.5);
+
+        // 创建背景
+        UIHelper.CreatePanelWithBackground(topAreaNode, new Color(30, 30, 30, 200));
 
         // 创建信息面板
         this.createInfoPanel(topAreaNode);
@@ -78,73 +80,78 @@ export class GameHUD extends Component {
     private createInfoPanel(parent: Node): void {
         const infoPanelNode = new Node("InfoPanel");
         infoPanelNode.parent = parent;
-        //topArea到位置是在左上角，往下50个高度的位置，这样子就是在topArea的中间了
-        infoPanelNode.setPosition(0, 25);
 
+        // 使用UIHelper设置布局 - 左对齐填充高度
+        UIHelper.SetupLeftAlignWidget(infoPanelNode, 600, 58.5, 0, 0, 0);
 
         // 金币显示
-        this.createGoldDisplay(infoPanelNode, 40);
+        this.createGoldDisplay(infoPanelNode);
 
         // 波次显示
-        this.createWaveDisplay(infoPanelNode, 200);
+        this.createWaveDisplay(infoPanelNode);
 
         // 城堡血量显示
-        this.createCastleHealthDisplay(infoPanelNode, 350);
+        this.createCastleHealthDisplay(infoPanelNode);
     }
 
     // 创建金币显示
-    private createGoldDisplay(parent: Node, xPosition: number): void {
+    private createGoldDisplay(parent: Node): void {
         const goldNode = new Node("GoldDisplay");
         goldNode.parent = parent;
-        goldNode.setPosition(xPosition, 0);
 
-        // 金币图标
-        const goldIcon = goldNode.addComponent(Graphics);
-        goldIcon.fillColor = new Color(255, 215, 0);
-        goldIcon.circle(0, 0, 12);
-        goldIcon.fill();
-        goldIcon.strokeColor = new Color(255, 140, 0);
-        goldIcon.lineWidth = 2;
-        goldIcon.circle(0, 0, 12);
-        goldIcon.stroke();
+        // 使用UIHelper设置布局
+        UIHelper.SetupLeftAlignWidget(goldNode, 30, 58.5, 15);
+
+        // 使用UIHelper创建金币图标
+        const goldNodeTransform = goldNode.getComponent(UITransform);
+        if (goldNodeTransform) {
+            UIHelper.CreateCircleIcon(goldNode, goldNodeTransform.height / 2,
+                new Color(255, 215, 0), new Color(255, 140, 0), 2.34);
+        }
 
         // 金币文本
         const goldLabelNode = new Node("GoldLabel");
         goldLabelNode.parent = goldNode;
-        goldLabelNode.setPosition(50, 0);
+
+        // 使用UIHelper设置文本标签的布局
+        UIHelper.SetupLeftAlignWidget(goldLabelNode, 30, 58.5, 30 + 15 + 15);
 
         const goldLabel = goldLabelNode.addComponent(Label);
         this._goldLabel = goldLabel;
         this._goldLabel.string = "100";
-        this._goldLabel.fontSize = 24;
+        this._goldLabel.fontSize = 28.08;
         this._goldLabel.color = new Color(255, 215, 0);
     }
 
     // 创建波次显示
-    private createWaveDisplay(parent: Node, xPosition: number): void {
+    private createWaveDisplay(parent: Node): void {
         const waveNode = new Node("WaveDisplay");
         waveNode.parent = parent;
-        waveNode.setPosition(xPosition, 0);
+
+        // 使用UIHelper设置布局
+        UIHelper.SetupLeftAlignWidget(waveNode, 30, 58.5, 30 + 15 + 15 + 30 + 100);
 
         const waveLabel = waveNode.addComponent(Label);
         this._waveLabel = waveLabel;
         this._waveLabel.string = "第1/3波";
-        this._waveLabel.fontSize = 22;
+        this._waveLabel.fontSize = 25.74;
         this._waveLabel.color = new Color(255, 255, 255);
     }
 
     // 创建城堡血量显示
-    private createCastleHealthDisplay(parent: Node, xPosition: number): void {
+    private createCastleHealthDisplay(parent: Node): void {
         const healthNode = new Node("CastleHealthDisplay");
         healthNode.parent = parent;
-        healthNode.setPosition(xPosition, 0);
+
+        // 使用UIHelper设置布局，设置在中央位置
+        UIHelper.SetupLeftAlignWidget(healthNode, 117, 58.5, 300);
 
         // 血量条背景
         const healthBgNode = new Node("HealthBarBg");
         healthBgNode.parent = healthNode;
         const healthBg = healthBgNode.addComponent(Graphics);
         healthBg.fillColor = new Color(100, 100, 100);
-        healthBg.rect(-50, -6, 100, 12);
+        healthBg.rect(-58.5, -7.02, 117, 14.04);
         healthBg.fill();
 
         // 血量条前景
@@ -153,18 +160,18 @@ export class GameHUD extends Component {
         const healthBar = healthBarNode.addComponent(Graphics);
         this._castleHealthBar = healthBar;
         this._castleHealthBar.fillColor = new Color(255, 0, 0);
-        this._castleHealthBar.rect(-50, -6, 100, 12);
+        this._castleHealthBar.rect(-58.5, -7.02, 117, 14.04);
         this._castleHealthBar.fill();
 
         // 血量文本
         const healthLabelNode = new Node("HealthLabel");
         healthLabelNode.parent = healthNode;
-        healthLabelNode.setPosition(0, -20);
+        healthLabelNode.setPosition(0, -23.4);
 
         const healthLabel = healthLabelNode.addComponent(Label);
         this._castleHealthLabel = healthLabel;
         this._castleHealthLabel.string = "城堡 100/100";
-        this._castleHealthLabel.fontSize = 16;
+        this._castleHealthLabel.fontSize = 18.72;
         this._castleHealthLabel.color = new Color(255, 255, 255);
     }
 
@@ -172,69 +179,26 @@ export class GameHUD extends Component {
     private createControlButtons(parent: Node): void {
         const controlPanelNode = new Node("ControlPanel");
         controlPanelNode.parent = parent;
-        const screenWidth = view.getVisibleSize().width;
-        controlPanelNode.setPosition(screenWidth - 150, 25);
 
-        // 计算按钮宽度和间距
-        const buttonWidth = Math.max(80, screenWidth * 0.12);
-        const buttonSpacing = Math.max(100, buttonWidth + 20); // 确保按钮间有足够间距
+        // 使用UIHelper设置右对齐布局
+        UIHelper.SetupRightAlignWidget(controlPanelNode, 250, 58.5, 10);
 
-        // 开始/暂停按钮
-        this._playPauseButton = this.createButton("开始", -buttonSpacing / 2, () => {
+        // 计算按钮间距
+        const buttonSpacing = 117;
+
+        // 使用UIHelper创建开始/暂停按钮
+        this._playPauseButton = UIHelper.CreateButtonWithPosition("开始", -buttonSpacing / 2, 0, 93.6, 40.95, new Color(70, 130, 180), () => {
             this.onPlayPauseButtonClicked();
-        });
+        }, this);
         this._playPauseButton.parent = controlPanelNode;
 
-        // 重启按钮
-        this._restartButton = this.createButton("重启", buttonSpacing / 2, () => {
+        // 使用UIHelper创建重启按钮
+        this._restartButton = UIHelper.CreateButtonWithPosition("重启", buttonSpacing / 2, 0, 93.6, 40.95, new Color(70, 130, 180), () => {
             this.onRestartButtonClicked();
-        });
+        }, this);
         this._restartButton.parent = controlPanelNode;
     }
 
-
-    // 创建按钮
-    private createButton(text: string, xPos: number, callback: () => void): Node {
-        const buttonNode = new Node(`Button_${text}`);
-        buttonNode.setPosition(xPos, 0);
-
-        const screenWidth = view.getVisibleSize().width;
-        const buttonWidth = Math.max(80, screenWidth * 0.12);
-        const buttonHeight = Math.max(35, screenWidth * 0.05);
-        const transform = buttonNode.addComponent(UITransform);
-        transform.setContentSize(buttonWidth, buttonHeight);
-
-        const button = buttonNode.addComponent(Button);
-
-        const buttonBg = buttonNode.addComponent(Graphics);
-        this.drawButtonBackground(buttonBg, buttonWidth, buttonHeight, new Color(70, 130, 180));
-
-        button.target = buttonNode;
-
-        const labelNode = new Node("Label");
-        labelNode.parent = buttonNode;
-        const label = labelNode.addComponent(Label);
-        label.string = text;
-        label.fontSize = Math.max(14, buttonHeight * 0.4);
-        label.color = new Color(255, 255, 255);
-
-        button.node.on(Button.EventType.CLICK, callback, this);
-
-        return buttonNode;
-    }
-
-    // 绘制按钮背景
-    private drawButtonBackground(graphics: Graphics, width: number, height: number, color: Color): void {
-        graphics.clear();
-        graphics.fillColor = color;
-        graphics.rect(-width / 2, -height / 2, width, height);
-        graphics.fill();
-
-        graphics.strokeColor = new Color(255, 255, 255);
-        graphics.lineWidth = 1;
-        graphics.rect(-width / 2, -height / 2, width, height);
-        graphics.stroke();
-    }
 
     // 更新显示信息
     private updateDisplays(): void {
@@ -279,8 +243,8 @@ export class GameHUD extends Component {
             this._castleHealthBar.fillColor = new Color(255, 0, 0);
         }
 
-        const healthWidth = 100 * healthPercent;
-        this._castleHealthBar.rect(-50, -6, healthWidth, 12);
+        const healthWidth = 117 * healthPercent;
+        this._castleHealthBar.rect(-58.5, -7.02, healthWidth, 14.04);
         this._castleHealthBar.fill();
     }
 
@@ -312,13 +276,7 @@ export class GameHUD extends Component {
 
     // 设置按钮文本
     private setButtonText(button: Node, text: string): void {
-        const labelNode = button.getChildByName("Label");
-        if (labelNode) {
-            const label = labelNode.getComponent(Label);
-            if (label) {
-                label.string = text;
-            }
-        }
+        UIHelper.SetButtonText(button, text);
     }
 
     // 按钮点击事件处理
@@ -359,16 +317,16 @@ export class GameHUD extends Component {
     public showGameOverMessage(isVictory: boolean): void {
         const messageNode = new Node("GameOverMessage");
         messageNode.parent = this.node;
-        messageNode.setPosition(0, 0);
 
-        const messageBg = messageNode.addComponent(Graphics);
-        messageBg.fillColor = new Color(0, 0, 0, 180);
-        messageBg.rect(-200, -100, 400, 200);
-        messageBg.fill();
+        // 使用UIHelper设置居中布局
+        UIHelper.SetupCenterWidget(messageNode, 468, 234);
+
+        // 使用UIHelper创建背景
+        UIHelper.CreatePanelWithBackground(messageNode, new Color(0, 0, 0, 180));
 
         const messageLabel = messageNode.addComponent(Label);
         messageLabel.string = isVictory ? "胜利！" : "失败！";
-        messageLabel.fontSize = 48;
+        messageLabel.fontSize = 56.16;
         messageLabel.color = isVictory ? new Color(0, 255, 0) : new Color(255, 0, 0);
 
         setTimeout(() => {

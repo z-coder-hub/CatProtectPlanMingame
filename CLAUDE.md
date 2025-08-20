@@ -167,8 +167,48 @@ interface IGameStateHandler {
 ### 命名约定
 - 组件类使用PascalCase: `GameManager`, `BaseUnit`
 - 方法使用camelCase: `takeDamage()`, `findNearestEnemy()`
+- **公共方法**使用大写开头的camelCase: `CreateButton()`, `SetupLayout()`
+- **私有方法**使用小写开头的camelCase: `createButton()`, `setupLayout()`
+- **受保护方法**不限制大小写，可根据具体场景选择: `HandleEvent()`, `updateDisplay()`
+- **Cocos Creator生命周期方法**遵循Cocos规则: `onLoad()`, `start()`, `update()`, `onDestroy()`
+- **工具类静态方法**使用大写开头的camelCase: `UIHelper.CreateButton()`, `UIHelper.SetupWidget()`
 - 常量使用UPPER_SNAKE_CASE: `GAME_CONFIG`, `UI_CONSTANTS`
 - 私有属性使用下划线前缀: `_gameManager`, `_currentHealth`
+
+#### 方法可见性命名规则说明：
+```typescript
+// ✅ 正确：公共方法大写开头
+class MyComponent {
+    public CreateElement(): Node { ... }
+    public SetupComponent(): void { ... }
+}
+
+// ✅ 正确：Cocos Creator生命周期方法遵循Cocos规则
+class MyComponent extends Component {
+    protected onLoad(): void { ... }     // 遵循Cocos规则
+    protected start(): void { ... }      // 遵循Cocos规则  
+    protected update(dt: number): void { ... }  // 遵循Cocos规则
+    protected onDestroy(): void { ... }  // 遵循Cocos规则
+}
+
+// ✅ 正确：自定义受保护方法不限制大小写
+class MyComponent {
+    protected HandleEvent(): void { ... }   // 可大写开头
+    protected updateDisplay(): void { ... } // 可小写开头
+}
+
+// ✅ 正确：私有方法小写开头
+class MyComponent {
+    private createInternalNode(): Node { ... }
+    private handlePrivateEvent(): void { ... }
+}
+
+// ✅ 正确：工具类静态方法大写开头
+export class UIHelper {
+    static CreateButton(): Node { ... }
+    static SetupWidget(): void { ... }
+}
+```
 
 ### 注释规范
 - 所有公共方法必须有TSDoc注释
@@ -207,6 +247,58 @@ interface IGameStateHandler {
 1. 创建继承自 `Component` 的新UI类
 2. 使用 Graphics API 绘制界面
 3. 通过接口和直接引用与其他组件通信
+4. **禁止使用延迟函数**: 设置UI组件时绝对不允许使用 `setTimeout`、`scheduleOnce` 等延迟方法
+   - **错误示例**: `this.scheduleOnce(() => { graphics.rect(...); }, 0);`
+   - **正确做法**: 确保组件正确初始化后直接操作，使用 `updateAlignment()` 等API确保Widget更新
+5. **优先使用Widget组件进行对齐布局**: 尽量使用Widget组件而不是手动setPosition进行UI布局
+   - Widget提供自动屏幕适配功能，支持多种分辨率和设备
+   - 减少手动计算屏幕尺寸和位置的复杂代码
+   - 提供更稳定和可维护的UI布局方案
+6. 确保所有UI节点都有正确的 UITransform 组件
+
+### Widget组件使用指南
+
+**Widget组件是Cocos Creator推荐的UI布局解决方案**，应该优先使用而不是手动setPosition：
+
+#### 常用Widget对齐方式：
+```typescript
+// ✅ 推荐：顶部对齐（如顶部信息栏）
+const topWidget = node.addComponent(Widget);
+topWidget.isAlignTop = true;
+topWidget.isAlignLeft = true;
+topWidget.isAlignRight = true;
+topWidget.top = 0;
+topWidget.left = 0;
+topWidget.right = 0;
+
+// ✅ 推荐：右上角对齐（如控制按钮）
+const rightWidget = node.addComponent(Widget);
+rightWidget.isAlignTop = true;
+rightWidget.isAlignRight = true;
+rightWidget.top = 0;
+rightWidget.right = 10;
+
+// ✅ 推荐：居中对齐（如游戏结束消息）
+const centerWidget = node.addComponent(Widget);
+centerWidget.isAlignHorizontalCenter = true;
+centerWidget.isAlignVerticalCenter = true;
+```
+
+#### Widget使用原则：
+- **总是调用updateAlignment()**: 设置Widget属性后必须调用此方法更新布局
+- **配合UITransform使用**: 确保节点有UITransform组件并设置正确的contentSize
+- **避免混用**: 不要在使用Widget的节点上再手动setPosition
+- **优先级**: Widget > 手动计算屏幕尺寸 > setPosition绝对定位
+
+#### 错误的布局方式：
+```typescript
+// ❌ 避免：手动计算屏幕尺寸
+const screenWidth = view.getVisibleSize().width;
+node.setPosition(screenWidth - 100, 50);
+
+// ❌ 避免：硬编码位置
+node.setPosition(800, 600);
+```
 
 ## 调试和测试
 

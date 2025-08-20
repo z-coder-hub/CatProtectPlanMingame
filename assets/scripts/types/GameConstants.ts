@@ -1,4 +1,4 @@
-import { EnemyConfig, EnemyType, EnemyCategory, GameConfig, HeroConfig, HeroType, HeroCategory, WaveConfig } from './GameTypes';
+import { EnemyCategory, EnemyConfig, EnemyType, GameConfig, HeroCategory, HeroConfig, HeroType, WaveConfig } from './GameTypes';
 
 // 英雄配置 - 完整的猫咪英雄配置
 export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
@@ -400,9 +400,9 @@ export const GAME_CONFIG: GameConfig = {
     initialGold: 150,                    // 增加初始金币，方便早期部署
     castleHealth: 120,                   // 增加城堡血量，提供更多容错
     gridConfig: {
-        rows: 13,
-        cols: 7,
-        cellSize: 85,
+        rows: 11,
+        cols: 6,
+        cellSize: 100,
         startPosition: { x: 0, y: -200 }
     },
     heroConfigs: HERO_CONFIGS,

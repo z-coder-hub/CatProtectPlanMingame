@@ -22,7 +22,6 @@ export class HeroSelectionPanel extends Component {
     private _selectedHeroType: HeroType | null = null;
     private _dragPreviewNode: Node | null = null;
     private _isDragging: boolean = false;
-    private _touchStartTime: number = 0;
 
     // 管理器引用
     private _gameManager: GameManager | null = null;
@@ -643,7 +642,6 @@ export class HeroSelectionPanel extends Component {
 
         // 记录触摸开始，但不立即开始拖拽 - 允许ScrollView正常处理
         this._selectedHeroType = heroType;
-        this._touchStartTime = Date.now();
         const startLocation = event.getUIStartLocation();
         console.log(`✅ 选中英雄: ${heroType}, 位置: (${startLocation.x}, ${startLocation.y})`);
     }
@@ -925,7 +923,6 @@ export class HeroSelectionPanel extends Component {
         console.log("🧹 清理拖拽状态");
         this._isDragging = false;
         this._selectedHeroType = null;
-        this._touchStartTime = 0;
 
         // 销毁拖拽预览
         if (this._dragPreviewNode) {
