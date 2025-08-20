@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, ScrollView, UITransform, Vec2, Vec3, view } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, ScrollView, UITransform, Vec3, view } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
 import { HeroFactory } from '../../systems/HeroFactory';
@@ -6,12 +6,6 @@ import { HeroType } from '../../types/GameTypes';
 
 const { ccclass } = _decorator;
 
-/**
- * 英雄部署接口 - 定义英雄部署的回调函数类型
- */
-export interface IHeroDeploymentHandler {
-    deployHeroToGrid(heroType: HeroType, gridRow: number, gridCol: number): boolean;
-}
 
 /**
  * 英雄选择面板组件
@@ -20,6 +14,8 @@ export interface IHeroDeploymentHandler {
 @ccclass('HeroSelectionPanel')
 export class HeroSelectionPanel extends Component {
 
+    // ========== 属性定义 ==========
+    
     // UI组件引用
     private _heroScrollView: ScrollView | null = null;
     private _heroButtons: Node[] = [];
@@ -28,14 +24,12 @@ export class HeroSelectionPanel extends Component {
     private _isDragging: boolean = false;
     private _touchStartPos: Vec3 | null = null;
     private _touchStartTime: number = 0;
-    private _lastTouchTime: number = 0;
 
     // 管理器引用
     private _gameManager: GameManager | null = null;
     private _gridSystem: GridDeploymentSystem | null = null;
 
-    // 部署处理器
-    private _deploymentHandler: IHeroDeploymentHandler | null = null;
+    // ========== 生命周期方法 ==========
 
     protected onLoad(): void {
         this.createHeroSelectionPanel();
@@ -55,13 +49,65 @@ export class HeroSelectionPanel extends Component {
         }
     }
 
-    // ========== 公共接口 ==========
+    protected onDestroy(): void {
+        this.cleanupDrag();
+    }
+
+    // ========== 公共接口方法 ==========
 
     /**
-     * 设置英雄部署处理器
+     * 部署英雄到网格
      */
-    public setDeploymentHandler(handler: IHeroDeploymentHandler): void {
-        this._deploymentHandler = handler;
+    public deployHeroToGrid(heroType: HeroType, gridRow: number, gridCol: number): boolean {
+        console.log(`🚀 开始部署英雄: ${heroType} 到位置 (${gridRow}, ${gridCol})`);
+
+        if (!this._gameManager || !this._gridSystem) {
+            console.log("❌ 缺少必要的管理器引用");
+            return false;
+        }
+
+        const heroCost = HeroFactory.getHeroCost(heroType);
+
+        // 检查金币
+        if (this._gameManager.getGameStats().gold < heroCost) {
+            console.log("金币不足，无法部署英雄");
+            return false;
+        }
+
+        // 检查网格位置
+        if (!this._gridSystem.canDeployHero(gridRow, gridCol)) {
+            console.log("网格位置不可用");
+            return false;
+        }
+
+        // 创建英雄
+        console.log(`🏭 创建英雄: ${heroType}`);
+        const heroNode = HeroFactory.createHero(heroType, this._gridSystem.node);
+        if (!heroNode) {
+            console.log("❌ 英雄创建失败");
+            return false;
+        }
+        console.log(`✅ 英雄创建成功: ${heroNode.name}`);
+
+        // 部署到网格
+        console.log(`🗺️ 部署英雄到网格位置 (${gridRow}, ${gridCol})`);
+        const success = this._gridSystem.deployHero(heroNode, gridRow, gridCol);
+        if (success) {
+            // 扣除金币
+            console.log(`💰 扣除金币: ${heroCost}`);
+            this._gameManager.spendGold(heroCost);
+
+            // 添加到已部署列表
+            this._gameManager.addDeployedHero(heroNode);
+
+            console.log(`✅ 成功部署 ${heroType}，消耗 ${heroCost} 金币`);
+            return true;
+        } else {
+            // 部署失败，销毁英雄节点
+            heroNode.destroy();
+            console.log("❌ 英雄部署失败");
+            return false;
+        }
     }
 
     /**
@@ -88,7 +134,7 @@ export class HeroSelectionPanel extends Component {
         });
     }
 
-    // ========== 面板创建 ==========
+    // ========== 面板创建方法 ==========
 
     /**
      * 创建英雄选择面板
@@ -217,7 +263,6 @@ export class HeroSelectionPanel extends Component {
         const availableHeroes = HeroFactory.getAvailableHeroTypes();
 
         // 计算起始位置（左对齐）
-        const contentWidth = contentNode.getComponent(UITransform)?.contentSize.width || 0;
         const startX = buttonSpacing + buttonSize / 2;
 
         availableHeroes.forEach((heroType, index) => {
@@ -263,6 +308,8 @@ export class HeroSelectionPanel extends Component {
 
         return buttonNode;
     }
+
+    // ========== UI绘制方法 ==========
 
     /**
      * 绘制英雄按钮背景
@@ -527,26 +574,34 @@ export class HeroSelectionPanel extends Component {
      * 创建价格标签
      */
     private createPriceLabel(parent: Node, cost: number, size: number): void {
-        const priceNode = new Node("PriceLabel");
-        priceNode.setPosition(0, -size / 2 + 12);
-
+        // 创建价格背景节点
+        const priceBgNode = new Node("PriceBackground");
+        priceBgNode.setPosition(0, -size / 2 + 12);
+        
         // 价格背景
-        const priceBg = priceNode.addComponent(Graphics);
+        const priceBg = priceBgNode.addComponent(Graphics);
         priceBg.fillColor = new Color(0, 0, 0, 150);
         priceBg.rect(-20, -8, 40, 16);
         priceBg.fill();
+        
+        // 设置背景节点的父节点
+        priceBgNode.parent = parent;
 
+        // 创建价格文本节点
+        const priceNode = new Node("PriceLabel");
+        priceNode.setPosition(0, -size / 2 + 12);
+        
         // 价格文本
         const priceLabel = priceNode.addComponent(Label);
-
-        // 设置父节点
-        priceNode.parent = parent;
         priceLabel.string = `${cost}`;
         priceLabel.fontSize = 14;
         priceLabel.color = new Color(255, 215, 0);
+
+        // 设置文本节点的父节点
+        priceNode.parent = parent;
     }
 
-    // ========== 英雄交互系统 ==========
+    // ========== 触摸事件处理方法 ==========
 
     /**
      * 设置英雄按钮事件
@@ -583,13 +638,6 @@ export class HeroSelectionPanel extends Component {
             return;
         }
 
-        // 检测双击以测试ScrollView
-        const currentTime = Date.now();
-        if (this._lastTouchTime && (currentTime - this._lastTouchTime) < 300) {
-            console.log("🧪 双击检测到，测试ScrollView滚动...");
-            this.testScrollView();
-        }
-        this._lastTouchTime = currentTime;
 
         // 记录触摸开始，但不立即开始拖拽 - 允许ScrollView正常处理
         this._selectedHeroType = heroType;
@@ -597,6 +645,84 @@ export class HeroSelectionPanel extends Component {
         this._touchStartTime = Date.now();
         console.log(`✅ 选中英雄: ${heroType}, 位置: (${this._touchStartPos.x}, ${this._touchStartPos.y})`);
     }
+
+    /**
+     * 英雄按钮触摸移动
+     */
+    private onHeroButtonTouchMove(event: EventTouch): void {
+        // 如果还没开始拖拽，检查拖动方向来决定是滚动还是拖拽
+        if (!this._isDragging && this._selectedHeroType && this._touchStartPos) {
+            const currentPos = new Vec3(event.getUILocation().x, event.getUILocation().y, 0);
+            const deltaX = currentPos.x - this._touchStartPos.x;
+            const deltaY = currentPos.y - this._touchStartPos.y;
+            const distance = Vec3.distance(this._touchStartPos, currentPos);
+            const currentTime = Date.now();
+            const holdTime = currentTime - this._touchStartTime;
+
+            // 只有在移动距离足够大时才判断方向
+            if (distance > 8) {
+                const isHorizontalMove = Math.abs(deltaX) > Math.abs(deltaY);
+                const isVerticalMove = Math.abs(deltaY) > Math.abs(deltaX);
+
+                if (isHorizontalMove) {
+                    // 水平移动：允许ScrollView处理滚动
+                    console.log(`➡️ 水平滑动检测，允许ScrollView处理，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
+                    return;
+                } else if (isVerticalMove && Math.abs(deltaY) > 15) {
+                    // 垂直移动且超过阈值：开始英雄拖拽
+                    console.log(`⬇️ 垂直拖拽检测，开始拖拽英雄，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
+                    this.startHeroDrag(this._selectedHeroType, event);
+                    event.propagationStopped = true;
+                    return;
+                }
+            }
+
+            // 支持长按拖拽（无论方向）
+            if (holdTime > 500) {
+                console.log(`⏰ 长按检测(${holdTime}ms)，开始拖拽英雄`);
+                this.startHeroDrag(this._selectedHeroType, event);
+                event.propagationStopped = true;
+                return;
+            }
+
+            console.log(`📱 允许滚动，距离: ${distance.toFixed(1)}px, ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}, 时间: ${holdTime}ms`);
+            return;
+        }
+
+        // 如果已经在拖拽中
+        if (this._isDragging) {
+            event.propagationStopped = true;
+            this.updateDragPreview(event);
+        }
+    }
+
+    /**
+     * 英雄按钮触摸结束
+     */
+    private onHeroButtonTouchEnd(event: EventTouch): void {
+        console.log(`🔚 英雄按钮触摸结束: 拖拽=${this._isDragging}, 选中=${this._selectedHeroType}`);
+
+        if (this._isDragging) {
+            // 如果正在拖拽，完成拖拽
+            console.log("🎯 完成拖拽部署");
+            this.finishHeroDrag(event);
+        } else if (this._selectedHeroType) {
+            // 如果只是点击（没有拖拽），清理选择状态，允许ScrollView处理
+            console.log(`📱 简单点击，清理选择: ${this._selectedHeroType}`);
+            this._selectedHeroType = null;
+            this._touchStartPos = null;
+            this._touchStartTime = 0;
+        }
+    }
+
+    /**
+     * 英雄按钮触摸取消
+     */
+    private onHeroButtonTouchCancel(): void {
+        this.cleanupDrag();
+    }
+
+    // ========== 拖拽系统方法 ==========
 
     /**
      * 开始英雄拖拽
@@ -741,56 +867,6 @@ export class HeroSelectionPanel extends Component {
     }
 
     /**
-     * 英雄按钮触摸移动
-     */
-    private onHeroButtonTouchMove(event: EventTouch): void {
-        // 如果还没开始拖拽，检查拖动方向来决定是滚动还是拖拽
-        if (!this._isDragging && this._selectedHeroType && this._touchStartPos) {
-            const currentPos = new Vec3(event.getUILocation().x, event.getUILocation().y, 0);
-            const deltaX = currentPos.x - this._touchStartPos.x;
-            const deltaY = currentPos.y - this._touchStartPos.y;
-            const distance = Vec3.distance(this._touchStartPos, currentPos);
-            const currentTime = Date.now();
-            const holdTime = currentTime - this._touchStartTime;
-
-            // 只有在移动距离足够大时才判断方向
-            if (distance > 8) {
-                const isHorizontalMove = Math.abs(deltaX) > Math.abs(deltaY);
-                const isVerticalMove = Math.abs(deltaY) > Math.abs(deltaX);
-
-                if (isHorizontalMove) {
-                    // 水平移动：允许ScrollView处理滚动
-                    console.log(`➡️ 水平滑动检测，允许ScrollView处理，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
-                    return;
-                } else if (isVerticalMove && Math.abs(deltaY) > 15) {
-                    // 垂直移动且超过阈值：开始英雄拖拽
-                    console.log(`⬇️ 垂直拖拽检测，开始拖拽英雄，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
-                    this.startHeroDrag(this._selectedHeroType, event);
-                    event.propagationStopped = true;
-                    return;
-                }
-            }
-
-            // 支持长按拖拽（无论方向）
-            if (holdTime > 500) {
-                console.log(`⏰ 长按检测(${holdTime}ms)，开始拖拽英雄`);
-                this.startHeroDrag(this._selectedHeroType, event);
-                event.propagationStopped = true;
-                return;
-            }
-
-            console.log(`📱 允许滚动，距离: ${distance.toFixed(1)}px, ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}, 时间: ${holdTime}ms`);
-            return;
-        }
-
-        // 如果已经在拖拽中
-        if (this._isDragging) {
-            event.propagationStopped = true;
-            this.updateDragPreview(event);
-        }
-    }
-
-    /**
      * 更新拖拽预览位置
      */
     private updateDragPreview(event: EventTouch): void {
@@ -807,25 +883,6 @@ export class HeroSelectionPanel extends Component {
             if (this._gridSystem) {
                 this._gridSystem.updateHoverPosition(worldPos);
             }
-        }
-    }
-
-    /**
-     * 英雄按钮触摸结束
-     */
-    private onHeroButtonTouchEnd(event: EventTouch): void {
-        console.log(`🔚 英雄按钮触摸结束: 拖拽=${this._isDragging}, 选中=${this._selectedHeroType}`);
-
-        if (this._isDragging) {
-            // 如果正在拖拽，完成拖拽
-            console.log("🎯 完成拖拽部署");
-            this.finishHeroDrag(event);
-        } else if (this._selectedHeroType) {
-            // 如果只是点击（没有拖拽），清理选择状态，允许ScrollView处理
-            console.log(`📱 简单点击，清理选择: ${this._selectedHeroType}`);
-            this._selectedHeroType = null;
-            this._touchStartPos = null;
-            this._touchStartTime = 0;
         }
     }
 
@@ -865,16 +922,12 @@ export class HeroSelectionPanel extends Component {
             console.log(`🎯 可部署: ${canDeploy}`);
 
             if (canDeploy) {
-                // 通过部署处理器执行部署
-                if (this._deploymentHandler) {
-                    const success = this._deploymentHandler.deployHeroToGrid(this._selectedHeroType, gridPos.row, gridPos.col);
-                    if (success) {
-                        console.log(`✅ 成功部署 ${this._selectedHeroType} 到网格 (${gridPos.row}, ${gridPos.col})`);
-                    } else {
-                        console.log(`❌ 英雄部署失败: ${this._selectedHeroType}`);
-                    }
+                // 直接使用自己的部署方法
+                const success = this.deployHeroToGrid(this._selectedHeroType, gridPos.row, gridPos.col);
+                if (success) {
+                    console.log(`✅ 成功部署 ${this._selectedHeroType} 到网格 (${gridPos.row}, ${gridPos.col})`);
                 } else {
-                    console.log("❌ 未设置部署处理器");
+                    console.log(`❌ 英雄部署失败: ${this._selectedHeroType}`);
                 }
             } else {
                 console.log(`❌ 网格位置 (${gridPos.row}, ${gridPos.col}) 已被占用`);
@@ -883,13 +936,6 @@ export class HeroSelectionPanel extends Component {
             console.log("❌ 触摸位置超出网格范围");
         }
 
-        this.cleanupDrag();
-    }
-
-    /**
-     * 英雄按钮触摸取消
-     */
-    private onHeroButtonTouchCancel(): void {
         this.cleanupDrag();
     }
 
@@ -917,7 +963,7 @@ export class HeroSelectionPanel extends Component {
         this.updateHeroButtonStates();
     }
 
-    // ========== 辅助方法 ==========
+    // ========== 辅助工具方法 ==========
 
     /**
      * 显示金币不足效果
@@ -933,37 +979,4 @@ export class HeroSelectionPanel extends Component {
         }, 200);
     }
 
-    /**
-     * 测试ScrollView滚动功能
-     */
-    private testScrollView(): void {
-        if (!this._heroScrollView) {
-            console.error("❌ 无法测试：_heroScrollView引用为空");
-            return;
-        }
-
-        const scrollView = this._heroScrollView;
-        console.log("🧪 开始ScrollView滚动测试...");
-
-        if (scrollView.content) {
-            console.log("📏 测试前状态:", {
-                enabled: scrollView.enabled,
-                horizontal: scrollView.horizontal,
-                contentWidth: scrollView.content.getComponent(UITransform)?.contentSize.width,
-                scrollViewWidth: scrollView.node.getComponent(UITransform)?.contentSize.width
-            });
-
-            // 尝试手动滚动到偏移位置
-            setTimeout(() => {
-                scrollView.scrollToOffset(new Vec2(100, 0), 2);
-                console.log("✅ 手动滚动命令已发送");
-            }, 100);
-        } else {
-            console.error("❌ 测试失败：ScrollView没有content");
-        }
-    }
-
-    protected onDestroy(): void {
-        this.cleanupDrag();
-    }
 }

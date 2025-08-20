@@ -1,7 +1,6 @@
-import { _decorator, Component, Node, Vec3, Vec2, Graphics, Color, EventTouch, input, Input, UITransform } from 'cc';
+import { _decorator, Component, Node, Vec3, Vec2, Graphics, Color, UITransform } from 'cc';
 import { GridPosition } from '../types/GameTypes';
 import { GAME_CONSTANTS, GAME_CONFIG } from '../types/GameConstants';
-import { GameHUD } from '../components/ui/GameHUD';
 
 const { ccclass, property } = _decorator;
 
@@ -45,8 +44,7 @@ export class GridDeploymentSystem extends Component {
     private _isDragMode: boolean = false;
     private _previewAnimationTimer: number = 0;
     
-    // UI交互相关
-    private _gameHUD: GameHUD | null = null;
+    // UI交互相关（保留拖拽预览功能）
     
     // 获取网格总数
     public get totalSlots(): number {
@@ -79,8 +77,8 @@ export class GridDeploymentSystem extends Component {
         // 创建拖拽预览Graphics
         this.createPreviewGraphics();
         
-        // 设置输入事件监听
-        this.setupInputEvents();
+        // 英雄部署交互现在由HeroSelectionPanel处理
+        console.log('网格系统初始化完成，英雄部署交互由HeroSelectionPanel处理');
         
         console.log(`网格部署系统初始化完成: ${this.gridColumns}x${this.gridRows}, 单元格大小: ${this.cellSize}`);
     }
@@ -90,8 +88,8 @@ export class GridDeploymentSystem extends Component {
             GridDeploymentSystem._instance = null;
         }
         
-        // 清理输入事件监听
-        this.cleanupInputEvents();
+        // 英雄部署交互现在由HeroSelectionPanel处理，无需清理
+        console.log('网格系统销毁，无需清理输入事件');
     }
     
     // 初始化网格数据
@@ -462,29 +460,24 @@ export class GridDeploymentSystem extends Component {
         
         const halfCell = this.cellSize / 2;
         
-        // 绘制填充背景
-        this._previewGraphics.fillColor = color;
+        // 绘制填充背景和边框（一条路径）
         this._previewGraphics.rect(
             worldPos.x - halfCell, 
             worldPos.y - halfCell, 
             this.cellSize, 
             this.cellSize
         );
+        
+        // 填充
+        this._previewGraphics.fillColor = color;
         this._previewGraphics.fill();
         
-        // 绘制边框
+        // 描边
         const borderColor = canDeploy ? 
             new Color(0, 200, 0, 255) :  // 深绿色 - 可部署
             new Color(200, 0, 0, 255);   // 深红色 - 不可部署
-        
         this._previewGraphics.strokeColor = borderColor;
         this._previewGraphics.lineWidth = 3;
-        this._previewGraphics.rect(
-            worldPos.x - halfCell, 
-            worldPos.y - halfCell, 
-            this.cellSize, 
-            this.cellSize
-        );
         this._previewGraphics.stroke();
         
         // 如果可部署，添加额外的装饰
@@ -599,96 +592,12 @@ export class GridDeploymentSystem extends Component {
         return GridDeploymentSystem._instance;
     }
     
-    // 设置GameHUD引用
-    public setGameHUD(gameHUD: GameHUD): void {
-        this._gameHUD = gameHUD;
-    }
     
-    // 设置输入事件监听
-    private setupInputEvents(): void {
-        // 监听触摸/鼠标点击事件
-        input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
-        input.on(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
-        input.on(Input.EventType.TOUCH_END, this.onTouchEnd, this);
-    }
     
-    // 清理输入事件监听
-    private cleanupInputEvents(): void {
-        input.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
-        input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
-        input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this);
-    }
     
-    // 触摸开始事件
-    private onTouchStart(event: EventTouch): void {
-        const uiTransform = this.node.getComponent(UITransform);
-        if (!uiTransform) return;
-        
-        const touchLocation = uiTransform.convertToNodeSpaceAR(event.getLocation());
-        const touchWorldPos = new Vec3(touchLocation.x, touchLocation.y, 0);
-        const gridPos = this.worldToGridPosition(touchWorldPos);
-        
-        if (gridPos && this._gameHUD) {
-            // 开始拖拽预览
-            this.startDragMode();
-            this.updateHoverPosition(touchWorldPos);
-        }
-    }
     
-    // 触摸移动事件
-    private onTouchMove(event: EventTouch): void {
-        if (this._isDragMode) {
-            const uiTransform = this.node.getComponent(UITransform);
-            if (!uiTransform) return;
-            
-            const touchLocation = uiTransform.convertToNodeSpaceAR(event.getLocation());
-            const touchWorldPos = new Vec3(touchLocation.x, touchLocation.y, 0);
-            this.updateHoverPosition(touchWorldPos);
-        }
-    }
     
-    // 触摸结束事件
-    private onTouchEnd(event: EventTouch): void {
-        if (this._isDragMode) {
-            const uiTransform = this.node.getComponent(UITransform);
-            if (!uiTransform) return;
-            
-            const touchLocation = uiTransform.convertToNodeSpaceAR(event.getLocation());
-            const touchWorldPos = new Vec3(touchLocation.x, touchLocation.y, 0);
-            const gridPos = this.worldToGridPosition(touchWorldPos);
-            
-            // 尝试在点击位置部署英雄
-            if (gridPos && this._gameHUD) {
-                const selectedHeroType = this._gameHUD.getSelectedHeroType();
-                if (selectedHeroType) {
-                    const success = this._gameHUD.deployHeroToGrid(selectedHeroType, gridPos.row, gridPos.col);
-                    if (success) {
-                        console.log(`英雄部署成功: 网格(${gridPos.row}, ${gridPos.col})`);
-                    } else {
-                        console.log(`英雄部署失败: 网格(${gridPos.row}, ${gridPos.col})`);
-                    }
-                }
-            }
-            
-            // 结束拖拽模式
-            this.endDragMode();
-        }
-    }
     
-    // 手动触发点击部署（供外部调用）
-    public handleGridClick(worldPosition: Vec3): boolean {
-        const gridPos = this.worldToGridPosition(worldPosition);
-        if (!gridPos || !this._gameHUD) {
-            return false;
-        }
-        
-        const selectedHeroType = this._gameHUD.getSelectedHeroType();
-        if (!selectedHeroType) {
-            return false;
-        }
-        
-        return this._gameHUD.deployHeroToGrid(selectedHeroType, gridPos.row, gridPos.col);
-    }
     
     // 获取网格统计信息
     public getGridStats(): {

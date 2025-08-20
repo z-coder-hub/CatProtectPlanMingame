@@ -265,16 +265,19 @@ export class DrawingHelper {
     }
     
     public static drawRect(graphics: Graphics, x: number, y: number, width: number, height: number, style: DrawStyle): void {
+        // 绘制矩形路径（一次）
+        graphics.rect(x, y, width, height);
+        
+        // 填充
         if (style.fillColor) {
             graphics.fillColor = style.fillColor;
-            graphics.rect(x, y, width, height);
             graphics.fill();
         }
         
+        // 描边
         if (style.strokeColor && style.lineWidth) {
             graphics.strokeColor = style.strokeColor;
             graphics.lineWidth = style.lineWidth;
-            graphics.rect(x, y, width, height);
             graphics.stroke();
         }
     }
@@ -334,9 +337,20 @@ export class DrawingHelper {
         const backgroundNode = new Node("HealthBarBackground");
         backgroundNode.parent = healthBarContainer;
         const background = backgroundNode.addComponent(Graphics);
-        background.fillColor = config.backgroundColor || new Color(100, 100, 100);
+        
+        // 绘制背景路径（包括边框）
         background.rect(-config.width / 2, -config.height / 2, config.width, config.height);
+        
+        // 填充背景
+        background.fillColor = config.backgroundColor || new Color(100, 100, 100);
         background.fill();
+        
+        // 描边（可选）
+        if (config.borderColor && config.borderWidth) {
+            background.strokeColor = config.borderColor;
+            background.lineWidth = config.borderWidth;
+            background.stroke();
+        }
         
         // 创建前景（血量条）
         const foregroundNode = new Node("HealthBarForeground");
@@ -345,14 +359,6 @@ export class DrawingHelper {
         foreground.fillColor = config.foregroundColor || new Color(255, 0, 0);
         foreground.rect(-config.width / 2, -config.height / 2, config.width, config.height);
         foreground.fill();
-        
-        // 创建边框（可选）
-        if (config.borderColor && config.borderWidth) {
-            background.strokeColor = config.borderColor;
-            background.lineWidth = config.borderWidth;
-            background.rect(-config.width / 2, -config.height / 2, config.width, config.height);
-            background.stroke();
-        }
         
         return {
             container: healthBarContainer,

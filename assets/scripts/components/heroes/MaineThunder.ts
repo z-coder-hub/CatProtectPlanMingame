@@ -41,15 +41,16 @@ export class MaineThunder extends BaseUnit {
     private drawMaineThunderAppearance(graphics: Graphics): void {
         graphics.clear();
         
-        // 绘制身体（深蓝色，代表雷电）
-        graphics.fillColor = new Color(25, 25, 112); // 深蓝色
+        // 绘制身体和边框（一条路径）
         graphics.rect(-22, -22, 44, 44);
+        
+        // 填充身体（深蓝色，代表雷电）
+        graphics.fillColor = new Color(25, 25, 112); // 深蓝色
         graphics.fill();
         
-        // 绘制雷电边框（亮蓝色）
+        // 描边雷电边框（亮蓝色）
         graphics.strokeColor = new Color(0, 191, 255); // 亮蓝色
         graphics.lineWidth = 3;
-        graphics.rect(-22, -22, 44, 44);
         graphics.stroke();
         
         // 绘制雷电标识

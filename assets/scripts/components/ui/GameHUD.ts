@@ -1,15 +1,12 @@
 import { _decorator, Button, Color, Component, Graphics, Label, Node, UITransform, view } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { WaveManager } from '../../managers/WaveManager';
-import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
-import { HeroFactory } from '../../systems/HeroFactory';
-import { GameState, HeroType } from '../../types/GameTypes';
-import { IHeroDeploymentHandler } from './HeroSelectionPanel';
+import { GameState } from '../../types/GameTypes';
 
 const { ccclass } = _decorator;
 
 @ccclass('GameHUD')
-export class GameHUD extends Component implements IHeroDeploymentHandler {
+export class GameHUD extends Component {
 
     // UI组件引用 - 信息显示
     private _goldLabel: Label | null = null;
@@ -23,7 +20,6 @@ export class GameHUD extends Component implements IHeroDeploymentHandler {
     // 管理器引用
     private _gameManager: GameManager | null = null;
     private _waveManager: WaveManager | null = null;
-    private _gridSystem: GridDeploymentSystem | null = null;
 
     protected onLoad(): void {
         this.createCompleteInterface();
@@ -34,19 +30,12 @@ export class GameHUD extends Component implements IHeroDeploymentHandler {
         // 获取管理器引用
         this._gameManager = GameManager.instance;
         this._waveManager = WaveManager.instance;
-        this._gridSystem = GridDeploymentSystem.instance;
 
         if (!this._gameManager) {
             console.error("未找到GameManager实例");
         }
         if (!this._waveManager) {
             console.error("未找到WaveManager实例");
-        }
-        if (!this._gridSystem) {
-            console.error("未找到GridDeploymentSystem实例");
-        } else {
-            // 建立与网格系统的连接
-            this._gridSystem.setGameHUD(this);
         }
     }
 
@@ -202,66 +191,6 @@ export class GameHUD extends Component implements IHeroDeploymentHandler {
         });
         this._restartButton.parent = controlPanelNode;
     }
-
-
-    // ========== 英雄部署功能 ==========
-
-    /**
-     * 部署英雄到网格
-     */
-    public deployHeroToGrid(heroType: HeroType, gridRow: number, gridCol: number): boolean {
-        console.log(`🚀 开始部署英雄: ${heroType} 到位置 (${gridRow}, ${gridCol})`);
-
-        if (!this._gameManager || !this._gridSystem) {
-            console.log("❌ 缺少必要的管理器引用");
-            return false;
-        }
-
-        const heroCost = HeroFactory.getHeroCost(heroType);
-
-        // 检查金币
-        if (this._gameManager.getGameStats().gold < heroCost) {
-            console.log("金币不足，无法部署英雄");
-            return false;
-        }
-
-        // 检查网格位置
-        if (!this._gridSystem.canDeployHero(gridRow, gridCol)) {
-            console.log("网格位置不可用");
-            return false;
-        }
-
-        // 创建英雄
-        console.log(`🏭 创建英雄: ${heroType}`);
-        const heroNode = HeroFactory.createHero(heroType, this._gridSystem.node);
-        if (!heroNode) {
-            console.log("❌ 英雄创建失败");
-            return false;
-        }
-        console.log(`✅ 英雄创建成功: ${heroNode.name}`);
-
-        // 部署到网格
-        console.log(`🗺️ 部署英雄到网格位置 (${gridRow}, ${gridCol})`);
-        const success = this._gridSystem.deployHero(heroNode, gridRow, gridCol);
-        if (success) {
-            // 扣除金币
-            console.log(`💰 扣除金币: ${heroCost}`);
-            this._gameManager.spendGold(heroCost);
-
-            // 添加到已部署列表
-            this._gameManager.addDeployedHero(heroNode);
-
-            console.log(`✅ 成功部署 ${heroType}，消耗 ${heroCost} 金币`);
-            return true;
-        } else {
-            // 部署失败，销毁英雄节点
-            heroNode.destroy();
-            console.log("❌ 英雄部署失败");
-            return false;
-        }
-    }
-
-
 
 
     // 创建按钮
@@ -449,13 +378,14 @@ export class GameHUD extends Component implements IHeroDeploymentHandler {
         }, 5000);
     }
 
-    // 公共接口方法
-    public getSelectedHeroType(): HeroType | null {
-        // 现在由 HeroSelectionPanel 独立管理，返回null
-        return null;
-    }
 
     protected onDestroy(): void {
-        // 清理工作已委托给HeroSelectionPanel
+        // UI组件清理工作在这里处理
+        if (this._goldLabel) this._goldLabel = null;
+        if (this._waveLabel) this._waveLabel = null;
+        if (this._castleHealthLabel) this._castleHealthLabel = null;
+        if (this._castleHealthBar) this._castleHealthBar = null;
+        if (this._playPauseButton) this._playPauseButton = null;
+        if (this._restartButton) this._restartButton = null;
     }
 }

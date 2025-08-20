@@ -136,15 +136,16 @@ export class ArmoredMouse extends BaseUnit {
         
         this._graphics.clear();
         
-        // 绘制装甲老鼠身体（深灰色，表示金属）
-        this._graphics.fillColor = new Color(105, 105, 105); // 深灰色
+        // 绘制装甲老鼠身体和边框（一条路径）
         this._graphics.rect(-18, -18, 36, 36);
+        
+        // 填充身体（深灰色，表示金属）
+        this._graphics.fillColor = new Color(105, 105, 105); // 深灰色
         this._graphics.fill();
         
-        // 绘制装甲边框（金色）
+        // 描边装甲边框（金色）
         this._graphics.strokeColor = new Color(255, 215, 0); // 金色
         this._graphics.lineWidth = 3;
-        this._graphics.rect(-18, -18, 36, 36);
         this._graphics.stroke();
         
         // 绘制装甲细节（装甲板）

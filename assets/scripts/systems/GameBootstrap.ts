@@ -185,10 +185,6 @@ export class GameBootstrap extends Component {
         // 添加自定义组件
         this._heroSelectionPanel = heroSelectionNode.addComponent(HeroSelectionPanel);
 
-        // 建立英雄选择面板和GameHUD之间的通信
-        if (this._heroSelectionPanel && this._gameHUD) {
-            this._heroSelectionPanel.setDeploymentHandler(this._gameHUD);
-        }
 
         // 创建Castle
         const castleNode = new Node("Castle");

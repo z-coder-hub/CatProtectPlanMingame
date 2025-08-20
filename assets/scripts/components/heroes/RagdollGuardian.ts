@@ -50,15 +50,16 @@ export class RagdollGuardian extends BaseUnit {
         
         this._graphics.clear();
         
-        // 绘制布偶猫身体（粉色方形，中等大小）
-        this._graphics.fillColor = new Color(255, 182, 193); // 粉色
+        // 绘制布偶猫身体和边框（一条路径）
         this._graphics.rect(-20, -20, 40, 40);
+        
+        // 填充身体（粉色方形，中等大小）
+        this._graphics.fillColor = new Color(255, 182, 193); // 粉色
         this._graphics.fill();
         
-        // 银色盔甲边框
+        // 描边银色盔甲边框
         this._graphics.strokeColor = new Color(192, 192, 192);
         this._graphics.lineWidth = 3;
-        this._graphics.rect(-20, -20, 40, 40);
         this._graphics.stroke();
         
         // 守护盾牌标识
