@@ -616,8 +616,13 @@ export class HeroSelectionPanel extends Component {
 
         buttonNode.on(Node.EventType.TOUCH_CANCEL, (event: EventTouch) => {
             console.log(`🟡 触摸取消: ${heroType}, event: ${event.getLocation()}`);
-            console.log(`event.currentTarget: ${event.currentTarget.ID}, event.target: ${event.target.ID}`);
-            this.onHeroButtonTouchCancel(event)
+            this.onHeroButtonTouchCancelOrEnd(event)
+        }, this);
+
+
+        buttonNode.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            console.log(`🟡 触摸结束: ${heroType}, event: ${event.getLocation()}`);
+            this.onHeroButtonTouchCancelOrEnd(event)
         }, this);
     }
 
@@ -639,7 +644,7 @@ export class HeroSelectionPanel extends Component {
         // 记录触摸开始，但不立即开始拖拽 - 允许ScrollView正常处理
         this._selectedHeroType = heroType;
         this._touchStartTime = Date.now();
-        const startLocation = event.getStartLocation();
+        const startLocation = event.getUIStartLocation();
         console.log(`✅ 选中英雄: ${heroType}, 位置: (${startLocation.x}, ${startLocation.y})`);
     }
 
@@ -650,36 +655,21 @@ export class HeroSelectionPanel extends Component {
         // 如果还没开始拖拽，检查拖动方向来决定是滚动还是拖拽
         if (!this._isDragging && this._selectedHeroType) {
             // 使用累积距离来判断拖拽方向
-            const startLocation = event.getStartLocation();
+            const startLocation = event.getUIStartLocation();
             const currentLocation = event.getUILocation();
             const deltaX = currentLocation.x - startLocation.x;
             const deltaY = currentLocation.y - startLocation.y;
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            const holdTime = Date.now() - this._touchStartTime;
 
-            // 只有在移动距离足够大时才判断方向
-            if (distance > 100) {
-                console.log(`📱 检测到移动距离: ${distance.toFixed(1)}px, ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}, 时间: ${holdTime}ms`);
-                const isVerticalMove = Math.abs(deltaY) - 50 > Math.abs(deltaX);
-                if (isVerticalMove) {
-                    // 垂直移动：开始英雄拖拽
-                    console.log(`distance, ${distance} ⬇️ 垂直拖拽检测，开始拖拽英雄，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
-                    this.startHeroDrag(this._selectedHeroType, event);
-                    event.propagationStopped = true;
-                    return;
-                }
-            }
-
-            // 支持长按拖拽（无论方向）
-            if (holdTime > 500) {
-                console.log(`⏰ 长按检测(${holdTime}ms)，开始拖拽英雄`);
+            const isVerticalMove = Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && Math.abs(deltaY) > 8;
+            // 在垂直方向有移动，并且移动有一定的距离
+            if (isVerticalMove && distance > 40) {
+                // 垂直移动：开始英雄拖拽
+                console.log(`distance, ${distance} ⬇️ 垂直拖拽检测，开始拖拽英雄，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
                 this.startHeroDrag(this._selectedHeroType, event);
                 event.propagationStopped = true;
                 return;
             }
-
-            console.log(`📱 允许滚动，距离: ${distance.toFixed(1)}px, ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}, 时间: ${holdTime}ms`);
-            return;
         }
 
         // 如果已经在拖拽中
@@ -692,7 +682,7 @@ export class HeroSelectionPanel extends Component {
     /**
      * 英雄按钮触摸结束
      */
-    private onHeroButtonTouchCancel(event: EventTouch): void {
+    private onHeroButtonTouchCancelOrEnd(event: EventTouch): void {
         console.log(`🔚 英雄按钮触摸结束: 拖拽=${this._isDragging}, 选中=${this._selectedHeroType}`);
         if (this._isDragging) {
             // 如果正在拖拽，完成拖拽
