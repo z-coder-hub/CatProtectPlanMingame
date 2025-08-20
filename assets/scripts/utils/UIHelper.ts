@@ -56,6 +56,23 @@ export class UIHelper {
     }
 
     /**
+     * 为节点设置UITransform和Widget组件进行底部对齐
+     */
+    static SetupBottomAlignWidget(node: Node, height: number, bottomOffset: number): void {
+        const transform = node.addComponent(UITransform);
+        transform.setContentSize(1000, height);
+
+        const widget = node.addComponent(Widget);
+        widget.isAlignBottom = true;
+        widget.isAlignLeft = true;
+        widget.isAlignRight = true;
+        widget.bottom = bottomOffset;
+        widget.left = 0;
+        widget.right = 0;
+        widget.updateAlignment();
+    }
+
+    /**
      * 为节点设置UITransform和Widget组件进行居中对齐
      */
     static SetupCenterWidget(node: Node, width: number, height: number): void {
@@ -157,6 +174,65 @@ export class UIHelper {
         const buttonNode = UIHelper.CreateButton(text, width, height, bgColor, callback, target);
         buttonNode.setPosition(xPos, yPos);
         return buttonNode;
+    }
+
+    /**
+     * 根据容器尺寸创建自适应按钮
+     * @param text 按钮文本
+     * @param container 父级容器节点
+     * @param widthRatio 按钮宽度占容器宽度的比例（0-1）
+     * @param heightRatio 按钮高度占容器高度的比例（0-1）
+     * @param bgColor 背景颜色
+     * @param callback 点击回调
+     * @param target 回调目标
+     */
+    static CreateAdaptiveButton(text: string, container: Node, widthRatio: number, heightRatio: number, bgColor: Color, callback: () => void, target?: any): Node {
+        const containerTransform = container.getComponent(UITransform);
+        if (!containerTransform) {
+            console.error("容器节点缺少UITransform组件");
+            return UIHelper.CreateButton(text, 100, 40, bgColor, callback, target);
+        }
+
+        const buttonWidth = containerTransform.width * widthRatio;
+        const buttonHeight = containerTransform.height * heightRatio;
+        
+        return UIHelper.CreateButton(text, buttonWidth, buttonHeight, bgColor, callback, target);
+    }
+
+    /**
+     * 在容器中创建多个等宽按钮
+     * @param texts 按钮文本数组
+     * @param container 父级容器节点
+     * @param heightRatio 按钮高度占容器高度的比例
+     * @param spacing 按钮间距（像素）
+     * @param bgColor 背景颜色
+     * @param callbacks 点击回调数组
+     * @param target 回调目标
+     */
+    static CreateEqualWidthButtons(texts: string[], container: Node, heightRatio: number, spacing: number, bgColor: Color, callbacks: (() => void)[], target?: any): Node[] {
+        const containerTransform = container.getComponent(UITransform);
+        if (!containerTransform) {
+            console.error("容器节点缺少UITransform组件");
+            return [];
+        }
+
+        const buttonCount = texts.length;
+        const totalSpacing = spacing * (buttonCount - 1);
+        const buttonWidth = (containerTransform.width - totalSpacing) / buttonCount;
+        const buttonHeight = containerTransform.height * heightRatio;
+
+        const buttons: Node[] = [];
+        const startX = -(containerTransform.width - buttonWidth) / 2;
+
+        for (let i = 0; i < buttonCount; i++) {
+            const button = UIHelper.CreateButton(texts[i], buttonWidth, buttonHeight, bgColor, callbacks[i], target);
+            const xPos = startX + i * (buttonWidth + spacing);
+            button.setPosition(xPos, 0);
+            button.parent = container;
+            buttons.push(button);
+        }
+
+        return buttons;
     }
 
     /**

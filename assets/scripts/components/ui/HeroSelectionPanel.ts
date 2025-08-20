@@ -1,8 +1,9 @@
-import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, ScrollView, UITransform, Vec3, view } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, ScrollView, UITransform, Vec3 } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
 import { HeroFactory } from '../../systems/HeroFactory';
 import { HeroType } from '../../types/GameTypes';
+import { UIHelper } from '../../utils/UIHelper';
 
 const { ccclass } = _decorator;
 
@@ -138,23 +139,11 @@ export class HeroSelectionPanel extends Component {
      * 创建英雄选择面板
      */
     private createHeroSelectionPanel(): void {
-        // 定位到屏幕底部
-        const screenHeight = view.getVisibleSize().height;
-        const screenWidth = view.getVisibleSize().width;
-        // 距离屏幕底部高100个像素单元的中间位置
-        this.node.setPosition(0, -screenHeight / 2 + 60);
+        // 使用Widget进行底部对齐 (120 * 1.2 = 144)
+        UIHelper.SetupBottomAlignWidget(this.node, 144, 0);
 
-        // 设置面板的UITransform
-        const panelTransform = this.node.addComponent(UITransform);
-        // 上下50
-        panelTransform.setContentSize(screenWidth, 120);
-
-        // 面板背景（这里边框和填充是一个路径线，主要不要使用两次rect）
-        const panelBg = this.node.addComponent(Graphics);
-        panelBg.fillColor = new Color(20, 20, 20, 220);
-        // 左下角
-        panelBg.rect(-screenWidth / 2, -50, screenWidth, 120);
-        panelBg.fill();
+        // 面板背景（边框和填充是一个路径线）
+        const panelBg = UIHelper.CreatePanelWithBackground(this.node, new Color(20, 20, 20, 220));
 
         // 添加面板边框（不需要重复 rect，只需 stroke）
         panelBg.strokeColor = new Color(100, 100, 100, 150);
@@ -171,94 +160,73 @@ export class HeroSelectionPanel extends Component {
      * 创建可滚动的英雄面板
      */
     private createScrollableHeroPanel(): void {
-        const screenWidth = view.getVisibleSize().width;
+        // 获取面板的尺寸（由Widget设置）
+        const panelTransform = this.node.getComponent(UITransform);
+        if (!panelTransform) {
+            console.error("面板缺少UITransform组件");
+            return;
+        }
 
-        // 创建ScrollView节点
+        // 创建ScrollView节点，使用Widget居中对齐 (30 * 1.2 = 36)
         const scrollViewNode = new Node("HeroScrollView");
         scrollViewNode.parent = this.node;
-        // 屏幕中间位置
-        scrollViewNode.setPosition(0, 0);
-
+        UIHelper.SetupCenterWidget(scrollViewNode, panelTransform.width - 36, panelTransform.height);
 
         // 添加ScrollView组件
         const scrollView = scrollViewNode.addComponent(ScrollView);
         this._heroScrollView = scrollView;
 
-        // 设置ScrollView的UITransform
-        const scrollTransform = scrollViewNode.addComponent(UITransform);
-        const scrollViewWidth = screenWidth - 30;
-        scrollTransform.setAnchorPoint(0.5, 0.5);
-        scrollTransform.setContentSize(scrollViewWidth, 120);
-
-
         // 配置ScrollView基本属性
-        scrollView.horizontal = true; // 启用水平滚动
-        scrollView.vertical = false; // 禁用垂直滚动
-        scrollView.inertia = true; // 启用惯性滚动
-        scrollView.brake = 0.9; // 设置刹车强度
+        scrollView.horizontal = true;
+        scrollView.vertical = false;
+        scrollView.inertia = true;
+        scrollView.brake = 0.6;
 
+        // 创建View节点（带遮罩）
+        const viewNode = new Node('View');
+        viewNode.parent = scrollViewNode;
+        const viewTransform = viewNode.addComponent(UITransform);
+        viewTransform.setContentSize(panelTransform.width - 36, panelTransform.height);
 
-        // 1. 创建父节点 view
-        const parentView = new Node('View');
-        const ui = parentView.addComponent(UITransform);
-        const mask = parentView.addComponent(Mask);
+        const mask = viewNode.addComponent(Mask);
         mask.type = Mask.Type.GRAPHICS_RECT;
-        ui.setAnchorPoint(0.5, 0.5);
-        ui.setContentSize(scrollViewWidth, 120);
-        parentView.parent = scrollViewNode;
 
-
-        // 2. 创建Content节点
+        // 创建Content节点
         const contentNode = new Node("Content");
-
-        // 确保Content节点先添加UITransform组件，再进行后续配置
+        contentNode.parent = viewNode;
         const contentTransform = contentNode.addComponent(UITransform);
 
         const availableHeroes = HeroFactory.getAvailableHeroTypes();
-        // 将这些常量配置，抽取出来到类外部，加上注释
-        const buttonSize = 80; // 按钮大小
-        const buttonSpacing = 20; // 按钮间距
-        const paddingTotal = buttonSpacing * 2; // 内边距总和
+        const buttonSize = 96; // 80 * 1.2 = 96
+        const buttonSpacing = 24; // 20 * 1.2 = 24
+        const paddingTotal = buttonSpacing * 2;
 
-        // 计算Content尺寸 - 确保可以滚动
+        // 计算Content尺寸
         const minContentWidth = availableHeroes.length * (buttonSize + buttonSpacing) + paddingTotal;
-        let contentWidth = Math.max(minContentWidth, scrollViewWidth + 100);
+        const contentWidth = Math.max(minContentWidth, (panelTransform.width - 36) + 120); // 100 * 1.2 = 120
 
-        console.log(`📋 ScrollView配置:
-            • ScrollView宽度: ${scrollViewWidth}px
-            • 英雄数量: ${availableHeroes.length}
-            • 需要的Content宽度: ${minContentWidth}px
-            • 最终Content宽度: ${contentWidth}px
-            • 🔄 可以滚动: ${contentWidth > scrollViewWidth}
-            • 英雄列表: ${availableHeroes.join(', ')}`);
-
-
-
-        // 在设置父节点之前完成所有Content配置
-        contentTransform.setContentSize(contentWidth, 120);
+        contentTransform.setContentSize(contentWidth, panelTransform.height);
         contentTransform.setAnchorPoint(0, 0.5);
-        contentNode.setPosition(-scrollViewWidth / 2, 0); // 确保Content在父节点中居中
 
-
-        console.log(`📋 Content节点配置完成，准备设置父节点...`);
-
-
-        contentNode.parent = parentView;
+        // 设置ScrollView的content
         scrollView.content = contentNode;
-        console.log(`✅ Content节点设置为ScrollView的内容, ${scrollView.view}`);
 
         // 创建英雄按钮
-        this.createHeroButtonsManualLayout(contentNode, buttonSize, buttonSpacing);
+        this.createHeroButtonsAdaptiveLayout(contentNode, buttonSize, buttonSpacing);
 
-
-        console.log(`✅ Content节点设置完成`);
+        console.log(`✅ ScrollView创建完成，英雄数量: ${availableHeroes.length}`);
     }
 
     /**
-     * 手动布局创建英雄按钮
+     * 自适应布局创建英雄按钮
      */
-    private createHeroButtonsManualLayout(contentNode: Node, buttonSize: number, buttonSpacing: number): void {
+    private createHeroButtonsAdaptiveLayout(contentNode: Node, buttonSize: number, buttonSpacing: number): void {
         const availableHeroes = HeroFactory.getAvailableHeroTypes();
+        const contentTransform = contentNode.getComponent(UITransform);
+        if (!contentTransform) {
+            console.error("Content节点缺少UITransform组件");
+            return;
+        }
 
         // 计算起始位置（左对齐）
         const startX = buttonSpacing + buttonSize / 2;
@@ -269,24 +237,22 @@ export class HeroSelectionPanel extends Component {
 
             // 计算每个按钮的X位置
             const buttonX = startX + index * (buttonSize + buttonSpacing);
-            const heroButton = this.createHeroButton(heroType, heroConfig, buttonX, 0, buttonSize);
+            const heroButton = this.createAdaptiveHeroButton(heroType, heroConfig, buttonX, 0, buttonSize);
 
-            // 设置父节点之前先完成所有组件创建
             heroButton.parent = contentNode;
             this._heroButtons.push(heroButton);
         });
 
-        console.log(`手动布局创建了 ${this._heroButtons.length} 个英雄按钮`);
+        console.log(`自适应布局创建了 ${this._heroButtons.length} 个英雄按钮`);
     }
 
     /**
-     * 创建单个英雄按钮
+     * 创建自适应英雄按钮
      */
-    private createHeroButton(heroType: HeroType, heroConfig: any, x: number, y: number, size: number): Node {
+    private createAdaptiveHeroButton(heroType: HeroType, heroConfig: any, x: number, y: number, size: number): Node {
         const buttonNode = new Node(`HeroButton_${heroType}`);
-
-        // 设置位置
         buttonNode.setPosition(x, y);
+
         const buttonTransform = buttonNode.addComponent(UITransform);
         buttonTransform.setContentSize(size, size);
         buttonTransform.setAnchorPoint(0.5, 0.5);
@@ -299,13 +265,44 @@ export class HeroSelectionPanel extends Component {
         this.createHeroIcon(buttonNode, heroType, size);
 
         // 价格标签
-        this.createPriceLabel(buttonNode, heroConfig.cost, size);
+        this.createAdaptivePriceLabel(buttonNode, heroConfig.cost, size);
 
         // 添加触摸事件
         this.setupHeroButtonEvents(buttonNode, heroType);
 
         return buttonNode;
     }
+
+    /**
+     * 创建自适应价格标签
+     */
+    private createAdaptivePriceLabel(parent: Node, cost: number, size: number): void {
+        
+        // 创建价格背景节点
+        const priceBgNode = new Node("PriceBackground");
+        priceBgNode.setPosition(0, -size / 2 + 14.4); // 12 * 1.2 = 14.4
+
+        // 价格背景
+        const priceBg = priceBgNode.addComponent(Graphics);
+        priceBg.fillColor = new Color(0, 0, 0, 150);
+        priceBg.rect(-24, -9.6, 48, 19.2); // (-20, -8, 40, 16) * 1.2
+        priceBg.fill();
+
+        priceBgNode.parent = parent;
+
+        // 创建价格文本节点
+        const priceNode = new Node("PriceLabel");
+        priceNode.setPosition(0, -size / 2 + 14.4); // 12 * 1.2 = 14.4
+
+        // 价格文本
+        const priceLabel = priceNode.addComponent(Label);
+        priceLabel.string = `${cost}`;
+        priceLabel.fontSize = Math.max(14.4, size * 0.175); // 12 * 1.2 = 14.4
+        priceLabel.color = new Color(255, 215, 0);
+
+        priceNode.parent = parent;
+    }
+
 
     // ========== UI绘制方法 ==========
 
@@ -346,7 +343,7 @@ export class HeroSelectionPanel extends Component {
      */
     private createHeroIcon(parent: Node, heroType: HeroType, _size: number): void {
         const iconNode = new Node("HeroIcon");
-        iconNode.setPosition(0, 8);
+        iconNode.setPosition(0, 9.6); // 8 * 1.2 = 9.6
 
         // 添加Graphics组件
         const iconGraphics = iconNode.addComponent(Graphics);
@@ -354,50 +351,53 @@ export class HeroSelectionPanel extends Component {
         // 设置父节点
         iconNode.parent = parent;
 
+        // 1.2倍缩放因子
+        const scale = 1.2;
+
         // 根据英雄类型绘制不同图标
         switch (heroType) {
             case HeroType.ORANGE_CAT:
                 // 橘猫 - 橙色圆形 + 弓箭
                 iconGraphics.fillColor = new Color(255, 165, 0);
-                iconGraphics.circle(0, 0, 18);
+                iconGraphics.circle(0, 0, 18 * scale); // 18 * 1.2 = 21.6
                 iconGraphics.fill();
 
                 iconGraphics.strokeColor = new Color(139, 69, 19);
-                iconGraphics.lineWidth = 3;
-                iconGraphics.moveTo(-10, 0);
-                iconGraphics.lineTo(10, 0);
-                iconGraphics.moveTo(8, -3);
-                iconGraphics.lineTo(10, 0);
-                iconGraphics.lineTo(8, 3);
+                iconGraphics.lineWidth = 3 * scale; // 3 * 1.2 = 3.6
+                iconGraphics.moveTo(-10 * scale, 0); // -12
+                iconGraphics.lineTo(10 * scale, 0); // 12
+                iconGraphics.moveTo(8 * scale, -3 * scale); // 9.6, -3.6
+                iconGraphics.lineTo(10 * scale, 0);
+                iconGraphics.lineTo(8 * scale, 3 * scale); // 9.6, 3.6
                 iconGraphics.stroke();
                 break;
 
             case HeroType.PERSIAN_SNIPER:
                 // 波斯猫 - 银色圆形 + 准星
                 iconGraphics.fillColor = new Color(192, 192, 192);
-                iconGraphics.circle(0, 0, 18);
+                iconGraphics.circle(0, 0, 18 * scale);
                 iconGraphics.fill();
 
                 iconGraphics.strokeColor = new Color(64, 64, 64);
-                iconGraphics.lineWidth = 2;
-                iconGraphics.circle(0, 0, 12);
-                iconGraphics.moveTo(0, -15);
-                iconGraphics.lineTo(0, 15);
-                iconGraphics.moveTo(-15, 0);
-                iconGraphics.lineTo(15, 0);
+                iconGraphics.lineWidth = 2 * scale;
+                iconGraphics.circle(0, 0, 12 * scale);
+                iconGraphics.moveTo(0, -15 * scale);
+                iconGraphics.lineTo(0, 15 * scale);
+                iconGraphics.moveTo(-15 * scale, 0);
+                iconGraphics.lineTo(15 * scale, 0);
                 iconGraphics.stroke();
                 break;
 
             case HeroType.SIAMESE_MAGE:
                 // 暹罗法师 - 蓝色方形 + 魔法帽
                 iconGraphics.fillColor = new Color(100, 100, 255);
-                iconGraphics.rect(-15, -15, 30, 30);
+                iconGraphics.rect(-15 * scale, -15 * scale, 30 * scale, 30 * scale);
                 iconGraphics.fill();
 
                 iconGraphics.fillColor = new Color(128, 0, 128);
-                iconGraphics.moveTo(0, 15);
-                iconGraphics.lineTo(-8, -5);
-                iconGraphics.lineTo(8, -5);
+                iconGraphics.moveTo(0, 15 * scale);
+                iconGraphics.lineTo(-8 * scale, -5 * scale);
+                iconGraphics.lineTo(8 * scale, -5 * scale);
                 iconGraphics.close();
                 iconGraphics.fill();
                 break;
@@ -405,63 +405,63 @@ export class HeroSelectionPanel extends Component {
             case HeroType.BENGAL_HUNTER:
                 // 孟加拉猎手 - 金色圆形 + 双弓
                 iconGraphics.fillColor = new Color(255, 215, 0);
-                iconGraphics.circle(0, 0, 18);
+                iconGraphics.circle(0, 0, 18 * scale);
                 iconGraphics.fill();
 
                 iconGraphics.strokeColor = new Color(139, 69, 19);
-                iconGraphics.lineWidth = 2;
-                iconGraphics.moveTo(-8, -15);
-                iconGraphics.lineTo(8, -15);
-                iconGraphics.moveTo(-8, 15);
-                iconGraphics.lineTo(8, 15);
+                iconGraphics.lineWidth = 2 * scale;
+                iconGraphics.moveTo(-8 * scale, -15 * scale);
+                iconGraphics.lineTo(8 * scale, -15 * scale);
+                iconGraphics.moveTo(-8 * scale, 15 * scale);
+                iconGraphics.lineTo(8 * scale, 15 * scale);
                 iconGraphics.stroke();
                 break;
 
             case HeroType.MAINE_THUNDER:
                 // 缅因雷猫 - 深蓝色方形 + 闪电
                 iconGraphics.fillColor = new Color(25, 25, 112);
-                iconGraphics.rect(-18, -18, 36, 36);
+                iconGraphics.rect(-18 * scale, -18 * scale, 36 * scale, 36 * scale);
                 iconGraphics.fill();
 
                 iconGraphics.strokeColor = new Color(255, 255, 0);
-                iconGraphics.lineWidth = 2;
-                iconGraphics.moveTo(-8, -12);
-                iconGraphics.lineTo(4, -2);
-                iconGraphics.lineTo(-4, 2);
-                iconGraphics.lineTo(8, 12);
+                iconGraphics.lineWidth = 2 * scale;
+                iconGraphics.moveTo(-8 * scale, -12 * scale);
+                iconGraphics.lineTo(4 * scale, -2 * scale);
+                iconGraphics.lineTo(-4 * scale, 2 * scale);
+                iconGraphics.lineTo(8 * scale, 12 * scale);
                 iconGraphics.stroke();
                 break;
 
             case HeroType.NORWEGIAN_ICE:
                 // 挪威冰猫 - 冰蓝色菱形 + 雪花
                 iconGraphics.fillColor = new Color(173, 216, 230);
-                iconGraphics.moveTo(0, -16);
-                iconGraphics.lineTo(12, 0);
-                iconGraphics.lineTo(0, 16);
-                iconGraphics.lineTo(-12, 0);
+                iconGraphics.moveTo(0, -16 * scale);
+                iconGraphics.lineTo(12 * scale, 0);
+                iconGraphics.lineTo(0, 16 * scale);
+                iconGraphics.lineTo(-12 * scale, 0);
                 iconGraphics.close();
                 iconGraphics.fill();
 
                 iconGraphics.strokeColor = new Color(255, 255, 255);
-                iconGraphics.lineWidth = 2;
-                iconGraphics.moveTo(0, -8);
-                iconGraphics.lineTo(0, 8);
-                iconGraphics.moveTo(-8, 0);
-                iconGraphics.lineTo(8, 0);
+                iconGraphics.lineWidth = 2 * scale;
+                iconGraphics.moveTo(0, -8 * scale);
+                iconGraphics.lineTo(0, 8 * scale);
+                iconGraphics.moveTo(-8 * scale, 0);
+                iconGraphics.lineTo(8 * scale, 0);
                 iconGraphics.stroke();
                 break;
 
             case HeroType.BRITISH_KNIGHT:
                 // 英国骑士 - 蓝色方形 + 盾牌
                 iconGraphics.fillColor = new Color(100, 149, 237);
-                iconGraphics.rect(-16, -16, 32, 32);
+                iconGraphics.rect(-16 * scale, -16 * scale, 32 * scale, 32 * scale);
                 iconGraphics.fill();
 
                 iconGraphics.fillColor = new Color(192, 192, 192);
-                iconGraphics.moveTo(0, -12);
-                iconGraphics.lineTo(-8, 0);
-                iconGraphics.lineTo(0, 12);
-                iconGraphics.lineTo(8, 0);
+                iconGraphics.moveTo(0, -12 * scale);
+                iconGraphics.lineTo(-8 * scale, 0);
+                iconGraphics.lineTo(0, 12 * scale);
+                iconGraphics.lineTo(8 * scale, 0);
                 iconGraphics.close();
                 iconGraphics.fill();
                 break;
@@ -469,30 +469,30 @@ export class HeroSelectionPanel extends Component {
             case HeroType.RAGDOLL_GUARDIAN:
                 // 布偶守护者 - 粉色方形 + 十字
                 iconGraphics.fillColor = new Color(255, 182, 193);
-                iconGraphics.rect(-16, -16, 32, 32);
+                iconGraphics.rect(-16 * scale, -16 * scale, 32 * scale, 32 * scale);
                 iconGraphics.fill();
 
                 iconGraphics.strokeColor = new Color(255, 255, 255);
-                iconGraphics.lineWidth = 3;
-                iconGraphics.moveTo(0, -10);
-                iconGraphics.lineTo(0, 10);
-                iconGraphics.moveTo(-10, 0);
-                iconGraphics.lineTo(10, 0);
+                iconGraphics.lineWidth = 3 * scale;
+                iconGraphics.moveTo(0, -10 * scale);
+                iconGraphics.lineTo(0, 10 * scale);
+                iconGraphics.moveTo(-10 * scale, 0);
+                iconGraphics.lineTo(10 * scale, 0);
                 iconGraphics.stroke();
                 break;
 
             case HeroType.SCOTTISH_ENGINEER:
                 // 苏格兰工程师 - 橙色圆形 + 扳手
                 iconGraphics.fillColor = new Color(255, 140, 0);
-                iconGraphics.circle(0, 0, 14);
+                iconGraphics.circle(0, 0, 14 * scale);
                 iconGraphics.fill();
 
                 iconGraphics.strokeColor = new Color(128, 128, 128);
-                iconGraphics.lineWidth = 3;
-                iconGraphics.moveTo(10, -6);
-                iconGraphics.lineTo(16, -6);
-                iconGraphics.moveTo(13, -9);
-                iconGraphics.lineTo(13, -3);
+                iconGraphics.lineWidth = 3 * scale;
+                iconGraphics.moveTo(10 * scale, -6 * scale);
+                iconGraphics.lineTo(16 * scale, -6 * scale);
+                iconGraphics.moveTo(13 * scale, -9 * scale);
+                iconGraphics.lineTo(13 * scale, -3 * scale);
                 iconGraphics.stroke();
                 break;
 
@@ -500,7 +500,7 @@ export class HeroSelectionPanel extends Component {
                 // 阿比西尼亚侦察兵 - 棕色六边形 + 望远镜
                 iconGraphics.fillColor = new Color(160, 82, 45);
                 const sides = 6;
-                const radius = 14;
+                const radius = 14 * scale;
                 iconGraphics.moveTo(radius, 0);
                 for (let i = 1; i <= sides; i++) {
                     const angle = (i * 2 * Math.PI) / sides;
@@ -511,7 +511,7 @@ export class HeroSelectionPanel extends Component {
                 iconGraphics.fill();
 
                 iconGraphics.fillColor = new Color(255, 255, 0);
-                iconGraphics.circle(6, -6, 4);
+                iconGraphics.circle(6 * scale, -6 * scale, 4 * scale);
                 iconGraphics.fill();
                 break;
 
@@ -519,8 +519,8 @@ export class HeroSelectionPanel extends Component {
                 // 俄罗斯蓝猫 - 蓝灰色星形 + 穿透箭
                 iconGraphics.fillColor = new Color(106, 90, 205);
                 const points = 8;
-                const outerR = 16;
-                const innerR = 8;
+                const outerR = 16 * scale;
+                const innerR = 8 * scale;
                 iconGraphics.moveTo(outerR, 0);
                 for (let i = 0; i < points; i++) {
                     const outerAngle = (i * 2 * Math.PI) / points;
@@ -536,12 +536,12 @@ export class HeroSelectionPanel extends Component {
                 iconGraphics.fill();
 
                 iconGraphics.strokeColor = new Color(255, 255, 255);
-                iconGraphics.lineWidth = 2;
-                iconGraphics.moveTo(-12, 0);
-                iconGraphics.lineTo(12, 0);
-                iconGraphics.moveTo(8, -3);
-                iconGraphics.lineTo(12, 0);
-                iconGraphics.lineTo(8, 3);
+                iconGraphics.lineWidth = 2 * scale;
+                iconGraphics.moveTo(-12 * scale, 0);
+                iconGraphics.lineTo(12 * scale, 0);
+                iconGraphics.moveTo(8 * scale, -3 * scale);
+                iconGraphics.lineTo(12 * scale, 0);
+                iconGraphics.lineTo(8 * scale, 3 * scale);
                 iconGraphics.stroke();
                 break;
 
@@ -549,55 +549,25 @@ export class HeroSelectionPanel extends Component {
                 // 美国爆破兵 - 红白蓝方形 + 炸弹
                 // 红色底部
                 iconGraphics.fillColor = new Color(220, 20, 60);
-                iconGraphics.rect(-16, -16, 32, 10);
+                iconGraphics.rect(-16 * scale, -16 * scale, 32 * scale, 10 * scale);
                 iconGraphics.fill();
                 // 白色中部
                 iconGraphics.fillColor = new Color(255, 255, 255);
-                iconGraphics.rect(-16, -6, 32, 12);
+                iconGraphics.rect(-16 * scale, -6 * scale, 32 * scale, 12 * scale);
                 iconGraphics.fill();
                 // 蓝色顶部
                 iconGraphics.fillColor = new Color(0, 0, 139);
-                iconGraphics.rect(-16, 6, 32, 10);
+                iconGraphics.rect(-16 * scale, 6 * scale, 32 * scale, 10 * scale);
                 iconGraphics.fill();
 
                 // 炸弹
                 iconGraphics.fillColor = new Color(0, 0, 0);
-                iconGraphics.circle(8, -8, 4);
+                iconGraphics.circle(8 * scale, -8 * scale, 4 * scale);
                 iconGraphics.fill();
                 break;
         }
     }
 
-    /**
-     * 创建价格标签
-     */
-    private createPriceLabel(parent: Node, cost: number, size: number): void {
-        // 创建价格背景节点
-        const priceBgNode = new Node("PriceBackground");
-        priceBgNode.setPosition(0, -size / 2 + 12);
-
-        // 价格背景
-        const priceBg = priceBgNode.addComponent(Graphics);
-        priceBg.fillColor = new Color(0, 0, 0, 150);
-        priceBg.rect(-20, -8, 40, 16);
-        priceBg.fill();
-
-        // 设置背景节点的父节点
-        priceBgNode.parent = parent;
-
-        // 创建价格文本节点
-        const priceNode = new Node("PriceLabel");
-        priceNode.setPosition(0, -size / 2 + 12);
-
-        // 价格文本
-        const priceLabel = priceNode.addComponent(Label);
-        priceLabel.string = `${cost}`;
-        priceLabel.fontSize = 14;
-        priceLabel.color = new Color(255, 215, 0);
-
-        // 设置文本节点的父节点
-        priceNode.parent = parent;
-    }
 
     // ========== 触摸事件处理方法 ==========
 
@@ -732,7 +702,7 @@ export class HeroSelectionPanel extends Component {
         this._dragPreviewNode = new Node(`DragPreview_${heroType}`);
         this._dragPreviewNode.parent = this.node.parent; // 设置为Canvas的子节点
 
-        const previewSize = 50;
+        const previewSize = 60; // 50 * 1.2 = 60
         const previewTransform = this._dragPreviewNode.addComponent(UITransform);
         previewTransform.setContentSize(previewSize, previewSize);
 
@@ -953,11 +923,12 @@ export class HeroSelectionPanel extends Component {
         const originalScale = buttonNode.scale;
         buttonNode.setScale(originalScale.x * 0.9, originalScale.y * 0.9);
 
-        setTimeout(() => {
+        // 使用Cocos Creator的调度系统而不是setTimeout
+        this.scheduleOnce(() => {
             if (buttonNode && buttonNode.isValid) {
                 buttonNode.setScale(originalScale);
             }
-        }, 200);
+        }, 0.2);
     }
 
 }

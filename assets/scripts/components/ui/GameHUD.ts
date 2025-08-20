@@ -183,20 +183,23 @@ export class GameHUD extends Component {
         // 使用UIHelper设置右对齐布局
         UIHelper.SetupRightAlignWidget(controlPanelNode, 250, 58.5, 10);
 
-        // 计算按钮间距
-        const buttonSpacing = 117;
+        // 使用UIHelper创建等宽按钮，高度占容器的70%
+        const buttons = UIHelper.CreateEqualWidthButtons(
+            ["开始", "重启"], 
+            controlPanelNode, 
+            0.7, // 按钮高度占容器高度的70%
+            10,  // 按钮间距10像素
+            new Color(70, 130, 180),
+            [
+                () => this.onPlayPauseButtonClicked(),
+                () => this.onRestartButtonClicked()
+            ],
+            this
+        );
 
-        // 使用UIHelper创建开始/暂停按钮
-        this._playPauseButton = UIHelper.CreateButtonWithPosition("开始", -buttonSpacing / 2, 0, 93.6, 40.95, new Color(70, 130, 180), () => {
-            this.onPlayPauseButtonClicked();
-        }, this);
-        this._playPauseButton.parent = controlPanelNode;
-
-        // 使用UIHelper创建重启按钮
-        this._restartButton = UIHelper.CreateButtonWithPosition("重启", buttonSpacing / 2, 0, 93.6, 40.95, new Color(70, 130, 180), () => {
-            this.onRestartButtonClicked();
-        }, this);
-        this._restartButton.parent = controlPanelNode;
+        // 保存按钮引用
+        this._playPauseButton = buttons[0];
+        this._restartButton = buttons[1];
     }
 
 
