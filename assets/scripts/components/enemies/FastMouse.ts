@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseMouse } from './BaseMouse';
 import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS, GAME_CONSTANTS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
@@ -10,9 +10,9 @@ import { EffectHelper } from '../../utils/EffectHelper';
 const { ccclass, property } = _decorator;
 
 @ccclass('FastMouse')
-export class FastMouse extends BaseUnit {
+export class FastMouse extends BaseMouse {
     
-    @property({ tooltip: "金币奖励" })
+    @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 4;
     
     // 私有属性
@@ -40,15 +40,30 @@ export class FastMouse extends BaseUnit {
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.FAST_MOUSE;
     
+    // 实现BaseMouse的抽象方法
+    protected initializeMouseStats(): void {
+        this.initializeFastMouseStats();
+    }
+    
+    // 实现BaseMouse的抽象方法
+    protected initializeMouseVisuals(): void {
+        this.initializeVisuals();
+        this.initializeMovementBehavior();
+    }
+    
+    // 实现BaseMouse的抽象方法
+    protected performAttack(target: Node): void {
+        // 快速老鼠的攻击实现
+        const targetUnit = target.getComponent(BaseMouse);
+        if (targetUnit) {
+            targetUnit.takeDamage(this.attackDamage);
+            console.log(`快速老鼠攻击目标，造成 ${this.attackDamage} 点伤害`);
+        }
+    }
+    
     protected onLoad(): void {
         // 先调用父类初始化
         super.onLoad();
-        
-        // 设置快速老鼠属性
-        this.initializeFastMouseStats();
-        
-        // 初始化外观
-        this.initializeVisuals();
         
         // 初始化血条
         this.initializeHealthBar();
@@ -206,13 +221,13 @@ export class FastMouse extends BaseUnit {
     
     // 朝城堡移动 - 快速老鼠移动行为
     private moveTowardsCastle(dt: number): void {
-        if (!this._gameManager) return;
+        if (!this._gameManager || !this._gameManager.castleNode) return;
         
         const currentPos = this.node.position;
-        const castleY = GAME_CONSTANTS.CASTLE_POSITION.y;
+        const castlePos = this._gameManager.castleNode.position;
         
         // 检查是否到达城堡Y位置
-        if (currentPos.y <= castleY + 50) {
+        if (currentPos.y <= castlePos.y + 50) {
             this.attackCastle();
             return;
         }
@@ -404,35 +419,11 @@ export class FastMouse extends BaseUnit {
     // 重写待机状态
     protected onIdleState(dt: number): void {
         // 快速老鼠在待机状态下总是移动向城堡
-        // moveTowardsCastle已在update中调用
-    }
-    
-    // 重写攻击状态
-    protected onAttackState(dt: number): void {
-        if (!this.currentTarget || !this.currentTarget.isValid) {
-            this.unitState = 0; // 回到待机状态
-            return;
-        }
-        
-        const targetUnit = this.currentTarget.getComponent(BaseUnit);
-        if (!targetUnit || !targetUnit.isAlive) {
-            this.currentTarget = null;
-            this.unitState = 0;
-            return;
-        }
-        
-        // 检查目标是否在攻击范围内
-        if (this.isTargetInRange(this.currentTarget) && this.canAttack) {
-            this.performAttackOnTarget(targetUnit);
-        } else {
-            // 目标不在范围内，回到待机状态（继续移动向城堡）
-            this.currentTarget = null;
-            this.unitState = 0;
-        }
+        this.moveTowardsCastle(dt);
     }
     
     // 对目标执行攻击
-    private performAttackOnTarget(target: BaseUnit): void {
+    private performAttackOnTarget(target: any): void {
         target.takeDamage(this.attackDamage);
         this.attackTarget(target.node);
         

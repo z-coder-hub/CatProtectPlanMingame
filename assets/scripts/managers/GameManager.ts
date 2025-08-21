@@ -1,7 +1,8 @@
 import { _decorator, Component, Node, Vec3 } from 'cc';
 import { GameState, GameEvents } from '../types/GameTypes';
 import { GAME_CONFIG } from '../types/GameConstants';
-import { BaseUnit } from '../components/base/BaseUnit';
+import { BaseHero } from '../components/heroes/BaseHero';
+import { BaseMouse } from '../components/enemies/BaseMouse';
 import { BattleManager } from './BattleManager';
 import { WaveManager } from './WaveManager';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';

@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Label, tween } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseMouse } from './BaseMouse';
 import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
@@ -10,9 +10,9 @@ import { DrawingHelper } from '../../utils/DrawingHelper';
 const { ccclass, property } = _decorator;
 
 @ccclass('GiantMouse')
-export class GiantMouse extends BaseUnit {
+export class GiantMouse extends BaseMouse {
     
-    @property({ tooltip: "金币奖励" })
+    @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 8;
     
     // 私有属性
@@ -27,10 +27,28 @@ export class GiantMouse extends BaseUnit {
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.GIANT_MOUSE;
     
+    // 实现BaseMouse的抽象方法
+    protected initializeMouseStats(): void {
+        this.initializeGiantMouseStats();
+    }
+    
+    // 实现BaseMouse的抽象方法
+    protected initializeMouseVisuals(): void {
+        this.initializeVisuals();
+    }
+    
+    // 实现BaseMouse的抽象方法
+    protected performAttack(target: Node): void {
+        // 巨型老鼠的攻击实现
+        const targetUnit = target.getComponent(BaseMouse);
+        if (targetUnit) {
+            targetUnit.takeDamage(this.attackDamage);
+            console.log(`巨型老鼠攻击目标，造成 ${this.attackDamage} 点伤害`);
+        }
+    }
+    
     protected onLoad(): void {
         super.onLoad();
-        this.initializeGiantMouseStats();
-        this.initializeVisuals();
         this._gameManager = GameManager.instance;
     }
     
@@ -157,12 +175,12 @@ export class GiantMouse extends BaseUnit {
     }
     
     private checkCastleCollision(): void {
-        if (!this._gameManager) return;
+        if (!this._gameManager || !this._gameManager.castleNode) return;
         
         const currentPos = this.node.position;
-        const castleY = -580; // 城堡位置
+        const castlePos = this._gameManager.castleNode.position;
         
-        if (currentPos.y <= castleY + 50) {
+        if (currentPos.y <= castlePos.y + 50) {
             this.attackCastle();
         }
     }

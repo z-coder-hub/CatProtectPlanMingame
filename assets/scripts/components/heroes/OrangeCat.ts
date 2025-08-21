@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween, Tween } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -12,12 +13,12 @@ import { SimpleObjectPool } from '../../utils/SimpleObjectPool';
 const { ccclass, property } = _decorator;
 
 @ccclass('OrangeCat')
-export class OrangeCat extends BaseUnit {
+export class OrangeCat extends BaseHero {
     
-    @property({ tooltip: "子弹速度" })
+    @property({ tooltip: "子弹速度", override: true })
     public bulletSpeed: number = 300;
     
-    @property({ tooltip: "技能冷却时间" })
+    @property({ tooltip: "技能冷却时间", override: true })
     public skillCooldown: number = 5;
     
     // 私有属性
@@ -176,7 +177,7 @@ export class OrangeCat extends BaseUnit {
         let targetPosition = Vec3.clone(target.position);
         
         // 如果目标在移动，进行简单的预测
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit && targetUnit.moveSpeed > 0) {
             const timeToReach = Vec3.distance(startPosition, targetPosition) / this.bulletSpeed;
             const predictedOffset = Vec3.multiplyScalar(new Vec3(), direction, targetUnit.moveSpeed * timeToReach * 0.5);
@@ -250,7 +251,7 @@ export class OrangeCat extends BaseUnit {
     // 子弹击中目标
     private onBulletHitTarget(bulletNode: Node, target: Node): void {
         // 对目标造成伤害
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit) {
             targetUnit.takeDamage(this.attackDamage);
         }
@@ -317,7 +318,7 @@ export class OrangeCat extends BaseUnit {
         
         // 暂时简化，直接对当前目标造成额外伤害
         if (this.currentTarget) {
-            const targetUnit = this.currentTarget.getComponent(BaseUnit);
+            const targetUnit = this.currentTarget.getComponent(BaseMouse);
             if (targetUnit) {
                 const skillDamage = this.attackDamage * 3; // 300%伤害
                 targetUnit.takeDamage(skillDamage);
@@ -440,6 +441,32 @@ export class OrangeCat extends BaseUnit {
             const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
             EffectHelper.createCooldownFeedback(feedbackPos, this.node.parent);
         }
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[HeroType.ORANGE_CAT];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 300;
+        this.skillCooldown = config.skillCooldown || 5;
+        this.cost = config.cost;
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroVisuals(): void {
+        this.initializeVisuals();
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
     }
     
     // 组件销毁时清理资源

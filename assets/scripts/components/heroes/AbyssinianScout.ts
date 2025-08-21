@@ -1,5 +1,6 @@
 import { _decorator, Color, Graphics, Node } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -7,15 +8,30 @@ import { BattleManager } from '../../managers/BattleManager';
 const { ccclass } = _decorator;
 
 @ccclass('AbyssinianScout')
-export class AbyssinianScout extends BaseUnit {
+export class AbyssinianScout extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.ABYSSINIAN_SCOUT;
     private _graphics: Graphics | null = null;
     private _scoutTimer: number = 0;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.initializeAbyssinianScoutStats();
+    // 实现BaseHero的抽象方法
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[HeroType.ABYSSINIAN_SCOUT];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 350;
+        this.skillCooldown = config.skillCooldown || 4;
+        this.cost = config.cost;
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroVisuals(): void {
         this.initializeVisuals();
     }
     
@@ -39,17 +55,6 @@ export class AbyssinianScout extends BaseUnit {
         }
     }
     
-    private initializeAbyssinianScoutStats(): void {
-        const config = HERO_CONFIGS[HeroType.ABYSSINIAN_SCOUT];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
-    }
     
     private initializeVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
@@ -111,12 +116,17 @@ export class AbyssinianScout extends BaseUnit {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
         
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit && targetUnit.isAlive) {
             targetUnit.takeDamage(this.attackDamage);
         }
         
         this.createAttackEffect();
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
     }
     
     private provideScoutBuff(): void {
@@ -125,7 +135,7 @@ export class AbyssinianScout extends BaseUnit {
             const nearbyAllies = battleManager.getHeroesInRange(this.node.position, 100);
             
             for (const ally of nearbyAllies) {
-                const allyUnit = ally.getComponent(BaseUnit);
+                const allyUnit = ally.getComponent(BaseHero);
                 if (allyUnit && allyUnit.isAlive) {
                     // 临时扩展攻击范围
                     const originalRange = allyUnit.attackRange;

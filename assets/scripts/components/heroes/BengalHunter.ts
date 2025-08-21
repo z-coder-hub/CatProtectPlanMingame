@@ -1,5 +1,6 @@
 import { _decorator, Color, Graphics, Node } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -7,14 +8,29 @@ import { BattleManager } from '../../managers/BattleManager';
 const { ccclass } = _decorator;
 
 @ccclass('BengalHunter')
-export class BengalHunter extends BaseUnit {
+export class BengalHunter extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.BENGAL_HUNTER;
     private _graphics: Graphics | null = null;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.initializeBengalHunterStats();
+    // 实现BaseHero的抽象方法
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[HeroType.BENGAL_HUNTER];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 350;
+        this.skillCooldown = config.skillCooldown || 6;
+        this.cost = config.cost;
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroVisuals(): void {
         this.initializeVisuals();
     }
     
@@ -27,17 +43,6 @@ export class BengalHunter extends BaseUnit {
         }
     }
     
-    private initializeBengalHunterStats(): void {
-        const config = HERO_CONFIGS[HeroType.BENGAL_HUNTER];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
-    }
     
     private initializeVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
@@ -93,7 +98,7 @@ export class BengalHunter extends BaseUnit {
         if (!target || !this.isAlive) return;
         
         // 连发攻击 - 快速造成多次伤害
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit && targetUnit.isAlive) {
             const rapidDamage = this.attackDamage * 0.4; // 每发40%伤害
             
@@ -132,5 +137,10 @@ export class BengalHunter extends BaseUnit {
                 effectNode.destroy();
             }
         }, 300);
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
     }
 }

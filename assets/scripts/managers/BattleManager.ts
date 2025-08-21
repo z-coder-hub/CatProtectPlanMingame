@@ -1,15 +1,19 @@
 import { _decorator, Component, Node, Vec3 } from 'cc';
-import { BaseUnit } from '../components/base/BaseUnit';
+import { BaseHero } from '../components/heroes/BaseHero';
+import { BaseMouse } from '../components/enemies/BaseMouse';
 import { GameManager } from './GameManager';
 import { GridPosition } from '../types/GameTypes';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
+
+// 通用单位类型
+type GameUnit = BaseHero | BaseMouse;
 
 const { ccclass, property } = _decorator;
 
 // 战斗目标类型
 export interface BattleTarget {
     node: Node;
-    unit: BaseUnit;
+    unit: BaseHero | BaseMouse;
     priority: number;
 }
 
@@ -104,12 +108,12 @@ export class BattleManager extends Component {
     private updateHeroBattle(heroNode: Node, enemies: Node[]): void {
         if (!heroNode || !heroNode.isValid) return;
         
-        const heroUnit = heroNode.getComponent(BaseUnit);
+        const heroUnit = heroNode.getComponent(BaseHero);
         if (!heroUnit || !heroUnit.isAlive) return;
         
         // 如果英雄有当前目标且目标仍然有效
         if (heroUnit.currentTarget && heroUnit.currentTarget.isValid) {
-            const targetUnit = heroUnit.currentTarget.getComponent(BaseUnit);
+            const targetUnit = heroUnit.currentTarget.getComponent(BaseMouse);
             
             // 检查目标是否还活着且在范围内
             if (targetUnit && targetUnit.isAlive && heroUnit.isTargetInRange(heroUnit.currentTarget)) {
@@ -138,26 +142,16 @@ export class BattleManager extends Component {
     private updateEnemyBattle(enemyNode: Node, heroes: Node[]): void {
         if (!enemyNode || !enemyNode.isValid) return;
         
-        const enemyUnit = enemyNode.getComponent(BaseUnit);
+        const enemyUnit = enemyNode.getComponent(BaseMouse);
         if (!enemyUnit || !enemyUnit.isAlive) return;
         
-        // 敌人AI：移动向城堡或攻击英雄
-        const nearbyHeroes = this.findUnitsInRange(enemyNode, heroes, enemyUnit.attackRange);
-        
-        if (nearbyHeroes.length > 0) {
-            // 有英雄在攻击范围内，攻击最近的英雄
-            const target = this.findNearestTarget(enemyNode, nearbyHeroes);
-            if (target && enemyUnit.canAttack) {
-                this.performAttack(enemyUnit, target.unit);
-            }
-        } else {
-            // 没有英雄在范围内，移动向城堡
-            this.moveEnemyToCastle(enemyUnit);
-        }
+        // 塔防游戏逻辑：敌人只移动向城堡，不攻击英雄
+        // 移动逻辑已经在BaseMouse的update方法中处理
+        // 这里可以添加额外的AI逻辑，如路径寻找等
     }
     
-    // 执行攻击
-    private performAttack(attacker: BaseUnit, target: BaseUnit): void {
+    // 执行攻击 - 塔防游戏中只有英雄攻击敌人
+    private performAttack(attacker: BaseHero, target: BaseMouse): void {
         if (!attacker || !target || !attacker.isAlive || !target.isAlive) return;
         
         // 对目标造成伤害
@@ -174,7 +168,7 @@ export class BattleManager extends Component {
     
     // 寻找最佳攻击目标
     private findBestTarget(attackerNode: Node, targetNodes: Node[]): BattleTarget | null {
-        const attackerUnit = attackerNode.getComponent(BaseUnit);
+        const attackerUnit = attackerNode.getComponent(BaseHero);
         if (!attackerUnit) return null;
         
         const validTargets: BattleTarget[] = [];
@@ -182,7 +176,7 @@ export class BattleManager extends Component {
         for (const targetNode of targetNodes) {
             if (!targetNode || !targetNode.isValid) continue;
             
-            const targetUnit = targetNode.getComponent(BaseUnit);
+            const targetUnit = targetNode.getComponent(BaseMouse);
             if (!targetUnit || !targetUnit.isAlive) continue;
             
             // 检查是否在攻击范围内
@@ -208,7 +202,7 @@ export class BattleManager extends Component {
     }
     
     // 计算目标优先级
-    private calculateTargetPriority(target: BaseUnit, distance: number): number {
+    private calculateTargetPriority(target: BaseMouse, distance: number): number {
         let priority = 100;
         
         // 距离越近优先级越高
@@ -228,7 +222,7 @@ export class BattleManager extends Component {
         for (const targetNode of targetNodes) {
             if (!targetNode || !targetNode.isValid) continue;
             
-            const targetUnit = targetNode.getComponent(BaseUnit);
+            const targetUnit = targetNode.getComponent(BaseMouse);
             if (!targetUnit || !targetUnit.isAlive) continue;
             
             const distance = Vec3.distance(centerNode.position, targetNode.position);
@@ -263,7 +257,7 @@ export class BattleManager extends Component {
     }
     
     // 移动敌人向城堡
-    private moveEnemyToCastle(enemyUnit: BaseUnit): void {
+    private moveEnemyToCastle(enemyUnit: BaseMouse): void {
         if (!this._gameManager || !this._gameManager.castleNode) return;
         
         const castlePos = this._gameManager.castleNode.position;
@@ -289,7 +283,7 @@ export class BattleManager extends Component {
     }
     
     // 敌人到达城堡
-    private enemyReachCastle(enemyUnit: BaseUnit): void {
+    private enemyReachCastle(enemyUnit: BaseMouse): void {
         if (!this._gameManager) return;
         
         // 对城堡造成伤害
@@ -301,7 +295,7 @@ export class BattleManager extends Component {
     }
     
     // 处理单位被摧毁
-    private handleUnitDestroyed(unit: BaseUnit): void {
+    private handleUnitDestroyed(unit: BaseHero | BaseMouse): void {
         if (!this._gameManager) return;
         
         // 如果是敌人被摧毁，给予金币奖励
@@ -354,7 +348,7 @@ export class BattleManager extends Component {
         let validUnits = 0;
         
         for (const node of nodes) {
-            const unit = node.getComponent(BaseUnit);
+            const unit = node.getComponent(BaseMouse);
             if (unit && unit.isAlive) {
                 totalHealth += (unit.currentHealth / unit.maxHealth) * 100;
                 validUnits++;
@@ -438,7 +432,7 @@ export class BattleManager extends Component {
         for (const enemy of this._registeredEnemies) {
             if (!enemy || !enemy.isValid) continue;
             
-            const enemyUnit = enemy.getComponent(BaseUnit);
+            const enemyUnit = enemy.getComponent(BaseMouse);
             if (!enemyUnit || !enemyUnit.isAlive) continue;
             
             const distance = Vec3.distance(fromPosition, enemy.position);
@@ -475,7 +469,7 @@ export class BattleManager extends Component {
     public getAllEnemies(): Node[] {
         return this._registeredEnemies.filter(enemy => {
             if (!enemy || !enemy.isValid) return false;
-            const enemyUnit = enemy.getComponent(BaseUnit);
+            const enemyUnit = enemy.getComponent(BaseMouse);
             return enemyUnit && enemyUnit.isAlive;
         });
     }
@@ -484,7 +478,7 @@ export class BattleManager extends Component {
     public getEnemiesInRange(centerPosition: Vec3, range: number): Node[] {
         return this._registeredEnemies.filter(enemy => {
             if (!enemy || !enemy.isValid) return false;
-            const enemyUnit = enemy.getComponent(BaseUnit);
+            const enemyUnit = enemy.getComponent(BaseMouse);
             if (!enemyUnit || !enemyUnit.isAlive) return false;
             
             const distance = Vec3.distance(centerPosition, enemy.position);
@@ -496,7 +490,7 @@ export class BattleManager extends Component {
     public getHeroesInRange(centerPosition: Vec3, range: number): Node[] {
         return this._registeredHeroes.filter(hero => {
             if (!hero || !hero.isValid) return false;
-            const heroUnit = hero.getComponent(BaseUnit);
+            const heroUnit = hero.getComponent(BaseHero);
             if (!heroUnit || !heroUnit.isAlive) return false;
             
             const distance = Vec3.distance(centerPosition, hero.position);
@@ -506,7 +500,7 @@ export class BattleManager extends Component {
     
     // 为英雄应用临时增益效果
     public applyHeroBuff(hero: Node, buffType: 'attackSpeed' | 'attackRange', value: number, duration: number): void {
-        const heroUnit = hero.getComponent(BaseUnit);
+        const heroUnit = hero.getComponent(BaseHero);
         if (!heroUnit) return;
         
         // 保存原始值
@@ -547,7 +541,7 @@ export class BattleManager extends Component {
         const targets: Node[] = [];
         const availableEnemies = this._registeredEnemies.filter(enemy => {
             if (!enemy || !enemy.isValid || enemy === excludeTarget) return false;
-            const enemyUnit = enemy.getComponent(BaseUnit);
+            const enemyUnit = enemy.getComponent(BaseMouse);
             if (!enemyUnit || !enemyUnit.isAlive) return false;
             
             const distance = Vec3.distance(startPosition, enemy.position);
@@ -572,7 +566,7 @@ export class BattleManager extends Component {
     // 对多个目标造成伤害（用于AOE攻击）
     public damageMultipleTargets(targets: Node[], damage: number, sourcePosition?: Vec3): void {
         for (const target of targets) {
-            const targetUnit = target.getComponent(BaseUnit);
+            const targetUnit = target.getComponent(BaseMouse);
             if (targetUnit && targetUnit.isAlive) {
                 targetUnit.takeDamage(damage);
                 

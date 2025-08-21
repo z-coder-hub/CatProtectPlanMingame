@@ -1,5 +1,6 @@
 import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -7,14 +8,29 @@ import { BattleManager } from '../../managers/BattleManager';
 const { ccclass } = _decorator;
 
 @ccclass('RussianBlue')
-export class RussianBlue extends BaseUnit {
+export class RussianBlue extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.RUSSIAN_BLUE;
     private _graphics: Graphics | null = null;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.initializeRussianBlueStats();
+    // 实现BaseHero的抽象方法
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[HeroType.RUSSIAN_BLUE];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 350;
+        this.skillCooldown = config.skillCooldown || 6;
+        this.cost = config.cost;
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroVisuals(): void {
         this.initializeVisuals();
     }
     
@@ -27,17 +43,6 @@ export class RussianBlue extends BaseUnit {
         }
     }
     
-    private initializeRussianBlueStats(): void {
-        const config = HERO_CONFIGS[HeroType.RUSSIAN_BLUE];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
-    }
     
     private initializeVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
@@ -111,6 +116,11 @@ export class RussianBlue extends BaseUnit {
         this.createAttackEffect();
     }
     
+    // 实现BaseHero的抽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
+    }
+    
     private performPenetratingAttack(target: Node): void {
         const battleManager = BattleManager.instance;
         if (!battleManager) return;
@@ -149,7 +159,7 @@ export class RussianBlue extends BaseUnit {
         // 攻击每个目标，穿透伤害递减
         for (let i = 0; i < hitTargets.length && i < 3; i++) { // 最多穿透3个目标
             const enemy = hitTargets[i];
-            const enemyUnit = enemy.getComponent(BaseUnit);
+            const enemyUnit = enemy.getComponent(BaseMouse);
             if (enemyUnit && enemyUnit.isAlive) {
                 const damageMultiplier = Math.max(0.3, 1 - i * 0.2); // 每穿透一个目标伤害减少20%
                 const damage = this.attackDamage * damageMultiplier;

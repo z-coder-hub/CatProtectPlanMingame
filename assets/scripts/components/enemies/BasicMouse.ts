@@ -1,23 +1,18 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { _decorator, Node, Vec3, Graphics, Color, Label, UITransform } from 'cc';
+import { BaseMouse } from './BaseMouse';
+import { BaseHero } from '../heroes/BaseHero';
 import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS, GAME_CONSTANTS } from '../../types/GameConstants';
-import { GameManager } from '../../managers/GameManager';
-import { BattleManager } from '../../managers/BattleManager';
+import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 import { EffectHelper } from '../../utils/EffectHelper';
 
 const { ccclass, property } = _decorator;
 
 @ccclass('BasicMouse')
-export class BasicMouse extends BaseUnit {
-    
-    @property({ tooltip: "金币奖励" })
-    public goldReward: number = 3;
+export class BasicMouse extends BaseMouse {
     
     // 私有属性
     private _graphics: Graphics | null = null;
-    private _gameManager: GameManager | null = null;
     private _nameLabel: Label | null = null;
     private _healthBarContainer: Node | null = null;
     private _healthBarForeground: Graphics | null = null;
@@ -28,9 +23,6 @@ export class BasicMouse extends BaseUnit {
     private _baseDirection: Vec3 = new Vec3(0, -1, 0);    // 基础向下方向
     private _zigzagAmplitude: number = 0;                 // 蜿蜒幅度
     private _zigzagFrequency: number = 0;                 // 蜿蜒频率
-    private _pauseTimer: number = 0;                      // 停顿计时器
-    private _isPaused: boolean = false;                   // 是否处于停顿状态
-    private _nextPauseTime: number = 0;                   // 下次停顿时间
     private _movementPattern: 'zigzag' | 'curves' = 'zigzag'; // 移动模式
     
     // 性能优化相关
@@ -40,35 +32,8 @@ export class BasicMouse extends BaseUnit {
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.BASIC_MOUSE;
     
-    protected onLoad(): void {
-        // 先调用父类初始化
-        super.onLoad();
-        
-        // 设置基础老鼠属性
-        this.initializeMouseStats();
-        
-        // 初始化外观
-        this.initializeVisuals();
-        
-        // 初始化血条
-        this.initializeHealthBar();
-    }
-    
-    protected start(): void {
-        super.start();
-        
-        // 获取GameManager引用
-        this._gameManager = GameManager.instance;
-        
-        // 注册到BattleManager
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.registerEnemy(this.node);
-        }
-    }
-    
-    // 初始化老鼠属性
-    private initializeMouseStats(): void {
+    // 实现抽象方法：初始化老鼠属性
+    protected initializeMouseStats(): void {
         const config = ENEMY_CONFIGS[EnemyType.BASIC_MOUSE];
         
         this.unitName = config.name;
@@ -84,6 +49,15 @@ export class BasicMouse extends BaseUnit {
         this.initializeMovementBehavior();
     }
     
+    // 实现抽象方法：初始化老鼠外观
+    protected initializeMouseVisuals(): void {
+        // 初始化外观
+        this.initializeVisuals();
+        
+        // 初始化血条
+        this.initializeHealthBar();
+    }
+    
     // 初始化移动行为
     private initializeMovementBehavior(): void {
         // 随机选择移动模式（移除冲刺模式）
@@ -93,9 +67,6 @@ export class BasicMouse extends BaseUnit {
         // 设置蜿蜒参数（减小幅度，提高流畅度）
         this._zigzagAmplitude = 10 + Math.random() * 15; // 10-25像素的摆动幅度（减小）
         this._zigzagFrequency = 0.5 + Math.random() * 1;   // 0.5-1.5的频率（减小）
-        
-        // 大幅减少停顿频率
-        this._nextPauseTime = 8 + Math.random() * 12; // 8-20秒后第一次停顿（大幅增加）
         
         console.log(`老鼠移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}`);
     }
@@ -166,26 +137,21 @@ export class BasicMouse extends BaseUnit {
         }
     }
     
-    // 朝城堡移动 - 老鼠式移动行为
-    private moveTowardsCastle(dt: number): void {
-        if (!this._gameManager) return;
+    // 重写朝城堡移动 - 基础老鼠的蜿蜒移动行为
+    protected moveTowardsCastle(dt: number): void {
+        if (!this._gameManager || !this._gameManager.castleNode) return;
         
         const currentPos = this.node.position;
-        const castleY = GAME_CONSTANTS.CASTLE_POSITION.y;
+        const castlePos = this._gameManager.castleNode.position;
         
         // 检查是否到达城堡Y位置（城堡是横跨整个屏幕的）
-        if (currentPos.y <= castleY + 50) {
+        if (currentPos.y <= castlePos.y + 50) {
             this.attackCastle();
             return;
         }
         
         // 更新移动计时器
         this._movementTimer += dt;
-        
-        // 处理随机停顿
-        if (this.handleRandomPause(dt)) {
-            return; // 如果在停顿中，不执行移动
-        }
         
         // 根据移动模式计算移动方向
         this.updateMovementDirection();
@@ -202,27 +168,6 @@ export class BasicMouse extends BaseUnit {
         this.node.setPosition(newPos);
     }
     
-    // 处理随机停顿（减少频率和时长）
-    private handleRandomPause(dt: number): boolean {
-        if (this._isPaused) {
-            this._pauseTimer -= dt;
-            if (this._pauseTimer <= 0) {
-                this._isPaused = false;
-                // 设置下次停顿时间（大幅增加间隔）
-                this._nextPauseTime = this._movementTimer + 10 + Math.random() * 15; // 10-25秒后再次停顿
-            }
-            return true;
-        }
-        
-        // 检查是否该停顿了
-        if (this._movementTimer >= this._nextPauseTime) {
-            this._isPaused = true;
-            this._pauseTimer = 0.1 + Math.random() * 0.2; // 停顿0.1-0.3秒（大幅减少）
-            return true;
-        }
-        
-        return false;
-    }
     
     // 更新移动方向
     private updateMovementDirection(): void {
@@ -255,25 +200,8 @@ export class BasicMouse extends BaseUnit {
     }
     
     
-    // 攻击城堡
-    private attackCastle(): void {
-        if (!this._gameManager) return;
-        
-        // 对城堡造成伤害
-        this._gameManager.castleTakeDamage(this.attackDamage);
-        
-        // 创建攻击特效
-        this.createAttackEffect();
-        
-        // 移除自己
-        this._gameManager.removeActiveEnemy(this.node);
-        this.die();
-        
-        console.log(`老鼠攻击城堡，造成 ${this.attackDamage} 点伤害`);
-    }
-    
-    // 创建攻击特效
-    private createAttackEffect(): void {
+    // 重写城堡攻击特效方法
+    protected createCastleAttackEffect(): void {
         if (this.node.parent) {
             EffectHelper.createAttackEffect(this.node.position, this.node.parent);
         }
@@ -316,24 +244,11 @@ export class BasicMouse extends BaseUnit {
         }, 0.2);
     }
     
-    // 重写死亡方法
-    protected onDie(): void {
-        console.log(`基础老鼠死亡，奖励 ${this.goldReward} 金币`);
-        
-        // 从BattleManager注销
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.unregisterEnemy(this.node);
+    // 重写死亡特效方法
+    protected createDeathEffect(): void {
+        if (this.node.parent) {
+            EffectHelper.createDeathEffect(this.node.position, this.node.parent);
         }
-        
-        // 给予金币奖励
-        if (this._gameManager) {
-            this._gameManager.addGold(this.goldReward);
-            this._gameManager.removeActiveEnemy(this.node);
-        }
-        
-        // 创建死亡特效
-        this.createDeathEffect();
         
         // 隐藏血条
         if (this._healthBarContainer) {
@@ -348,48 +263,14 @@ export class BasicMouse extends BaseUnit {
         }
     }
     
-    // 创建死亡特效
-    private createDeathEffect(): void {
-        if (this.node.parent) {
-            EffectHelper.createDeathEffect(this.node.position, this.node.parent);
+    // 实现抽象方法：执行攻击
+    protected performAttack(target: Node): void {
+        // 简单的近战攻击
+        const targetUnit = target.getComponent(BaseMouse) || target.getComponent(BaseHero);
+        if (targetUnit && targetUnit.takeDamage) {
+            targetUnit.takeDamage(this.attackDamage);
+            console.log(`${this.unitName}攻击目标，造成 ${this.attackDamage} 点伤害`);
         }
     }
     
-    // 重写待机状态，老鼠总是朝城堡移动
-    protected onIdleState(dt: number): void {
-        // 老鼠在待机状态下总是移动向城堡
-        // moveTowardsCastle已在update中调用
-    }
-    
-    // 重写攻击状态，老鼠可以攻击英雄
-    protected onAttackState(dt: number): void {
-        if (!this.currentTarget || !this.currentTarget.isValid) {
-            this.unitState = 0; // 回到待机状态
-            return;
-        }
-        
-        const targetUnit = this.currentTarget.getComponent(BaseUnit);
-        if (!targetUnit || !targetUnit.isAlive) {
-            this.currentTarget = null;
-            this.unitState = 0;
-            return;
-        }
-        
-        // 检查目标是否在攻击范围内
-        if (this.isTargetInRange(this.currentTarget) && this.canAttack) {
-            this.performAttackOnTarget(targetUnit);
-        } else {
-            // 目标不在范围内，回到待机状态（继续移动向城堡）
-            this.currentTarget = null;
-            this.unitState = 0;
-        }
-    }
-    
-    // 对目标执行攻击
-    private performAttackOnTarget(target: BaseUnit): void {
-        target.takeDamage(this.attackDamage);
-        this.attackTarget(target.node);
-        
-        console.log(`老鼠攻击英雄，造成 ${this.attackDamage} 点伤害`);
-    }
 }

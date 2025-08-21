@@ -237,7 +237,7 @@ export class SkillSystem extends Component {
     
     // 应用伤害效果
     private applyDamageEffect(skill: SkillInstance, target?: Node, position?: Vec3): void {
-        const ownerUnit = skill.owner.getComponent('BaseUnit');
+        const ownerUnit = skill.owner.getComponent('BaseHero');
         if (!ownerUnit) return;
         
         const baseDamage = ownerUnit.attackDamage;
@@ -248,7 +248,7 @@ export class SkillSystem extends Component {
         switch (skill.config.targetType) {
             case SkillTargetType.ENEMY:
                 if (target) {
-                    const targetUnit = target.getComponent('BaseUnit');
+                    const targetUnit = target.getComponent('BaseMouse');
                     if (targetUnit) {
                         targetUnit.takeDamage(actualDamage);
                     }
@@ -275,7 +275,7 @@ export class SkillSystem extends Component {
         if (battleManager) {
             const enemies = battleManager.getAllEnemies();
             for (const enemy of enemies) {
-                const enemyUnit = enemy.getComponent('BaseUnit');
+                const enemyUnit = enemy.getComponent('BaseMouse');
                 if (enemyUnit && enemyUnit.isAlive) {
                     enemyUnit.takeDamage(damage);
                 }
@@ -293,7 +293,7 @@ export class SkillSystem extends Component {
             for (const enemy of enemies) {
                 const distance = Vec3.distance(enemy.position, center);
                 if (distance <= radius) {
-                    const enemyUnit = enemy.getComponent('BaseUnit');
+                    const enemyUnit = enemy.getComponent('BaseMouse');
                     if (enemyUnit && enemyUnit.isAlive) {
                         enemyUnit.takeDamage(damage);
                     }

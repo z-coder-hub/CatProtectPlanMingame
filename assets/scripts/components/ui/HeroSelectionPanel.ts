@@ -46,6 +46,14 @@ export class HeroSelectionPanel extends Component {
         if (!this._gridSystem) {
             console.error("未找到GridDeploymentSystem实例");
         }
+        
+        // 初始更新按钮状态
+        this.updateHeroButtonStates();
+    }
+    
+    protected update(_dt: number): void {
+        // 实时更新英雄按钮状态（基于当前金币）
+        this.updateHeroButtonStates();
     }
 
     protected onDestroy(): void {
@@ -128,7 +136,7 @@ export class HeroSelectionPanel extends Component {
             if (buttonGraphics) {
                 const buttonTransform = buttonNode.getComponent(UITransform);
                 const size = buttonTransform ? buttonTransform.contentSize.width : 80;
-                this.drawHeroButtonBackground(buttonGraphics, size, isSelected);
+                this.drawHeroButtonBackground(buttonGraphics, size, isSelected, heroType);
             }
         });
     }
@@ -259,7 +267,7 @@ export class HeroSelectionPanel extends Component {
 
         // 按钮背景
         const buttonBg = buttonNode.addComponent(Graphics);
-        this.drawHeroButtonBackground(buttonBg, size, false);
+        this.drawHeroButtonBackground(buttonBg, size, false, heroType);
 
         // 英雄图标
         this.createHeroIcon(buttonNode, heroType, size);
@@ -309,11 +317,16 @@ export class HeroSelectionPanel extends Component {
     /**
      * 绘制英雄按钮背景
      */
-    private drawHeroButtonBackground(graphics: Graphics, size: number, isSelected: boolean): void {
+    private drawHeroButtonBackground(graphics: Graphics, size: number, isSelected: boolean, heroType?: HeroType): void {
         graphics.clear();
 
-        // 检查是否可购买
-        const canAfford = this._gameManager ? this._gameManager.getGameStats().gold >= 40 : true;
+        // 检查是否可购买 - 使用英雄实际成本
+        let canAfford = true;
+        if (this._gameManager && heroType) {
+            const currentGold = this._gameManager.getGameStats().gold;
+            const heroCost = HeroFactory.getHeroCost(heroType);
+            canAfford = currentGold >= heroCost;
+        }
 
         // 背景色
         let bgColor: Color;

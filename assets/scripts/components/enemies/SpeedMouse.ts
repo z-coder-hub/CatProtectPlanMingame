@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Label, tween } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseMouse } from './BaseMouse';
 import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
@@ -10,9 +10,9 @@ import { DrawingHelper } from '../../utils/DrawingHelper';
 const { ccclass, property } = _decorator;
 
 @ccclass('SpeedMouse')
-export class SpeedMouse extends BaseUnit {
+export class SpeedMouse extends BaseMouse {
     
-    @property({ tooltip: "金币奖励" })
+    @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 5;
     
     // 私有属性
@@ -28,12 +28,30 @@ export class SpeedMouse extends BaseUnit {
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.SPEED_MOUSE;
     
+    // 实现BaseMouse的抽象方法
+    protected initializeMouseStats(): void {
+        this.initializeSpeedMouseStats();
+    }
+    
+    // 实现BaseMouse的抽象方法
+    protected initializeMouseVisuals(): void {
+        this.initializeVisuals();
+        this.createSpeedTrail();
+    }
+    
+    // 实现BaseMouse的抽象方法
+    protected performAttack(target: Node): void {
+        // 疾速老鼠的攻击实现
+        const targetUnit = target.getComponent(BaseMouse);
+        if (targetUnit) {
+            targetUnit.takeDamage(this.attackDamage);
+            console.log(`疾速老鼠攻击目标，造成 ${this.attackDamage} 点伤害`);
+        }
+    }
+    
     protected onLoad(): void {
         super.onLoad();
-        this.initializeSpeedMouseStats();
-        this.initializeVisuals();
         this._gameManager = GameManager.instance;
-        this.createSpeedTrail();
     }
     
     protected start(): void {
@@ -199,12 +217,12 @@ export class SpeedMouse extends BaseUnit {
     }
     
     private checkCastleCollision(): void {
-        if (!this._gameManager) return;
+        if (!this._gameManager || !this._gameManager.castleNode) return;
         
         const currentPos = this.node.position;
-        const castleY = -580;
+        const castlePos = this._gameManager.castleNode.position;
         
-        if (currentPos.y <= castleY + 50) {
+        if (currentPos.y <= castlePos.y + 50) {
             this.attackCastle();
         }
     }

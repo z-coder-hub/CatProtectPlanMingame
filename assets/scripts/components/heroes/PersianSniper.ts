@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween, Tween } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -12,12 +13,12 @@ import { SimpleObjectPool } from '../../utils/SimpleObjectPool';
 const { ccclass, property } = _decorator;
 
 @ccclass('PersianSniper')
-export class PersianSniper extends BaseUnit {
+export class PersianSniper extends BaseHero {
     
-    @property({ tooltip: "子弹速度" })
+    @property({ tooltip: "子弹速度", override: true })
     public bulletSpeed: number = 500;
     
-    @property({ tooltip: "技能冷却时间" })
+    @property({ tooltip: "技能冷却时间", override: true })
     public skillCooldown: number = 8;
     
     @property({ tooltip: "暴击几率" })
@@ -37,9 +38,26 @@ export class PersianSniper extends BaseUnit {
     // 英雄类型
     public readonly heroType: HeroType = HeroType.PERSIAN_SNIPER;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.initializePersianSniperStats();
+    // 实现BaseHero的抽象方法
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[HeroType.PERSIAN_SNIPER];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 500;
+        this.skillCooldown = config.skillCooldown || 8;
+        this.cost = config.cost;
+        this.critChance = config.critChance || 0.3;
+        this.critMultiplier = config.critMultiplier || 2.5;
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroVisuals(): void {
         this.initializeVisuals();
         this.initializeAnimation();
         this.setupClickEvents();
@@ -54,21 +72,6 @@ export class PersianSniper extends BaseUnit {
         }
     }
     
-    private initializePersianSniperStats(): void {
-        const config = HERO_CONFIGS[HeroType.PERSIAN_SNIPER];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
-        this.bulletSpeed = config.bulletSpeed || 500;
-        this.skillCooldown = config.skillCooldown || 8;
-        this.critChance = config.critChance || 0.3;
-        this.critMultiplier = config.critMultiplier || 2.5;
-    }
     
     private initializeVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
@@ -129,6 +132,11 @@ export class PersianSniper extends BaseUnit {
         this.playAttackAnimation();
     }
     
+    // 实现BaseHero的抽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
+    }
+    
     private shootBullet(target: Node): void {
         const direction = Vec3.subtract(new Vec3(), target.position, this.node.position);
         direction.normalize();
@@ -150,7 +158,7 @@ export class PersianSniper extends BaseUnit {
         
         let targetPosition = Vec3.clone(target.position);
         
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit && targetUnit.moveSpeed > 0) {
             const timeToReach = Vec3.distance(startPosition, targetPosition) / this.bulletSpeed;
             const predictedOffset = Vec3.multiplyScalar(new Vec3(), direction, targetUnit.moveSpeed * timeToReach * 0.3);
@@ -212,7 +220,7 @@ export class PersianSniper extends BaseUnit {
     }
     
     private onBulletHitTarget(bulletNode: Node, target: Node): void {
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit) {
             let damage = this.attackDamage;
             
@@ -287,7 +295,7 @@ export class PersianSniper extends BaseUnit {
         let maxHealth = 0;
         
         for (const enemy of enemies) {
-            const enemyUnit = enemy.getComponent(BaseUnit);
+            const enemyUnit = enemy.getComponent(BaseMouse);
             if (enemyUnit && enemyUnit.currentHealth > maxHealth) {
                 maxHealth = enemyUnit.currentHealth;
                 targetEnemy = enemy;
@@ -295,7 +303,7 @@ export class PersianSniper extends BaseUnit {
         }
         
         if (targetEnemy) {
-            const targetUnit = targetEnemy.getComponent(BaseUnit);
+            const targetUnit = targetEnemy.getComponent(BaseMouse);
             if (targetUnit) {
                 const skillDamage = this.attackDamage * this.critMultiplier * 1.5; // 超级暴击
                 targetUnit.takeDamage(skillDamage);

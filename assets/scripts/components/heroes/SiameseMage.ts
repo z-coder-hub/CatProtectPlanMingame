@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween, Tween } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -12,9 +13,9 @@ import { SimpleObjectPool } from '../../utils/SimpleObjectPool';
 const { ccclass, property } = _decorator;
 
 @ccclass('SiameseMage')
-export class SiameseMage extends BaseUnit {
+export class SiameseMage extends BaseHero {
     
-    @property({ tooltip: "技能冷却时间" })
+    @property({ tooltip: "技能冷却时间", override: true })
     public skillCooldown: number = 8;
     
     @property({ tooltip: "AOE伤害倍率" })
@@ -33,9 +34,26 @@ export class SiameseMage extends BaseUnit {
     // 英雄类型
     public readonly heroType: HeroType = HeroType.SIAMESE_MAGE;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.initializeSiameseMageStats();
+    // 实现BaseHero的抽象方法
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[HeroType.SIAMESE_MAGE];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 350;
+        this.skillCooldown = config.skillCooldown || 8;
+        this.cost = config.cost;
+        this.aoeDamage = config.aoeDamage || 1.5;
+        this.aoeRange = config.aoeRange || 80;
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroVisuals(): void {
         this.initializeVisuals();
         this.initializeAnimation();
         this.setupClickEvents();
@@ -50,20 +68,6 @@ export class SiameseMage extends BaseUnit {
         }
     }
     
-    private initializeSiameseMageStats(): void {
-        const config = HERO_CONFIGS[HeroType.SIAMESE_MAGE];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
-        this.skillCooldown = config.skillCooldown || 8;
-        this.aoeDamage = config.aoeDamage || 1.5;
-        this.aoeRange = config.aoeRange || 80;
-    }
     
     private initializeVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
@@ -124,9 +128,14 @@ export class SiameseMage extends BaseUnit {
         this.playAttackAnimation();
     }
     
+    // 实现BaseHero的抽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
+    }
+    
     private castMagicMissile(target: Node): void {
         // 暹罗猫使用瞬发魔法攻击
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit) {
             targetUnit.takeDamage(this.attackDamage);
             this.createMagicHitEffect(target.position);
@@ -207,7 +216,7 @@ export class SiameseMage extends BaseUnit {
         const explosionDamage = this.attackDamage * this.aoeDamage;
         
         for (const enemy of affectedEnemies) {
-            const enemyUnit = enemy.getComponent(BaseUnit);
+            const enemyUnit = enemy.getComponent(BaseMouse);
             if (enemyUnit) {
                 enemyUnit.takeDamage(explosionDamage);
             }

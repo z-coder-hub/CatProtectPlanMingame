@@ -1,5 +1,6 @@
 import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -7,14 +8,29 @@ import { BattleManager } from '../../managers/BattleManager';
 const { ccclass } = _decorator;
 
 @ccclass('NorwegianIce')
-export class NorwegianIce extends BaseUnit {
+export class NorwegianIce extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.NORWEGIAN_ICE;
     private _graphics: Graphics | null = null;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.initializeNorwegianIceStats();
+    // 实现BaseHero的抽象方法
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[HeroType.NORWEGIAN_ICE];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 350;
+        this.skillCooldown = config.skillCooldown || 6;
+        this.cost = config.cost;
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroVisuals(): void {
         this.initializeVisuals();
     }
     
@@ -27,17 +43,6 @@ export class NorwegianIce extends BaseUnit {
         }
     }
     
-    private initializeNorwegianIceStats(): void {
-        const config = HERO_CONFIGS[HeroType.NORWEGIAN_ICE];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
-    }
     
     private initializeVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
@@ -105,7 +110,7 @@ export class NorwegianIce extends BaseUnit {
             const enemies = battleManager.getEnemiesInRange(target.position, 80);
             
             for (const enemy of enemies) {
-                const enemyUnit = enemy.getComponent(BaseUnit);
+                const enemyUnit = enemy.getComponent(BaseMouse);
                 if (enemyUnit && enemyUnit.isAlive) {
                     enemyUnit.takeDamage(this.attackDamage);
                     
@@ -124,6 +129,11 @@ export class NorwegianIce extends BaseUnit {
         }
         
         this.createIceEffect(target.position);
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
     }
     
     private createIceEffect(position: Vec3): void {

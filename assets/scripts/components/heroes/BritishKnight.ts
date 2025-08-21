@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -11,9 +12,9 @@ import { DrawingHelper } from '../../utils/DrawingHelper';
 const { ccclass, property } = _decorator;
 
 @ccclass('BritishKnight')
-export class BritishKnight extends BaseUnit {
+export class BritishKnight extends BaseHero {
     
-    @property({ tooltip: "技能冷却时间" })
+    @property({ tooltip: "技能冷却时间", override: true })
     public skillCooldown: number = 12;
     
     // 私有属性
@@ -27,9 +28,24 @@ export class BritishKnight extends BaseUnit {
     // 英雄类型
     public readonly heroType: HeroType = HeroType.BRITISH_KNIGHT;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.initializeBritishKnightStats();
+    // 实现BaseHero的抽象方法
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[HeroType.BRITISH_KNIGHT];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 350;
+        this.skillCooldown = config.skillCooldown || 12;
+        this.cost = config.cost;
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroVisuals(): void {
         this.initializeVisuals();
         this.initializeAnimation();
         this.setupClickEvents();
@@ -44,18 +60,6 @@ export class BritishKnight extends BaseUnit {
         }
     }
     
-    private initializeBritishKnightStats(): void {
-        const config = HERO_CONFIGS[HeroType.BRITISH_KNIGHT];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
-        this.skillCooldown = config.skillCooldown || 12;
-    }
     
     private initializeVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
@@ -116,8 +120,13 @@ export class BritishKnight extends BaseUnit {
         this.playAttackAnimation();
     }
     
+    // 实现BaseHero的抽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
+    }
+    
     private meleeAttack(target: Node): void {
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit) {
             let damage = this.attackDamage;
             

@@ -1,5 +1,6 @@
 import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -7,15 +8,30 @@ import { BattleManager } from '../../managers/BattleManager';
 const { ccclass } = _decorator;
 
 @ccclass('AmericanBomber')
-export class AmericanBomber extends BaseUnit {
+export class AmericanBomber extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.AMERICAN_BOMBER;
     private _graphics: Graphics | null = null;
     private _bombTimer: number = 0;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.initializeAmericanBomberStats();
+    // 实现BaseHero的抽象方法
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[HeroType.AMERICAN_BOMBER];
+        
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        this.attackSpeed = config.attackSpeed;
+        this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 350;
+        this.skillCooldown = config.skillCooldown || 5;
+        this.cost = config.cost;
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected initializeHeroVisuals(): void {
         this.initializeVisuals();
     }
     
@@ -39,17 +55,6 @@ export class AmericanBomber extends BaseUnit {
         }
     }
     
-    private initializeAmericanBomberStats(): void {
-        const config = HERO_CONFIGS[HeroType.AMERICAN_BOMBER];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
-    }
     
     private initializeVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
@@ -113,12 +118,17 @@ export class AmericanBomber extends BaseUnit {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
         
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit && targetUnit.isAlive) {
             targetUnit.takeDamage(this.attackDamage);
         }
         
         this.createAttackEffect();
+    }
+    
+    // 实现BaseHero的抽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
     }
     
     private throwBomb(): void {
@@ -188,7 +198,7 @@ export class AmericanBomber extends BaseUnit {
         const enemies = battleManager.getEnemiesInRange(position, explosionRadius);
         
         for (const enemy of enemies) {
-            const enemyUnit = enemy.getComponent(BaseUnit);
+            const enemyUnit = enemy.getComponent(BaseMouse);
             if (enemyUnit && enemyUnit.isAlive) {
                 const distance = Vec3.distance(enemy.position, position);
                 const damageMultiplier = Math.max(0.3, 1 - distance / explosionRadius);

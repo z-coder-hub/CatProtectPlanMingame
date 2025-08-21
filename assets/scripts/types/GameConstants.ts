@@ -426,5 +426,6 @@ export const GAME_CONSTANTS = {
     CANVAS_DESIGN_SIZE: { width: 720, height: 1280 },  // 竖屏设计分辨率
     GRID_OFFSET_Y: 0,                               // 网格Y轴偏移
     HERO_PANEL_HEIGHT: 144,                           // 英雄面板高度 (120 * 1.2)
-    ENEMY_SPAWN_Y: 500                                // 敌人生成Y坐标
+    ENEMY_SPAWN_Y: 500,                               // 敌人生成Y坐标
+    CASTLE_POSITION: { x: 0, y: -600, z: 0 }          // 城堡位置坐标
 } as const;

@@ -1,5 +1,6 @@
 import { _decorator, Color, Graphics, Node } from 'cc';
-import { BaseUnit } from '../base/BaseUnit';
+import { BaseHero } from './BaseHero';
+import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
@@ -7,7 +8,7 @@ import { BattleManager } from '../../managers/BattleManager';
 const { ccclass } = _decorator;
 
 @ccclass('RagdollGuardian')
-export class RagdollGuardian extends BaseUnit {
+export class RagdollGuardian extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.RAGDOLL_GUARDIAN;
     private _graphics: Graphics | null = null;
@@ -27,7 +28,8 @@ export class RagdollGuardian extends BaseUnit {
         }
     }
     
-    private initializeRagdollGuardianStats(): void {
+    // 实现BaseHero的拽象方法
+    protected initializeHeroStats(): void {
         const config = HERO_CONFIGS[HeroType.RAGDOLL_GUARDIAN];
         
         this.unitName = config.name;
@@ -37,6 +39,14 @@ export class RagdollGuardian extends BaseUnit {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.moveSpeed = config.moveSpeed;
+        this.bulletSpeed = config.bulletSpeed || 200;
+        this.skillCooldown = config.skillCooldown || 8;
+        this.cost = config.cost;
+    }
+    
+    // 实现BaseHero的拽象方法
+    protected initializeHeroVisuals(): void {
+        this.initializeVisuals();
     }
     
     private initializeVisuals(): void {
@@ -96,7 +106,7 @@ export class RagdollGuardian extends BaseUnit {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
         
-        const targetUnit = target.getComponent(BaseUnit);
+        const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit && targetUnit.isAlive) {
             targetUnit.takeDamage(this.attackDamage);
         }
@@ -112,7 +122,7 @@ export class RagdollGuardian extends BaseUnit {
             const nearbyAllies = battleManager.getHeroesInRange(this.node.position, 120);
             
             for (const ally of nearbyAllies) {
-                const allyUnit = ally.getComponent(BaseUnit);
+                const allyUnit = ally.getComponent(BaseHero);
                 if (allyUnit && allyUnit.isAlive && ally !== this.node) {
                     // 临时增加防御力（减少受到的伤害）
                     this.applyGuardianBuff(allyUnit);
@@ -123,7 +133,7 @@ export class RagdollGuardian extends BaseUnit {
         this.createGuardianAuraEffect();
     }
     
-    private applyGuardianBuff(unit: BaseUnit): void {
+    private applyGuardianBuff(unit: BaseHero): void {
         // 这里应该实现防御buff，简化版本中增加一些临时血量
         const bonusHealth = 20;
         unit.currentHealth = Math.min(unit.maxHealth, unit.currentHealth + bonusHealth);
@@ -163,5 +173,10 @@ export class RagdollGuardian extends BaseUnit {
                 auraNode.destroy();
             }
         }, 2000);
+    }
+    
+    // 实现BaseHero的拽象方法
+    protected performAttack(target: Node): void {
+        this.onAttack(target);
     }
 }
