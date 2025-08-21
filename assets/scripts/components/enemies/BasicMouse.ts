@@ -1,4 +1,4 @@
-import { _decorator, Node, Vec3, Graphics, Color, Label, UITransform } from 'cc';
+import { _decorator, Node, Vec3, Graphics, Color } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { BaseHero } from '../heroes/BaseHero';
 import { EnemyType } from '../../types/GameTypes';
@@ -6,21 +6,19 @@ import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 import { EffectHelper } from '../../utils/EffectHelper';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 @ccclass('BasicMouse')
 export class BasicMouse extends BaseMouse {
     
     // 私有属性
     private _graphics: Graphics | null = null;
-    private _nameLabel: Label | null = null;
     private _healthBarContainer: Node | null = null;
     private _healthBarForeground: Graphics | null = null;
     
     // 移动行为相关属性
     private _movementTimer: number = 0;
     private _currentDirection: Vec3 = new Vec3(0, -1, 0); // 当前移动方向
-    private _baseDirection: Vec3 = new Vec3(0, -1, 0);    // 基础向下方向
     private _zigzagAmplitude: number = 0;                 // 蜿蜒幅度
     private _zigzagFrequency: number = 0;                 // 蜿蜒频率
     private _movementPattern: 'zigzag' | 'curves' = 'zigzag'; // 移动模式
@@ -112,7 +110,7 @@ export class BasicMouse extends BaseMouse {
     
     // 创建名称标签
     private createNameLabel(): void {
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
+        DrawingHelper.createLabel(this.node, {
             text: "鼠",
             fontSize: 16,
             color: new Color(255, 255, 255),

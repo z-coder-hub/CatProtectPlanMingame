@@ -1,4 +1,4 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Node } from 'cc';
 import { EnemyType } from '../types/GameTypes';
 import { ENEMY_CONFIGS } from '../types/GameConstants';
 

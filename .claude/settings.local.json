@@ -10,7 +10,8 @@
       "Bash(grep:*)",
       "mcp__ide__getDiagnostics",
       "Bash(true)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "mcp__ide__executeCode"
     ],
     "deny": [],
     "ask": []

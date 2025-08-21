@@ -1,8 +1,8 @@
-import { _decorator, Color, Component, Graphics, Label, Node, UITransform, Widget } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, UITransform } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { UIHelper } from '../../utils/UIHelper';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 @ccclass('Castle')
 export class Castle extends Component {

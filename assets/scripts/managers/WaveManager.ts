@@ -7,6 +7,7 @@ import { ResourceManager, ResourceManagerHelper } from './ResourceManager';
 import { BasicMouse } from '../components/enemies/BasicMouse';
 import { FastMouse } from '../components/enemies/FastMouse';
 import { ArmoredMouse } from '../components/enemies/ArmoredMouse';
+import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 
 const { ccclass, property } = _decorator;
 
@@ -260,20 +261,28 @@ export class WaveManager extends Component {
     
     // 获取网格上方的随机生成位置
     private getRandomSpawnPosition(): Vec3 {
-        // 获取网格配置信息
-        const gridConfig = GAME_CONFIG.gridConfig;
-        const totalGridWidth = gridConfig.cols * gridConfig.cellSize;
+        // 从网格系统获取动态的网格边界信息
+        const gridSystem = GridDeploymentSystem.instance;
         
-        // 计算网格的X范围（网格居中，所以是 -totalWidth/2 到 +totalWidth/2）
-        const minX = -totalGridWidth / 2;
-        const maxX = totalGridWidth / 2;
+        if (!gridSystem) {
+            // 如果网格系统未初始化，使用固定位置作为备选
+            console.warn("GridDeploymentSystem未初始化，使用固定生成位置");
+            const randomX = -200 + Math.random() * 400; // -200 到 200 的随机X坐标
+            return new Vec3(randomX, GAME_CONSTANTS.ENEMY_SPAWN_Y, 0);
+        }
+
+        // 获取网格的边界信息
+        const gridBounds = gridSystem.getGridBounds();
         
-        // 在网格X范围内随机选择位置
+        // 在网格的X范围内随机生成敌人位置
+        const minX = gridBounds.left;
+        const maxX = gridBounds.right;
         const randomX = minX + Math.random() * (maxX - minX);
         
-        // Y坐标设置为网格正上方一点的位置（网格顶部 + 100像素）
-        const gridTopY = GAME_CONSTANTS.GRID_OFFSET_Y + (gridConfig.rows * gridConfig.cellSize) / 2;
-        const spawnY = gridTopY + 100;
+        // Y坐标设置为网格顶部上方100像素的位置
+        const spawnY = gridBounds.top + 100;
+        
+        console.log(`敌人生成位置: (${randomX.toFixed(1)}, ${spawnY.toFixed(1)}) - 网格范围: X[${minX.toFixed(1)}, ${maxX.toFixed(1)}], 顶部Y: ${gridBounds.top.toFixed(1)}`);
         
         return new Vec3(randomX, spawnY, 0);
     }

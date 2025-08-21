@@ -1,3 +1,4 @@
+// 移除未使用的Vec2导入
 import { EnemyCategory, EnemyConfig, EnemyType, GameConfig, HeroCategory, HeroConfig, HeroType, WaveConfig } from './GameTypes';
 
 // 英雄配置 - 完整的猫咪英雄配置
@@ -401,9 +402,7 @@ export const GAME_CONFIG: GameConfig = {
     castleHealth: 120,                   // 增加城堡血量，提供更多容错
     gridConfig: {
         rows: 11,
-        cols: 6,
-        cellSize: 100,
-        startPosition: { x: 0, y: -200 }
+        cols: 6
     },
     heroConfigs: HERO_CONFIGS,
     enemyConfigs: ENEMY_CONFIGS,

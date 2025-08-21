@@ -99,6 +99,36 @@ export class GridDeploymentSystem extends Component {
         return count;
     }
 
+    /**
+     * 获取动态计算的单元格大小
+     * @returns 当前单元格大小
+     */
+    public get cellSize(): number {
+        return this._calculatedCellSize;
+    }
+
+    /**
+     * 获取网格的边界信息
+     * @returns 包含网格左、右、上、下边界的对象
+     */
+    public getGridBounds(): {
+        left: number;
+        right: number;
+        top: number;
+        bottom: number;
+        width: number;
+        height: number;
+    } {
+        const left = this._gridStartPos.x;
+        const right = this._gridStartPos.x + this.gridColumns * this._calculatedCellSize;
+        const top = this._gridStartPos.y;
+        const bottom = this._gridStartPos.y - this.gridRows * this._calculatedCellSize;
+        const width = this.gridColumns * this._calculatedCellSize;
+        const height = this.gridRows * this._calculatedCellSize;
+
+        return { left, right, top, bottom, width, height };
+    }
+
     // ==================== 组件生命周期 ====================
 
     /**
@@ -165,7 +195,7 @@ export class GridDeploymentSystem extends Component {
 
     /**
      * 计算网格的边界和每个槽位的世界坐标
-     * 基于容器节点的实际尺寸计算格子大小和位置
+     * 基于容器节点的实际尺寸动态计算格子大小和位置
      */
     private calculateGridBounds(): void {
         const containerTransform = this.node.getComponent(UITransform);
@@ -178,7 +208,7 @@ export class GridDeploymentSystem extends Component {
         const containerWidth = containerTransform.contentSize.width;
         const containerHeight = containerTransform.contentSize.height;
 
-        // 根据容器尺寸和网格数量计算格子大小
+        // 根据容器尺寸和网格数量动态计算格子大小
         const cellWidth = containerWidth / this.gridColumns;
         const cellHeight = containerHeight / this.gridRows;
         this._calculatedCellSize = Math.min(cellWidth, cellHeight); // 使用较小的值保持正方形
@@ -203,7 +233,7 @@ export class GridDeploymentSystem extends Component {
             }
         }
 
-        console.log(`网格计算完成: 容器尺寸(${containerWidth}x${containerHeight}), 格子大小: ${this._calculatedCellSize}`);
+        console.log(`网格计算完成: 容器尺寸(${containerWidth}x${containerHeight}), 动态计算格子大小: ${this._calculatedCellSize}`);
     }
 
     // ==================== 坐标转换系统 ====================
@@ -488,16 +518,6 @@ export class GridDeploymentSystem extends Component {
         this.drawGameGrid();
     }
 
-    /**
-     * 创建游戏网格的图形组件（已弃用，由createGridContainer替代）
-     */
-    private createGridGraphics(): void {
-        const gridNode = new Node("GameGrid");
-        gridNode.parent = this.node;
-
-        this._gridGraphics = gridNode.addComponent(Graphics);
-        this.drawGameGrid();
-    }
 
     /**
      * 绘制游戏网格的主方法

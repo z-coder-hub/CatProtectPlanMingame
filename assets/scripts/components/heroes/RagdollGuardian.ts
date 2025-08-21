@@ -15,8 +15,6 @@ export class RagdollGuardian extends BaseHero {
     
     protected onLoad(): void {
         super.onLoad();
-        this.initializeRagdollGuardianStats();
-        this.initializeVisuals();
     }
     
     protected start(): void {

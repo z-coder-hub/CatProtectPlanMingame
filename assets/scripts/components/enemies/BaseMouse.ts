@@ -304,14 +304,6 @@ export abstract class BaseMouse extends Component {
         // 子类可以重写此方法实现特定的特效
     }
     
-    /**
-     * 重写待机状态，老鼠总是朝城堡移动
-     */
-    protected onIdleState(dt: number): void {
-        // 老鼠在待机状态下总是移动向城堡
-        // 子类可以重写moveTowardsCastle方法实现特定移动行为
-    }
-    
     // === 状态处理方法 (子类可重写) ===
     
     /**
@@ -342,44 +334,12 @@ export abstract class BaseMouse extends Component {
     /**
      * 死亡状态处理
      */
-    protected onDeadState(dt: number): void {
+    protected onDeadState(_dt: number): void {
         // 死亡状态，不执行任何操作
     }
     
-    // === 事件回调方法 (子类可重写) ===
+    // === 动作辅助方法 ===
     
-    /**
-     * 受到伤害
-     */
-    public takeDamage(damage: number): void {
-        if (!this.isAlive) return;
-        
-        this.currentHealth -= damage;
-        this.onTakeDamage(damage);
-        
-        if (this.currentHealth <= 0) {
-            this.currentHealth = 0;
-            this.die();
-        }
-    }
-    
-    /**
-     * 死亡处理
-     */
-    public die(): void {
-        if (this.unitState === UnitState.DEAD) return;
-        
-        this.unitState = UnitState.DEAD;
-        this.currentHealth = 0;
-        
-        // 调用子类的死亡回调
-        this.onDie();
-        
-        // 销毁节点
-        if (this.node && this.node.isValid) {
-            this.node.destroy();
-        }
-    }
     
     /**
      * 受伤回调
@@ -399,29 +359,6 @@ export abstract class BaseMouse extends Component {
     // === 工具方法 ===
     
     /**
-     * 检查目标是否在攻击范围内
-     */
-    protected isTargetInRange(target: Node): boolean {
-        if (!target || !target.isValid) return false;
-        
-        const distance = Vec3.distance(this.node.position, target.position);
-        return distance <= this.attackRange;
-    }
-    
-    /**
-     * 攻击目标
-     */
-    protected attackTarget(target: Node): void {
-        if (!this.canAttack || !target || !target.isValid) return;
-        
-        // 重置攻击计时器
-        this._attackTimer = 1.0 / this.attackSpeed;
-        
-        // 调用子类的攻击实现
-        this.performAttack(target);
-    }
-    
-    /**
      * 面向目标
      */
     protected faceTarget(target: Node): void {
@@ -438,7 +375,7 @@ export abstract class BaseMouse extends Component {
     /**
      * 创建缓动动画
      */
-    protected createTween(duration: number): any {
+    protected createTween(_duration: number): any {
         return tween(this.node).tag(1001);
     }
     

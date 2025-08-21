@@ -36,12 +36,6 @@ export class OrangeCat extends BaseHero {
         // 先调用父类初始化
         super.onLoad();
         
-        // 设置橘猫属性
-        this.initializeOrangeCatStats();
-        
-        // 初始化外观
-        this.initializeVisuals();
-        
         // 初始化动画
         this.initializeAnimation();
         
@@ -59,20 +53,6 @@ export class OrangeCat extends BaseHero {
         }
     }
     
-    // 初始化橘猫属性
-    private initializeOrangeCatStats(): void {
-        const config = HERO_CONFIGS[HeroType.ORANGE_CAT];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
-        this.bulletSpeed = config.bulletSpeed || 300;
-        this.skillCooldown = config.skillCooldown || 5;
-    }
     
     // 初始化外观
     private initializeVisuals(): void {

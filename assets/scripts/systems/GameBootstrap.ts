@@ -37,8 +37,6 @@ export class GameBootstrap extends Component {
     private _gridSystem: GridDeploymentSystem | null = null;
 
     // UI组件引用
-    private _gameHUD: GameHUD | null = null;
-    private _heroSelectionPanel: HeroSelectionPanel | null = null;
 
     // 获取Canvas节点
     public get canvasNode(): Node | null {
@@ -134,12 +132,11 @@ export class GameBootstrap extends Component {
     private loadGameResources(): void {
         if (!this._resourceManager) return;
 
-        // 定义需要预加载的资源
-        const resourcesToLoad = [
-            // 暂时注释预制体加载，后续添加
-            // { path: "prefabs/heroes/OrangeCat", type: ResourceType.PREFAB },
-            // { path: "prefabs/enemies/BasicMouse", type: ResourceType.PREFAB },
-        ];
+        // 定义需要预加载的资源（暂时不需要预加载）
+        // const resourcesToLoad = [
+        //     { path: "prefabs/heroes/OrangeCat", type: ResourceType.PREFAB },
+        //     { path: "prefabs/enemies/BasicMouse", type: ResourceType.PREFAB },
+        // ];
 
         // 同步加载资源，暂时不需要异步操作
         // if (resourcesToLoad.length > 0) {
@@ -178,13 +175,13 @@ export class GameBootstrap extends Component {
         // 创建GameHUD（只负责顶部信息显示）
         const hudNode = new Node("GameHUD");
         hudNode.parent = this._canvasNode;
-        this._gameHUD = hudNode.addComponent(GameHUD);
+        hudNode.addComponent(GameHUD);
 
         // 创建HeroSelectionPanel（独立的英雄选择面板，处于游戏界面的底部）
         const heroSelectionNode = new Node("HeroSelectionPanel");
         heroSelectionNode.parent = this._canvasNode;
         // 添加自定义组件
-        this._heroSelectionPanel = heroSelectionNode.addComponent(HeroSelectionPanel);
+        heroSelectionNode.addComponent(HeroSelectionPanel);
 
 
         // 创建Castle
