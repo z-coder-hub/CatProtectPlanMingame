@@ -1,7 +1,8 @@
-import { _decorator, Component, Node, Vec3, tween, TweenSystem } from 'cc';
+import { _decorator, Component, Node, Vec3, tween, TweenSystem, Graphics, Label, Color, EventTouch, Animation } from 'cc';
 import { HeroType, UnitStats } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
+import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass, property } = _decorator;
 
@@ -60,12 +61,18 @@ export abstract class BaseHero extends Component {
     protected _skillTimer: number = 0;
     protected _healthBarNode: Node | null = null;
     
+    // === 统一外观系统属性 ===
+    protected _graphics: Graphics | null = null;
+    protected _nameLabel: Label | null = null;
+    protected _animation: Animation | null = null;
+    
     // === 抽象属性，子类必须实现 ===
     public abstract readonly heroType: HeroType;
     
     // === 生命周期方法 ===
     protected onLoad(): void {
         this.initializeHeroStats();
+        this.initializeBaseVisuals();
         this.initializeHeroVisuals();
     }
     
@@ -113,6 +120,117 @@ export abstract class BaseHero extends Component {
     // === 抽象方法，子类必须实现 ===
     protected abstract initializeHeroStats(): void;
     protected abstract initializeHeroVisuals(): void;
+    
+    // === 统一外观系统方法 ===
+    
+    /**
+     * 初始化基础外观组件 - 所有英雄共同的外观元素
+     */
+    protected initializeBaseVisuals(): void {
+        // 创建Graphics组件用于绘制英雄外观
+        this._graphics = this.node.addComponent(Graphics);
+        
+        // 绘制英雄外观
+        this.drawHeroAppearance();
+        
+        // 创建名称标签
+        this.createHeroNameLabel();
+        
+        // 设置点击事件
+        this.setupClickEvents();
+    }
+    
+    /**
+     * 绘制英雄外观 - 基于英雄类型自动选择绘制方式
+     */
+    protected drawHeroAppearance(): void {
+        if (!this._graphics) return;
+        
+        const heroTypeMap: Record<HeroType, string> = {
+            [HeroType.ORANGE_CAT]: 'orange',
+            [HeroType.SIAMESE_MAGE]: 'siamese', 
+            [HeroType.MAINE_THUNDER]: 'maine',
+            [HeroType.PERSIAN_SNIPER]: 'persian',
+            [HeroType.BRITISH_KNIGHT]: 'british',
+            [HeroType.BENGAL_HUNTER]: 'bengal',
+            [HeroType.NORWEGIAN_ICE]: 'norwegian',
+            [HeroType.RAGDOLL_GUARDIAN]: 'ragdoll',
+            [HeroType.SCOTTISH_ENGINEER]: 'scottish',
+            [HeroType.ABYSSINIAN_SCOUT]: 'abyssinian',
+            [HeroType.RUSSIAN_BLUE]: 'russian',
+            [HeroType.AMERICAN_BOMBER]: 'american'
+        };
+        
+        const drawType = heroTypeMap[this.heroType];
+        if (drawType) {
+            DrawingHelper.drawHeroAppearance(this._graphics, drawType as any);
+        }
+    }
+    
+    /**
+     * 创建英雄名称标签 - 统一的标签创建方法
+     */
+    protected createHeroNameLabel(): void {
+        const labelConfig = this.getHeroLabelConfig();
+        
+        this._nameLabel = DrawingHelper.createLabel(this.node, {
+            text: labelConfig.text,
+            fontSize: labelConfig.fontSize,
+            color: labelConfig.color,
+            position: { x: 0, y: labelConfig.yOffset, z: 0 },
+            size: labelConfig.size
+        });
+    }
+    
+    /**
+     * 获取英雄标签配置 - 子类可以重写以自定义标签
+     */
+    protected getHeroLabelConfig(): {
+        text: string;
+        fontSize: number;
+        color: Color;
+        yOffset: number;
+        size: { width: number; height: number };
+    } {
+        // 默认配置，基于英雄名称
+        return {
+            text: this.unitName,
+            fontSize: 18,           // 统一大字体
+            color: new Color(255, 255, 255),
+            yOffset: 35,            // 统一上方位置
+            size: { width: 70, height: 24 }  // 统一大尺寸
+        };
+    }
+    
+    /**
+     * 设置点击事件
+     */
+    protected setupClickEvents(): void {
+        this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
+    }
+    
+    /**
+     * 英雄点击事件处理
+     */
+    protected onHeroClick(event: EventTouch): void {
+        if (!this.isAlive) return;
+        
+        // 阻止事件传播，避免触发网格点击
+        event.propagationStopped = true;
+        
+        // 调用子类的点击处理
+        this.onHeroClickHandler();
+    }
+    
+    /**
+     * 英雄点击处理方法 - 子类可以重写
+     */
+    protected onHeroClickHandler(): void {
+        // 默认尝试使用技能
+        if (this.canUseSkill) {
+            this.useSkill();
+        }
+    }
     
     // === 通用属性访问器 ===
     public get isAlive(): boolean {

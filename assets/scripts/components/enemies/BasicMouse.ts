@@ -75,9 +75,6 @@ export class BasicMouse extends BaseMouse {
         this._graphics = this.node.addComponent(Graphics);
         
         this.drawMouseAppearance();
-        
-        // 创建名称标签
-        this.createNameLabel();
     }
     
     // 初始化血条
@@ -108,15 +105,14 @@ export class BasicMouse extends BaseMouse {
         DrawingHelper.drawEnemyAppearance(this._graphics, 'basicMouse', 1.2);
     }
     
-    // 创建名称标签
-    private createNameLabel(): void {
-        DrawingHelper.createLabel(this.node, {
+    // 重写标签配置 - 使用统一大字体
+    protected getMouseLabelConfig() {
+        const baseConfig = super.getMouseLabelConfig();
+        return {
+            ...baseConfig,
             text: "鼠",
-            fontSize: 16,
-            color: new Color(255, 255, 255),
-            position: { x: 0, y: 0, z: 0 },
-            size: { width: 40, height: 20 }
-        });
+            color: new Color(255, 255, 255), // 白色文字
+        };
     }
     
     protected update(dt: number): void {

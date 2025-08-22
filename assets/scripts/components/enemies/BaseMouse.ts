@@ -1,7 +1,8 @@
-import { _decorator, Component, Node, Vec3, tween, TweenSystem } from 'cc';
+import { _decorator, Component, Node, Vec3, tween, TweenSystem, Label, Color } from 'cc';
 import { EnemyType, UnitStats } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
+import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass, property } = _decorator;
 
@@ -51,6 +52,7 @@ export abstract class BaseMouse extends Component {
     protected _gameManager: GameManager | null = null;
     protected _attackTimer: number = 0;
     protected _healthBarNode: Node | null = null;
+    protected _nameLabel: Label | null = null;
     
     // 抽象属性，子类必须实现
     public abstract readonly enemyType: EnemyType;
@@ -58,6 +60,7 @@ export abstract class BaseMouse extends Component {
     protected onLoad(): void {
         this.initializeMouseStats();
         this.initializeMouseVisuals();
+        this.createMouseNameLabel();
     }
     
     protected start(): void {
@@ -293,6 +296,9 @@ export abstract class BaseMouse extends Component {
         
         // 创建死亡特效
         this.createDeathEffect();
+        
+        // 销毁节点，清理尸体
+        this.node.destroy();
     }
     
     /**
@@ -384,5 +390,43 @@ export abstract class BaseMouse extends Component {
      */
     protected stopAllTweens(): void {
         TweenSystem.instance.ActionManager.removeAllActionsFromTarget(this.node);
+    }
+    
+    /**
+     * 创建老鼠名称标签 - 统一的标签创建方法
+     * 标签位置在老鼠上方，根据老鼠类型显示不同的名称和颜色
+     */
+    protected createMouseNameLabel(): void {
+        // 根据敌人类型获取标签配置
+        const labelConfig = this.getMouseLabelConfig();
+        
+        this._nameLabel = DrawingHelper.createLabel(this.node, {
+            text: labelConfig.text,
+            fontSize: labelConfig.fontSize,
+            color: labelConfig.color,
+            position: { x: 0, y: labelConfig.yOffset, z: 0 }, // 统一在上方
+            size: labelConfig.size
+        });
+    }
+    
+    /**
+     * 获取老鼠标签配置 - 子类可以重写以自定义标签
+     * 统一使用大字体，提供基础配置
+     */
+    protected getMouseLabelConfig(): {
+        text: string;
+        fontSize: number;
+        color: Color;
+        yOffset: number;
+        size: { width: number; height: number };
+    } {
+        // 统一的大字体配置，子类可以重写
+        return {
+            text: "老鼠",
+            fontSize: 22,           // 统一大字体
+            color: new Color(255, 255, 255),
+            yOffset: 35,            // 统一上方位置
+            size: { width: 60, height: 28 }  // 统一大尺寸
+        };
     }
 }

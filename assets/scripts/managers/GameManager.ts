@@ -250,6 +250,7 @@ export class GameManager extends Component {
         this.setGameState(GameState.RESTING);
         this._restTimer = this._restDuration;
         this.clearAllHeroes(); // 清空英雄重新部署
+        this.clearAllEnemies(); // 清理所有剩余的敌人尸体
     }
     
     // 更新休息阶段

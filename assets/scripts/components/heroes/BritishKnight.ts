@@ -76,10 +76,10 @@ export class BritishKnight extends BaseHero {
     private createNameLabel(): void {
         this._nameLabel = DrawingHelper.createLabel(this.node, {
             text: "英短骑士",
-            fontSize: 12,
+            fontSize: 18,  // 放大字体
             color: new Color(255, 255, 255),
-            position: { x: 0, y: 35, z: 0 },
-            size: { width: 70, height: 20 }
+            position: { x: 0, y: 40, z: 0 },  // 提高位置适应更大字体
+            size: { width: 80, height: 24 }   // 增大标签尺寸
         });
     }
     

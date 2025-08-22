@@ -25,7 +25,7 @@ export class DrawingHelper {
     public static drawHeroAppearance(
         graphics: Graphics, 
         heroType: 'orange' | 'siamese' | 'maine' | 'persian' | 'british' | 'bengal' | 'norwegian' | 'ragdoll' | 'scottish' | 'abyssinian' | 'russian' | 'american',
-        scale: number = 1
+        scale: number = 1.5  // 统一放大英雄显示尺寸
     ): void {
         graphics.clear();
         

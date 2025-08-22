@@ -63,13 +63,54 @@ assets/
 - 使用依赖注入，避免紧耦合
 - 通过直接引用和接口进行组件间通信
 
-### 4. 代码库清洁
+### 4. DRY 原则 (Don't Repeat Yourself)
+- **抽象共同逻辑**: 将重复的代码提取到基类或工具函数中
+- **统一接口设计**: 相同功能的组件应使用统一的接口和方法签名
+- **避免代码重复**: 通过继承、组合、工具类等方式消除重复实现
+- **配置集中管理**: 相同的配置项应统一管理，避免分散在各个文件中
+
+#### DRY 实践示例：
+```typescript
+// ✅ 推荐：基类统一实现
+export abstract class BaseHero extends Component {
+    protected _graphics: Graphics | null = null;
+    protected _nameLabel: Label | null = null;
+    
+    protected initializeBaseVisuals(): void {
+        this._graphics = this.node.addComponent(Graphics);
+        this.drawHeroAppearance();
+        this.createHeroNameLabel();
+    }
+    
+    protected abstract getHeroLabelConfig(): LabelConfig;
+}
+
+// ✅ 推荐：子类只实现差异化部分
+export class OrangeCat extends BaseHero {
+    protected getHeroLabelConfig() {
+        return { text: "橘猫", fontSize: 18, /* ... */ };
+    }
+}
+
+// ❌ 避免：每个子类重复相同代码
+export class OrangeCat extends Component {
+    private _graphics: Graphics | null = null;
+    private _nameLabel: Label | null = null;
+    
+    private initializeVisuals(): void {
+        this._graphics = this.node.addComponent(Graphics);
+        // 重复的初始化代码...
+    }
+}
+```
+
+### 5. 代码库清洁
 - 及时删除废弃的代码和文件
 - 避免注释掉的代码长期保留
 - 定期清理未使用的import和方法
 - 保持项目结构简洁明了
 
-### 5. 事件和通信设计
+### 6. 事件和通信设计
 - **避免过度事件驱动**: Cocos Creator 本身已有完整的事件分发机制，不要重复造轮子
 - **优先使用直接引用**: 组件间通信优先使用直接的方法调用和属性访问
 - **合理使用 Cocos 事件**: 只在必要时使用 `node.emit()` 和 `node.on()` 等内置事件机制

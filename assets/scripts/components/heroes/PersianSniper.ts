@@ -88,10 +88,10 @@ export class PersianSniper extends BaseHero {
     private createNameLabel(): void {
         this._nameLabel = DrawingHelper.createLabel(this.node, {
             text: "波斯猫",
-            fontSize: 12,
+            fontSize: 18,  // 放大字体
             color: new Color(255, 255, 255),
-            position: { x: 0, y: 30, z: 0 },
-            size: { width: 60, height: 20 }
+            position: { x: 0, y: 35, z: 0 },  // 提高位置适应更大字体
+            size: { width: 70, height: 24 }   // 增大标签尺寸
         });
     }
     
@@ -154,7 +154,7 @@ export class PersianSniper extends BaseHero {
     
     private moveBulletToTarget(bulletNode: Node, target: Node, direction: Vec3): void {
         const startPosition = Vec3.clone(this.node.position);
-        const maxRange = this.attackRange + 100;
+        const maxRange = this.attackRange + 400; // 狙击手射程更远
         
         let targetPosition = Vec3.clone(target.position);
         

@@ -78,7 +78,6 @@ export class GiantMouse extends BaseMouse {
         this._graphics = this.node.addComponent(Graphics);
         
         this.drawGiantMouseAppearance();
-        this.createNameLabel();
         this.createHealthBar();
     }
     
@@ -127,14 +126,15 @@ export class GiantMouse extends BaseMouse {
         this._graphics.stroke();
     }
     
-    private createNameLabel(): void {
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
-            text: "巨型老鼠",
-            fontSize: 10,
-            color: new Color(255, 100, 100),
-            position: { x: 0, y: 40, z: 0 },
-            size: { width: 70, height: 15 }
-        });
+    // 重写标签配置 - 使用统一大字体
+    protected getMouseLabelConfig() {
+        const baseConfig = super.getMouseLabelConfig();
+        return {
+            ...baseConfig,
+            text: "巨鼠",
+            color: new Color(255, 100, 100), // 红色文字
+            yOffset: 50, // 巨型老鼠更高，需要更大的偏移
+        };
     }
     
     private createHealthBar(): void {
@@ -298,6 +298,9 @@ export class GiantMouse extends BaseMouse {
         if (Math.random() < 0.3) {
             this.dropBonusGold();
         }
+        
+        // 销毁节点，清理尸体
+        this.node.destroy();
     }
     
     private createDeathEffect(): void {

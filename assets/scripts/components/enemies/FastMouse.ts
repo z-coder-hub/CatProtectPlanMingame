@@ -121,9 +121,6 @@ export class FastMouse extends BaseMouse {
         this._graphics = this.node.addComponent(Graphics);
         
         this.drawFastMouseAppearance();
-        
-        // 创建名称标签
-        this.createNameLabel();
     }
     
     // 初始化血条
@@ -192,15 +189,14 @@ export class FastMouse extends BaseMouse {
         this._graphics.fill();
     }
     
-    // 创建名称标签
-    private createNameLabel(): void {
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
+    // 重写标签配置 - 使用统一大字体
+    protected getMouseLabelConfig() {
+        const baseConfig = super.getMouseLabelConfig();
+        return {
+            ...baseConfig,
             text: "快鼠",
-            fontSize: 14,
             color: new Color(50, 205, 50), // 绿色文字
-            position: { x: 0, y: 0, z: 0 },
-            size: { width: 35, height: 18 }
-        });
+        };
     }
     
     protected update(dt: number): void {
@@ -400,13 +396,8 @@ export class FastMouse extends BaseMouse {
             this._healthBarContainer.active = false;
         }
         
-        // 改变外观表示死亡
-        if (this._graphics) {
-            this._graphics.clear();
-            this._graphics.fillColor = new Color(64, 64, 64); // 变暗
-            this._graphics.circle(0, 0, 12);
-            this._graphics.fill();
-        }
+        // 销毁节点，清理尸体
+        this.node.destroy();
     }
     
     // 创建死亡特效

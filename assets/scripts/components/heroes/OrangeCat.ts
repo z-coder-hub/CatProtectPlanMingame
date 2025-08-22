@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween, Tween } from 'cc';
+import { _decorator, Component, Node, Vec3, Color, Animation, tween, Tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
@@ -7,7 +7,6 @@ import { BattleManager } from '../../managers/BattleManager';
 import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
 import { GameManager } from '../../managers/GameManager';
 import { EffectHelper } from '../../utils/EffectHelper';
-import { DrawingHelper } from '../../utils/DrawingHelper';
 import { SimpleObjectPool } from '../../utils/SimpleObjectPool';
 
 const { ccclass, property } = _decorator;
@@ -22,26 +21,13 @@ export class OrangeCat extends BaseHero {
     public skillCooldown: number = 5;
     
     // 私有属性
-    private _skillTimer: number = 0;
-    private _graphics: Graphics | null = null;
-    private _animation: Animation | null = null;
-    private _nameLabel: Label | null = null;
     private _activeBullets: Set<Node> | null = new Set(); // 跟踪活跃的子弹
     private _isPlayingAttackAnimation: boolean = false; // 防止攻击动画重叠
     
     // 英雄类型
     public readonly heroType: HeroType = HeroType.ORANGE_CAT;
     
-    protected onLoad(): void {
-        // 先调用父类初始化
-        super.onLoad();
-        
-        // 初始化动画
-        this.initializeAnimation();
-        
-        // 添加点击事件监听器
-        this.setupClickEvents();
-    }
+    // 移除onLoad重写，使用基类的统一实现
     
     protected start(): void {
         super.start();
@@ -53,34 +39,7 @@ export class OrangeCat extends BaseHero {
         }
     }
     
-    
-    // 初始化外观
-    private initializeVisuals(): void {
-        // 添加Graphics组件绘制外观
-        this._graphics = this.node.addComponent(Graphics);
-        
-        this.drawOrangeCatAppearance();
-        
-        // 创建名称标签
-        this.createNameLabel();
-    }
-    
-    // 绘制橘猫外观
-    private drawOrangeCatAppearance(): void {
-        if (!this._graphics) return;
-        DrawingHelper.drawHeroAppearance(this._graphics, 'orange');
-    }
-    
-    // 创建名称标签
-    private createNameLabel(): void {
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
-            text: "橘猫",
-            fontSize: 12,
-            color: new Color(255, 255, 255),
-            position: { x: 0, y: 30, z: 0 },
-            size: { width: 50, height: 20 }
-        });
-    }
+    // 移除重复的外观初始化代码，使用基类统一实现
     
     // 初始化动画
     private initializeAnimation(): void {
@@ -151,7 +110,7 @@ export class OrangeCat extends BaseHero {
     // 移动子弹到目标
     private moveBulletToTarget(bulletNode: Node, target: Node, direction: Vec3): void {
         const startPosition = Vec3.clone(this.node.position);
-        const maxRange = this.attackRange + 100;
+        const maxRange = this.attackRange + 300; // 增加子弹飞行距离
         
         // 计算目标位置：目标当前位置 + 预测移动
         let targetPosition = Vec3.clone(target.position);
@@ -286,17 +245,9 @@ export class OrangeCat extends BaseHero {
             .start();
     }
     
-    // 精准射击技能
-    public useSkill(): boolean {
-        if (this._skillTimer > 0 || !this.isAlive) {
-            return false;
-        }
-        
-        // 寻找最强的敌人
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return false;
-        
-        // 暂时简化，直接对当前目标造成额外伤害
+    // 重写基类技能使用
+    protected onUseSkill(): void {
+        // 寻找目标
         if (this.currentTarget) {
             const targetUnit = this.currentTarget.getComponent(BaseMouse);
             if (targetUnit) {
@@ -306,15 +257,9 @@ export class OrangeCat extends BaseHero {
                 // 创建技能特效
                 this.createSkillEffect();
                 
-                // 设置技能冷却
-                this._skillTimer = this.skillCooldown;
-                
                 console.log(`橘猫使用精准射击！造成 ${skillDamage} 点伤害`);
-                return true;
             }
         }
-        
-        return false;
     }
     
     // 创建技能特效
@@ -324,15 +269,7 @@ export class OrangeCat extends BaseHero {
         }
     }
     
-    // 获取技能冷却剩余时间
-    public getSkillCooldownRemaining(): number {
-        return Math.max(0, this._skillTimer);
-    }
-    
-    // 检查技能是否可用
-    public isSkillReady(): boolean {
-        return this._skillTimer <= 0 && this.isAlive;
-    }
+    // 移除重复方法，使用基类的canUseSkill
     
     // 重写死亡方法，添加橘猫特有的死亡效果
     protected onDie(): void {
@@ -371,7 +308,7 @@ export class OrangeCat extends BaseHero {
         // 创建死亡特效
         if (this._graphics) {
             this._graphics.fillColor = new Color(128, 128, 128); // 变灰
-            this.drawOrangeCatAppearance();
+            this.drawHeroAppearance(); // 使用基类方法
         }
         
         // 停止动画
@@ -380,29 +317,15 @@ export class OrangeCat extends BaseHero {
         }
     }
     
-    // 设置点击事件
-    private setupClickEvents(): void {
-        this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
-    }
-    
-    // 英雄点击事件处理
-    private onHeroClick(event: EventTouch): void {
-        if (!this.isAlive) return;
-        
-        // 阻止事件传播，避免触发网格点击
-        event.propagationStopped = true;
-        
+    // 重写基类的英雄点击处理
+    protected onHeroClickHandler(): void {
         // 尝试释放技能
-        if (this.isSkillReady()) {
-            const skillUsed = this.useSkill();
-            if (skillUsed) {
-                console.log("橘猫释放精准射击技能！");
-                this.createClickFeedback();
-            } else {
-                console.log("橘猫技能释放失败");
-            }
+        if (this.canUseSkill) {
+            this.useSkill();
+            console.log("橘猫释放精准射击技能！");
+            this.createClickFeedback();
         } else {
-            console.log(`橘猫技能冷却中，剩余时间: ${this.getSkillCooldownRemaining().toFixed(1)}秒`);
+            console.log(`橘猫技能冷却中，剩余时间: ${this._skillTimer.toFixed(1)}秒`);
             this.createCooldownFeedback();
         }
     }
@@ -441,7 +364,18 @@ export class OrangeCat extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeVisuals();
+        // 初始化动画
+        this.initializeAnimation();
+    }
+    
+    // 重写标签配置，使用"橘猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
+            text: "橘猫",
+            size: { width: 60, height: 24 }
+        };
     }
     
     // 实现BaseHero的抽象方法

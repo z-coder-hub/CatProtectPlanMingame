@@ -115,9 +115,6 @@ export class ArmoredMouse extends BaseMouse {
         this._graphics = this.node.addComponent(Graphics);
         
         this.drawArmoredMouseAppearance();
-        
-        // 创建名称标签
-        this.createNameLabel();
     }
     
     // 初始化血条
@@ -210,15 +207,15 @@ export class ArmoredMouse extends BaseMouse {
         this._graphics.fill();
     }
     
-    // 创建名称标签
-    private createNameLabel(): void {
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
+    // 重写标签配置 - 使用统一大字体
+    protected getMouseLabelConfig() {
+        const baseConfig = super.getMouseLabelConfig();
+        return {
+            ...baseConfig,
             text: "甲鼠",
-            fontSize: 16,
             color: new Color(255, 215, 0), // 金色文字
-            position: { x: 0, y: 0, z: 0 },
-            size: { width: 40, height: 20 }
-        });
+            yOffset: 45, // 装甲老鼠更高，需要更大的偏移
+        };
     }
     
     protected update(dt: number): void {
@@ -333,7 +330,7 @@ export class ArmoredMouse extends BaseMouse {
         
         // 调用父类方法但传入减伤后的伤害
         this.currentHealth = Math.max(0, this.currentHealth - actualDamage);
-        this.updateHealthBar();
+        this.updateHealthBarDisplay();
         
         // 触发受伤回调
         this.onTakeDamage(actualDamage);
@@ -471,13 +468,8 @@ export class ArmoredMouse extends BaseMouse {
             this._healthBarContainer.active = false;
         }
         
-        // 改变外观表示死亡
-        if (this._graphics) {
-            this._graphics.clear();
-            this._graphics.fillColor = new Color(64, 64, 64); // 变暗
-            this._graphics.rect(-18, -18, 36, 36);
-            this._graphics.fill();
-        }
+        // 销毁节点，清理尸体
+        this.node.destroy();
     }
     
     // 创建死亡特效

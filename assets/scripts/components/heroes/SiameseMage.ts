@@ -25,10 +25,6 @@ export class SiameseMage extends BaseHero {
     public aoeRange: number = 80;
     
     // 私有属性
-    private _skillTimer: number = 0;
-    private _graphics: Graphics | null = null;
-    private _animation: Animation | null = null;
-    private _nameLabel: Label | null = null;
     private _isPlayingAttackAnimation: boolean = false;
     
     // 英雄类型
@@ -54,9 +50,7 @@ export class SiameseMage extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeVisuals();
         this.initializeAnimation();
-        this.setupClickEvents();
     }
     
     protected start(): void {
@@ -68,27 +62,14 @@ export class SiameseMage extends BaseHero {
         }
     }
     
-    
-    private initializeVisuals(): void {
-        this._graphics = this.node.addComponent(Graphics);
-        
-        this.drawSiameseMageAppearance();
-        this.createNameLabel();
-    }
-    
-    private drawSiameseMageAppearance(): void {
-        if (!this._graphics) return;
-        DrawingHelper.drawHeroAppearance(this._graphics, 'siamese');
-    }
-    
-    private createNameLabel(): void {
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
+    // 重写标签配置，使用"暹罗猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
             text: "暹罗猫",
-            fontSize: 12,
-            color: new Color(255, 255, 255),
-            position: { x: 0, y: 30, z: 0 },
-            size: { width: 60, height: 20 }
-        });
+            size: { width: 70, height: 24 }
+        };
     }
     
     private initializeAnimation(): void {

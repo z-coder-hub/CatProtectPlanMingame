@@ -80,7 +80,6 @@ export class SpeedMouse extends BaseMouse {
         this._graphics = this.node.addComponent(Graphics);
         
         this.drawSpeedMouseAppearance();
-        this.createNameLabel();
         this.createHealthBar();
     }
     
@@ -136,14 +135,14 @@ export class SpeedMouse extends BaseMouse {
         this._graphics.stroke();
     }
     
-    private createNameLabel(): void {
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
-            text: "疾速鼠",
-            fontSize: 10,
-            color: new Color(255, 255, 100),
-            position: { x: 0, y: 25, z: 0 },
-            size: { width: 50, height: 15 }
-        });
+    // 重写标签配置 - 使用统一大字体
+    protected getMouseLabelConfig() {
+        const baseConfig = super.getMouseLabelConfig();
+        return {
+            ...baseConfig,
+            text: "疾速",
+            color: new Color(255, 255, 100), // 亮黄色
+        };
     }
     
     private createHealthBar(): void {
@@ -321,6 +320,9 @@ export class SpeedMouse extends BaseMouse {
         
         // 创建死亡特效
         this.createDeathEffect();
+        
+        // 销毁节点，清理尸体
+        this.node.destroy();
     }
     
     private cleanupSpeedTrail(): void {
