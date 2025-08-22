@@ -164,7 +164,6 @@ export class HeroFactory {
         cost: number;
         description: string;
         stats: {
-            health: number;
             attack: number;
             range: number;
             speed: number;
@@ -180,7 +179,6 @@ export class HeroFactory {
             cost: config.cost,
             description: this.getHeroDescription(heroType),
             stats: {
-                health: config.maxHealth,
                 attack: config.attackDamage,
                 range: config.attackRange,
                 speed: config.attackSpeed

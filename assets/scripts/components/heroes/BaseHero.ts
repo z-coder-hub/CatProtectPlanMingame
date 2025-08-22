@@ -25,8 +25,7 @@ export abstract class BaseHero extends Component {
     @property({ tooltip: "单位名称" })
     public unitName: string = "英雄单位";
     
-    @property({ tooltip: "最大生命值" })
-    public maxHealth: number = 100;
+    // 英雄不再有生命值概念
     
     @property({ tooltip: "攻击力" })
     public attackDamage: number = 20;
@@ -37,8 +36,6 @@ export abstract class BaseHero extends Component {
     @property({ tooltip: "攻击速度(次/秒)" })
     public attackSpeed: number = 1.0;
     
-    @property({ tooltip: "移动速度(像素/秒)" })
-    public moveSpeed: number = 100;
     
     // === 英雄特有属性 ===
     @property({ tooltip: "子弹速度" })
@@ -51,7 +48,6 @@ export abstract class BaseHero extends Component {
     public cost: number = 50;
     
     // === 状态属性 ===
-    public currentHealth: number = 100;
     public unitState: UnitState = UnitState.IDLE;
     public currentTarget: Node | null = null;
     
@@ -59,7 +55,7 @@ export abstract class BaseHero extends Component {
     protected _gameManager: GameManager | null = null;
     protected _attackTimer: number = 0;
     protected _skillTimer: number = 0;
-    protected _healthBarNode: Node | null = null;
+    // 移除生命条相关属性
     
     // === 统一外观系统属性 ===
     protected _graphics: Graphics | null = null;
@@ -106,7 +102,8 @@ export abstract class BaseHero extends Component {
                 this.onIdleState(dt);
                 break;
             case UnitState.MOVING:
-                this.onMovingState(dt);
+                // 英雄不移动，自动转为待机状态
+                this.unitState = UnitState.IDLE;
                 break;
             case UnitState.ATTACKING:
                 this.onAttackState(dt);
@@ -234,7 +231,7 @@ export abstract class BaseHero extends Component {
     
     // === 通用属性访问器 ===
     public get isAlive(): boolean {
-        return this.currentHealth > 0 && this.unitState !== UnitState.DEAD;
+        return this.unitState !== UnitState.DEAD;
     }
     
     public get canAttack(): boolean {
@@ -248,41 +245,14 @@ export abstract class BaseHero extends Component {
     public get stats(): UnitStats {
         return {
             name: this.unitName,
-            health: this.currentHealth,
-            maxHealth: this.maxHealth,
             attackDamage: this.attackDamage,
             attackRange: this.attackRange,
-            attackSpeed: this.attackSpeed,
-            moveSpeed: this.moveSpeed
+            attackSpeed: this.attackSpeed
         };
     }
     
     // === 战斗方法 ===
-    
-    /**
-     * 受到伤害
-     */
-    public takeDamage(damage: number): void {
-        if (!this.isAlive) return;
-        
-        this.currentHealth = Math.max(0, this.currentHealth - damage);
-        this.onTakeDamage(damage);
-        
-        if (this.currentHealth <= 0) {
-            this.die();
-        }
-    }
-    
-    /**
-     * 死亡处理
-     */
-    public die(): void {
-        if (this.unitState === UnitState.DEAD) return;
-        
-        this.unitState = UnitState.DEAD;
-        this.currentTarget = null;
-        this.onDie();
-    }
+    // 英雄不会受到伤害或死亡，移除相关方法
     
     /**
      * 寻找最近的敌人
@@ -360,7 +330,8 @@ export abstract class BaseHero extends Component {
      * 移动状态处理
      */
     protected onMovingState(dt: number): void {
-        // 英雄一般不主动移动，子类可重写
+        // 英雄不移动，此方法保留用于兼容性
+        // 在update循环中会自动转换为IDLE状态
     }
     
     /**
@@ -391,27 +362,7 @@ export abstract class BaseHero extends Component {
     }
     
     // === 事件回调方法 (子类可重写) ===
-    
-    /**
-     * 受伤回调
-     */
-    protected onTakeDamage(damage: number): void {
-        // 子类可重写实现特定的受伤反馈
-    }
-    
-    /**
-     * 死亡回调
-     */
-    protected onDie(): void {
-        // 从BattleManager注销
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.unregisterHero(this.node);
-        }
-        
-        // 子类可重写实现特定的死亡行为
-        this.createDeathEffect();
-    }
+    // 英雄不会受伤或死亡，移除相关回调方法
     
     // === 抽象方法，子类必须实现具体行为 ===
     
@@ -437,12 +388,7 @@ export abstract class BaseHero extends Component {
         // 子类实现具体技能逻辑
     }
     
-    /**
-     * 创建死亡特效 - 子类可重写
-     */
-    protected createDeathEffect(): void {
-        // 子类实现具体死亡特效
-    }
+    // 移除死亡特效方法，英雄不会死亡
     
     // === 工具方法 ===
     

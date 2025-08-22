@@ -18,8 +18,6 @@ export class RussianBlue extends BaseHero {
         const config = HERO_CONFIGS[HeroType.RUSSIAN_BLUE];
         
         this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;

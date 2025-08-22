@@ -51,15 +51,7 @@ export class FastMouse extends BaseMouse {
         this.initializeMovementBehavior();
     }
     
-    // 实现BaseMouse的抽象方法
-    protected performAttack(target: Node): void {
-        // 快速老鼠的攻击实现
-        const targetUnit = target.getComponent(BaseMouse);
-        if (targetUnit) {
-            targetUnit.takeDamage(this.attackDamage);
-            console.log(`快速老鼠攻击目标，造成 ${this.attackDamage} 点伤害`);
-        }
-    }
+    // 快速老鼠不再有攻击能力，移除 performAttack 方法
     
     protected onLoad(): void {
         // 先调用父类初始化
@@ -89,9 +81,7 @@ export class FastMouse extends BaseMouse {
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
+        // 移除攻击相关属性，快速老鼠不攻击
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
         
@@ -224,7 +214,7 @@ export class FastMouse extends BaseMouse {
         
         // 检查是否到达城堡Y位置
         if (currentPos.y <= castlePos.y + 50) {
-            this.attackCastle();
+            this.reachCastle();
             return;
         }
         
@@ -308,29 +298,9 @@ export class FastMouse extends BaseMouse {
         this._currentDirection.normalize();
     }
     
-    // 攻击城堡
-    private attackCastle(): void {
-        if (!this._gameManager) return;
-        
-        // 对城堡造成伤害
-        this._gameManager.castleTakeDamage(this.attackDamage);
-        
-        // 创建攻击特效
-        this.createAttackEffect();
-        
-        // 移除自己
-        this._gameManager.removeActiveEnemy(this.node);
-        this.die();
-        
-        console.log(`快速老鼠攻击城堡，造成 ${this.attackDamage} 点伤害`);
-    }
+    // 移除攻击城堡方法，使用父类的 reachCastle 方法
     
-    // 创建攻击特效
-    private createAttackEffect(): void {
-        if (this.node.parent) {
-            EffectHelper.createAttackEffect(this.node.position, this.node.parent);
-        }
-    }
+    // 移除攻击特效方法
     
     // 重写受伤方法，添加受伤反馈
     protected onTakeDamage(damage: number): void {
@@ -413,11 +383,5 @@ export class FastMouse extends BaseMouse {
         this.moveTowardsCastle(dt);
     }
     
-    // 对目标执行攻击
-    private performAttackOnTarget(target: any): void {
-        target.takeDamage(this.attackDamage);
-        this.attackTarget(target.node);
-        
-        console.log(`快速老鼠攻击英雄，造成 ${this.attackDamage} 点伤害`);
-    }
+    // 移除攻击英雄方法，快速老鼠不再攻击
 }

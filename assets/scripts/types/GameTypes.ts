@@ -90,14 +90,19 @@ export enum DeploymentMode {
     GRID = "grid"                  // 网格部署模式
 }
 
-// 基础单位属性接口
+// 英雄单位属性接口（英雄不移动）
 export interface UnitStats {
     readonly name: string;         // 单位名称
-    health: number;                // 生命值
-    maxHealth: number;             // 最大生命值
     attackDamage: number;          // 攻击力
     attackRange: number;           // 攻击范围
     attackSpeed: number;           // 攻击速度(每秒攻击次数)
+}
+
+// 敌人专用的单位属性接口（包含生命值，无攻击能力）
+export interface EnemyUnitStats {
+    readonly name: string;         // 单位名称
+    health: number;                // 生命值
+    maxHealth: number;             // 最大生命值
     moveSpeed: number;             // 移动速度
 }
 
@@ -121,7 +126,7 @@ export interface HeroConfig extends UnitStats {
 }
 
 // 敌人配置接口
-export interface EnemyConfig extends UnitStats {
+export interface EnemyConfig extends EnemyUnitStats {
     readonly type: EnemyType;      // 敌人类型
     category: EnemyCategory;       // 敌人分类
     goldReward: number;            // 击败奖励金币

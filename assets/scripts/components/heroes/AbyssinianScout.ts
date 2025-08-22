@@ -19,7 +19,6 @@ export class AbyssinianScout extends BaseHero {
         const config = HERO_CONFIGS[HeroType.ABYSSINIAN_SCOUT];
         
         this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;

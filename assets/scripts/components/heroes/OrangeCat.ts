@@ -271,51 +271,7 @@ export class OrangeCat extends BaseHero {
     
     // 移除重复方法，使用基类的canUseSkill
     
-    // 重写死亡方法，添加橘猫特有的死亡效果
-    protected onDie(): void {
-        console.log("橘猫射手阵亡");
-        
-        // 清理所有活跃的子弹
-        if (this._activeBullets) {
-            this._activeBullets.forEach(bullet => {
-                if (bullet && bullet.isValid) {
-                    bullet.destroy();
-                }
-            });
-            this._activeBullets.clear();
-            // 将引用设为null，防止异步回调访问
-            this._activeBullets = null;
-        }
-        
-        // 从BattleManager注销
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.unregisterHero(this.node);
-        }
-        
-        // 从网格系统中清理位置
-        const gridSystem = GridDeploymentSystem.instance;
-        if (gridSystem) {
-            gridSystem.clearHeroFromGrid(this.node);
-        }
-        
-        // 从GameManager的英雄列表中移除
-        const gameManager = GameManager.instance;
-        if (gameManager) {
-            gameManager.removeDeployedHero(this.node);
-        }
-        
-        // 创建死亡特效
-        if (this._graphics) {
-            this._graphics.fillColor = new Color(128, 128, 128); // 变灰
-            this.drawHeroAppearance(); // 使用基类方法
-        }
-        
-        // 停止动画
-        if (this._animation) {
-            this._animation.stop();
-        }
-    }
+    // 英雄不会死亡，移除死亡相关方法
     
     // 重写基类的英雄点击处理
     protected onHeroClickHandler(): void {
@@ -351,8 +307,6 @@ export class OrangeCat extends BaseHero {
         const config = HERO_CONFIGS[HeroType.ORANGE_CAT];
         
         this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;

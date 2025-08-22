@@ -18,7 +18,6 @@ export class BengalHunter extends BaseHero {
         const config = HERO_CONFIGS[HeroType.BENGAL_HUNTER];
         
         this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;

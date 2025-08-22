@@ -19,8 +19,6 @@ export class AmericanBomber extends BaseHero {
         const config = HERO_CONFIGS[HeroType.AMERICAN_BOMBER];
         
         this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;

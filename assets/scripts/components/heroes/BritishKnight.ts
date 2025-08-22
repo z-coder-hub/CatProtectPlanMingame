@@ -33,8 +33,6 @@ export class BritishKnight extends BaseHero {
         const config = HERO_CONFIGS[HeroType.BRITISH_KNIGHT];
         
         this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
@@ -247,49 +245,7 @@ export class BritishKnight extends BaseHero {
         return this._skillTimer <= 0 && this.isAlive;
     }
     
-    // 重写受伤方法，添加护甲效果
-    public takeDamage(damage: number): void {
-        // 英短骑士有天然护甲，减少10%伤害
-        const reducedDamage = damage * 0.9;
-        super.takeDamage(reducedDamage);
-        
-        // 护甲防护视觉效果
-        this.createArmorEffect();
-    }
     
-    private createArmorEffect(): void {
-        if (this.node.parent) {
-            EffectHelper.createArmorEffect(this.node.position, this.node.parent);
-        }
-    }
-    
-    protected onDie(): void {
-        console.log("英短骑士阵亡");
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.unregisterHero(this.node);
-        }
-        
-        const gridSystem = GridDeploymentSystem.instance;
-        if (gridSystem) {
-            gridSystem.clearHeroFromGrid(this.node);
-        }
-        
-        const gameManager = GameManager.instance;
-        if (gameManager) {
-            gameManager.removeDeployedHero(this.node);
-        }
-        
-        if (this._graphics) {
-            this._graphics.fillColor = new Color(128, 128, 128);
-            this.drawBritishKnightAppearance();
-        }
-        
-        if (this._animation) {
-            this._animation.stop();
-        }
-    }
     
     private setupClickEvents(): void {
         this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);

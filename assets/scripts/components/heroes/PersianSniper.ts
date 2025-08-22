@@ -43,8 +43,6 @@ export class PersianSniper extends BaseHero {
         const config = HERO_CONFIGS[HeroType.PERSIAN_SNIPER];
         
         this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
@@ -333,43 +331,6 @@ export class PersianSniper extends BaseHero {
         return this._skillTimer <= 0 && this.isAlive;
     }
     
-    protected onDie(): void {
-        console.log("波斯猫狙击手阵亡");
-        
-        if (this._activeBullets) {
-            this._activeBullets.forEach(bullet => {
-                if (bullet && bullet.isValid) {
-                    bullet.destroy();
-                }
-            });
-            this._activeBullets.clear();
-            this._activeBullets = null;
-        }
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.unregisterHero(this.node);
-        }
-        
-        const gridSystem = GridDeploymentSystem.instance;
-        if (gridSystem) {
-            gridSystem.clearHeroFromGrid(this.node);
-        }
-        
-        const gameManager = GameManager.instance;
-        if (gameManager) {
-            gameManager.removeDeployedHero(this.node);
-        }
-        
-        if (this._graphics) {
-            this._graphics.fillColor = new Color(128, 128, 128);
-            this.drawPersianSniperAppearance();
-        }
-        
-        if (this._animation) {
-            this._animation.stop();
-        }
-    }
     
     private setupClickEvents(): void {
         this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);

@@ -11,7 +11,11 @@
       "mcp__ide__getDiagnostics",
       "Bash(true)",
       "Bash(sed:*)",
-      "mcp__ide__executeCode"
+      "mcp__ide__executeCode",
+      "Bash(for file in RagdollGuardian.ts AbyssinianScout.ts BengalHunter.ts NorwegianIce.ts ScottishEngineer.ts)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "ask": []

@@ -31,8 +31,6 @@ export class RagdollGuardian extends BaseHero {
         const config = HERO_CONFIGS[HeroType.RAGDOLL_GUARDIAN];
         
         this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
@@ -132,9 +130,9 @@ export class RagdollGuardian extends BaseHero {
     }
     
     private applyGuardianBuff(unit: BaseHero): void {
-        // 这里应该实现防御buff，简化版本中增加一些临时血量
-        const bonusHealth = 20;
-        unit.currentHealth = Math.min(unit.maxHealth, unit.currentHealth + bonusHealth);
+        // 布偶猫守护者提供防护，英雄单位无需生命值机制
+        // 在此版本中，英雄不会受到伤害，因此不需要实现防御buff
+        console.log(`布偶猫为${unit.unitName}提供守护buff`);
     }
     
     private createAttackEffect(): void {

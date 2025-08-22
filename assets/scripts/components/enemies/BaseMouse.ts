@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Vec3, tween, TweenSystem, Label, Color } from 'cc';
-import { EnemyType, UnitStats } from '../../types/GameTypes';
+import { EnemyType, EnemyUnitStats } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { DrawingHelper } from '../../utils/DrawingHelper';
@@ -28,14 +28,6 @@ export abstract class BaseMouse extends Component {
     @property({ tooltip: "最大生命值" })
     public maxHealth: number = 40;
     
-    @property({ tooltip: "攻击力" })
-    public attackDamage: number = 8;
-    
-    @property({ tooltip: "攻击范围" })
-    public attackRange: number = 50;
-    
-    @property({ tooltip: "攻击速度(次/秒)" })
-    public attackSpeed: number = 1.0;
     
     @property({ tooltip: "移动速度(像素/秒)" })
     public moveSpeed: number = 60;
@@ -50,7 +42,6 @@ export abstract class BaseMouse extends Component {
     
     // === 受保护属性，子类可以访问 ===
     protected _gameManager: GameManager | null = null;
-    protected _attackTimer: number = 0;
     protected _healthBarNode: Node | null = null;
     protected _nameLabel: Label | null = null;
     
@@ -77,10 +68,6 @@ export abstract class BaseMouse extends Component {
     protected update(dt: number): void {
         if (!this.isAlive) return;
         
-        // 更新攻击计时器
-        if (this._attackTimer > 0) {
-            this._attackTimer -= dt;
-        }
         
         // 根据状态执行对应行为
         switch (this.unitState) {
@@ -91,7 +78,8 @@ export abstract class BaseMouse extends Component {
                 this.onMovingState(dt);
                 break;
             case UnitState.ATTACKING:
-                this.onAttackState(dt);
+                // 老鼠不再攻击，自动转为移动状态
+                this.unitState = UnitState.MOVING;
                 break;
             case UnitState.DEAD:
                 this.onDeadState(dt);
@@ -110,18 +98,12 @@ export abstract class BaseMouse extends Component {
         return this.currentHealth > 0 && this.unitState !== UnitState.DEAD;
     }
     
-    public get canAttack(): boolean {
-        return this._attackTimer <= 0 && this.isAlive;
-    }
     
-    public get stats(): UnitStats {
+    public get stats(): EnemyUnitStats {
         return {
             name: this.unitName,
             health: this.currentHealth,
             maxHealth: this.maxHealth,
-            attackDamage: this.attackDamage,
-            attackRange: this.attackRange,
-            attackSpeed: this.attackSpeed,
             moveSpeed: this.moveSpeed
         };
     }
@@ -153,54 +135,14 @@ export abstract class BaseMouse extends Component {
         this.onDie();
     }
     
-    /**
-     * 寻找最近的英雄目标
-     */
-    protected findNearestHero(): Node | null {
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return null;
-        
-        const heroes = battleManager.registeredHeroes;
-        if (heroes.length === 0) return null;
-        
-        let nearestHero: Node | null = null;
-        let nearestDistance = Infinity;
-        
-        const mousePos = this.node.position;
-        
-        for (const hero of heroes) {
-            const distance = Vec3.distance(mousePos, hero.position);
-            if (distance < nearestDistance && distance <= this.attackRange) {
-                nearestDistance = distance;
-                nearestHero = hero;
-            }
-        }
-        
-        return nearestHero;
-    }
+    // 老鼠不再寻找英雄目标，因为没有攻击能力
+    // 移除 findNearestHero 方法
     
-    /**
-     * 检查目标是否在攻击范围内
-     */
-    protected isTargetInRange(target: Node): boolean {
-        if (!target || !target.isValid) return false;
-        
-        const distance = Vec3.distance(this.node.position, target.position);
-        return distance <= this.attackRange;
-    }
+    // 老鼠不再需要检查攻击范围，因为没有攻击能力
+    // 移除 isTargetInRange 方法
     
-    /**
-     * 攻击目标
-     */
-    protected attackTarget(target: Node): void {
-        if (!this.canAttack || !target || !target.isValid) return;
-        
-        // 重置攻击计时器
-        this._attackTimer = 1.0 / this.attackSpeed;
-        
-        // 调用子类的攻击实现
-        this.performAttack(target);
-    }
+    // 老鼠不再攻击目标，因为没有攻击能力
+    // 移除 attackTarget 方法
     
     /**
      * 通用的城堡位置获取方法
@@ -238,7 +180,7 @@ export abstract class BaseMouse extends Component {
         
         // 检查是否到达城堡
         if (this.isReachedCastle(currentPos)) {
-            this.attackCastle();
+            this.reachCastle();
             return;
         }
         
@@ -249,30 +191,31 @@ export abstract class BaseMouse extends Component {
     }
     
     /**
-     * 通用的攻击城堡方法
+     * 通用的到达城堡方法（老鼠不攻击，只是到达城堡造成扣血）
      */
-    protected attackCastle(): void {
+    protected reachCastle(): void {
         if (!this._gameManager) return;
         
-        // 对城堡造成伤害
-        this._gameManager.castleTakeDamage(this.attackDamage);
+        // 老鼠到达城堡造成固定伤害（基于其最大生命值）
+        const castleDamage = Math.floor(this.maxHealth / 10); // 根据老鼠最大血量计算伤害
+        this._gameManager.castleTakeDamage(castleDamage);
         
-        // 创建攻击特效
-        this.createCastleAttackEffect();
+        // 创建到达特效
+        this.createCastleReachEffect();
         
         // 移除自己
         this._gameManager.removeActiveEnemy(this.node);
         this.die();
         
-        console.log(`${this.unitName}攻击城堡，造成 ${this.attackDamage} 点伤害`);
+        console.log(`${this.unitName}到达城堡，造成 ${castleDamage} 点伤害`);
     }
     
     /**
-     * 创建城堡攻击特效的通用方法
+     * 创建城堡到达特效的通用方法
      * 子类可以重写实现不同的特效
      */
-    protected createCastleAttackEffect(): void {
-        // 基础攻击特效实现
+    protected createCastleReachEffect(): void {
+        // 基础到达特效实现
         // 子类可以重写此方法实现特定的特效
     }
     
@@ -358,9 +301,9 @@ export abstract class BaseMouse extends Component {
     // === 抽象方法，子类必须实现 ===
     
     /**
-     * 执行攻击 - 子类必须实现
+     * 老鼠不再有攻击能力，移除 performAttack 抽象方法
+     * 子类如需特殊逻辑可重写 reachCastle 方法
      */
-    protected abstract performAttack(target: Node): void;
     
     // === 工具方法 ===
     

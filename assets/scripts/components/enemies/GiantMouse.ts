@@ -37,15 +37,7 @@ export class GiantMouse extends BaseMouse {
         this.initializeVisuals();
     }
     
-    // 实现BaseMouse的抽象方法
-    protected performAttack(target: Node): void {
-        // 巨型老鼠的攻击实现
-        const targetUnit = target.getComponent(BaseMouse);
-        if (targetUnit) {
-            targetUnit.takeDamage(this.attackDamage);
-            console.log(`巨型老鼠攻击目标，造成 ${this.attackDamage} 点伤害`);
-        }
-    }
+    // 巨型老鼠不再有攻击能力，移除 performAttack 方法
     
     protected onLoad(): void {
         super.onLoad();
@@ -67,9 +59,7 @@ export class GiantMouse extends BaseMouse {
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
+        // 移除攻击相关属性，巨型老鼠不攻击
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
     }
@@ -181,30 +171,13 @@ export class GiantMouse extends BaseMouse {
         const castlePos = this._gameManager.castleNode.position;
         
         if (currentPos.y <= castlePos.y + 50) {
-            this.attackCastle();
+            this.reachCastle();
         }
     }
     
-    private attackCastle(): void {
-        if (!this._gameManager) return;
-        
-        console.log("巨型老鼠攻击城堡！造成额外伤害！");
-        
-        // 巨型老鼠造成更高伤害
-        this._gameManager.damageCastle(this.attackDamage);
-        
-        // 创建攻击特效
-        this.createCastleAttackEffect();
-        
-        // 销毁自己
-        this.die();
-    }
+    // 移除攻击城堡方法，使用父类的 reachCastle 方法
     
-    private createCastleAttackEffect(): void {
-        if (this.node.parent) {
-            EffectHelper.createCastleAttackEffect(this.node.position, this.node.parent);
-        }
-    }
+    // 移除攻击特效方法
     
     // 重写受伤方法，添加巨型老鼠的特殊反应
     public takeDamage(damage: number): void {
@@ -230,7 +203,7 @@ export class GiantMouse extends BaseMouse {
         
         // 提升移动速度和攻击力
         this.moveSpeed *= 1.5;
-        this.attackDamage *= 1.2;
+        // 移除攻击力提升，巨型老鼠不再攻击
         
         // 变红色表示狂暴
         if (this._graphics) {

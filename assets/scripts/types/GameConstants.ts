@@ -8,12 +8,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.ORANGE_CAT,
         name: "橘猫射手",
         category: HeroCategory.RANGED,
-        health: 120,
-        maxHealth: 120,
         attackDamage: 25,
         attackRange: 150,
         attackSpeed: 1.2,
-        moveSpeed: 100,
         cost: 40,
         bulletSpeed: 300,
         skillCooldown: 5
@@ -23,12 +20,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.PERSIAN_SNIPER,
         name: "波斯猫狙击手",
         category: HeroCategory.RANGED,
-        health: 100,
-        maxHealth: 100,
         attackDamage: 50,
         attackRange: 250,
         attackSpeed: 0.6,
-        moveSpeed: 80,
         cost: 70,
         bulletSpeed: 500,
         skillCooldown: 8,
@@ -40,12 +34,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.BENGAL_HUNTER,
         name: "孟加拉猫猎手",
         category: HeroCategory.RANGED,
-        health: 110,
-        maxHealth: 110,
         attackDamage: 18,
         attackRange: 160,
         attackSpeed: 2.0,
-        moveSpeed: 120,
         cost: 55,
         bulletSpeed: 350,
         skillCooldown: 6
@@ -56,12 +47,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.SIAMESE_MAGE,
         name: "暹罗猫法师",
         category: HeroCategory.MAGE,
-        health: 80,
-        maxHealth: 80,
         attackDamage: 35,
         attackRange: 180,
         attackSpeed: 0.8,
-        moveSpeed: 90,
         cost: 65,
         skillCooldown: 8,
         aoeDamage: 1.5,
@@ -72,12 +60,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.MAINE_THUNDER,
         name: "缅因猫雷法",
         category: HeroCategory.MAGE,
-        health: 90,
-        maxHealth: 90,
         attackDamage: 60,
         attackRange: 200,
         attackSpeed: 0.6,
-        moveSpeed: 70,
         cost: 90,
         skillCooldown: 10,
         chainTargets: 3
@@ -87,12 +72,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.NORWEGIAN_ICE,
         name: "挪威森林猫冰法",
         category: HeroCategory.MAGE,
-        health: 85,
-        maxHealth: 85,
         attackDamage: 30,
         attackRange: 170,
         attackSpeed: 1.0,
-        moveSpeed: 85,
         cost: 75,
         skillCooldown: 7,
         slowEffect: 0.5,
@@ -105,12 +87,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.BRITISH_KNIGHT,
         name: "英国短毛猫骑士",
         category: HeroCategory.MELEE,
-        health: 250,
-        maxHealth: 250,
         attackDamage: 45,
         attackRange: 60,
         attackSpeed: 0.8,
-        moveSpeed: 60,
         cost: 80,
         skillCooldown: 12
     },
@@ -119,12 +98,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.RAGDOLL_GUARDIAN,
         name: "布偶猫守护者",
         category: HeroCategory.MELEE,
-        health: 180,
-        maxHealth: 180,
         attackDamage: 35,
         attackRange: 70,
         attackSpeed: 1.0,
-        moveSpeed: 80,
         cost: 60,
         skillCooldown: 8
     },
@@ -134,12 +110,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.SCOTTISH_ENGINEER,
         name: "苏格兰折耳猫工程师",
         category: HeroCategory.SUPPORT,
-        health: 100,
-        maxHealth: 100,
         attackDamage: 20,
         attackRange: 120,
         attackSpeed: 1.0,
-        moveSpeed: 90,
         cost: 50,
         skillCooldown: 15,
         buffRange: 120,
@@ -150,12 +123,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.ABYSSINIAN_SCOUT,
         name: "阿比西尼亚猫侦察兵",
         category: HeroCategory.SUPPORT,
-        health: 90,
-        maxHealth: 90,
         attackDamage: 15,
         attackRange: 140,
         attackSpeed: 1.2,
-        moveSpeed: 110,
         cost: 45,
         skillCooldown: 12,
         buffRange: 100,
@@ -167,12 +137,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.RUSSIAN_BLUE,
         name: "俄罗斯蓝猫精英",
         category: HeroCategory.SPECIAL,
-        health: 100,
-        maxHealth: 100,
         attackDamage: 45,
         attackRange: 140,
         attackSpeed: 1.8,
-        moveSpeed: 100,
         cost: 85,
         skillCooldown: 12,
         critChance: 0.3,
@@ -184,12 +151,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.AMERICAN_BOMBER,
         name: "美国短毛猫爆破兵",
         category: HeroCategory.SPECIAL,
-        health: 110,
-        maxHealth: 110,
         attackDamage: 70,
         attackRange: 120,
         attackSpeed: 0.5,
-        moveSpeed: 70,
         cost: 95,
         skillCooldown: 15,
         aoeDamage: 2.0,
@@ -197,7 +161,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
     }
 };
 
-// 敌人配置 - 完整的老鼠敌人配置
+// 敌人配置 - 完整的老鼠敌人配置（移除攻击能力）
 export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     // === 基础单位 ===
     [EnemyType.BASIC_MOUSE]: {
@@ -206,10 +170,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BASIC,
         health: 40,
         maxHealth: 40,
-        attackDamage: 8,
-        attackRange: 50,
-        attackSpeed: 1.0,
-        moveSpeed: 60,
         goldReward: 3
     },
 
@@ -219,10 +179,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BASIC,
         health: 120,
         maxHealth: 120,
-        attackDamage: 20,
-        attackRange: 60,
-        attackSpeed: 0.6,
-        moveSpeed: 30,
         goldReward: 8
     },
 
@@ -233,10 +189,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.FAST,
         health: 25,
         maxHealth: 25,
-        attackDamage: 6,
-        attackRange: 45,
-        attackSpeed: 1.3,
-        moveSpeed: 120,
         goldReward: 4
     },
 
@@ -246,10 +198,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.FAST,
         health: 15,
         maxHealth: 15,
-        attackDamage: 4,
-        attackRange: 40,
-        attackSpeed: 1.5,
-        moveSpeed: 180,
         goldReward: 5
     },
 
@@ -260,10 +208,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.ARMORED,
         health: 80,
         maxHealth: 80,
-        attackDamage: 12,
-        attackRange: 55,
-        attackSpeed: 0.8,
-        moveSpeed: 40,
         goldReward: 6
     },
 
@@ -273,10 +217,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.ARMORED,
         health: 150,
         maxHealth: 150,
-        attackDamage: 15,
-        attackRange: 55,
-        attackSpeed: 0.7,
-        moveSpeed: 25,
         goldReward: 10,
         armorValue: 5
     },
@@ -288,10 +228,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.SPECIAL,
         health: 30,
         maxHealth: 30,
-        attackDamage: 8,
-        attackRange: 45,
-        attackSpeed: 1.2,
-        moveSpeed: 80,
         goldReward: 5,
         isFlying: true
     },
@@ -302,10 +238,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.SPECIAL,
         health: 20,
         maxHealth: 20,
-        attackDamage: 5,
-        attackRange: 40,
-        attackSpeed: 1.0,
-        moveSpeed: 70,
         goldReward: 5,
         explosionDamage: 40,
         explosionRange: 80
@@ -317,10 +249,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.SPECIAL,
         health: 30,
         maxHealth: 30,
-        attackDamage: 10,
-        attackRange: 45,
-        attackSpeed: 1.2,
-        moveSpeed: 80,
         goldReward: 7,
         stealthChance: 0.3
     },
@@ -332,10 +260,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 300,
         maxHealth: 300,
-        attackDamage: 25,
-        attackRange: 70,
-        attackSpeed: 0.7,
-        moveSpeed: 40,
         goldReward: 25,
         summonCount: 3,
         summonType: EnemyType.BASIC_MOUSE
@@ -347,10 +271,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 250,
         maxHealth: 250,
-        attackDamage: 30,
-        attackRange: 150,
-        attackSpeed: 0.8,
-        moveSpeed: 35,
         goldReward: 30
     }
 };
@@ -419,4 +339,3 @@ export const UI_CONSTANTS = {
         BUTTON_PRESSED: '#0D47A1'
     }
 } as const;
-

@@ -39,15 +39,7 @@ export class SpeedMouse extends BaseMouse {
         this.createSpeedTrail();
     }
     
-    // 实现BaseMouse的抽象方法
-    protected performAttack(target: Node): void {
-        // 疾速老鼠的攻击实现
-        const targetUnit = target.getComponent(BaseMouse);
-        if (targetUnit) {
-            targetUnit.takeDamage(this.attackDamage);
-            console.log(`疾速老鼠攻击目标，造成 ${this.attackDamage} 点伤害`);
-        }
-    }
+    // 痾速老鼠不再有攻击能力，移除 performAttack 方法
     
     protected onLoad(): void {
         super.onLoad();
@@ -69,9 +61,7 @@ export class SpeedMouse extends BaseMouse {
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
+        // 移除攻击相关属性，痾速老鼠不攻击
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
     }
@@ -222,27 +212,13 @@ export class SpeedMouse extends BaseMouse {
         const castlePos = this._gameManager.castleNode.position;
         
         if (currentPos.y <= castlePos.y + 50) {
-            this.attackCastle();
+            this.reachCastle();
         }
     }
     
-    private attackCastle(): void {
-        if (!this._gameManager) return;
-        
-        console.log("疾速老鼠快速攻击城堡！");
-        
-        // 疾速老鼠攻击力较低但速度快
-        this._gameManager.damageCastle(this.attackDamage);
-        
-        this.createCastleAttackEffect();
-        this.die();
-    }
+    // 移除攻击城堡方法，使用父类的 reachCastle 方法
     
-    private createCastleAttackEffect(): void {
-        if (this.node.parent) {
-            EffectHelper.createCastleAttackEffect(this.node.position, this.node.parent);
-        }
-    }
+    // 移除攻击特效方法
     
     // 重写受伤方法，疾速老鼠受伤时会加速
     public takeDamage(damage: number): void {

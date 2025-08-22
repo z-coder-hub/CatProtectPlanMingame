@@ -1,6 +1,5 @@
 import { _decorator, Node, Vec3, Graphics, Color } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { BaseHero } from '../heroes/BaseHero';
 import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { DrawingHelper } from '../../utils/DrawingHelper';
@@ -37,9 +36,6 @@ export class BasicMouse extends BaseMouse {
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
         
@@ -140,7 +136,7 @@ export class BasicMouse extends BaseMouse {
         
         // 检查是否到达城堡Y位置（城堡是横跨整个屏幕的）
         if (currentPos.y <= castlePos.y + 50) {
-            this.attackCastle();
+            this.reachCastle();
             return;
         }
         
@@ -258,13 +254,7 @@ export class BasicMouse extends BaseMouse {
     }
     
     // 实现抽象方法：执行攻击
-    protected performAttack(target: Node): void {
-        // 简单的近战攻击
-        const targetUnit = target.getComponent(BaseMouse) || target.getComponent(BaseHero);
-        if (targetUnit && targetUnit.takeDamage) {
-            targetUnit.takeDamage(this.attackDamage);
-            console.log(`${this.unitName}攻击目标，造成 ${this.attackDamage} 点伤害`);
-        }
-    }
+    // 老鼠不再有攻击能力，移除 performAttack 方法
+    // 基础老鼠只会朝城堡移动
     
 }
