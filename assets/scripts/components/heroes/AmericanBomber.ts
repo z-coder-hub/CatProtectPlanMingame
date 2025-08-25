@@ -32,14 +32,7 @@ export class AmericanBomber extends BaseHero {
         this.initializeVisuals();
     }
     
-    protected start(): void {
-        super.start();
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.registerHero(this.node);
-        }
-    }
+    // 继承父类start()方法，无需重写
     
     protected update(dt: number): void {
         super.update(dt);
@@ -54,8 +47,8 @@ export class AmericanBomber extends BaseHero {
     
     
     private initializeVisuals(): void {
-        this._graphics = this.node.addComponent(Graphics);
-        
+        // 父类已创建Graphics组件，直接获取引用
+        this._graphics = this.node.getComponent(Graphics);
         this.drawAmericanBomberAppearance();
     }
     

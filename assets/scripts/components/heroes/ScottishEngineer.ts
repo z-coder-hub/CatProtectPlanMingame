@@ -19,7 +19,6 @@ export class ScottishEngineer extends BaseHero {
         const config = HERO_CONFIGS[HeroType.SCOTTISH_ENGINEER];
         
         this.unitName = config.name;
-        this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
@@ -30,17 +29,12 @@ export class ScottishEngineer extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeVisuals();
+        // 父类已创建Graphics组件，直接获取引用
+        this._graphics = this.node.getComponent(Graphics);
+        this.drawScottishEngineerAppearance();
     }
     
-    protected start(): void {
-        super.start();
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.registerHero(this.node);
-        }
-    }
+    // 继承父类start()方法，无需重写
     
     protected update(dt: number): void {
         super.update(dt);
@@ -51,13 +45,6 @@ export class ScottishEngineer extends BaseHero {
             this._buffTimer = 0;
             this.provideBuff();
         }
-    }
-    
-    
-    private initializeVisuals(): void {
-        this._graphics = this.node.addComponent(Graphics);
-        
-        this.drawScottishEngineerAppearance();
     }
     
     private drawScottishEngineerAppearance(): void {

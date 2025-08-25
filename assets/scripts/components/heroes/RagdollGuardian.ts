@@ -17,14 +17,7 @@ export class RagdollGuardian extends BaseHero {
         super.onLoad();
     }
     
-    protected start(): void {
-        super.start();
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.registerHero(this.node);
-        }
-    }
+    // 继承父类start()方法，无需重写
     
     // 实现BaseHero的拽象方法
     protected initializeHeroStats(): void {
@@ -39,14 +32,10 @@ export class RagdollGuardian extends BaseHero {
         this.cost = config.cost;
     }
     
-    // 实现BaseHero的拽象方法
+    // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeVisuals();
-    }
-    
-    private initializeVisuals(): void {
-        this._graphics = this.node.addComponent(Graphics);
-        
+        // 父类已创建Graphics组件，直接获取引用
+        this._graphics = this.node.getComponent(Graphics);
         this.drawRagdollGuardianAppearance();
     }
     

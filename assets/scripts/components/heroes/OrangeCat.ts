@@ -29,15 +29,7 @@ export class OrangeCat extends BaseHero {
     
     // 移除onLoad重写，使用基类的统一实现
     
-    protected start(): void {
-        super.start();
-        
-        // 注册到BattleManager
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.registerHero(this.node);
-        }
-    }
+    // 继承父类start()方法，无需重写
     
     // 移除重复的外观初始化代码，使用基类统一实现
     

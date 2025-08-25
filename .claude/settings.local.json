@@ -15,7 +15,8 @@
       "Bash(for file in RagdollGuardian.ts AbyssinianScout.ts BengalHunter.ts NorwegianIce.ts ScottishEngineer.ts)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(for file in RagdollGuardian.ts AbyssinianScout.ts BengalHunter.ts ScottishEngineer.ts)"
     ],
     "deny": [],
     "ask": []

@@ -17,14 +17,7 @@ export class MaineThunder extends BaseHero {
         super.onLoad();
     }
     
-    protected start(): void {
-        super.start();
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.registerHero(this.node);
-        }
-    }
+    // 继承父类start()方法，无需重写
     
     // 实现BaseHero的拽象方法
     protected initializeHeroStats(): void {
@@ -46,7 +39,8 @@ export class MaineThunder extends BaseHero {
     
     // 初始化外观
     private initializeVisuals(): void {
-        let graphics = this.node.addComponent(Graphics);
+        // 父类已创建Graphics组件，直接获取引用
+        let graphics = this.node.getComponent(Graphics);
         
         this.drawMaineThunderAppearance(graphics);
     }

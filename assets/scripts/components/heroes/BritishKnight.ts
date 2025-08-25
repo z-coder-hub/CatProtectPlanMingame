@@ -48,18 +48,12 @@ export class BritishKnight extends BaseHero {
         this.setupClickEvents();
     }
     
-    protected start(): void {
-        super.start();
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.registerHero(this.node);
-        }
-    }
+    // 继承父类start()方法，无需重写
     
     
     private initializeVisuals(): void {
-        this._graphics = this.node.addComponent(Graphics);
+        // 父类已创建Graphics组件，直接获取引用
+        this._graphics = this.node.getComponent(Graphics);
         
         this.drawBritishKnightAppearance();
         this.createNameLabel();

@@ -18,7 +18,6 @@ export class BengalHunter extends BaseHero {
         const config = HERO_CONFIGS[HeroType.BENGAL_HUNTER];
         
         this.unitName = config.name;
-        this.currentHealth = config.health;
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
@@ -29,24 +28,12 @@ export class BengalHunter extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeVisuals();
-    }
-    
-    protected start(): void {
-        super.start();
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.registerHero(this.node);
-        }
-    }
-    
-    
-    private initializeVisuals(): void {
-        this._graphics = this.node.addComponent(Graphics);
-        
+        // 父类已创建Graphics组件，直接获取引用
+        this._graphics = this.node.getComponent(Graphics);
         this.drawBengalHunterAppearance();
     }
+    
+    // 继承父类start()方法，无需重写
     
     private drawBengalHunterAppearance(): void {
         if (!this._graphics) return;
