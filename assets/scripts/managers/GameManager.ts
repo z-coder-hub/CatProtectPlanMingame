@@ -153,36 +153,20 @@ export class GameManager extends Component {
         }
     }
     
-    // 暂停游戏
-    public pauseGame(): void {
-        if (this._gameState === GameState.BATTLE) {
-            this.setGameState(GameState.PAUSED);
-            console.log("游戏暂停");
-        }
-    }
-    
-    // 恢复游戏
-    public resumeGame(): void {
-        if (this._gameState === GameState.PAUSED) {
-            this.setGameState(GameState.BATTLE);
-            console.log("游戏恢复");
-        }
-    }
-    
     // 游戏结束
     public endGame(isVictory: boolean): void {
-        const newState = isVictory ? GameState.VICTORY : GameState.GAME_OVER;
-        this.setGameState(newState);
-        
         if (isVictory) {
+            this.setGameState(GameState.VICTORY);
             console.log("游戏胜利！");
         } else {
-            console.log("游戏失败！");
+            console.log("游戏失败！自动重新开始...");
+            // 失败后自动重新开始游戏
+            this.resetToFirstWave();
         }
     }
     
-    // 重新开始游戏
-    public restartGame(): void {
+    // 重置到第一关
+    private resetToFirstWave(): void {
         // 重置游戏数据
         this.currentWave = 1;
         this.initializeGameConfig();
@@ -199,10 +183,10 @@ export class GameManager extends Component {
             waveManager.resetWaves();
         }
         
-        // 重置游戏状态
-        this.setGameState(GameState.MENU);
+        // 重置游戏状态到部署阶段
+        this.setGameState(GameState.DEPLOYMENT);
         
-        console.log(`游戏重新开始，当前波次: ${this.currentWave}`);
+        console.log("已重置到第一关，准备重新部署英雄");
     }
     
     // 设置游戏状态

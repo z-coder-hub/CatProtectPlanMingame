@@ -15,7 +15,6 @@ export class GameHUD extends Component {
     private _castleHealthLabel: Label | null = null;
     private _castleHealthBar: Graphics | null = null;
     private _playPauseButton: Node | null = null;
-    private _restartButton: Node | null = null;
 
 
     // 管理器引用
@@ -183,23 +182,21 @@ export class GameHUD extends Component {
         // 使用UIHelper设置右对齐布局
         UIHelper.SetupRightAlignWidget(controlPanelNode, 250, 58.5, 10);
 
-        // 使用UIHelper创建等宽按钮，高度占容器的70%
+        // 使用UIHelper创建单个按钮，高度占容器的70%
         const buttons = UIHelper.CreateEqualWidthButtons(
-            ["开始", "重启"], 
+            ["开始"], 
             controlPanelNode, 
             0.7, // 按钮高度占容器高度的70%
             10,  // 按钮间距10像素
             new Color(70, 130, 180),
             [
-                () => this.onPlayPauseButtonClicked(),
-                () => this.onRestartButtonClicked()
+                () => this.onPlayPauseButtonClicked()
             ],
             this
         );
 
         // 保存按钮引用
         this._playPauseButton = buttons[0];
-        this._restartButton = buttons[1];
     }
 
 
@@ -253,7 +250,7 @@ export class GameHUD extends Component {
 
     // 更新按钮状态
     private updateButtonStates(gameState: GameState): void {
-        if (!this._playPauseButton || !this._restartButton) return;
+        if (!this._playPauseButton) return;
 
         switch (gameState) {
             case GameState.MENU:
@@ -264,10 +261,7 @@ export class GameHUD extends Component {
                 break;
             case GameState.BATTLE:
             case GameState.PLAYING:
-                this.setButtonText(this._playPauseButton, "暂停");
-                break;
-            case GameState.PAUSED:
-                this.setButtonText(this._playPauseButton, "继续");
+                this.setButtonText(this._playPauseButton, "战斗中");
                 break;
             case GameState.RESTING:
                 if (this._gameManager) {
@@ -298,23 +292,11 @@ export class GameHUD extends Component {
                 break;
             case GameState.BATTLE:
             case GameState.PLAYING:
-                this._gameManager.pauseGame();
-                break;
-            case GameState.PAUSED:
-                this._gameManager.resumeGame();
+                // 战斗中不允许暂停，按钮显示状态
                 break;
         }
     }
 
-    private onRestartButtonClicked(): void {
-        console.log("重新开始按钮被点击");
-        if (this._gameManager) {
-            this._gameManager.restartGame();
-        }
-        if (this._waveManager) {
-            this._waveManager.resetWaves();
-        }
-    }
 
     // 显示游戏结束信息
     public showGameOverMessage(isVictory: boolean): void {
@@ -347,6 +329,5 @@ export class GameHUD extends Component {
         if (this._castleHealthLabel) this._castleHealthLabel = null;
         if (this._castleHealthBar) this._castleHealthBar = null;
         if (this._playPauseButton) this._playPauseButton = null;
-        if (this._restartButton) this._restartButton = null;
     }
 }

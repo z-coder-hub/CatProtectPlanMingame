@@ -80,8 +80,6 @@ export enum GameState {
     BATTLE = "battle",            // 战斗阶段
     RESTING = "resting",          // 休息阶段
     PLAYING = "playing",
-    PAUSED = "paused",
-    GAME_OVER = "game_over",
     VICTORY = "victory"
 }
 

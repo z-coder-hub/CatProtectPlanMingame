@@ -99,21 +99,6 @@ export class GameScene extends Component {
         };
     }
     
-    // 重新启动游戏
-    public restartGame(): void {
-        this.log("重新启动游戏...");
-        
-        if (this.gameBootstrap) {
-            // 销毁现有的GameBootstrap
-            this.gameBootstrap.node.destroy();
-            this.gameBootstrap = null;
-        }
-        
-        // 创建新的GameBootstrap
-        this.createGameBootstrap();
-        
-        this.log("游戏重新启动完成");
-    }
     
     // 日志输出
     private log(message: string): void {
