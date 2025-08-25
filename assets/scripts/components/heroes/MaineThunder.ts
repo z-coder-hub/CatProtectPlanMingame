@@ -34,7 +34,6 @@ export class MaineThunder extends BaseHero {
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
         this.bulletSpeed = config.bulletSpeed || 400;
         this.skillCooldown = config.skillCooldown || 10;
         this.cost = config.cost;

@@ -170,6 +170,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BASIC,
         health: 40,
         maxHealth: 40,
+        moveSpeed: 60,
         goldReward: 3
     },
 
@@ -179,6 +180,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BASIC,
         health: 120,
         maxHealth: 120,
+        moveSpeed: 40,
         goldReward: 8
     },
 
@@ -189,6 +191,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.FAST,
         health: 25,
         maxHealth: 25,
+        moveSpeed: 100,
         goldReward: 4
     },
 
@@ -198,6 +201,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.FAST,
         health: 15,
         maxHealth: 15,
+        moveSpeed: 120,
         goldReward: 5
     },
 
@@ -208,6 +212,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.ARMORED,
         health: 80,
         maxHealth: 80,
+        moveSpeed: 45,
         goldReward: 6
     },
 
@@ -217,6 +222,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.ARMORED,
         health: 150,
         maxHealth: 150,
+        moveSpeed: 30,
         goldReward: 10,
         armorValue: 5
     },
@@ -228,6 +234,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.SPECIAL,
         health: 30,
         maxHealth: 30,
+        moveSpeed: 80,
         goldReward: 5,
         isFlying: true
     },
@@ -238,6 +245,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.SPECIAL,
         health: 20,
         maxHealth: 20,
+        moveSpeed: 70,
         goldReward: 5,
         explosionDamage: 40,
         explosionRange: 80
@@ -249,6 +257,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.SPECIAL,
         health: 30,
         maxHealth: 30,
+        moveSpeed: 65,
         goldReward: 7,
         stealthChance: 0.3
     },
@@ -260,6 +269,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 300,
         maxHealth: 300,
+        moveSpeed: 35,
         goldReward: 25,
         summonCount: 3,
         summonType: EnemyType.BASIC_MOUSE
@@ -271,54 +281,143 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 250,
         maxHealth: 250,
+        moveSpeed: 50,
         goldReward: 30
     }
 };
 
-// 波次配置 - 扩展版本，包含新敌人类型
+// 波次配置 - 重新设计的平衡版本，使用现有敌人类型
 export const WAVE_CONFIGS: WaveConfig[] = [
+    // === 第一阶段: 基础训练 (1-3波) ===
     {
         waveNumber: 1,
         enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 5, spawnDelay: 0.8 }
+            { type: EnemyType.BASIC_MOUSE, count: 3, spawnDelay: 1.5 }
         ]
     },
     {
         waveNumber: 2,
         enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 6, spawnDelay: 0.6 },
-            { type: EnemyType.FAST_MOUSE, count: 2, spawnDelay: 0.4 }
+            { type: EnemyType.BASIC_MOUSE, count: 5, spawnDelay: 1.0 }
         ]
     },
     {
         waveNumber: 3,
         enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 8, spawnDelay: 0.5 },
-            { type: EnemyType.FAST_MOUSE, count: 3, spawnDelay: 0.3 },
-            { type: EnemyType.ARMORED_MOUSE, count: 1, spawnDelay: 1.0 }
+            { type: EnemyType.BASIC_MOUSE, count: 6, spawnDelay: 0.8 },
+            { type: EnemyType.FAST_MOUSE, count: 2, spawnDelay: 1.5 }
         ]
     },
+
+    // === 第二阶段: 装甲威胁 (4-6波) ===
     {
         waveNumber: 4,
         enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 10, spawnDelay: 0.4 },
-            { type: EnemyType.FAST_MOUSE, count: 5, spawnDelay: 0.3 },
-            { type: EnemyType.ARMORED_MOUSE, count: 2, spawnDelay: 0.8 }
+            { type: EnemyType.BASIC_MOUSE, count: 6, spawnDelay: 0.6 },
+            { type: EnemyType.FAST_MOUSE, count: 3, spawnDelay: 1.0 },
+            { type: EnemyType.ARMORED_MOUSE, count: 1, spawnDelay: 2.0 }
         ]
     },
     {
         waveNumber: 5,
         enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 12, spawnDelay: 0.3 },
-            { type: EnemyType.FAST_MOUSE, count: 8, spawnDelay: 0.2 },
-            { type: EnemyType.ARMORED_MOUSE, count: 4, spawnDelay: 0.6 }
+            { type: EnemyType.BASIC_MOUSE, count: 7, spawnDelay: 0.5 },
+            { type: EnemyType.ARMORED_MOUSE, count: 2, spawnDelay: 1.5 },
+            { type: EnemyType.GIANT_MOUSE, count: 1, spawnDelay: 3.0 }
+        ]
+    },
+    {
+        waveNumber: 6,
+        enemies: [
+            { type: EnemyType.FAST_MOUSE, count: 5, spawnDelay: 0.6 },
+            { type: EnemyType.ARMORED_MOUSE, count: 2, spawnDelay: 1.2 },
+            { type: EnemyType.SPEED_MOUSE, count: 3, spawnDelay: 1.5 }
+        ]
+    },
+
+    // === 第三阶段: 高速突击 (7-9波) ===
+    {
+        waveNumber: 7,
+        enemies: [
+            { type: EnemyType.BASIC_MOUSE, count: 8, spawnDelay: 0.4 },
+            { type: EnemyType.SPEED_MOUSE, count: 4, spawnDelay: 0.8 }
+        ]
+    },
+    {
+        waveNumber: 8,
+        enemies: [
+            { type: EnemyType.FAST_MOUSE, count: 6, spawnDelay: 0.5 },
+            { type: EnemyType.GIANT_MOUSE, count: 2, spawnDelay: 2.5 },
+            { type: EnemyType.SPEED_MOUSE, count: 4, spawnDelay: 0.7 }
+        ]
+    },
+    {
+        waveNumber: 9,
+        enemies: [
+            { type: EnemyType.ARMORED_MOUSE, count: 4, spawnDelay: 1.0 },
+            { type: EnemyType.FAST_MOUSE, count: 6, spawnDelay: 0.4 },
+            { type: EnemyType.GIANT_MOUSE, count: 2, spawnDelay: 3.0 }
+        ]
+    },
+
+    // === 第四阶段: 混合突击 (10-12波) ===
+    {
+        waveNumber: 10,
+        enemies: [
+            { type: EnemyType.BASIC_MOUSE, count: 10, spawnDelay: 0.3 },
+            { type: EnemyType.FAST_MOUSE, count: 6, spawnDelay: 0.4 },
+            { type: EnemyType.ARMORED_MOUSE, count: 3, spawnDelay: 0.8 }
+        ]
+    },
+    {
+        waveNumber: 11,
+        enemies: [
+            { type: EnemyType.SPEED_MOUSE, count: 8, spawnDelay: 0.3 },
+            { type: EnemyType.GIANT_MOUSE, count: 2, spawnDelay: 2.0 },
+            { type: EnemyType.ARMORED_MOUSE, count: 3, spawnDelay: 1.0 }
+        ]
+    },
+    {
+        waveNumber: 12,
+        enemies: [
+            { type: EnemyType.GIANT_MOUSE, count: 3, spawnDelay: 1.5 },
+            { type: EnemyType.SPEED_MOUSE, count: 10, spawnDelay: 0.2 },
+            { type: EnemyType.ARMORED_MOUSE, count: 4, spawnDelay: 0.8 }
+        ]
+    },
+
+    // === 第五阶段: 终极挑战 (13-15波) ===
+    {
+        waveNumber: 13,
+        enemies: [
+            { type: EnemyType.BASIC_MOUSE, count: 20, spawnDelay: 0.2 },
+            { type: EnemyType.FAST_MOUSE, count: 15, spawnDelay: 0.3 },
+            { type: EnemyType.GIANT_MOUSE, count: 2, spawnDelay: 4.0 }
+        ]
+    },
+    {
+        waveNumber: 14,
+        enemies: [
+            { type: EnemyType.SPEED_MOUSE, count: 25, spawnDelay: 0.15 },
+            { type: EnemyType.ARMORED_MOUSE, count: 8, spawnDelay: 0.5 },
+            { type: EnemyType.GIANT_MOUSE, count: 3, spawnDelay: 2.0 }
+        ]
+    },
+    {
+        waveNumber: 15,
+        enemies: [
+            { type: EnemyType.BASIC_MOUSE, count: 30, spawnDelay: 0.1 },
+            { type: EnemyType.FAST_MOUSE, count: 20, spawnDelay: 0.15 },
+            { type: EnemyType.SPEED_MOUSE, count: 15, spawnDelay: 0.2 },
+            { type: EnemyType.ARMORED_MOUSE, count: 10, spawnDelay: 0.3 },
+            { type: EnemyType.GIANT_MOUSE, count: 5, spawnDelay: 1.0 }
         ]
     }
 ];
 
 // 游戏配置
 export const GAME_CONFIG: GameConfig = {
-    initialGold: 150,                    // 增加初始金币，方便早期部署
+    initialGold: 110,                    // 优化的初始金币，确保能部署2个橘猫+有余量
     castleHealth: 120,                   // 增加城堡血量，提供更多容错
     gridConfig: {
         rows: 11,

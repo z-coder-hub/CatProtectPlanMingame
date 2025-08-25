@@ -46,7 +46,6 @@ export class PersianSniper extends BaseHero {
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
         this.bulletSpeed = config.bulletSpeed || 500;
         this.skillCooldown = config.skillCooldown || 8;
         this.cost = config.cost;

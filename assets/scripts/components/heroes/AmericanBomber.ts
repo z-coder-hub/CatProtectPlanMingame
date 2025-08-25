@@ -22,7 +22,6 @@ export class AmericanBomber extends BaseHero {
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
         this.bulletSpeed = config.bulletSpeed || 350;
         this.skillCooldown = config.skillCooldown || 5;
         this.cost = config.cost;

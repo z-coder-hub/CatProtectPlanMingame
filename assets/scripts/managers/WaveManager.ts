@@ -1,12 +1,14 @@
 import { _decorator, Component, Node, Vec3, instantiate } from 'cc';
 import { WaveConfig, EnemyType } from '../types/GameTypes';
-import { GAME_CONFIG, GAME_CONSTANTS } from '../types/GameConstants';
+import { GAME_CONFIG } from '../types/GameConstants';
 import { GameManager } from './GameManager';
 import { BattleManager } from './BattleManager';
 import { ResourceManager, ResourceManagerHelper } from './ResourceManager';
 import { BasicMouse } from '../components/enemies/BasicMouse';
 import { FastMouse } from '../components/enemies/FastMouse';
 import { ArmoredMouse } from '../components/enemies/ArmoredMouse';
+import { GiantMouse } from '../components/enemies/GiantMouse';
+import { SpeedMouse } from '../components/enemies/SpeedMouse';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 
 const { ccclass, property } = _decorator;
@@ -265,10 +267,11 @@ export class WaveManager extends Component {
         const gridSystem = GridDeploymentSystem.instance;
         
         if (!gridSystem) {
-            // 如果网格系统未初始化，使用固定位置作为备选
-            console.warn("GridDeploymentSystem未初始化，使用固定生成位置");
+            // 如果网格系统未初始化，使用屏幕上方作为备用生成位置
+            console.warn("GridDeploymentSystem未初始化，使用屏幕上方作为生成位置");
             const randomX = -200 + Math.random() * 400; // -200 到 200 的随机X坐标
-            return new Vec3(randomX, GAME_CONSTANTS.ENEMY_SPAWN_Y, 0);
+            const fallbackSpawnY = 300; // 屏幕上方300像素位置作为备用
+            return new Vec3(randomX, fallbackSpawnY, 0);
         }
 
         // 获取网格的边界信息
@@ -302,8 +305,14 @@ export class WaveManager extends Component {
             case EnemyType.ARMORED_MOUSE:
                 enemyNode.addComponent(ArmoredMouse);
                 break;
+            case EnemyType.GIANT_MOUSE:
+                enemyNode.addComponent(GiantMouse);
+                break;
+            case EnemyType.SPEED_MOUSE:
+                enemyNode.addComponent(SpeedMouse);
+                break;
             default:
-                console.warn(`未知的敌人类型: ${enemyType}`);
+                console.warn(`未知或未实现的敌人类型: ${enemyType}`);
                 enemyNode.destroy();
                 return null;
         }

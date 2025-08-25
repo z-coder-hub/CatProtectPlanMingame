@@ -34,7 +34,6 @@ export class RagdollGuardian extends BaseHero {
         this.attackDamage = config.attackDamage;
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
-        this.moveSpeed = config.moveSpeed;
         this.bulletSpeed = config.bulletSpeed || 200;
         this.skillCooldown = config.skillCooldown || 8;
         this.cost = config.cost;
