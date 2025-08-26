@@ -1,6 +1,7 @@
-import { _decorator, Color, Component, Graphics, Label, Node, UITransform } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, UITransform, Widget } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { WaveManager } from '../../managers/WaveManager';
+import { GameBootstrap } from '../../systems/GameBootstrap';
 import { GameState } from '../../types/GameTypes';
 import { UIHelper } from '../../utils/UIHelper';
 
@@ -15,6 +16,7 @@ export class GameHUD extends Component {
     private _castleHealthLabel: Label | null = null;
     private _castleHealthBar: Graphics | null = null;
     private _playPauseButton: Node | null = null;
+    private _gameOverDialog: Node | null = null;
 
 
     // 管理器引用
@@ -23,7 +25,7 @@ export class GameHUD extends Component {
 
     protected onLoad(): void {
         // 使用UIHelper设置GameHUD节点的全屏顶部对齐
-        UIHelper.SetupFullWidthTopWidget(this.node, 60);
+        UIHelper.SetupFullWidthTopWidget(this.node, 65);
 
         this.createCompleteInterface();
         console.log("GameHUD初始化完成 - 完整版本");
@@ -52,27 +54,42 @@ export class GameHUD extends Component {
 
     // 创建完整界面
     private createCompleteInterface(): void {
-        // 创建顶部信息区域
-        this.createTopInfoArea();
+        // 创建独立的信息显示区域（轻微下移）
+        this.createInfoDisplayArea();
+
+        // 创建独立的控制按钮区域（大幅下移）
+        this.createControlButtonArea();
     }
 
 
-    // 创建顶部信息区域
-    private createTopInfoArea(): void {
-        const topAreaNode = new Node("TopInfoArea");
-        topAreaNode.parent = this.node;
+    // 创建信息显示区域（轻微下移）
+    private createInfoDisplayArea(): void {
+        const infoAreaNode = new Node("InfoDisplayArea");
+        infoAreaNode.parent = this.node;
 
-        // 使用UIHelper设置布局
-        UIHelper.SetupFullWidthTopWidget(topAreaNode, 58.5);
+        // 左对齐布局，占据左侧600像素宽度，轻微下移10像素
+        UIHelper.SetupLeftAlignWidget(infoAreaNode, 450, 60, 0, 10, 0);
 
         // 创建背景
-        UIHelper.CreatePanelWithBackground(topAreaNode, new Color(30, 30, 30, 200));
+        UIHelper.CreatePanelWithBackground(infoAreaNode, new Color(30, 30, 30, 200));
 
-        // 创建信息面板
-        this.createInfoPanel(topAreaNode);
+        // 创建信息面板内容
+        this.createInfoPanel(infoAreaNode);
+    }
+
+    // 创建控制按钮区域（大幅下移）
+    private createControlButtonArea(): void {
+        const controlAreaNode = new Node("ControlButtonArea");
+        controlAreaNode.parent = this.node;
+
+        // 大幅下移50像素，避开微信小游戏系统UI
+        UIHelper.SetupRightAlignWidget(controlAreaNode, 250, 58.5, 10, 50);
+
+        // 创建背景
+        UIHelper.CreatePanelWithBackground(controlAreaNode, new Color(30, 30, 30, 200));
 
         // 创建控制按钮
-        this.createControlButtons(topAreaNode);
+        this.createControlButtons(controlAreaNode);
     }
 
     // 创建信息面板
@@ -104,7 +121,7 @@ export class GameHUD extends Component {
         // 使用UIHelper创建金币图标
         const goldNodeTransform = goldNode.getComponent(UITransform);
         if (goldNodeTransform) {
-            UIHelper.CreateCircleIcon(goldNode, goldNodeTransform.height / 2,
+            UIHelper.CreateCircleIcon(goldNode, 12,
                 new Color(255, 215, 0), new Color(255, 140, 0), 2.34);
         }
 
@@ -148,6 +165,16 @@ export class GameHUD extends Component {
         // 血量条背景
         const healthBgNode = new Node("HealthBarBg");
         healthBgNode.parent = healthNode;
+
+        // 使用Widget居中对齐血量条背景
+        const bgTransform = healthBgNode.addComponent(UITransform);
+        bgTransform.setContentSize(117, 14.04);
+        const bgWidget = healthBgNode.addComponent(Widget);
+        bgWidget.isAlignHorizontalCenter = true;
+        bgWidget.isAlignVerticalCenter = true;
+        bgWidget.verticalCenter = 14; // 从healthNode顶部向下22像素
+        bgWidget.updateAlignment();
+
         const healthBg = healthBgNode.addComponent(Graphics);
         healthBg.fillColor = new Color(100, 100, 100);
         healthBg.rect(-58.5, -7.02, 117, 14.04);
@@ -156,6 +183,16 @@ export class GameHUD extends Component {
         // 血量条前景
         const healthBarNode = new Node("HealthBar");
         healthBarNode.parent = healthNode;
+
+        // 使用Widget居中对齐血量条前景
+        const barTransform = healthBarNode.addComponent(UITransform);
+        barTransform.setContentSize(117, 14.04);
+        const barWidget = healthBarNode.addComponent(Widget);
+        barWidget.isAlignHorizontalCenter = true;
+        barWidget.isAlignVerticalCenter = true;
+        barWidget.verticalCenter = 14;
+        barWidget.updateAlignment();
+
         const healthBar = healthBarNode.addComponent(Graphics);
         this._castleHealthBar = healthBar;
         this._castleHealthBar.fillColor = new Color(255, 0, 0);
@@ -165,7 +202,15 @@ export class GameHUD extends Component {
         // 血量文本
         const healthLabelNode = new Node("HealthLabel");
         healthLabelNode.parent = healthNode;
-        healthLabelNode.setPosition(0, -23.4);
+
+        // 使用Widget居中对齐血量文本
+        const labelTransform = healthLabelNode.addComponent(UITransform);
+        labelTransform.setContentSize(117, 18.72);
+        const labelWidget = healthLabelNode.addComponent(Widget);
+        labelWidget.isAlignHorizontalCenter = true;
+        labelWidget.isAlignVerticalCenter = true;
+        labelWidget.verticalCenter = -14
+        labelWidget.updateAlignment();
 
         const healthLabel = healthLabelNode.addComponent(Label);
         this._castleHealthLabel = healthLabel;
@@ -179,13 +224,25 @@ export class GameHUD extends Component {
         const controlPanelNode = new Node("ControlPanel");
         controlPanelNode.parent = parent;
 
-        // 使用UIHelper设置右对齐布局
-        UIHelper.SetupRightAlignWidget(controlPanelNode, 250, 58.5, 10);
+        // 控制面板现在直接填充父容器
+        const transform = controlPanelNode.addComponent(UITransform);
+        transform.setContentSize(250, 58.5);
+
+        const widget = controlPanelNode.addComponent(Widget);
+        widget.isAlignTop = true;
+        widget.isAlignLeft = true;
+        widget.isAlignRight = true;
+        widget.isAlignBottom = true;
+        widget.top = 0;
+        widget.left = 0;
+        widget.right = 0;
+        widget.bottom = 0;
+        widget.updateAlignment();
 
         // 使用UIHelper创建单个按钮，高度占容器的70%
         const buttons = UIHelper.CreateEqualWidthButtons(
-            ["开始"], 
-            controlPanelNode, 
+            ["开始"],
+            controlPanelNode,
             0.7, // 按钮高度占容器高度的70%
             10,  // 按钮间距10像素
             new Color(70, 130, 180),
@@ -222,6 +279,11 @@ export class GameHUD extends Component {
 
         // 更新按钮状态
         this.updateButtonStates(stats.gameState);
+
+        // 检测游戏失败状态并显示对话框
+        if (stats.gameState === GameState.GAME_OVER) {
+            this.createGameOverDialog();
+        }
     }
 
     // 更新城堡血量显示
@@ -265,8 +327,15 @@ export class GameHUD extends Component {
                 break;
             case GameState.RESTING:
                 if (this._gameManager) {
-                    this.setButtonText(this._playPauseButton, `休息${Math.ceil(this._gameManager.restTimer)}s`);
+                    const remainingTime = Math.ceil(this._gameManager.restTimer);
+                    this.setButtonText(this._playPauseButton, `休息${remainingTime}s | 点击跳过`);
                 }
+                break;
+            case GameState.GAME_OVER:
+                this.setButtonText(this._playPauseButton, "游戏失败");
+                break;
+            case GameState.VICTORY:
+                this.setButtonText(this._playPauseButton, "游戏胜利");
                 break;
         }
     }
@@ -274,6 +343,87 @@ export class GameHUD extends Component {
     // 设置按钮文本
     private setButtonText(button: Node, text: string): void {
         UIHelper.SetButtonText(button, text);
+    }
+
+    // 创建游戏失败对话框
+    private createGameOverDialog(): void {
+        // 避免重复创建
+        if (this._gameOverDialog && this._gameOverDialog.isValid) {
+            return;
+        }
+
+        // 获取Canvas根节点以实现全局覆盖
+        const bootstrap = GameBootstrap.instance;
+        const canvasNode = bootstrap?.canvasNode;
+
+        if (!canvasNode) {
+            console.error("无法获取Canvas节点，对话框将添加到GameHUD节点");
+        }
+
+        const dialogNode = new Node("GameOverDialog");
+        dialogNode.parent = canvasNode || this.node; // 优先使用Canvas节点，实现全局覆盖
+        this._gameOverDialog = dialogNode;
+
+        // 设置为最高层级，确保显示在所有UI之上
+        dialogNode.setSiblingIndex(99999);
+
+        // 使用UIHelper设置居中布局 - 更大尺寸以覆盖更多屏幕
+        UIHelper.SetupCenterWidget(dialogNode, 600, 400);
+
+        // 使用UIHelper创建半透明背景 - 更高透明度实现遮罩效果
+        UIHelper.CreatePanelWithBackground(dialogNode, new Color(0, 0, 0, 220));
+
+        // 创建标题文本
+        const titleNode = new Node("Title");
+        titleNode.parent = dialogNode;
+        titleNode.setPosition(0, 80);
+
+        const titleLabel = titleNode.addComponent(Label);
+        titleLabel.string = "游戏失败";
+        titleLabel.fontSize = 56; // 更大的字体
+        titleLabel.color = new Color(255, 80, 80);
+
+        // 创建按钮容器
+        const buttonContainer = new Node("ButtonContainer");
+        buttonContainer.parent = dialogNode;
+        buttonContainer.setPosition(0, -50);
+
+        // 使用UIHelper设置按钮容器布局 - 更大的按钮
+        UIHelper.SetupCenterWidget(buttonContainer, 250, 80);
+
+        // 使用UIHelper创建重新开始按钮
+        UIHelper.CreateEqualWidthButtons(
+            ["重新开始"],
+            buttonContainer,
+            0.7, // 按钮高度占容器高度的70%
+            10,  // 按钮间距
+            new Color(80, 160, 80),
+            [
+                () => this.onRestartButtonClicked()
+            ],
+            this
+        );
+
+        console.log("游戏失败对话框已创建");
+    }
+
+    // 重启按钮点击事件处理
+    private onRestartButtonClicked(): void {
+        console.log("重启按钮被点击");
+
+        if (!this._gameManager) {
+            console.error("未找到GameManager实例");
+            return;
+        }
+
+        // 销毁失败对话框
+        if (this._gameOverDialog && this._gameOverDialog.isValid) {
+            this._gameOverDialog.destroy();
+            this._gameOverDialog = null;
+        }
+
+        // 调用GameManager的重启游戏方法
+        this._gameManager.restartGame();
     }
 
     // 按钮点击事件处理
@@ -294,32 +444,14 @@ export class GameHUD extends Component {
             case GameState.PLAYING:
                 // 战斗中不允许暂停，按钮显示状态
                 break;
+            case GameState.RESTING:
+                // 休息阶段允许手动跳过
+                this._gameManager.skipRestPhase();
+                break;
         }
     }
 
 
-    // 显示游戏结束信息
-    public showGameOverMessage(isVictory: boolean): void {
-        const messageNode = new Node("GameOverMessage");
-        messageNode.parent = this.node;
-
-        // 使用UIHelper设置居中布局
-        UIHelper.SetupCenterWidget(messageNode, 468, 234);
-
-        // 使用UIHelper创建背景
-        UIHelper.CreatePanelWithBackground(messageNode, new Color(0, 0, 0, 180));
-
-        const messageLabel = messageNode.addComponent(Label);
-        messageLabel.string = isVictory ? "胜利！" : "失败！";
-        messageLabel.fontSize = 56.16;
-        messageLabel.color = isVictory ? new Color(0, 255, 0) : new Color(255, 0, 0);
-
-        setTimeout(() => {
-            if (messageNode && messageNode.isValid) {
-                messageNode.destroy();
-            }
-        }, 5000);
-    }
 
 
     protected onDestroy(): void {
@@ -329,5 +461,6 @@ export class GameHUD extends Component {
         if (this._castleHealthLabel) this._castleHealthLabel = null;
         if (this._castleHealthBar) this._castleHealthBar = null;
         if (this._playPauseButton) this._playPauseButton = null;
+        if (this._gameOverDialog) this._gameOverDialog = null;
     }
 }

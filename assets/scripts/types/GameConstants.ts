@@ -419,6 +419,7 @@ export const WAVE_CONFIGS: WaveConfig[] = [
 export const GAME_CONFIG: GameConfig = {
     initialGold: 110,                    // 优化的初始金币，确保能部署2个橘猫+有余量
     castleHealth: 120,                   // 增加城堡血量，提供更多容错
+    restDuration: 120,                   // 波次间休息时长120秒，支持手动跳过
     gridConfig: {
         rows: 11,
         cols: 6

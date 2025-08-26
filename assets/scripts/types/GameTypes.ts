@@ -80,7 +80,8 @@ export enum GameState {
     BATTLE = "battle",            // 战斗阶段
     RESTING = "resting",          // 休息阶段
     PLAYING = "playing",
-    VICTORY = "victory"
+    VICTORY = "victory",
+    GAME_OVER = "game_over"       // 游戏失败
 }
 
 // 部署模式枚举
@@ -177,6 +178,7 @@ export interface GridConfig {
 export interface GameConfig {
     initialGold: number;           // 初始金币
     castleHealth: number;          // 城堡生命值
+    restDuration: number;          // 波次间休息时长(秒)
     gridConfig: GridConfig;        // 网格配置
     heroConfigs: Record<HeroType, HeroConfig>;     // 英雄配置
     enemyConfigs: Record<EnemyType, EnemyConfig>;  // 敌人配置

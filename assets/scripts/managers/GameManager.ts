@@ -39,7 +39,7 @@ export class GameManager extends Component {
     
     // 休息阶段相关（参考老项目）
     private _restTimer: number = 0;
-    private _restDuration: number = 3.0;
+    private _restDuration: number = GAME_CONFIG.restDuration;
     
     // 组件引用缓存（参考老项目）
     private _battleManagerCache: BattleManager | null = null;
@@ -159,14 +159,13 @@ export class GameManager extends Component {
             this.setGameState(GameState.VICTORY);
             console.log("游戏胜利！");
         } else {
-            console.log("游戏失败！自动重新开始...");
-            // 失败后自动重新开始游戏
-            this.resetToFirstWave();
+            this.setGameState(GameState.GAME_OVER);
+            console.log("游戏失败！等待玩家重启...");
         }
     }
     
-    // 重置到第一关
-    private resetToFirstWave(): void {
+    // 重新开始游戏
+    public restartGame(): void {
         // 重置游戏数据
         this.currentWave = 1;
         this.initializeGameConfig();
@@ -186,7 +185,7 @@ export class GameManager extends Component {
         // 重置游戏状态到部署阶段
         this.setGameState(GameState.DEPLOYMENT);
         
-        console.log("已重置到第一关，准备重新部署英雄");
+        console.log("游戏已重新开始，准备重新部署英雄");
     }
     
     // 设置游戏状态
@@ -242,6 +241,17 @@ export class GameManager extends Component {
         this._restTimer -= dt;
         if (this._restTimer <= 0) {
             this.nextWave();
+        }
+    }
+    
+    // 手动跳过休息阶段
+    public skipRestPhase(): void {
+        if (this._gameState === GameState.RESTING) {
+            console.log("手动跳过休息阶段，立即开始下一波");
+            this._restTimer = 0;
+            this.nextWave();
+        } else {
+            console.warn("只能在休息阶段跳过休息");
         }
     }
     

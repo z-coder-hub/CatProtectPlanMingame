@@ -43,14 +43,14 @@ export class UIHelper {
     /**
      * 为节点设置UITransform和Widget组件进行右对齐
      */
-    static SetupRightAlignWidget(node: Node, width: number, height: number, rightOffset: number): void {
+    static SetupRightAlignWidget(node: Node, width: number, height: number, rightOffset: number, topOffset: number = 0): void {
         const transform = node.addComponent(UITransform);
         transform.setContentSize(width, height);
 
         const widget = node.addComponent(Widget);
         widget.isAlignTop = true;
         widget.isAlignRight = true;
-        widget.top = 0;
+        widget.top = topOffset;
         widget.right = rightOffset;
         widget.updateAlignment();
     }
