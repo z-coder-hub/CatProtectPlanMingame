@@ -33,7 +33,7 @@ export class GridDeploymentSystem extends Component {
     public gridMarginTop: number = 120;
 
     @property({ tooltip: "网格区域下边距" })
-    public gridMarginBottom: number = 200;
+    public gridMarginBottom: number = 170;
 
     @property({ tooltip: "网格区域左边距" })
     public gridMarginLeft: number = 50;

@@ -40,7 +40,7 @@ export class Castle extends Component {
     // 设置城堡位置 - 位于英雄面板上方，距离底部200像素
     private setupCastlePosition(): void {
         // 使用Widget全宽底部对齐，距离底部200像素（英雄面板144px + 间距）
-        UIHelper.SetupBottomAlignWidget(this.node, this._castleHeight, 200);
+        UIHelper.SetupBottomAlignWidget(this.node, this._castleHeight, 150);
     }
 
     // 初始化城堡外观
@@ -145,11 +145,11 @@ export class Castle extends Component {
         // 改变外观为废墟
         if (this._graphics) {
             this._graphics.clear();
-            
+
             // 获取节点的实际宽度（由Widget设置）
             const transform = this.node.getComponent(UITransform);
             const castleWidth = transform ? transform.width : 720;
-            
+
             this._graphics.fillColor = new Color(64, 64, 64); // 变成灰色废墟
             this._graphics.rect(
                 -castleWidth / 2,
