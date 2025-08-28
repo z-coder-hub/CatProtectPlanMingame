@@ -6,6 +6,20 @@ export enum UnitType {
     ENEMY = "enemy"
 }
 
+// 英雄状态枚举（英雄不会死亡）
+export enum HeroState {
+    IDLE = 0,      // 待机
+    ATTACKING = 1  // 攻击中
+}
+
+// 敌人状态枚举
+export enum EnemyState {
+    IDLE = 0,      // 待机
+    MOVING = 1,    // 移动中
+    ATTACKING = 2, // 攻击中
+    DEAD = 3       // 死亡
+}
+
 // 英雄分类枚举
 export enum HeroCategory {
     RANGED = "ranged",     // 远程
@@ -64,8 +78,6 @@ export enum EnemyType {
     TANK_MOUSE = "TankMouse",           // 坦克老鼠
 
     // 特殊单位
-    FLYING_MOUSE = "FlyingMouse",       // 飞行老鼠
-    BOMB_MOUSE = "BombMouse",           // 爆炸老鼠
     STEALTH_MOUSE = "StealthMouse",     // 潜行老鼠
 
     // BOSS单位
@@ -129,7 +141,6 @@ export interface EnemyConfig extends EnemyUnitStats {
     readonly type: EnemyType;      // 敌人类型
     category: EnemyCategory;       // 敌人分类
     goldReward: number;            // 击败奖励金币
-    isFlying?: boolean;            // 是否飞行单位
     explosionDamage?: number;      // 爆炸伤害
     explosionRange?: number;       // 爆炸范围
     summonCount?: number;          // 召唤数量

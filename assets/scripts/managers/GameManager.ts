@@ -16,7 +16,7 @@ export class GameManager extends Component {
     public castleHealth: number = 100;
     
     @property({ tooltip: "当前金币数量" })
-    public currentGold: number = 200;
+    public currentGold: number = 110;  // 与GAME_CONFIG.initialGold保持一致
     
     @property({ tooltip: "当前波次" })
     public currentWave: number = 1;

@@ -34,7 +34,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.BENGAL_HUNTER,
         name: "孟加拉猫猎手",
         category: HeroCategory.RANGED,
-        attackDamage: 18,
+        attackDamage: 20,        // 从18提升到20，修复略弱问题
         attackRange: 160,
         attackSpeed: 2.0,
         cost: 55,
@@ -60,7 +60,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.MAINE_THUNDER,
         name: "缅因猫雷法",
         category: HeroCategory.MAGE,
-        attackDamage: 60,
+        attackDamage: 45,        // 从60降低到45，修复过强问题
         attackRange: 200,
         attackSpeed: 0.6,
         cost: 90,
@@ -72,7 +72,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.NORWEGIAN_ICE,
         name: "挪威森林猫冰法",
         category: HeroCategory.MAGE,
-        attackDamage: 30,
+        attackDamage: 35,        // 从30提升到35，修复过弱问题
         attackRange: 170,
         attackSpeed: 1.0,
         cost: 75,
@@ -90,7 +90,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackDamage: 45,
         attackRange: 60,
         attackSpeed: 0.8,
-        cost: 80,
+        cost: 65,               // 从80降低到65，修复性价比问题
         skillCooldown: 12
     },
 
@@ -98,7 +98,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.RAGDOLL_GUARDIAN,
         name: "布偶猫守护者",
         category: HeroCategory.MELEE,
-        attackDamage: 35,
+        attackDamage: 40,        // 从35提升到40，修复过弱问题
         attackRange: 70,
         attackSpeed: 1.0,
         cost: 60,
@@ -137,7 +137,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.RUSSIAN_BLUE,
         name: "俄罗斯蓝猫精英",
         category: HeroCategory.SPECIAL,
-        attackDamage: 45,
+        attackDamage: 35,        // 从45降低到35，修复过强问题
         attackRange: 140,
         attackSpeed: 1.8,
         cost: 85,
@@ -228,28 +228,6 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     },
 
     // === 特殊单位 ===
-    [EnemyType.FLYING_MOUSE]: {
-        type: EnemyType.FLYING_MOUSE,
-        name: "飞行老鼠",
-        category: EnemyCategory.SPECIAL,
-        health: 30,
-        maxHealth: 30,
-        moveSpeed: 80,
-        goldReward: 5,
-        isFlying: true
-    },
-
-    [EnemyType.BOMB_MOUSE]: {
-        type: EnemyType.BOMB_MOUSE,
-        name: "爆炸老鼠",
-        category: EnemyCategory.SPECIAL,
-        health: 20,
-        maxHealth: 20,
-        moveSpeed: 70,
-        goldReward: 5,
-        explosionDamage: 40,
-        explosionRange: 80
-    },
 
     [EnemyType.STEALTH_MOUSE]: {
         type: EnemyType.STEALTH_MOUSE,
@@ -261,6 +239,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         goldReward: 7,
         stealthChance: 0.3
     },
+
 
     // === BOSS单位 ===
     [EnemyType.MOUSE_KING]: {

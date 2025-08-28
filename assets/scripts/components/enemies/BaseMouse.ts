@@ -1,18 +1,11 @@
 import { _decorator, Component, Node, Vec3, tween, TweenSystem, Label, Color } from 'cc';
-import { EnemyType, EnemyUnitStats } from '../../types/GameTypes';
+import { EnemyType, EnemyState, EnemyUnitStats } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass, property } = _decorator;
 
-// 单位状态枚举
-export enum UnitState {
-    IDLE = 0,      // 待机
-    MOVING = 1,    // 移动中
-    ATTACKING = 2, // 攻击中
-    DEAD = 3       // 死亡
-}
 
 /**
  * 老鼠敌人基类
@@ -37,7 +30,7 @@ export abstract class BaseMouse extends Component {
     
     // === 状态属性 ===
     public currentHealth: number = 40;
-    public unitState: UnitState = UnitState.IDLE;
+    public enemyState: EnemyState = EnemyState.IDLE;
     public currentTarget: Node | null = null;
     
     // === 受保护属性，子类可以访问 ===
@@ -70,18 +63,18 @@ export abstract class BaseMouse extends Component {
         
         
         // 根据状态执行对应行为
-        switch (this.unitState) {
-            case UnitState.IDLE:
+        switch (this.enemyState) {
+            case EnemyState.IDLE:
                 this.onIdleState(dt);
                 break;
-            case UnitState.MOVING:
+            case EnemyState.MOVING:
                 this.onMovingState(dt);
                 break;
-            case UnitState.ATTACKING:
+            case EnemyState.ATTACKING:
                 // 老鼠不再攻击，自动转为移动状态
-                this.unitState = UnitState.MOVING;
+                this.enemyState = EnemyState.MOVING;
                 break;
-            case UnitState.DEAD:
+            case EnemyState.DEAD:
                 this.onDeadState(dt);
                 break;
         }
@@ -95,7 +88,7 @@ export abstract class BaseMouse extends Component {
     
     // === 通用属性访问器 ===
     public get isAlive(): boolean {
-        return this.currentHealth > 0 && this.unitState !== UnitState.DEAD;
+        return this.currentHealth > 0 && this.enemyState !== EnemyState.DEAD;
     }
     
     
@@ -128,9 +121,9 @@ export abstract class BaseMouse extends Component {
      * 死亡处理
      */
     public die(): void {
-        if (this.unitState === UnitState.DEAD) return;
+        if (this.enemyState === EnemyState.DEAD) return;
         
-        this.unitState = UnitState.DEAD;
+        this.enemyState = EnemyState.DEAD;
         this.currentTarget = null;
         this.onDie();
     }
@@ -276,7 +269,7 @@ export abstract class BaseMouse extends Component {
     protected onAttackState(dt: number): void {
         // 在塔防游戏中，敌人不攻击英雄，立即回到移动状态
         this.currentTarget = null;
-        this.unitState = UnitState.IDLE;
+        this.enemyState = EnemyState.IDLE;
         this.moveTowardsCastle(dt);
     }
     

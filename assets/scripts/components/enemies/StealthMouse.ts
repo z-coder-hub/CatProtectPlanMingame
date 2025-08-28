@@ -1,0 +1,273 @@
+import { _decorator, Color, Graphics } from 'cc';
+import { BaseMouse } from './BaseMouse';
+import { EnemyType } from '../../types/GameTypes';
+import { ENEMY_CONFIGS } from '../../types/GameConstants';
+
+const { ccclass, property } = _decorator;
+
+/**
+ * 潜行老鼠 - 闪避型敌人，30%几率闪避攻击
+ * 特点：血量30，移速65，30%闪避几率，奖励7金币
+ */
+@ccclass('StealthMouse')
+export class StealthMouse extends BaseMouse {
+    
+    public readonly enemyType: EnemyType = EnemyType.STEALTH_MOUSE;
+    
+    @property({ tooltip: "闪避几率(0-1)" })
+    public dodgeChance: number = 0.3;
+    
+    // 潜行状态（用于视觉效果）
+    private _isStealthed: boolean = false;
+    private _stealthTimer: number = 0;
+    private _stealthCooldown: number = 3; // 3秒切换一次潜行状态
+    
+    protected initializeMouseStats(): void {
+        const config = ENEMY_CONFIGS[this.enemyType];
+        
+        // 基础属性配置
+        this.unitName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.moveSpeed = config.moveSpeed;
+        this.goldReward = config.goldReward;
+        
+        // 特殊属性：闪避几率
+        this.dodgeChance = config.stealthChance || 0.3;
+        
+        console.log(`初始化${this.unitName}: 血量${this.maxHealth}, 移速${this.moveSpeed}, 闪避${this.dodgeChance * 100}%, 奖励${this.goldReward}金币`);
+    }
+    
+    protected initializeMouseVisuals(): void {
+        // 创建潜行老鼠外观 - 紫色半透明外观
+        const graphics = this.node.addComponent(Graphics);
+        
+        // 绘制潜行老鼠身体（较小且敏捷的外观）
+        this.drawStealthMouseAppearance(graphics, false);
+        
+        console.log(`${this.unitName}外观创建完成`);
+    }
+    
+    /**
+     * 绘制潜行老鼠外观
+     * @param graphics 绘图组件
+     * @param isStealthed 是否处于潜行状态
+     */
+    private drawStealthMouseAppearance(graphics: Graphics, isStealthed: boolean): void {
+        graphics.clear();
+        
+        // 根据潜行状态调整透明度和颜色
+        const alpha = isStealthed ? 128 : 255;  // 潜行时半透明
+        const bodyColor = isStealthed ? 
+            new Color(150, 100, 200, alpha) :    // 潜行时偏紫色
+            new Color(100, 100, 150, alpha);     // 正常时深蓝色
+        
+        // 绘制敏捷的身体（椭圆形，更流线型）
+        graphics.fillColor = bodyColor;
+        graphics.strokeColor = new Color(80, 80, 120, alpha);
+        graphics.lineWidth = 2;
+        
+        // 主体 - 流线型椭圆
+        graphics.ellipse(-14, -6, 28, 12);
+        graphics.fill();
+        graphics.stroke();
+        
+        // 头部
+        graphics.fillColor = new Color(120, 120, 170, alpha);
+        graphics.ellipse(-8, 2, 16, 10);
+        graphics.fill();
+        
+        // 眼睛 - 敏锐的眼神
+        const eyeColor = isStealthed ? 
+            new Color(200, 150, 255, alpha) :    // 潜行时发光的紫色眼睛
+            new Color(255, 255, 100, alpha);     // 正常时黄色眼睛
+        
+        graphics.fillColor = eyeColor;
+        graphics.circle(-4, 5, 3);
+        graphics.fill();
+        graphics.circle(4, 5, 3);
+        graphics.fill();
+        
+        // 耳朵 - 尖锐警觉
+        graphics.fillColor = bodyColor;
+        graphics.moveTo(-10, 8);
+        graphics.lineTo(-6, 12);
+        graphics.lineTo(-2, 8);
+        graphics.close();
+        graphics.fill();
+        
+        graphics.moveTo(2, 8);
+        graphics.lineTo(6, 12);
+        graphics.lineTo(10, 8);
+        graphics.close();
+        graphics.fill();
+        
+        // 尾巴 - 细长敏捷
+        graphics.strokeColor = bodyColor;
+        graphics.lineWidth = 3;
+        graphics.moveTo(12, -2);
+        graphics.quadraticCurveTo(18, -8, 24, -4);
+        graphics.stroke();
+        
+        // 潜行特效 - 在潜行状态时添加光环
+        if (isStealthed) {
+            graphics.strokeColor = new Color(200, 150, 255, 100);
+            graphics.lineWidth = 1;
+            graphics.circle(0, 0, 20);
+            graphics.stroke();
+            graphics.circle(0, 0, 24);
+            graphics.stroke();
+        }
+    }
+    
+    /**
+     * 重写update方法，添加潜行状态切换
+     */
+    protected update(dt: number): void {
+        super.update(dt);
+        
+        if (!this.isAlive) return;
+        
+        // 潜行状态切换逻辑
+        this._stealthTimer += dt;
+        if (this._stealthTimer >= this._stealthCooldown) {
+            this.toggleStealthState();
+            this._stealthTimer = 0;
+        }
+    }
+    
+    /**
+     * 切换潜行状态
+     */
+    private toggleStealthState(): void {
+        this._isStealthed = !this._isStealthed;
+        
+        // 重新绘制外观
+        const graphics = this.node.getComponent(Graphics);
+        if (graphics) {
+            this.drawStealthMouseAppearance(graphics, this._isStealthed);
+        }
+        
+        // 调整节点透明度
+        this.node.opacity = this._isStealthed ? 160 : 255;
+        
+        console.log(`${this.unitName}${this._isStealthed ? '进入' : '退出'}潜行状态`);
+    }
+    
+    /**
+     * 重写受到伤害方法，应用闪避机制
+     */
+    public takeDamage(damage: number): void {
+        if (!this.isAlive) return;
+        
+        // 闪避判定
+        const dodgeRoll = Math.random();
+        if (dodgeRoll < this.dodgeChance) {
+            console.log(`${this.unitName}闪避了攻击！(${(dodgeRoll * 100).toFixed(1)}% < ${(this.dodgeChance * 100).toFixed(1)}%)`);
+            this.createDodgeEffect();
+            return;
+        }
+        
+        // 没有闪避，正常受伤
+        this.currentHealth = Math.max(0, this.currentHealth - damage);
+        this.onTakeDamage(damage);
+        
+        if (this.currentHealth <= 0) {
+            this.die();
+        }
+    }
+    
+    /**
+     * 创建闪避特效
+     */
+    private createDodgeEffect(): void {
+        // 闪避特效 - 快速左右移动
+        const originalPos = this.node.position.clone();
+        const dodgeDistance = 15;
+        
+        // 左闪
+        this.node.setPosition(originalPos.x - dodgeDistance, originalPos.y, originalPos.z);
+        
+        this.scheduleOnce(() => {
+            if (this.node && this.node.isValid) {
+                // 右闪
+                this.node.setPosition(originalPos.x + dodgeDistance, originalPos.y, originalPos.z);
+                
+                this.scheduleOnce(() => {
+                    if (this.node && this.node.isValid) {
+                        // 回到原位
+                        this.node.setPosition(originalPos);
+                    }
+                }, 0.05);
+            }
+        }, 0.05);
+    }
+    
+    /**
+     * 获取潜行老鼠标签配置
+     */
+    protected getMouseLabelConfig() {
+        return {
+            text: "潜行老鼠",
+            fontSize: 22,
+            color: new Color(200, 150, 255),      // 紫色字体配合潜行主题
+            yOffset: 35,
+            size: { width: 80, height: 28 }      // 稍宽的标签
+        };
+    }
+    
+    /**
+     * 重写移动方法，添加潜行移动效果
+     */
+    protected moveTowardsCastle(dt: number): void {
+        if (!this._gameManager || !this._gameManager.castleNode) return;
+        
+        const currentPos = this.node.position;
+        
+        // 检查是否到达城堡
+        if (this.isReachedCastle(currentPos)) {
+            this.reachCastle();
+            return;
+        }
+        
+        // 潜行移动 - 添加轻微的左右摇摆
+        const baseSpeed = this.moveSpeed * dt;
+        let moveDistance = baseSpeed;
+        
+        // 潜行状态时移动稍快且更难预测
+        if (this._isStealthed) {
+            moveDistance *= 1.1; // 潜行时稍快10%
+        }
+        
+        // 添加随机摇摆（模拟潜行的不规律移动）
+        const swayAmplitude = this._isStealthed ? 8 : 4;
+        const swayOffset = Math.sin(Date.now() * 0.01) * swayAmplitude;
+        
+        const newPos = Vec3.add(new Vec3(), currentPos, new Vec3(swayOffset * dt, -moveDistance, 0));
+        this.node.setPosition(newPos);
+    }
+    
+    /**
+     * 创建死亡特效 - 潜行单位的特殊消失效果
+     */
+    protected createDeathEffect(): void {
+        // 潜行单位死亡 - 逐渐透明消失
+        const fadeOutDuration = 0.5;
+        const originalOpacity = this.node.opacity;
+        
+        // 渐隐消失效果
+        const fadeSteps = 10;
+        const fadeInterval = fadeOutDuration / fadeSteps;
+        
+        for (let i = 1; i <= fadeSteps; i++) {
+            this.scheduleOnce(() => {
+                if (this.node && this.node.isValid) {
+                    const newOpacity = originalOpacity * (1 - i / fadeSteps);
+                    this.node.opacity = newOpacity;
+                }
+            }, i * fadeInterval);
+        }
+        
+        console.log(`${this.unitName}潜行消失...`);
+    }
+}

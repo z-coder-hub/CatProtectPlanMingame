@@ -21,8 +21,6 @@ export class EnemyFactory {
         // [EnemyType.FAST_MOUSE]: FastMouse,
         // [EnemyType.ARMORED_MOUSE]: ArmoredMouse,
         // [EnemyType.TANK_MOUSE]: TankMouse,
-        // [EnemyType.FLYING_MOUSE]: FlyingMouse,
-        // [EnemyType.BOMB_MOUSE]: BombMouse,
         // [EnemyType.STEALTH_MOUSE]: StealthMouse,
         // [EnemyType.MOUSE_KING]: MouseKing,
         // [EnemyType.MECH_MOUSE]: MechMouse,
@@ -184,8 +182,8 @@ export class EnemyFactory {
             description: this.getEnemyDescription(enemyType),
             stats: {
                 health: config.maxHealth,
-                attack: config.attackDamage,
-                range: config.attackRange,
+                attack: 0, // Enemies don't have attack damage anymore
+                range: 0,  // Enemies don't have attack range anymore  
                 speed: config.moveSpeed
             },
             specialAbilities: this.getEnemyAbilities(enemyType),
@@ -206,8 +204,6 @@ export class EnemyFactory {
             [EnemyType.SPEED_MOUSE]: "疾速老鼠，极高速度",
             [EnemyType.ARMORED_MOUSE]: "装甲老鼠，厚重防护",
             [EnemyType.TANK_MOUSE]: "坦克老鼠，终极护甲",
-            [EnemyType.FLYING_MOUSE]: "飞行老鼠，空中威胁",
-            [EnemyType.BOMB_MOUSE]: "爆炸老鼠，自爆攻击",
             [EnemyType.STEALTH_MOUSE]: "潜行老鼠，闪避攻击",
             [EnemyType.MOUSE_KING]: "老鼠王，召唤BOSS",
             [EnemyType.MECH_MOUSE]: "机械老鼠，远程火力"
@@ -229,8 +225,6 @@ export class EnemyFactory {
             [EnemyType.SPEED_MOUSE]: ["受伤加速", "残影效果"],
             [EnemyType.ARMORED_MOUSE]: [],
             [EnemyType.TANK_MOUSE]: ["护甲减伤"],
-            [EnemyType.FLYING_MOUSE]: ["飞行（免疫近战）"],
-            [EnemyType.BOMB_MOUSE]: ["死亡爆炸"],
             [EnemyType.STEALTH_MOUSE]: ["闪避攻击"],
             [EnemyType.MOUSE_KING]: ["召唤小老鼠"],
             [EnemyType.MECH_MOUSE]: ["激光攻击", "远程威胁"]

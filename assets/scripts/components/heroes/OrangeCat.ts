@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Vec3, Color, Animation, tween, Tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
-import { HeroType } from '../../types/GameTypes';
+import { HeroType, HeroState } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
 import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
@@ -55,22 +55,20 @@ export class OrangeCat extends BaseHero {
     
     // 重写待机状态，自动搜索和攻击敌人
     protected onIdleState(dt: number): void {
-        if (!this.isAlive) return;
-        
         // 寻找最近的敌人
         const battleManager = BattleManager.instance;
         if (battleManager) {
             const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
-                this.unitState = 2; // 攻击状态
+                this.heroState = HeroState.ATTACKING;
             }
         }
     }
     
     // 重写攻击方法
     protected onAttack(target: Node): void {
-        if (!target || !this.isAlive) return;
+        if (!target) return;
         
         // 创建子弹攻击目标
         this.shootBullet(target);

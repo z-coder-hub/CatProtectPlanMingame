@@ -19,16 +19,23 @@
 assets/
 ├── scripts/                    # TypeScript脚本文件
 │   ├── components/             # 游戏组件
-│   │   ├── base/              # 基础组件
-│   │   │   └── BaseUnit.ts    # 所有游戏单位的基类
-│   │   ├── heroes/            # 英雄组件
-│   │   │   └── OrangeCat.ts   # 橘猫射手
-│   │   ├── enemies/           # 敌人组件
-│   │   │   └── BasicMouse.ts  # 基础老鼠
+│   │   ├── heroes/            # 英雄组件 (12种英雄类型)
+│   │   │   ├── BaseHero.ts    # 英雄抽象基类
+│   │   │   ├── OrangeCat.ts   # 橘猫射手
+│   │   │   ├── PersianSniper.ts # 波斯猫狙击手
+│   │   │   ├── SiameseMage.ts # 暹罗猫法师
+│   │   │   └── ... (其他9种英雄)
+│   │   ├── enemies/           # 敌人组件 (9种老鼠类型)
+│   │   │   ├── BaseMouse.ts   # 老鼠抽象基类
+│   │   │   ├── BasicMouse.ts  # 基础老鼠
+│   │   │   ├── GiantMouse.ts  # 巨型老鼠
+│   │   │   ├── FastMouse.ts   # 快速老鼠
+│   │   │   └── ... (其他6种老鼠)
 │   │   ├── game/              # 游戏对象
 │   │   │   └── Castle.ts      # 城堡
 │   │   └── ui/                # UI组件
-│   │       └── GameHUD.ts     # 游戏界面
+│   │       ├── GameHUD.ts     # 主游戏界面
+│   │       └── HeroSelectionPanel.ts # 英雄选择面板
 │   ├── managers/              # 管理器类
 │   │   ├── GameManager.ts     # 游戏总控制
 │   │   ├── BattleManager.ts   # 战斗管理
@@ -36,10 +43,18 @@ assets/
 │   │   └── ResourceManager.ts # 资源管理
 │   ├── systems/               # 系统类
 │   │   ├── GameBootstrap.ts   # 游戏启动器
-│   │   └── GridDeploymentSystem.ts # 网格部署系统
-│   └── types/                 # 类型定义
-│       ├── GameTypes.ts       # 游戏类型定义
-│       └── GameConstants.ts   # 游戏常量配置
+│   │   ├── GridDeploymentSystem.ts # 网格部署系统
+│   │   ├── HeroFactory.ts     # 英雄工厂系统
+│   │   ├── EnemyFactory.ts    # 敌人工厂系统
+│   │   └── SkillSystem.ts     # 技能系统
+│   ├── types/                 # 类型定义
+│   │   ├── GameTypes.ts       # 游戏类型定义
+│   │   └── GameConstants.ts   # 游戏常量配置
+│   └── utils/                 # 工具类
+│       ├── DrawingHelper.ts   # 绘图辅助工具
+│       ├── EffectHelper.ts    # 特效辅助工具
+│       ├── UIHelper.ts        # UI辅助工具
+│       └── SimpleObjectPool.ts # 简单对象池
 ├── textures/                  # 图片资源
 ├── animations/                # 动画资源
 └── scenes/                    # 场景文件
@@ -155,25 +170,42 @@ this.eventBus.emit('hero-deployed', { type, position });
 - 胜利条件判定
 
 ### 网格部署系统 (GridDeploymentSystem)
-- 5x5网格管理
+- 11x6网格管理
 - 英雄部署和移动
 - 网格状态追踪
 
 ## 游戏角色
 
 ### 英雄类 (DRY原则重构)
-基于DRY原则，英雄系统采用了统一的基类架构：
+基于DRY原则，英雄系统采用了统一的基类架构，包含**12种英雄类型**分为5个分类：
 
 - **BaseHero**: 英雄抽象基类，统一实现外观渲染、标签创建、点击事件等通用功能
   - 统一的Graphics组件管理和外观绘制
-  - 统一的名称标签创建和配置
+  - 统一的名称标签创建和配置（18px大字体）
   - 统一的点击事件处理和技能触发
   - 通过英雄类型枚举自动选择对应的外观绘制方式
-  
-- **OrangeCat**: 橘猫射手，继承BaseHero，只需实现特有的攻击逻辑和技能
-- **SiameseMage**: 暹罗猫法师，继承BaseHero，实现AOE魔法攻击
-- **PersianSniper**: 波斯猫狙击手，继承BaseHero，实现长距离精准射击
-- **BritishKnight**: 英短骑士，继承BaseHero，实现近战冲锋攻击
+
+#### 远程英雄 (3种)
+- **OrangeCat**: 橘猫射手 - 基础射手，高攻速，子弹攻击
+- **PersianSniper**: 波斯猫狙击手 - 高伤害狙击手，暴击能力
+- **BengalHunter**: 孟加拉猎手 - 快速攻击的机敏射手
+
+#### 法师英雄 (3种)  
+- **SiameseMage**: 暹罗猫法师 - AOE魔法攻击，群体伤害
+- **MaineThunder**: 缅因雷猫 - 链式雷电攻击，连锁伤害
+- **NorwegianIce**: 挪威冰猫 - 冰系法术，减速效果
+
+#### 近战英雄 (2种)
+- **BritishKnight**: 英短骑士 - 重装骑士，高伤害近战
+- **RagdollGuardian**: 布偶守护者 - 防御型近战单位
+
+#### 辅助英雄 (2种)
+- **ScottishEngineer**: 苏格兰工程师 - 攻速光环，增益周围英雄
+- **AbyssinianScout**: 阿比西尼亚侦察兵 - 射程光环，扩展攻击范围
+
+#### 特殊英雄 (2种)
+- **RussianBlue**: 俄罗斯蓝猫精英 - 穿透攻击，高暴击
+- **AmericanBomber**: 美国爆破兵 - AOE爆炸伤害，大范围攻击
 
 每个英雄子类只需要：
 1. 实现 `initializeHeroStats()` 设置属性
@@ -182,10 +214,32 @@ this.eventBus.emit('hero-deployed', { type, position });
 4. 可选重写 `onHeroClickHandler()` 自定义点击行为
 
 ### 敌人类 (DRY原则重构)
-敌人系统同样采用统一的基类架构：
+敌人系统同样采用统一的基类架构，包含**9种敌人类型**分为5个分类：
 
-- **BaseMouse**: 老鼠抽象基类，统一实现移动、标签、血条等通用功能
-- **BasicMouse**: 基础老鼠，朝城堡移动并攻击
+- **BaseMouse**: 老鼠抽象基类，统一实现移动、标签等通用功能
+  - 统一的名称标签创建和配置（22px大字体）
+  - 统一的城堡移动逻辑
+  - 统一的生命值管理和死亡处理
+  - 老鼠专注突破防线，**不具备攻击能力**
+
+#### 基础单位 (2种)
+- **BasicMouse**: 基础老鼠 - 普通血量，中等速度
+- **GiantMouse**: 巨型老鼠 - 高血量，较慢速度
+
+#### 快速单位 (2种)
+- **FastMouse**: 快速老鼠 - 低血量，高速移动
+- **SpeedMouse**: 疾速老鼠 - 极低血量，极高速度
+
+#### 装甲单位 (2种)
+- **ArmoredMouse**: 装甲老鼠 - 中等血量，护甲减伤
+- **TankMouse**: 坦克老鼠 - 极高血量，护甲值，缓慢移动
+
+#### 特殊单位 (1种)
+- **StealthMouse**: 潜行老鼠 - 潜行躲避攻击能力
+
+#### BOSS单位 (2种)
+- **MouseKing**: 老鼠王 - 超高血量，可召唤小兵
+- **MechMouse**: 机械老鼠 - 高血量，特殊机械属性
 
 ### 游戏对象
 - **Castle**: 城堡，玩家需要保护的目标
@@ -194,21 +248,55 @@ this.eventBus.emit('hero-deployed', { type, position });
 
 ### 核心枚举
 ```typescript
-enum GameState { MENU, PLAYING, PAUSED, GAME_OVER, VICTORY }
-enum HeroType { ORANGE_CAT, SIAMESE_CAT, MAINE_CAT }
-enum EnemyType { BASIC_MOUSE }
+enum GameState { 
+  MENU, DEPLOYMENT, BATTLE, RESTING, PLAYING, 
+  VICTORY, GAME_OVER 
+}
+
+enum HeroType {
+  // 远程英雄
+  ORANGE_CAT, PERSIAN_SNIPER, BENGAL_HUNTER,
+  // 法师英雄  
+  SIAMESE_MAGE, MAINE_THUNDER, NORWEGIAN_ICE,
+  // 近战英雄
+  BRITISH_KNIGHT, RAGDOLL_GUARDIAN,
+  // 辅助英雄
+  SCOTTISH_ENGINEER, ABYSSINIAN_SCOUT,
+  // 特殊英雄
+  RUSSIAN_BLUE, AMERICAN_BOMBER
+}
+
+enum EnemyType {
+  // 基础单位
+  BASIC_MOUSE, GIANT_MOUSE,
+  // 快速单位
+  FAST_MOUSE, SPEED_MOUSE,
+  // 装甲单位
+  ARMORED_MOUSE, TANK_MOUSE,
+  // 特殊单位
+  STEALTH_MOUSE,
+  // BOSS单位
+  MOUSE_KING, MECH_MOUSE
+}
+
 enum UnitState { IDLE, MOVING, ATTACKING, DEAD }
 ```
 
-### 核心接口
+### 核心接口 (游戏机制纯化后)
 ```typescript
+// 英雄单位属性（无生命值，无移动速度）
 interface UnitStats {
-  name: string;
-  health: number;
-  maxHealth: number;
+  readonly name: string;
   attackDamage: number;
   attackRange: number;
   attackSpeed: number;
+}
+
+// 敌人单位属性（有生命值，无攻击能力）
+interface EnemyUnitStats {
+  readonly name: string;
+  health: number;
+  maxHealth: number;
   moveSpeed: number;
 }
 
@@ -292,16 +380,18 @@ export class UIHelper {
 ## 扩展指南
 
 ### 添加新英雄
-1. 在 `HeroType` 枚举中添加新类型
-2. 在 `HERO_CONFIGS` 中添加配置
-3. 创建继承自 `BaseUnit` 的新组件类
-4. 实现特有的攻击逻辑和技能
+1. 在 `HeroType` 枚举中添加新类型（选择合适的分类：远程/法师/近战/辅助/特殊）
+2. 在 `HERO_CONFIGS` 中添加配置（包含完整的英雄属性和技能参数）
+3. 创建继承自 `BaseHero` 的新组件类
+4. 实现 `initializeHeroStats()` 和 `performAttack()` 抽象方法
+5. 可选实现特殊技能和自定义外观
 
 ### 添加新敌人
-1. 在 `EnemyType` 枚举中添加新类型
-2. 在 `ENEMY_CONFIGS` 中添加配置
-3. 创建继承自 `BaseUnit` 的新组件类
-4. 实现特有的AI行为
+1. 在 `EnemyType` 枚举中添加新类型（选择合适的分类：基础/快速/装甲/特殊/BOSS）
+2. 在 `ENEMY_CONFIGS` 中添加配置（包含血量、速度、奖励等属性）
+3. 创建继承自 `BaseMouse` 的新组件类
+4. 实现 `initializeMouseStats()` 和 `initializeMouseVisuals()` 抽象方法
+5. 可选重写移动逻辑和特殊能力（如潜行、召唤等）
 
 ### 添加新UI组件
 1. 创建继承自 `Component` 的新UI类
@@ -408,10 +498,14 @@ node.setPosition(800, 600);
 
 ## 开发原则
 
-### 🚫 禁止使用延迟等待解决问题
-**重要原则**: 遇到组件初始化、UITransform缺失、事件时序等问题时，**绝对不要**使用`setTimeout`、`scheduleOnce`等延迟方法来"解决"问题。
+### 🚫 禁止使用延迟等待解决UI组件初始化问题
+**重要原则**: 在**UI组件创建和初始化阶段**，遇到UITransform缺失、组件依赖、布局更新等问题时，**绝对不要**使用`setTimeout`、`scheduleOnce`等延迟方法来"解决"问题。
 
-#### 为什么禁止延迟等待：
+**适用范围**: 
+- ✅ **禁止场景**: UI组件初始化、onLoad、start等生命周期中的组件设置
+- ✅ **允许场景**: 游戏逻辑中的定时效果、动画延迟、技能冷却、AI行为等
+
+#### 为什么在UI初始化中禁止延迟等待：
 - 延迟等待只是掩盖问题，不能解决根本原因
 - 会导致不可预测的时序问题
 - 增加代码复杂性和维护难度
@@ -425,16 +519,36 @@ node.setPosition(800, 600);
 - **使用正确的API**: 查阅Cocos Creator文档，使用正确的组件API
 
 ```typescript
-// ❌ 错误的做法 - 使用延迟等待
-setTimeout(() => {
-    scrollView.content = contentTransform;
-}, 100);
+// ❌ 错误的做法 - 在UI初始化中使用延迟等待
+onLoad() {
+    setTimeout(() => {
+        scrollView.content = contentTransform; // UI初始化问题
+    }, 100);
+}
 
 // ✅ 正确的做法 - 修复根本问题
-if (!scrollView.node.getComponent(UITransform)) {
-    scrollView.node.addComponent(UITransform);
+onLoad() {
+    if (!scrollView.node.getComponent(UITransform)) {
+        scrollView.node.addComponent(UITransform);
+    }
+    scrollView.content = contentTransform;
 }
-scrollView.content = contentTransform;
+
+// ✅ 允许的使用场景 - 游戏逻辑中的延迟效果
+castSpell() {
+    // 技能延迟效果
+    setTimeout(() => {
+        this.createExplosionEffect();
+    }, 500);
+}
+
+// ✅ 允许的使用场景 - AI行为延迟
+onEnemySpawn() {
+    // 敌人AI行为延迟
+    this.scheduleOnce(() => {
+        this.startMovingTowardsTarget();
+    }, 1.0);
+}
 ```
 
 #### Widget组件的正确使用
@@ -451,10 +565,10 @@ widget.updateAlignment(); // 布局立即更新完成
 const transform = node.getComponent(UITransform);
 const width = transform.contentSize.width; // 已经是更新后的值
 
-// ❌ 错误的做法 - 不需要延迟
+// ❌ 错误的做法 - 在UI初始化中不需要延迟
 widget.updateAlignment();
 this.scheduleOnce(() => {
-    // 这种延迟是多余的
+    // UI初始化中这种延迟是多余的，违背设计原则
 }, 0);
 ```
 
@@ -637,16 +751,38 @@ if (!manager) {
   - 重构BaseHero.ts，移除移动相关属性和状态处理
   - 更新文档，明确英雄为固定防御单位
 
+- **v1.4**: 文档更新和内容扩展反映实际实现
+- **扩展英雄系统**: 完善12种英雄类型的文档描述
+  - 更新英雄分类：远程(3种)、法师(3种)、近战(2种)、辅助(2种)、特殊(2种)
+  - 详细描述每种英雄的特色和能力（如穿透、AOE、光环、暴击等）
+  - 明确英雄工厂系统和创建流程
+- **扩展敌人系统**: 完善9种敌人类型的文档描述  
+  - 更新敌人分类：基础(2种)、快速(2种)、装甲(2种)、特殊(1种)、BOSS(2种)
+  - 详细描述每种老鼠的特征（血量、速度、特殊能力等）
+  - 强调老鼠无攻击能力，专注突破防线的设计理念
+- **完善项目结构**: 更新文档以反映实际的代码结构
+  - 移除已不存在的BaseUnit.ts，突出BaseHero和BaseMouse基类
+  - 添加工具类目录（utils）和完整的系统组件列表
+  - 明确UI系统职责分工（GameHUD主界面 + HeroSelectionPanel英雄面板）
+- **更新类型系统**: 同步枚举和接口定义与实际代码
+  - 完整的HeroType和EnemyType枚举列表
+  - 分离后的UnitStats和EnemyUnitStats接口定义
+  - 新增游戏状态（DEPLOYMENT、RESTING等）
+
 ## 当前架构状态
 
 ### ✅ 已实现的系统
-- **统一UI系统**: GameHUD.ts作为唯一的用户界面
-- **英雄管理**: 完整的英雄选择、拖拽部署、工厂创建系统
-- **网格部署**: 5x5网格的英雄部署和管理
-- **游戏状态管理**: 金币、波次、城堡血量的实时显示
-- **通信系统**: 基于接口和直接引用的组件间通信
-- **DRY架构**: BaseHero和BaseMouse统一外观系统，消除重复代码
-- **标签系统**: 统一的大字体标签系统（英雄18px，老鼠22px）
+- **丰富的游戏内容**: 12种英雄类型和9种敌人类型，提供多样化的战术选择
+- **统一UI系统**: GameHUD主界面 + HeroSelectionPanel英雄面板的协作式UI架构
+- **完整的英雄系统**: 包含5个分类的英雄，支持拖拽部署、技能系统、工厂创建
+- **多样化的敌人系统**: 从基础老鼠到BOSS单位，包含装甲、潜行、召唤等特殊机制
+- **智能网格部署**: 11x6网格的英雄部署和管理，支持实时预览和冲突检测
+- **实时游戏状态管理**: 金币、波次、城堡血量、英雄冷却的动态显示
+- **高效通信系统**: 基于接口和直接引用的组件间通信，避免过度事件驱动
+- **DRY架构**: BaseHero和BaseMouse统一外观系统，大幅减少重复代码
+- **统一标签系统**: 英雄18px大字体，老鼠22px大字体，提供清晰的视觉识别
+- **工厂模式**: HeroFactory和EnemyFactory提供统一的单位创建和管理
+- **对象池优化**: SimpleObjectPool管理子弹等短生命周期对象，提升性能
 
 ### ⚠️ 需要注意的区域
 - **Graphics组件**: 所有创建都已加入存在性检查，避免重复添加

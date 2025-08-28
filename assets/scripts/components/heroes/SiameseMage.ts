@@ -80,20 +80,18 @@ export class SiameseMage extends BaseHero {
     }
     
     protected onIdleState(dt: number): void {
-        if (!this.isAlive) return;
-        
         const battleManager = BattleManager.instance;
         if (battleManager) {
             const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
-                this.unitState = 2;
+                this.heroState = 1; // HeroState.ATTACKING
             }
         }
     }
     
     protected onAttack(target: Node): void {
-        if (!target || !this.isAlive) return;
+        if (!target) return;
         
         this.castMagicMissile(target);
         this.playAttackAnimation();
@@ -143,18 +141,14 @@ export class SiameseMage extends BaseHero {
             .start();
     }
     
-    // 元素爆炸技能
-    public useSkill(): boolean {
-        if (this._skillTimer > 0 || !this.isAlive) {
-            return false;
-        }
-        
+    // 重写基类的技能使用方法，保持接口一致
+    protected onUseSkill(): void {
         const battleManager = BattleManager.instance;
-        if (!battleManager) return false;
+        if (!battleManager) return;
         
         // 寻找范围内的敌人群体
         const enemies = battleManager.getEnemiesInRange(this.node.position, this.attackRange);
-        if (enemies.length === 0) return false;
+        if (enemies.length === 0) return;
         
         // 选择敌人最密集的位置作为爆炸中心
         let bestTarget: Node | null = null;
@@ -170,12 +164,8 @@ export class SiameseMage extends BaseHero {
         
         if (bestTarget && maxEnemiesInArea > 0) {
             this.castElementalExplosion(bestTarget.position);
-            this._skillTimer = this.skillCooldown;
             console.log(`暹罗猫使用元素爆炸！影响 ${maxEnemiesInArea} 个敌人`);
-            return true;
         }
-        
-        return false;
     }
     
     private castElementalExplosion(centerPosition: Vec3): void {
@@ -214,55 +204,12 @@ export class SiameseMage extends BaseHero {
         return Math.max(0, this._skillTimer);
     }
     
-    public isSkillReady(): boolean {
-        return this._skillTimer <= 0 && this.isAlive;
-    }
-    
-    protected onDie(): void {
-        console.log("暹罗猫法师阵亡");
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.unregisterHero(this.node);
-        }
-        
-        const gridSystem = GridDeploymentSystem.instance;
-        if (gridSystem) {
-            gridSystem.clearHeroFromGrid(this.node);
-        }
-        
-        const gameManager = GameManager.instance;
-        if (gameManager) {
-            gameManager.removeDeployedHero(this.node);
-        }
-        
-        if (this._graphics) {
-            this._graphics.fillColor = new Color(128, 128, 128);
-            this.drawSiameseMageAppearance();
-        }
-        
-        if (this._animation) {
-            this._animation.stop();
-        }
-    }
-    
-    private setupClickEvents(): void {
-        this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
-    }
-    
-    private onHeroClick(event: EventTouch): void {
-        if (!this.isAlive) return;
-        
-        event.propagationStopped = true;
-        
-        if (this.isSkillReady()) {
-            const skillUsed = this.useSkill();
-            if (skillUsed) {
-                console.log("暹罗猫释放元素爆炸技能！");
-                this.createClickFeedback();
-            } else {
-                console.log("暹罗猫技能释放失败");
-            }
+    // 重写基类的点击处理方法
+    protected onHeroClickHandler(): void {
+        if (this.canUseSkill) {
+            this.useSkill();
+            console.log("暹罗猫释放元素爆炸技能！");
+            this.createClickFeedback();
         } else {
             console.log(`暹罗猫技能冷却中，剩余时间: ${this.getSkillCooldownRemaining().toFixed(1)}秒`);
             this.createCooldownFeedback();

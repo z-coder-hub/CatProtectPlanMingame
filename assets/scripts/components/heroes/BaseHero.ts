@@ -1,18 +1,11 @@
 import { _decorator, Component, Node, Vec3, tween, TweenSystem, Graphics, Label, Color, EventTouch, Animation } from 'cc';
-import { HeroType, UnitStats } from '../../types/GameTypes';
+import { HeroType, HeroState, UnitStats } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass, property } = _decorator;
 
-// 单位状态枚举
-export enum UnitState {
-    IDLE = 0,      // 待机
-    MOVING = 1,    // 移动中
-    ATTACKING = 2, // 攻击中
-    DEAD = 3       // 死亡
-}
 
 /**
  * 英雄基类
@@ -48,7 +41,7 @@ export abstract class BaseHero extends Component {
     public cost: number = 50;
     
     // === 状态属性 ===
-    public unitState: UnitState = UnitState.IDLE;
+    public heroState: HeroState = HeroState.IDLE;
     public currentTarget: Node | null = null;
     
     // === 受保护属性，子类可访问 ===
@@ -84,8 +77,6 @@ export abstract class BaseHero extends Component {
     }
     
     protected update(dt: number): void {
-        if (!this.isAlive) return;
-        
         // 更新攻击计时器
         if (this._attackTimer > 0) {
             this._attackTimer -= dt;
@@ -97,19 +88,12 @@ export abstract class BaseHero extends Component {
         }
         
         // 根据状态执行对应行为
-        switch (this.unitState) {
-            case UnitState.IDLE:
+        switch (this.heroState) {
+            case HeroState.IDLE:
                 this.onIdleState(dt);
                 break;
-            case UnitState.MOVING:
-                // 英雄不移动，自动转为待机状态
-                this.unitState = UnitState.IDLE;
-                break;
-            case UnitState.ATTACKING:
+            case HeroState.ATTACKING:
                 this.onAttackState(dt);
-                break;
-            case UnitState.DEAD:
-                this.onDeadState(dt);
                 break;
         }
     }
@@ -210,8 +194,6 @@ export abstract class BaseHero extends Component {
      * 英雄点击事件处理
      */
     protected onHeroClick(event: EventTouch): void {
-        if (!this.isAlive) return;
-        
         // 阻止事件传播，避免触发网格点击
         event.propagationStopped = true;
         
@@ -230,16 +212,17 @@ export abstract class BaseHero extends Component {
     }
     
     // === 通用属性访问器 ===
+    // 英雄始终存活，不会死亡
     public get isAlive(): boolean {
-        return this.unitState !== UnitState.DEAD;
+        return true;
     }
     
     public get canAttack(): boolean {
-        return this._attackTimer <= 0 && this.isAlive;
+        return this._attackTimer <= 0;
     }
     
     public get canUseSkill(): boolean {
-        return this._skillTimer <= 0 && this.isAlive;
+        return this._skillTimer <= 0;
     }
     
     public get stats(): UnitStats {
@@ -322,16 +305,8 @@ export abstract class BaseHero extends Component {
         const target = this.findNearestEnemy();
         if (target) {
             this.currentTarget = target;
-            this.unitState = UnitState.ATTACKING;
+            this.heroState = HeroState.ATTACKING;
         }
-    }
-    
-    /**
-     * 移动状态处理
-     */
-    protected onMovingState(dt: number): void {
-        // 英雄不移动，此方法保留用于兼容性
-        // 在update循环中会自动转换为IDLE状态
     }
     
     /**
@@ -339,26 +314,19 @@ export abstract class BaseHero extends Component {
      */
     protected onAttackState(dt: number): void {
         if (!this.currentTarget || !this.currentTarget.isValid) {
-            this.unitState = UnitState.IDLE;
+            this.heroState = HeroState.IDLE;
             return;
         }
         
         // 检查目标是否仍在范围内
         if (!this.isTargetInRange(this.currentTarget)) {
             this.currentTarget = null;
-            this.unitState = UnitState.IDLE;
+            this.heroState = HeroState.IDLE;
             return;
         }
         
         // 攻击目标
         this.attackTarget(this.currentTarget);
-    }
-    
-    /**
-     * 死亡状态处理
-     */
-    protected onDeadState(dt: number): void {
-        // 死亡状态，不执行任何操作
     }
     
     // === 事件回调方法 (子类可重写) ===

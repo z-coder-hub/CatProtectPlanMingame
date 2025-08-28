@@ -528,14 +528,6 @@ export class BattleManager extends Component {
         }, duration * 1000);
     }
     
-    // 检查目标是否为飞行单位
-    public isFlying(target: Node): boolean {
-        // 这里需要根据敌人类型判断，暂时返回false
-        // 后续可以通过敌人组件或配置来判断
-        const enemyComponent = target.getComponent('FlyingMouse');
-        return enemyComponent !== null;
-    }
-    
     // 为链式攻击寻找下一个目标
     public findChainTargets(startPosition: Vec3, excludeTarget: Node, maxTargets: number, maxRange: number): Node[] {
         const targets: Node[] = [];
