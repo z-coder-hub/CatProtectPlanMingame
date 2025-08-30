@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, Color, director } from 'cc';
 
 const { ccclass } = _decorator;
 
@@ -226,8 +226,8 @@ export class EffectHelper {
                 graphics.circle(0, 0, config.size * scale);
                 graphics.fill();
                 
-                // 使用 setTimeout 因为这是静态工具类
-                setTimeout(animate, 16); // 约60FPS
+                // 使用 Cocos Creator 的调度器
+                director.getScheduler().schedule(animate, node, 0.016, 0, 0, false);
             }
         };
         
@@ -252,8 +252,8 @@ export class EffectHelper {
                 graphics.circle(0, 0, radius);
                 graphics.stroke();
                 
-                // 使用 setTimeout 因为这是静态工具类
-                setTimeout(expand, 33); // 30FPS for smoother expansion
+                // 使用 Cocos Creator 的调度器
+                director.getScheduler().schedule(expand, node, 0.033, 0, 0, false);
             }
         };
         
@@ -318,12 +318,12 @@ export class EffectHelper {
     // 统一的销毁调度
     private static scheduleDestroy(node: Node, duration: number): void {
         if (node && node.isValid) {
-            // 使用setTimeout而不是scheduleOnce，因为这是静态工具类
-            setTimeout(() => {
+            // 使用 Cocos Creator 的调度器延迟销毁
+            director.getScheduler().schedule(() => {
                 if (node && node.isValid) {
                     node.destroy();
                 }
-            }, duration);
+            }, node, 0, 0, duration, false);
         }
     }
     
@@ -530,7 +530,7 @@ export class EffectHelper {
         });
         
         // 添加范围圈显示
-        setTimeout(() => {
+        director.getScheduler().schedule(() => {
             if (parent && parent.isValid) {
                 this.createEffect(EffectType.SKILL, position, parent, {
                     color: new Color(255, 100, 0, 100),
@@ -538,7 +538,7 @@ export class EffectHelper {
                     duration: 200
                 });
             }
-        }, 100);
+        }, parent, 0, 0, 0.1, false);
         
         return effectNode;
     }

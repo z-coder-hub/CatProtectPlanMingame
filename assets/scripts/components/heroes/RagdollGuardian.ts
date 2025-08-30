@@ -11,7 +11,6 @@ const { ccclass } = _decorator;
 export class RagdollGuardian extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.RAGDOLL_GUARDIAN;
-    private _graphics: Graphics | null = null;
     
     protected onLoad(): void {
         super.onLoad();
@@ -34,44 +33,44 @@ export class RagdollGuardian extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        this._graphics = this.node.getComponent(Graphics);
+        // 使用基类提供的安全方法，无需重复获取Graphics组件
         this.drawRagdollGuardianAppearance();
     }
     
     private drawRagdollGuardianAppearance(): void {
-        if (!this._graphics) return;
+        const graphics = this.getGraphics();
+        if (!graphics) return;
         
-        this._graphics.clear();
+        graphics.clear();
         
         // 绘制布偶猫身体和边框（一条路径）
-        this._graphics.rect(-20, -20, 40, 40);
+        graphics.rect(-20, -20, 40, 40);
         
         // 填充身体（粉色方形，中等大小）
-        this._graphics.fillColor = new Color(255, 182, 193); // 粉色
-        this._graphics.fill();
+        graphics.fillColor = new Color(255, 182, 193); // 粉色
+        graphics.fill();
         
         // 描边银色盔甲边框
-        this._graphics.strokeColor = new Color(192, 192, 192);
-        this._graphics.lineWidth = 3;
-        this._graphics.stroke();
+        graphics.strokeColor = new Color(192, 192, 192);
+        graphics.lineWidth = 3;
+        graphics.stroke();
         
         // 守护盾牌标识
-        this._graphics.fillColor = new Color(192, 192, 192);
-        this._graphics.moveTo(-18, -5);
-        this._graphics.lineTo(-25, 0);
-        this._graphics.lineTo(-18, 5);
-        this._graphics.close();
-        this._graphics.fill();
+        graphics.fillColor = new Color(192, 192, 192);
+        graphics.moveTo(-18, -5);
+        graphics.lineTo(-25, 0);
+        graphics.lineTo(-18, 5);
+        graphics.close();
+        graphics.fill();
         
         // 十字标记
-        this._graphics.strokeColor = new Color(255, 255, 255);
-        this._graphics.lineWidth = 2;
-        this._graphics.moveTo(0, -8);
-        this._graphics.lineTo(0, 8);
-        this._graphics.moveTo(-8, 0);
-        this._graphics.lineTo(8, 0);
-        this._graphics.stroke();
+        graphics.strokeColor = new Color(255, 255, 255);
+        graphics.lineWidth = 2;
+        graphics.moveTo(0, -8);
+        graphics.lineTo(0, 8);
+        graphics.moveTo(-8, 0);
+        graphics.lineTo(8, 0);
+        graphics.stroke();
     }
     
     protected onIdleState(dt: number): void {
@@ -82,7 +81,7 @@ export class RagdollGuardian extends BaseHero {
             const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
-                this.unitState = 2;
+                this.heroState = HeroState.ATTACKING;
             }
         }
     }

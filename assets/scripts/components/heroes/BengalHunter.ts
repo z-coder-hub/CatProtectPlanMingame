@@ -74,7 +74,7 @@ export class BengalHunter extends BaseHero {
             const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
-                this.unitState = 2;
+                this.heroState = HeroState.ATTACKING;
             }
         }
     }

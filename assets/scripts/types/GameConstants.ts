@@ -1,4 +1,4 @@
-// 移除未使用的Vec2导入
+// 游戏常量配置文件
 import { EnemyCategory, EnemyConfig, EnemyType, GameConfig, HeroCategory, HeroConfig, HeroType, WaveConfig } from './GameTypes';
 
 // 英雄配置 - 完整的猫咪英雄配置

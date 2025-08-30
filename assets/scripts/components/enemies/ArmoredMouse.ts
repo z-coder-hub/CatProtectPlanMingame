@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS, GAME_CONSTANTS } from '../../types/GameConstants';
+import { EnemyType, EnemyState } from '../../types/GameTypes';
+import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { DrawingHelper } from '../../utils/DrawingHelper';
@@ -218,7 +218,7 @@ export class ArmoredMouse extends BaseMouse {
             this._lastMovementUpdate = 0;
             
             // 如果没有在战斗中，朝城堡移动
-            if (this.unitState === 0 && this.isAlive) { // 待机状态
+            if (this.enemyState === EnemyState.IDLE && this.isAlive) { // 待机状态
                 this.moveTowardsCastle(movementDt);
             }
         }

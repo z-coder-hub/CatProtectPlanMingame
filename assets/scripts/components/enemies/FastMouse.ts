@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS, GAME_CONSTANTS } from '../../types/GameConstants';
+import { EnemyType, EnemyState } from '../../types/GameTypes';
+import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { DrawingHelper } from '../../utils/DrawingHelper';
@@ -15,10 +15,7 @@ export class FastMouse extends BaseMouse {
     @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 4;
     
-    // 私有属性
-    private _graphics: Graphics | null = null;
-    private _gameManager: GameManager | null = null;
-    private _nameLabel: Label | null = null;
+    // 私有属性（只保留FastMouse特有的属性）
     private _healthBarContainer: Node | null = null;
     private _healthBarForeground: Graphics | null = null;
     
@@ -63,15 +60,7 @@ export class FastMouse extends BaseMouse {
     
     protected start(): void {
         super.start();
-        
-        // 获取GameManager引用
-        this._gameManager = GameManager.instance;
-        
-        // 注册到BattleManager
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.registerEnemy(this.node);
-        }
+        // 基类已经处理GameManager引用和BattleManager注册，无需重复
     }
     
     // 初始化快速老鼠属性
@@ -107,8 +96,9 @@ export class FastMouse extends BaseMouse {
     
     // 初始化外观
     private initializeVisuals(): void {
-        // 添加Graphics组件绘制外观
-        this._graphics = this.node.addComponent(Graphics);
+        // 使用基类的统一Graphics管理
+        const graphics = this.node.addComponent(Graphics);
+        this.setGraphics(graphics);
         
         this.drawFastMouseAppearance();
     }
@@ -137,46 +127,47 @@ export class FastMouse extends BaseMouse {
     
     // 绘制快速老鼠外观
     private drawFastMouseAppearance(): void {
-        if (!this._graphics) return;
+        const graphics = this.getGraphics();
+        if (!graphics) return;
         
-        this._graphics.clear();
+        graphics.clear();
         
         // 绘制快速老鼠身体（亮绿色，表示速度）
-        this._graphics.fillColor = new Color(50, 205, 50); // 亮绿色
-        this._graphics.circle(0, 0, 12);
-        this._graphics.fill();
+        graphics.fillColor = new Color(50, 205, 50); // 亮绿色
+        graphics.circle(0, 0, 12);
+        graphics.fill();
         
         // 绘制轮廓
-        this._graphics.strokeColor = new Color(34, 139, 34); // 深绿色轮廓
-        this._graphics.lineWidth = 2;
-        this._graphics.circle(0, 0, 12);
-        this._graphics.stroke();
+        graphics.strokeColor = new Color(34, 139, 34); // 深绿色轮廓
+        graphics.lineWidth = 2;
+        graphics.circle(0, 0, 12);
+        graphics.stroke();
         
         // 绘制速度线条（表示快速移动）
-        this._graphics.strokeColor = new Color(255, 255, 0); // 黄色速度线
-        this._graphics.lineWidth = 2;
+        graphics.strokeColor = new Color(255, 255, 0); // 黄色速度线
+        graphics.lineWidth = 2;
         // 左侧速度线
-        this._graphics.moveTo(-8, -8);
-        this._graphics.lineTo(-12, -12);
-        this._graphics.moveTo(-8, 0);
-        this._graphics.lineTo(-12, 0);
-        this._graphics.moveTo(-8, 8);
-        this._graphics.lineTo(-12, 12);
+        graphics.moveTo(-8, -8);
+        graphics.lineTo(-12, -12);
+        graphics.moveTo(-8, 0);
+        graphics.lineTo(-12, 0);
+        graphics.moveTo(-8, 8);
+        graphics.lineTo(-12, 12);
         // 右侧速度线
-        this._graphics.moveTo(8, -8);
-        this._graphics.lineTo(12, -12);
-        this._graphics.moveTo(8, 0);
-        this._graphics.lineTo(12, 0);
-        this._graphics.moveTo(8, 8);
-        this._graphics.lineTo(12, 12);
-        this._graphics.stroke();
+        graphics.moveTo(8, -8);
+        graphics.lineTo(12, -12);
+        graphics.moveTo(8, 0);
+        graphics.lineTo(12, 0);
+        graphics.moveTo(8, 8);
+        graphics.lineTo(12, 12);
+        graphics.stroke();
         
         // 绘制眼睛（红色，表示警觉）
-        this._graphics.fillColor = new Color(255, 0, 0); // 红色眼睛
-        this._graphics.circle(-4, -4, 2);
-        this._graphics.fill();
-        this._graphics.circle(4, -4, 2);
-        this._graphics.fill();
+        graphics.fillColor = new Color(255, 0, 0); // 红色眼睛
+        graphics.circle(-4, -4, 2);
+        graphics.fill();
+        graphics.circle(4, -4, 2);
+        graphics.fill();
     }
     
     // 重写标签配置 - 使用统一大字体
@@ -199,7 +190,7 @@ export class FastMouse extends BaseMouse {
             this._lastMovementUpdate = 0;
             
             // 如果没有在战斗中，朝城堡移动
-            if (this.unitState === 0 && this.isAlive) { // 待机状态
+            if (this.enemyState === EnemyState.IDLE && this.isAlive) { // 待机状态
                 this.moveTowardsCastle(movementDt);
             }
         }
@@ -207,13 +198,10 @@ export class FastMouse extends BaseMouse {
     
     // 朝城堡移动 - 快速老鼠移动行为
     private moveTowardsCastle(dt: number): void {
-        if (!this._gameManager || !this._gameManager.castleNode) return;
-        
         const currentPos = this.node.position;
-        const castlePos = this._gameManager.castleNode.position;
         
-        // 检查是否到达城堡Y位置
-        if (currentPos.y <= castlePos.y + 50) {
+        // 使用基类方法检查是否到达城堡
+        if (this.isReachedCastle(currentPos)) {
             this.reachCastle();
             return;
         }
@@ -326,48 +314,35 @@ export class FastMouse extends BaseMouse {
     
     // 播放受伤效果
     private playHurtEffect(): void {
-        if (!this._graphics) return;
+        const graphics = this.getGraphics();
+        if (!graphics) return;
         
         // 使用DrawingHelper绘制受伤效果，但用红色高亮
-        this._graphics.clear();
-        this._graphics.fillColor = new Color(255, 100, 100); // 红色受伤效果
-        this._graphics.circle(0, 0, 12);
-        this._graphics.fill();
+        graphics.clear();
+        graphics.fillColor = new Color(255, 100, 100); // 红色受伤效果
+        graphics.circle(0, 0, 12);
+        graphics.fill();
         
         // 200ms后恢复原色
         this.scheduleOnce(() => {
-            if (this._graphics && this.node.isValid) {
+            if (graphics && this.node.isValid) {
                 this.drawFastMouseAppearance();
             }
         }, 0.2);
     }
     
-    // 重写死亡方法
+    // 重写死亡方法，只处理特有的血条清理
     protected onDie(): void {
-        console.log(`快速老鼠死亡，奖励 ${this.goldReward} 金币`);
-        
-        // 从BattleManager注销
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.unregisterEnemy(this.node);
-        }
-        
-        // 给予金币奖励
-        if (this._gameManager) {
-            this._gameManager.addGold(this.goldReward);
-            this._gameManager.removeActiveEnemy(this.node);
+        // 隐藏血条（快速老鼠特有的血条）
+        if (this._healthBarContainer) {
+            this._healthBarContainer.active = false;
         }
         
         // 创建死亡特效
         this.createDeathEffect();
         
-        // 隐藏血条
-        if (this._healthBarContainer) {
-            this._healthBarContainer.active = false;
-        }
-        
-        // 销毁节点，清理尸体
-        this.node.destroy();
+        // 调用基类的死亡处理（包含注销、奖励、销毁等通用逻辑）
+        super.onDie();
     }
     
     // 创建死亡特效

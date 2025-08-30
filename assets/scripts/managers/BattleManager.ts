@@ -157,8 +157,8 @@ export class BattleManager extends Component {
         // 对目标造成伤害
         target.takeDamage(attacker.attackDamage);
         
-        // 重置攻击计时器
-        attacker.attackTarget(target.node);
+        // 重置攻击计时器  
+        // 注意：BaseHero中没有attackTarget方法，攻击逻辑已在performAttack中处理
         
         // 如果目标死亡，给予奖励
         if (!target.isAlive) {
@@ -286,8 +286,9 @@ export class BattleManager extends Component {
     private enemyReachCastle(enemyUnit: BaseMouse): void {
         if (!this._gameManager) return;
         
-        // 对城堡造成伤害
-        this._gameManager.castleTakeDamage(enemyUnit.attackDamage);
+        // 老鼠到达城堡造成伤害（使用固定伤害值，因为老鼠没有attackDamage属性）
+        const castleDamage = Math.floor(enemyUnit.maxHealth / 10);
+        this._gameManager.castleTakeDamage(castleDamage);
         
         // 移除敌人
         this._gameManager.removeActiveEnemy(enemyUnit.node);
@@ -515,8 +516,8 @@ export class BattleManager extends Component {
         
         console.log(`为 ${heroUnit.unitName} 应用 ${buffType} 增益: ${value}, 持续时间: ${duration}秒`);
         
-        // 定时恢复原值
-        setTimeout(() => {
+        // 使用Cocos Creator调度器恢复原值
+        this.scheduleOnce(() => {
             if (hero && hero.isValid && heroUnit && heroUnit.isAlive) {
                 if (buffType === 'attackSpeed') {
                     heroUnit.attackSpeed = originalValue;
@@ -525,7 +526,7 @@ export class BattleManager extends Component {
                 }
                 console.log(`${heroUnit.unitName} 的 ${buffType} 增益效果结束`);
             }
-        }, duration * 1000);
+        }, duration);
     }
     
     // 为链式攻击寻找下一个目标

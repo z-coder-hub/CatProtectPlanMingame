@@ -37,6 +37,7 @@ export abstract class BaseMouse extends Component {
     protected _gameManager: GameManager | null = null;
     protected _healthBarNode: Node | null = null;
     protected _nameLabel: Label | null = null;
+    protected _graphics: Graphics | null = null; // 统一Graphics组件管理
     
     // 抽象属性，子类必须实现
     public abstract readonly enemyType: EnemyType;
@@ -364,5 +365,21 @@ export abstract class BaseMouse extends Component {
             yOffset: 35,            // 统一上方位置
             size: { width: 60, height: 28 }  // 统一大尺寸
         };
+    }
+    
+    /**
+     * 获取Graphics组件的安全访问方法
+     * 子类应使用此方法而不是直接访问_graphics
+     */
+    protected getGraphics(): Graphics | null {
+        return this._graphics;
+    }
+    
+    /**
+     * 统一的Graphics设置方法
+     * 子类可以使用此方法安全地设置Graphics组件
+     */
+    protected setGraphics(graphics: Graphics): void {
+        this._graphics = graphics;
     }
 }

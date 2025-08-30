@@ -11,7 +11,6 @@ const { ccclass } = _decorator;
 export class ScottishEngineer extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.SCOTTISH_ENGINEER;
-    private _graphics: Graphics | null = null;
     private _buffTimer: number = 0;
     
     // 实现BaseHero的抽象方法
@@ -29,8 +28,7 @@ export class ScottishEngineer extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        this._graphics = this.node.getComponent(Graphics);
+        // 使用基类提供的安全方法，无需重复获取Graphics组件
         this.drawScottishEngineerAppearance();
     }
     
@@ -48,34 +46,35 @@ export class ScottishEngineer extends BaseHero {
     }
     
     private drawScottishEngineerAppearance(): void {
-        if (!this._graphics) return;
+        const graphics = this.getGraphics();
+        if (!graphics) return;
         
-        this._graphics.clear();
+        graphics.clear();
         
         // 绘制苏格兰折耳猫身体（橙色圆形，较小）
-        this._graphics.fillColor = new Color(255, 140, 0); // 橙色
-        this._graphics.circle(0, 0, 16);
-        this._graphics.fill();
+        graphics.fillColor = new Color(255, 140, 0); // 橙色
+        graphics.circle(0, 0, 16);
+        graphics.fill();
         
         // 工程师帽子（黄色）
-        this._graphics.fillColor = new Color(255, 255, 0);
-        this._graphics.rect(-12, -20, 24, 8);
-        this._graphics.fill();
+        graphics.fillColor = new Color(255, 255, 0);
+        graphics.rect(-12, -20, 24, 8);
+        graphics.fill();
         
         // 工具标识（灰色扳手）
-        this._graphics.strokeColor = new Color(128, 128, 128);
-        this._graphics.lineWidth = 3;
-        this._graphics.moveTo(12, -8);
-        this._graphics.lineTo(20, -8);
-        this._graphics.moveTo(16, -12);
-        this._graphics.lineTo(16, -4);
-        this._graphics.stroke();
+        graphics.strokeColor = new Color(128, 128, 128);
+        graphics.lineWidth = 3;
+        graphics.moveTo(12, -8);
+        graphics.lineTo(20, -8);
+        graphics.moveTo(16, -12);
+        graphics.lineTo(16, -4);
+        graphics.stroke();
         
         // 支撑buff光环
-        this._graphics.strokeColor = new Color(0, 255, 0, 100);
-        this._graphics.lineWidth = 1;
-        this._graphics.circle(0, 0, 80);
-        this._graphics.stroke();
+        graphics.strokeColor = new Color(0, 255, 0, 100);
+        graphics.lineWidth = 1;
+        graphics.circle(0, 0, 80);
+        graphics.stroke();
     }
     
     protected onIdleState(dt: number): void {
@@ -86,7 +85,7 @@ export class ScottishEngineer extends BaseHero {
             const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
-                this.unitState = 2;
+                this.heroState = HeroState.ATTACKING;
             }
         }
     }

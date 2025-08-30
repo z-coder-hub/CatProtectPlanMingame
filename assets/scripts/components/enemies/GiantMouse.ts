@@ -1,6 +1,6 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Label, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
+import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
@@ -140,7 +140,7 @@ export class GiantMouse extends BaseMouse {
     protected update(dt: number): void {
         super.update(dt);
         
-        if (this.unitState === 1) { // MOVING状态
+        if (this.enemyState === EnemyState.MOVING) { // MOVING状态
             this.updateMovement(dt);
         }
     }
@@ -303,7 +303,7 @@ export class GiantMouse extends BaseMouse {
     
     // 开始移动
     public startMoving(): void {
-        this.unitState = 1; // MOVING状态
+        this.enemyState = EnemyState.MOVING; // MOVING状态
         this._isMovingTowardsCastle = true;
         console.log("巨型老鼠开始朝城堡移动");
     }

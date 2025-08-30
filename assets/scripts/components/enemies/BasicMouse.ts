@@ -1,6 +1,6 @@
 import { _decorator, Node, Vec3, Graphics, Color } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
+import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 import { EffectHelper } from '../../utils/EffectHelper';
@@ -121,7 +121,7 @@ export class BasicMouse extends BaseMouse {
             this._lastMovementUpdate = 0;
             
             // 如果没有在战斗中，朝城堡移动
-            if (this.unitState === 0 && this.isAlive) { // 待机状态
+            if (this.enemyState === EnemyState.IDLE && this.isAlive) { // 待机状态
                 this.moveTowardsCastle(movementDt);
             }
         }
@@ -190,8 +190,8 @@ export class BasicMouse extends BaseMouse {
     }
     
     
-    // 重写城堡攻击特效方法
-    protected createCastleAttackEffect(): void {
+    // 重写城堡到达特效方法
+    protected createCastleReachEffect(): void {
         if (this.node.parent) {
             EffectHelper.createAttackEffect(this.node.position, this.node.parent);
         }

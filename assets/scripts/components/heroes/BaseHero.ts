@@ -122,6 +122,25 @@ export abstract class BaseHero extends Component {
     }
     
     /**
+     * 获取Graphics组件的安全访问方法
+     * 子类应使用此方法而不是直接访问_graphics
+     */
+    protected getGraphics(): Graphics | null {
+        return this._graphics;
+    }
+    
+    /**
+     * 统一的Graphics清理和重绘方法
+     * 子类可以使用此方法进行安全的重绘操作
+     */
+    protected redrawHeroAppearance(): void {
+        if (this._graphics) {
+            this._graphics.clear();
+            this.drawHeroAppearance();
+        }
+    }
+    
+    /**
      * 绘制英雄外观 - 基于英雄类型自动选择绘制方式
      */
     protected drawHeroAppearance(): void {

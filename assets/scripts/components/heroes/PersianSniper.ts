@@ -28,10 +28,6 @@ export class PersianSniper extends BaseHero {
     public critMultiplier: number = 2.5;
     
     // 私有属性
-    private _skillTimer: number = 0;
-    private _graphics: Graphics | null = null;
-    private _animation: Animation | null = null;
-    private _nameLabel: Label | null = null;
     private _activeBullets: Set<Node> | null = new Set();
     private _isPlayingAttackAnimation: boolean = false;
     
@@ -55,69 +51,24 @@ export class PersianSniper extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeVisuals();
         this.initializeAnimation();
-        this.setupClickEvents();
-    }
-    
-    // 继承父类start()方法，无需重写
-    
-    
-    private initializeVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        this._graphics = this.node.getComponent(Graphics);
-        
-        this.drawPersianSniperAppearance();
-        this.createNameLabel();
-    }
-    
-    private drawPersianSniperAppearance(): void {
-        if (!this._graphics) return;
-        DrawingHelper.drawHeroAppearance(this._graphics, 'persian');
-    }
-    
-    private createNameLabel(): void {
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
-            text: "波斯猫",
-            fontSize: 18,  // 放大字体
-            color: new Color(255, 255, 255),
-            position: { x: 0, y: 35, z: 0 },  // 提高位置适应更大字体
-            size: { width: 70, height: 24 }   // 增大标签尺寸
-        });
     }
     
     private initializeAnimation(): void {
-        this._animation = this.node.getComponent(Animation);
-        if (this._animation) {
-            if (this._animation.getState('persian_sniper_idle')) {
-                this._animation.play('persian_sniper_idle');
+        const animation = this.node.getComponent(Animation);
+        if (animation) {
+            if (animation.getState('persian_sniper_idle')) {
+                animation.play('persian_sniper_idle');
             }
         }
     }
     
-    protected update(dt: number): void {
-        super.update(dt);
-        
-        if (this._skillTimer > 0) {
-            this._skillTimer -= dt;
-        }
-    }
+    // 使用基类的update方法
     
-    protected onIdleState(dt: number): void {
-        if (!this.isAlive) return;
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
-            if (nearestEnemy) {
-                this.currentTarget = nearestEnemy;
-                this.unitState = 2;
-            }
-        }
-    }
+    // 使用基类的onIdleState方法
     
     protected onAttack(target: Node): void {
-        if (!target || !this.isAlive) return;
+        if (!target) return;
         
         this.shootBullet(target);
         this.playAttackAnimation();
@@ -269,18 +220,14 @@ export class PersianSniper extends BaseHero {
             .start();
     }
     
-    // 穿甲射击技能
-    public useSkill(): boolean {
-        if (this._skillTimer > 0 || !this.isAlive) {
-            return false;
-        }
-        
+    // 重写基类的技能使用方法
+    protected onUseSkill(): void {
         const battleManager = BattleManager.instance;
-        if (!battleManager) return false;
+        if (!battleManager) return;
         
         // 寻找血量最高的敌人
         const enemies = battleManager.getEnemiesInRange(this.node.position, this.attackRange);
-        if (enemies.length === 0) return false;
+        if (enemies.length === 0) return;
         
         let targetEnemy: Node | null = null;
         let maxHealth = 0;
@@ -300,14 +247,10 @@ export class PersianSniper extends BaseHero {
                 targetUnit.takeDamage(skillDamage);
                 
                 this.createSkillEffect();
-                this._skillTimer = this.skillCooldown;
                 
                 console.log(`波斯猫使用穿甲射击！造成 ${skillDamage} 点伤害`);
-                return true;
             }
         }
-        
-        return false;
     }
     
     private createSkillEffect(): void {
@@ -316,49 +259,13 @@ export class PersianSniper extends BaseHero {
         }
     }
     
-    public getSkillCooldownRemaining(): number {
-        return Math.max(0, this._skillTimer);
-    }
-    
-    public isSkillReady(): boolean {
-        return this._skillTimer <= 0 && this.isAlive;
-    }
-    
-    
-    private setupClickEvents(): void {
-        this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
-    }
-    
-    private onHeroClick(event: EventTouch): void {
-        if (!this.isAlive) return;
-        
-        event.propagationStopped = true;
-        
-        if (this.isSkillReady()) {
-            const skillUsed = this.useSkill();
-            if (skillUsed) {
-                console.log("波斯猫释放穿甲射击技能！");
-                this.createClickFeedback();
-            } else {
-                console.log("波斯猫技能释放失败");
-            }
+    // 重写基类的英雄点击处理方法
+    protected onHeroClickHandler(): void {
+        if (this.canUseSkill) {
+            this.useSkill();
+            console.log("波斯猫释放穿甲射击技能！");
         } else {
-            console.log(`波斯猫技能冷却中，剩余时间: ${this.getSkillCooldownRemaining().toFixed(1)}秒`);
-            this.createCooldownFeedback();
-        }
-    }
-    
-    private createClickFeedback(): void {
-        if (this.node.parent) {
-            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
-            EffectHelper.createClickFeedback(feedbackPos, this.node.parent);
-        }
-    }
-    
-    private createCooldownFeedback(): void {
-        if (this.node.parent) {
-            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
-            EffectHelper.createCooldownFeedback(feedbackPos, this.node.parent);
+            console.log(`波斯猫技能冷却中，剩余时间: ${this._skillTimer.toFixed(1)}秒`);
         }
     }
     

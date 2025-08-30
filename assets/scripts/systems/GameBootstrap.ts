@@ -132,16 +132,7 @@ export class GameBootstrap extends Component {
     private loadGameResources(): void {
         if (!this._resourceManager) return;
 
-        // 定义需要预加载的资源（暂时不需要预加载）
-        // const resourcesToLoad = [
-        //     { path: "prefabs/heroes/OrangeCat", type: ResourceType.PREFAB },
-        //     { path: "prefabs/enemies/BasicMouse", type: ResourceType.PREFAB },
-        // ];
-
-        // 同步加载资源，暂时不需要异步操作
-        // if (resourcesToLoad.length > 0) {
-        //     this._resourceManager.preloadResources(resourcesToLoad);
-        // }
+        // 资源预加载暂时不需要，使用动态创建组件的方式
 
         this.log("游戏资源加载完成");
     }

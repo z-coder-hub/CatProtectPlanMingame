@@ -142,38 +142,31 @@ export class OrangeCat extends BaseHero {
                 this.safeDestroyBullet(bulletNode);
             });
         
-        // 添加中途检查，如果目标消失则提前结束
-        let checkCount = 0;
-        const maxChecks = Math.floor(duration * 10); // 每0.1秒检查一次
-        
-        const addPeriodicCheck = () => {
-            if (checkCount >= maxChecks) return;
-            
-            bulletTween.delay(0.1).call(() => {
-                // 检查目标是否仍然存在
-                if (!target || !target.isValid) {
-                    // 目标消失，停止tween并清理子弹
+        // 使用Cocos Creator调度器进行定期检查
+        const checkInterval = 0.1;
+        const checkFunction = () => {
+            // 检查子弹和目标是否仍然有效
+            if (!bulletNode || !bulletNode.isValid || !target || !target.isValid) {
+                this.unschedule(checkFunction);
+                if (bulletNode && bulletNode.isValid) {
                     Tween.stopAllByTarget(bulletNode);
                     this.safeDestroyBullet(bulletNode);
-                    return;
                 }
-                
-                // 检查是否提前击中（对于移动目标）
-                const currentDistance = Vec3.distance(bulletNode.position, target.position);
-                if (currentDistance <= 25) {
-                    Tween.stopAllByTarget(bulletNode);
-                    this.onBulletHitTarget(bulletNode, target);
-                    return;
-                }
-                
-                checkCount++;
-                if (checkCount < maxChecks) {
-                    addPeriodicCheck();
-                }
-            });
+                return;
+            }
+            
+            // 检查是否提前击中（对于移动目标）
+            const currentDistance = Vec3.distance(bulletNode.position, target.position);
+            if (currentDistance <= 25) {
+                this.unschedule(checkFunction);
+                Tween.stopAllByTarget(bulletNode);
+                this.onBulletHitTarget(bulletNode, target);
+                return;
+            }
         };
         
-        addPeriodicCheck();
+        // 启动定期检查
+        this.schedule(checkFunction, checkInterval, Math.floor(duration / checkInterval));
         bulletTween.start();
     }
     
