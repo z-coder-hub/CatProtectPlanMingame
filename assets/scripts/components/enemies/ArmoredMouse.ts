@@ -473,11 +473,11 @@ export class ArmoredMouse extends BaseMouse {
         }
         
         // 破碎效果消失
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 500);
+        }, 0.5);
     }
     
     // 重写待机状态

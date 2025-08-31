@@ -133,11 +133,11 @@ export class RagdollGuardian extends BaseHero {
         effectGraphics.circle(0, 0, 30);
         effectGraphics.stroke();
         
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 500);
+        }, 0.5);
     }
     
     private createGuardianAuraEffect(): void {
@@ -151,11 +151,11 @@ export class RagdollGuardian extends BaseHero {
         auraGraphics.circle(0, 0, 120);
         auraGraphics.stroke();
         
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (auraNode && auraNode.isValid) {
                 auraNode.destroy();
             }
-        }, 2000);
+        }, 2.0);
     }
     
     // 实现BaseHero的拽象方法

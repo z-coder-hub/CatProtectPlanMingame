@@ -119,11 +119,11 @@ export class ScottishEngineer extends BaseHero {
                     allyUnit.attackSpeed *= 1.3; // 增加30%攻击速度
                     
                     // 5秒后恢复
-                    setTimeout(() => {
+                    this.scheduleOnce(() => {
                         if (allyUnit && allyUnit.isAlive) {
                             allyUnit.attackSpeed = originalAttackSpeed;
                         }
-                    }, 5000);
+                    }, 5.0);
                 }
             }
         }
@@ -142,11 +142,11 @@ export class ScottishEngineer extends BaseHero {
         effectGraphics.circle(0, 0, 20);
         effectGraphics.stroke();
         
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 300);
+        }, 0.3);
     }
     
     private createBuffEffect(): void {

@@ -90,17 +90,17 @@ export class BengalHunter extends BaseHero {
             // 连续3发
             targetUnit.takeDamage(rapidDamage);
             
-            setTimeout(() => {
+            this.scheduleOnce(() => {
                 if (targetUnit && targetUnit.isAlive) {
                     targetUnit.takeDamage(rapidDamage);
                 }
-            }, 100);
+            }, 0.1);
             
-            setTimeout(() => {
+            this.scheduleOnce(() => {
                 if (targetUnit && targetUnit.isAlive) {
                     targetUnit.takeDamage(rapidDamage);
                 }
-            }, 200);
+            }, 0.2);
         }
         
         this.createAttackEffect();
@@ -117,11 +117,11 @@ export class BengalHunter extends BaseHero {
         effectGraphics.circle(0, 0, 25);
         effectGraphics.stroke();
         
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 300);
+        }, 0.3);
     }
     
     // 实现BaseHero的抽象方法

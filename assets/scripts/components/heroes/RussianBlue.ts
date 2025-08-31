@@ -172,11 +172,11 @@ export class RussianBlue extends BaseHero {
         effectGraphics.circle(0, 0, 25);
         effectGraphics.stroke();
         
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 400);
+        }, 0.4);
     }
     
     private createPenetrationEffect(position: Vec3, index: number): void {

@@ -104,11 +104,11 @@ export class NorwegianIce extends BaseHero {
                     enemyUnit.moveSpeed *= 0.5;
                     
                     // 3秒后恢复速度
-                    setTimeout(() => {
+                    this.scheduleOnce(() => {
                         if (enemyUnit && enemyUnit.isAlive) {
                             enemyUnit.moveSpeed = originalSpeed;
                         }
-                    }, 3000);
+                    }, 3.0);
                 }
             }
         }

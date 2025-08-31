@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, director } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, Color, director, tween } from 'cc';
 
 const { ccclass } = _decorator;
 
@@ -226,8 +226,11 @@ export class EffectHelper {
                 graphics.circle(0, 0, config.size * scale);
                 graphics.fill();
                 
-                // 使用 Cocos Creator 的调度器
-                director.getScheduler().schedule(animate, node, 0.016, 0, 0, false);
+                // 使用 Tween 进行下一帧调度
+                tween(node)
+                    .delay(0.016)
+                    .call(animate)
+                    .start();
             }
         };
         
@@ -252,8 +255,11 @@ export class EffectHelper {
                 graphics.circle(0, 0, radius);
                 graphics.stroke();
                 
-                // 使用 Cocos Creator 的调度器
-                director.getScheduler().schedule(expand, node, 0.033, 0, 0, false);
+                // 使用 Tween 进行下一帧调度
+                tween(node)
+                    .delay(0.033)
+                    .call(expand)
+                    .start();
             }
         };
         
@@ -318,12 +324,17 @@ export class EffectHelper {
     // 统一的销毁调度
     private static scheduleDestroy(node: Node, duration: number): void {
         if (node && node.isValid) {
-            // 使用 Cocos Creator 的调度器延迟销毁
-            director.getScheduler().schedule(() => {
-                if (node && node.isValid) {
-                    node.destroy();
-                }
-            }, node, 0, 0, duration, false);
+            // 转换毫秒为秒，使用 Tween 系统进行延迟销毁
+            const delayInSeconds = duration / 1000;
+            
+            tween(node)
+                .delay(delayInSeconds)
+                .call(() => {
+                    if (node && node.isValid) {
+                        node.destroy();
+                    }
+                })
+                .start();
         }
     }
     
@@ -530,15 +541,18 @@ export class EffectHelper {
         });
         
         // 添加范围圈显示
-        director.getScheduler().schedule(() => {
-            if (parent && parent.isValid) {
-                this.createEffect(EffectType.SKILL, position, parent, {
-                    color: new Color(255, 100, 0, 100),
-                    size: range,
-                    duration: 200
-                });
-            }
-        }, parent, 0, 0, 0.1, false);
+        tween(parent)
+            .delay(0.1)
+            .call(() => {
+                if (parent && parent.isValid) {
+                    this.createEffect(EffectType.SKILL, position, parent, {
+                        color: new Color(255, 100, 0, 100),
+                        size: range,
+                        duration: 200
+                    });
+                }
+            })
+            .start();
         
         return effectNode;
     }

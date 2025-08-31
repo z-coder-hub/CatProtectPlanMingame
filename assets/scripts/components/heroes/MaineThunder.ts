@@ -130,11 +130,11 @@ export class MaineThunder extends BaseHero {
         effectGraphics.circle(0, 0, 35);
         effectGraphics.stroke();
         
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 400);
+        }, 0.4);
     }
     
     private createChainLightningEffect(from: Vec3, to: Vec3): void {
@@ -151,11 +151,11 @@ export class MaineThunder extends BaseHero {
         effectGraphics.lineTo(direction.x, direction.y);
         effectGraphics.stroke();
         
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 200);
+        }, 0.2);
     }
     
     // 实现BaseHero的拽象方法

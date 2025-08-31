@@ -127,11 +127,11 @@ export class AbyssinianScout extends BaseHero {
                     allyUnit.attackRange *= 1.4; // 增加40%攻击范围
                     
                     // 6秒后恢复
-                    setTimeout(() => {
+                    this.scheduleOnce(() => {
                         if (allyUnit && allyUnit.isAlive) {
                             allyUnit.attackRange = originalRange;
                         }
-                    }, 6000);
+                    }, 6.0);
                 }
             }
         }
@@ -150,11 +150,11 @@ export class AbyssinianScout extends BaseHero {
         effectGraphics.circle(0, 0, 22);
         effectGraphics.stroke();
         
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 300);
+        }, 0.3);
     }
     
     private createScoutEffect(): void {

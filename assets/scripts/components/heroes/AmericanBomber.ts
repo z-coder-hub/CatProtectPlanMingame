@@ -4,6 +4,7 @@ import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
+import { EffectHelper } from '../../utils/EffectHelper';
 
 const { ccclass } = _decorator;
 
@@ -211,48 +212,17 @@ export class AmericanBomber extends BaseHero {
         effectGraphics.rect(-25, -25, 50, 50);
         effectGraphics.stroke();
         
-        setTimeout(() => {
+        this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 400);
+        }, 0.4);
     }
     
     private createExplosionEffect(position: Vec3): void {
-        const explosionNode = new Node("Explosion");
-        explosionNode.parent = this.node.parent;
-        explosionNode.setPosition(position);
-        
-        const explosionGraphics = explosionNode.addComponent(Graphics);
-        explosionGraphics.fillColor = new Color(255, 140, 0, 200); // 橙色爆炸
-        explosionGraphics.circle(0, 0, 100);
-        explosionGraphics.fill();
-        
-        // 爆炸动画
-        let scale = 0.3;
-        let opacity = 200;
-        const explodeEffect = () => {
-            scale += 0.3;
-            opacity -= 25;
-            
-            if (explosionGraphics && explosionNode.isValid && opacity > 0) {
-                explosionGraphics.clear();
-                explosionGraphics.fillColor = new Color(255, 140, 0, opacity);
-                explosionGraphics.circle(0, 0, 100 * scale);
-                explosionGraphics.fill();
-                
-                // 内部白色闪光
-                if (opacity > 100) {
-                    explosionGraphics.fillColor = new Color(255, 255, 255, opacity * 0.7);
-                    explosionGraphics.circle(0, 0, 50 * scale);
-                    explosionGraphics.fill();
-                }
-                
-                requestAnimationFrame(explodeEffect);
-            } else {
-                explosionNode.destroy();
-            }
-        };
-        explodeEffect();
+        // 使用EffectHelper创建标准化的爆炸效果
+        if (this.node.parent) {
+            EffectHelper.createExplosionEffect(position, this.node.parent, 100);
+        }
     }
 }
