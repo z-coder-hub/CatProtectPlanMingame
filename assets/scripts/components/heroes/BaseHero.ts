@@ -311,7 +311,7 @@ export abstract class BaseHero extends Component {
         this._attackTimer = 1.0 / this.attackSpeed;
         
         // 调用子类的攻击实现
-        this.performAttack(target);
+        this.onAttack(target);
     }
     
     // === 状态处理方法 (子类可重写) ===
@@ -354,9 +354,9 @@ export abstract class BaseHero extends Component {
     // === 抽象方法，子类必须实现具体行为 ===
     
     /**
-     * 执行攻击 - 子类必须实现
+     * 执行攻击 - 子类必须实现具体的攻击逻辑
      */
-    protected abstract performAttack(target: Node): void;
+    protected abstract onAttack(target: Node): void;
     
     /**
      * 使用技能 - 子类可选实现

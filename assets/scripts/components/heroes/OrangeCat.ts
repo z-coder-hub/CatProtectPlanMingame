@@ -314,10 +314,7 @@ export class OrangeCat extends BaseHero {
         };
     }
     
-    // 实现BaseHero的抽象方法
-    protected performAttack(target: Node): void {
-        this.onAttack(target);
-    }
+    // 实现BaseHero的抽象方法 - 直接实现攻击逻辑，无需额外包装
     
     // 组件销毁时清理资源
     protected onDestroy(): void {

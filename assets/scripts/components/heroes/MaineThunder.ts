@@ -158,8 +158,5 @@ export class MaineThunder extends BaseHero {
         }, 0.2);
     }
     
-    // 实现BaseHero的拽象方法
-    protected performAttack(target: Node): void {
-        this.onAttack(target);
-    }
+    // 已移除多余的performAttack包装方法，直接使用onAttack实现
 }

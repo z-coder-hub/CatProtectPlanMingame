@@ -101,10 +101,7 @@ export class ScottishEngineer extends BaseHero {
         this.createAttackEffect();
     }
     
-    // 实现BaseHero的抽象方法
-    protected performAttack(target: Node): void {
-        this.onAttack(target);
-    }
+    // 已移除多余的performAttack包装方法，直接使用onAttack实现
     
     private provideBuff(): void {
         const battleManager = BattleManager.instance;

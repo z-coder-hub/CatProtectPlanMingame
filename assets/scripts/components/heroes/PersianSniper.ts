@@ -74,10 +74,7 @@ export class PersianSniper extends BaseHero {
         this.playAttackAnimation();
     }
     
-    // 实现BaseHero的抽象方法
-    protected performAttack(target: Node): void {
-        this.onAttack(target);
-    }
+    // 已移除多余的performAttack包装方法，直接使用onAttack实现
     
     private shootBullet(target: Node): void {
         const direction = Vec3.subtract(new Vec3(), target.position, this.node.position);

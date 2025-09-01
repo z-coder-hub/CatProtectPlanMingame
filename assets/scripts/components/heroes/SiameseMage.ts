@@ -97,10 +97,7 @@ export class SiameseMage extends BaseHero {
         this.playAttackAnimation();
     }
     
-    // 实现BaseHero的抽象方法
-    protected performAttack(target: Node): void {
-        this.onAttack(target);
-    }
+    // 已移除多余的performAttack包装方法，直接使用onAttack实现
     
     private castMagicMissile(target: Node): void {
         // 暹罗猫使用瞬发魔法攻击
