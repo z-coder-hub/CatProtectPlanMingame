@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
-import { HeroType } from '../../types/GameTypes';
+import { HeroType, HeroState } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
 import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
