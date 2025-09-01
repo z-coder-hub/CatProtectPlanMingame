@@ -178,4 +178,14 @@ export class ScottishEngineer extends BaseHero {
         };
         expandEffect();
     }
+    
+    // 重写标签配置，使用"苏格兰猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
+            text: "苏格兰猫",
+            size: { width: 80, height: 24 }
+        };
+    }
 }

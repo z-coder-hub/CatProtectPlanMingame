@@ -18,7 +18,10 @@
       "Bash(mv:*)",
       "Bash(for file in RagdollGuardian.ts AbyssinianScout.ts BengalHunter.ts ScottishEngineer.ts)",
       "Bash(for:*)",
-      "WebFetch(domain:docs.cocos.com)"
+      "WebFetch(domain:docs.cocos.com)",
+      "Bash(do if [[ \"$file\" != \"BaseHero.ts\" ]])",
+      "Bash(then echo \"=== $file ===\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

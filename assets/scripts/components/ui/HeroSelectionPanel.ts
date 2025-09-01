@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, ScrollView, UITransform, Vec3 } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, ScrollView, UITransform, Vec3, Widget } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
 import { HeroFactory } from '../../systems/HeroFactory';
@@ -46,11 +46,11 @@ export class HeroSelectionPanel extends Component {
         if (!this._gridSystem) {
             console.error("未找到GridDeploymentSystem实例");
         }
-        
+
         // 初始更新按钮状态
         this.updateHeroButtonStates();
     }
-    
+
     protected update(_dt: number): void {
         // 实时更新英雄按钮状态（基于当前金币）
         this.updateHeroButtonStates();
@@ -135,8 +135,9 @@ export class HeroSelectionPanel extends Component {
             const buttonGraphics = buttonNode.getComponent(Graphics);
             if (buttonGraphics) {
                 const buttonTransform = buttonNode.getComponent(UITransform);
-                const size = buttonTransform ? buttonTransform.contentSize.width : 80;
-                this.drawHeroButtonBackground(buttonGraphics, size, isSelected, heroType);
+                const width = buttonTransform ? buttonTransform.contentSize.width : 96;
+                const height = buttonTransform ? buttonTransform.contentSize.height : 120;
+                this.drawHeroButtonBackground(buttonGraphics, width, height, isSelected, heroType);
             }
         });
     }
@@ -147,8 +148,8 @@ export class HeroSelectionPanel extends Component {
      * 创建英雄选择面板
      */
     private createHeroSelectionPanel(): void {
-        // 使用Widget进行底部对齐 (120 * 1.2 = 144)
-        UIHelper.SetupBottomAlignWidget(this.node, 144, 0);
+        // 使用Widget进行底部对齐，增加高度以容纳更高的按钮 (140 * 1.2 = 168)
+        UIHelper.SetupBottomAlignWidget(this.node, 168, 0);
 
         // 面板背景（边框和填充是一个路径线）
         const panelBg = UIHelper.CreatePanelWithBackground(this.node, new Color(20, 20, 20, 220));
@@ -205,12 +206,13 @@ export class HeroSelectionPanel extends Component {
         const contentTransform = contentNode.addComponent(UITransform);
 
         const availableHeroes = HeroFactory.getAvailableHeroTypes();
-        const buttonSize = 96; // 80 * 1.2 = 96
+        const buttonWidth = 96; // 80 * 1.2 = 96
+        const buttonHeight = 120; // 增加高度以容纳名称标签，100 * 1.2 = 120
         const buttonSpacing = 24; // 20 * 1.2 = 24
         const paddingTotal = buttonSpacing * 2;
 
         // 计算Content尺寸
-        const minContentWidth = availableHeroes.length * (buttonSize + buttonSpacing) + paddingTotal;
+        const minContentWidth = availableHeroes.length * (buttonWidth + buttonSpacing) + paddingTotal;
         const contentWidth = Math.max(minContentWidth, (panelTransform.width - 36) + 120); // 100 * 1.2 = 120
 
         contentTransform.setContentSize(contentWidth, panelTransform.height);
@@ -220,15 +222,15 @@ export class HeroSelectionPanel extends Component {
         scrollView.content = contentNode;
 
         // 创建英雄按钮
-        this.createHeroButtonsAdaptiveLayout(contentNode, buttonSize, buttonSpacing);
+        this.createHeroButtonsAdaptiveLayout(contentNode, buttonWidth, buttonHeight, buttonSpacing);
 
         console.log(`✅ ScrollView创建完成，英雄数量: ${availableHeroes.length}`);
     }
 
     /**
-     * 自适应布局创建英雄按钮
+     * 自适应布局创建英雄按钮 - 使用Widget相对布局
      */
-    private createHeroButtonsAdaptiveLayout(contentNode: Node, buttonSize: number, buttonSpacing: number): void {
+    private createHeroButtonsAdaptiveLayout(contentNode: Node, buttonWidth: number, buttonHeight: number, buttonSpacing: number): void {
         const availableHeroes = HeroFactory.getAvailableHeroTypes();
         const contentTransform = contentNode.getComponent(UITransform);
         if (!contentTransform) {
@@ -236,44 +238,89 @@ export class HeroSelectionPanel extends Component {
             return;
         }
 
-        // 计算起始位置（左对齐）
-        const startX = buttonSpacing + buttonSize / 2;
+        const containerWidth = buttonWidth + buttonSpacing; // 每个容器的宽度
 
         availableHeroes.forEach((heroType, index) => {
             const heroConfig = HeroFactory.getHeroConfig(heroType);
             if (!heroConfig) return;
 
-            // 计算每个按钮的X位置
-            const buttonX = startX + index * (buttonSize + buttonSpacing);
-            const heroButton = this.createAdaptiveHeroButton(heroType, heroConfig, buttonX, 0, buttonSize);
+            // 创建按钮容器，使用Widget进行相对定位
+            const buttonContainer = this.createHeroButtonContainer(index, containerWidth, buttonHeight);
+            buttonContainer.parent = contentNode;
 
-            heroButton.parent = contentNode;
+            // 在容器内创建英雄按钮，居中对齐
+            const heroButton = this.createAdaptiveHeroButton(heroType, heroConfig, buttonWidth, buttonHeight);
+            heroButton.parent = buttonContainer;
+
+            // 为按钮设置居中Widget
+            this.setupButtonCenterWidget(heroButton);
+
             this._heroButtons.push(heroButton);
         });
 
-        console.log(`自适应布局创建了 ${this._heroButtons.length} 个英雄按钮`);
+        console.log(`使用Widget布局创建了 ${this._heroButtons.length} 个英雄按钮`);
     }
 
     /**
-     * 创建自适应英雄按钮
+     * 创建英雄按钮容器，使用Widget进行相对定位
      */
-    private createAdaptiveHeroButton(heroType: HeroType, heroConfig: any, x: number, y: number, size: number): Node {
+    private createHeroButtonContainer(index: number, containerWidth: number, containerHeight: number): Node {
+        const container = new Node(`HeroButtonContainer_${index}`);
+
+        // 设置容器的UITransform
+        const containerTransform = container.addComponent(UITransform);
+        containerTransform.setContentSize(containerWidth, containerHeight);
+        containerTransform.setAnchorPoint(0, 0.5); // 左对齐，垂直居中
+
+        // 使用Widget进行相对定位
+        const widget = container.addComponent(Widget);
+        widget.isAlignLeft = true;
+        widget.isAlignVerticalCenter = true;
+
+        // 计算左边距 - 基于索引和容器宽度
+        const leftOffset = index * containerWidth;
+        widget.left = leftOffset;
+        widget.verticalCenter = 0; // 垂直居中
+
+        widget.updateAlignment();
+
+        return container;
+    }
+
+    /**
+     * 为按钮设置居中Widget
+     */
+    private setupButtonCenterWidget(buttonNode: Node): void {
+        const widget = buttonNode.addComponent(Widget);
+        widget.isAlignHorizontalCenter = true;
+        widget.isAlignVerticalCenter = true;
+        widget.horizontalCenter = 0;
+        widget.verticalCenter = 0;
+        widget.updateAlignment();
+    }
+
+    /**
+     * 创建自适应英雄按钮 - Widget布局版本
+     */
+    private createAdaptiveHeroButton(heroType: HeroType, heroConfig: any, width: number, height: number): Node {
         const buttonNode = new Node(`HeroButton_${heroType}`);
-        buttonNode.setPosition(x, y);
 
         const buttonTransform = buttonNode.addComponent(UITransform);
-        buttonTransform.setContentSize(size, size);
+        buttonTransform.setContentSize(width, height);
         buttonTransform.setAnchorPoint(0.5, 0.5);
 
         // 按钮背景
         const buttonBg = buttonNode.addComponent(Graphics);
-        this.drawHeroButtonBackground(buttonBg, size, false, heroType);
+        this.drawHeroButtonBackground(buttonBg, width, height, false, heroType);
 
         // 英雄图标
-        this.createHeroIcon(buttonNode, heroType, size);
+        this.createHeroIcon(buttonNode, heroType);
+
+        // 名称标签
+        this.createAdaptiveNameLabel(buttonNode, heroType);
 
         // 价格标签
-        this.createAdaptivePriceLabel(buttonNode, heroConfig.cost, size);
+        this.createAdaptivePriceLabel(buttonNode, heroConfig.cost);
 
         // 添加触摸事件
         this.setupHeroButtonEvents(buttonNode, heroType);
@@ -284,11 +331,23 @@ export class HeroSelectionPanel extends Component {
     /**
      * 创建自适应价格标签
      */
-    private createAdaptivePriceLabel(parent: Node, cost: number, size: number): void {
-        
+    private createAdaptivePriceLabel(parent: Node, cost: number): void {
+
         // 创建价格背景节点
         const priceBgNode = new Node("PriceBackground");
-        priceBgNode.setPosition(0, -size / 2 + 14.4); // 12 * 1.2 = 14.4
+        priceBgNode.parent = parent;
+
+        // 设置价格背景的UITransform
+        const bgTransform = priceBgNode.addComponent(UITransform);
+        bgTransform.setContentSize(48, 19.2);
+
+        // 使用Widget进行底部对齐
+        const bgWidget = priceBgNode.addComponent(Widget);
+        bgWidget.isAlignBottom = true;
+        bgWidget.isAlignHorizontalCenter = true;
+        bgWidget.bottom = 10; // 从底部偏移
+        bgWidget.horizontalCenter = 0;
+        bgWidget.updateAlignment();
 
         // 价格背景
         const priceBg = priceBgNode.addComponent(Graphics);
@@ -296,19 +355,115 @@ export class HeroSelectionPanel extends Component {
         priceBg.rect(-24, -9.6, 48, 19.2); // (-20, -8, 40, 16) * 1.2
         priceBg.fill();
 
-        priceBgNode.parent = parent;
-
         // 创建价格文本节点
         const priceNode = new Node("PriceLabel");
-        priceNode.setPosition(0, -size / 2 + 14.4); // 12 * 1.2 = 14.4
+        priceNode.parent = parent;
+
+        // 设置价格文本的UITransform
+        const priceTransform = priceNode.addComponent(UITransform);
+        priceTransform.setContentSize(48, 19.2);
+
+        // 使用Widget进行底部居中对齐
+        const priceWidget = priceNode.addComponent(Widget);
+        priceWidget.isAlignBottom = true;
+        priceWidget.isAlignHorizontalCenter = true;
+        priceWidget.bottom = 10; // 与背景相同位置
+        priceWidget.horizontalCenter = 0;
+        priceWidget.updateAlignment();
 
         // 价格文本
         const priceLabel = priceNode.addComponent(Label);
         priceLabel.string = `${cost}`;
-        priceLabel.fontSize = Math.max(14.4, size * 0.175); // 12 * 1.2 = 14.4
+        priceLabel.fontSize = 14.4; // 12 * 1.2 = 14.4，固定字体大小
         priceLabel.color = new Color(255, 215, 0);
+    }
 
-        priceNode.parent = parent;
+    /**
+     * 创建自适应名称标签
+     */
+    private createAdaptiveNameLabel(parent: Node, heroType: HeroType): void {
+
+        // 获取英雄名称
+        const heroName = this.getHeroDisplayName(heroType);
+
+        // 创建名称背景节点
+        const nameBgNode = new Node("NameBackground");
+        nameBgNode.parent = parent;
+
+        // 设置名称背景的UITransform
+        const bgTransform = nameBgNode.addComponent(UITransform);
+        const bgWidth = Math.max(48, heroName.length * 12);
+        bgTransform.setContentSize(bgWidth, 19.2);
+
+        // 使用Widget进行顶部对齐
+        const bgWidget = nameBgNode.addComponent(Widget);
+        bgWidget.isAlignTop = true;
+        bgWidget.isAlignHorizontalCenter = true;
+        bgWidget.top = 10; // 从顶部偏移
+        bgWidget.horizontalCenter = 0;
+        bgWidget.updateAlignment();
+
+        // 名称背景
+        const nameBg = nameBgNode.addComponent(Graphics);
+        nameBg.fillColor = new Color(0, 0, 0, 150);
+        nameBg.rect(-bgWidth / 2, -9.6, bgWidth, 19.2);
+        nameBg.fill();
+
+        // 创建名称文本节点
+        const nameNode = new Node("NameLabel");
+        nameNode.parent = parent;
+
+        // 设置名称文本的UITransform
+        const nameTransform = nameNode.addComponent(UITransform);
+        nameTransform.setContentSize(bgWidth, 19.2);
+
+        // 使用Widget进行顶部居中对齐
+        const nameWidget = nameNode.addComponent(Widget);
+        nameWidget.isAlignTop = true;
+        nameWidget.isAlignHorizontalCenter = true;
+        nameWidget.top = 10; // 与背景相同位置
+        nameWidget.horizontalCenter = 0;
+        nameWidget.updateAlignment();
+
+        // 名称文本
+        const nameLabel = nameNode.addComponent(Label);
+        nameLabel.string = heroName;
+        nameLabel.fontSize = 18; // 18px字体，与游戏内标签保持一致
+        nameLabel.color = new Color(255, 255, 255); // 白色文字
+    }
+
+    /**
+     * 获取英雄显示名称 - 与游戏内标签保持一致的简洁名称
+     */
+    private getHeroDisplayName(heroType: HeroType): string {
+        switch (heroType) {
+            case HeroType.ORANGE_CAT:
+                return "橘猫";
+            case HeroType.PERSIAN_SNIPER:
+                return "波斯猫";
+            case HeroType.BENGAL_HUNTER:
+                return "孟加拉猫";
+            case HeroType.SIAMESE_MAGE:
+                return "暹罗猫";
+            case HeroType.MAINE_THUNDER:
+                return "缅因猫";
+            case HeroType.NORWEGIAN_ICE:
+                return "挪威猫";
+            case HeroType.BRITISH_KNIGHT:
+                return "英短骑士";
+            case HeroType.RAGDOLL_GUARDIAN:
+                return "布偶猫";
+            case HeroType.SCOTTISH_ENGINEER:
+                return "苏格兰猫";
+            case HeroType.ABYSSINIAN_SCOUT:
+                return "阿比猫";
+            case HeroType.RUSSIAN_BLUE:
+                return "俄蓝猫";
+            case HeroType.AMERICAN_BOMBER:
+                return "美短猫";
+            default:
+                return "未知英雄";
+        }
     }
 
 
@@ -317,7 +472,7 @@ export class HeroSelectionPanel extends Component {
     /**
      * 绘制英雄按钮背景
      */
-    private drawHeroButtonBackground(graphics: Graphics, size: number, isSelected: boolean, heroType?: HeroType): void {
+    private drawHeroButtonBackground(graphics: Graphics, width: number, height: number, isSelected: boolean, heroType?: HeroType): void {
         graphics.clear();
 
         // 检查是否可购买 - 使用英雄实际成本
@@ -339,7 +494,7 @@ export class HeroSelectionPanel extends Component {
         }
 
         graphics.fillColor = bgColor;
-        graphics.rect(-size / 2, -size / 2, size, size);
+        graphics.rect(-width / 2, -height / 2, width, height);
         graphics.fill();
 
         // 边框
@@ -347,22 +502,31 @@ export class HeroSelectionPanel extends Component {
             !canAfford ? new Color(255, 0, 0) : new Color(150, 150, 150);
         graphics.strokeColor = borderColor;
         graphics.lineWidth = isSelected ? 3 : 2;
-        graphics.rect(-size / 2, -size / 2, size, size);
+        graphics.rect(-width / 2, -height / 2, width, height);
         graphics.stroke();
     }
 
     /**
      * 创建英雄图标
      */
-    private createHeroIcon(parent: Node, heroType: HeroType, _size: number): void {
+    private createHeroIcon(parent: Node, heroType: HeroType): void {
         const iconNode = new Node("HeroIcon");
-        iconNode.setPosition(0, 9.6); // 8 * 1.2 = 9.6
+        iconNode.parent = parent;
+
+        // 设置图标的UITransform
+        const iconTransform = iconNode.addComponent(UITransform);
+        iconTransform.setContentSize(60, 60); // 图标固定尺寸
+
+        // 使用Widget进行居中对齐，并稍微向上偏移
+        const iconWidget = iconNode.addComponent(Widget);
+        iconWidget.isAlignHorizontalCenter = true;
+        iconWidget.isAlignVerticalCenter = true;
+        iconWidget.horizontalCenter = 0;
+        iconWidget.verticalCenter = 0; // 稍微向上偏移 8 * 1.2 = 9.6
+        iconWidget.updateAlignment();
 
         // 添加Graphics组件
         const iconGraphics = iconNode.addComponent(Graphics);
-
-        // 设置父节点
-        iconNode.parent = parent;
 
         // 1.2倍缩放因子
         const scale = 1.2;

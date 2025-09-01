@@ -222,4 +222,14 @@ export class AmericanBomber extends BaseHero {
             EffectHelper.createExplosionEffect(position, this.node.parent, 100);
         }
     }
+    
+    // 重写标签配置，使用"美短猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
+            text: "美短猫",
+            size: { width: 70, height: 24 }
+        };
+    }
 }

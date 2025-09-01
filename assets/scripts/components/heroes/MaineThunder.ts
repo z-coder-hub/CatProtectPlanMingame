@@ -158,5 +158,15 @@ export class MaineThunder extends BaseHero {
         }, 0.2);
     }
     
+    // 重写标签配置，使用"缅因猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
+            text: "缅因猫",
+            size: { width: 70, height: 24 }
+        };
+    }
+    
     // 已移除多余的performAttack包装方法，直接使用onAttack实现
 }

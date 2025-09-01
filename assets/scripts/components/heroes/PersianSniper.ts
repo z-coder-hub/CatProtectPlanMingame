@@ -266,6 +266,16 @@ export class PersianSniper extends BaseHero {
         }
     }
     
+    // 重写标签配置，使用"波斯猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
+            text: "波斯猫",
+            size: { width: 70, height: 24 }
+        };
+    }
+    
     protected onDestroy(): void {
         if (this._activeBullets) {
             this._activeBullets.forEach(bullet => {

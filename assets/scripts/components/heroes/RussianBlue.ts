@@ -207,4 +207,14 @@ export class RussianBlue extends BaseHero {
         };
         flashEffect();
     }
+    
+    // 重写标签配置，使用"俄蓝猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
+            text: "俄蓝猫",
+            size: { width: 70, height: 24 }
+        };
+    }
 }

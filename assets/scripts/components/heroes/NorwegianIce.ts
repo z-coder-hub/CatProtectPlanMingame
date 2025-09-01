@@ -146,4 +146,14 @@ export class NorwegianIce extends BaseHero {
         };
         fadeEffect();
     }
+    
+    // 重写标签配置，使用"挪威猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
+            text: "挪威猫",
+            size: { width: 70, height: 24 }
+        };
+    }
 }

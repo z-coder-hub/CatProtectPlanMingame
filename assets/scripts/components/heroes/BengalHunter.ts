@@ -124,5 +124,15 @@ export class BengalHunter extends BaseHero {
         }, 0.3);
     }
     
+    // 重写标签配置，使用"孟加拉猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
+            text: "孟加拉猫",
+            size: { width: 80, height: 24 }
+        };
+    }
+    
     // 已移除多余的performAttack包装方法，直接使用onAttack实现
 }

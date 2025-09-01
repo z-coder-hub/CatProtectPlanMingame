@@ -194,4 +194,14 @@ export class AbyssinianScout extends BaseHero {
         };
         scanEffect();
     }
+    
+    // 重写标签配置，使用"阿比猫"名称
+    protected getHeroLabelConfig() {
+        const baseConfig = super.getHeroLabelConfig();
+        return {
+            ...baseConfig,
+            text: "阿比猫",
+            size: { width: 70, height: 24 }
+        };
+    }
 }
