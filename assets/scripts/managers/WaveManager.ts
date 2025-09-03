@@ -129,7 +129,7 @@ export class WaveManager extends Component {
     
     
     // 开始波次（参考老项目接口）
-    public startWave(waveNumber: number): void {
+    public StartWave(waveNumber: number): void {
         if (this._waveState === WaveState.SPAWNING) {
             console.warn("波次已经在进行中");
             return;
@@ -181,7 +181,7 @@ export class WaveManager extends Component {
         if (this._prepareTimer >= this.wavePrepareTime) {
             this._prepareTimer = 0;
             if (this.autoStartNextWave) {
-                this.startWave(this.currentWaveNumber);
+                this.StartWave(this.currentWaveNumber);
             }
         }
     }
@@ -220,7 +220,7 @@ export class WaveManager extends Component {
             
             // 通知GameManager波次完成
             if (this._gameManager) {
-                this._gameManager.onWaveComplete();
+                this._gameManager.OnWaveComplete();
             }
             
             // 重置波次状态，等待下一波开始
@@ -247,11 +247,11 @@ export class WaveManager extends Component {
             enemyNode.parent = this.node.parent; // 添加到场景
             
             // 添加到活跃敌人列表
-            this._gameManager.addActiveEnemy(enemyNode);
+            this._gameManager.AddActiveEnemy(enemyNode);
             
             // 注册到BattleManager
             if (this._battleManager) {
-                this._battleManager.registerEnemy(enemyNode);
+                this._battleManager.RegisterEnemy(enemyNode);
             }
             
             console.log(`[WaveManager] 生成敌人: ${enemyType} 位置: (${spawnPosition.x}, ${spawnPosition.y})`);
@@ -275,7 +275,7 @@ export class WaveManager extends Component {
         }
 
         // 获取网格的边界信息
-        const gridBounds = gridSystem.getGridBounds();
+        const gridBounds = gridSystem.GetGridBounds();
         
         // 在网格的X范围内随机生成敌人位置
         const minX = gridBounds.left;
@@ -327,7 +327,7 @@ export class WaveManager extends Component {
     }
     
     // 准备下一波（现在由GameManager调用）
-    public prepareNextWave(): void {
+    public PrepareNextWave(): void {
         this._currentWaveIndex++;
         
         console.log(`[WaveManager] prepareNextWave调用，当前索引增加到: ${this._currentWaveIndex}，波次号: ${this.currentWaveNumber}`);
@@ -349,26 +349,26 @@ export class WaveManager extends Component {
         console.log("所有波次已完成，游戏胜利！");
         
         if (this._gameManager) {
-            this._gameManager.endGame(true);
+            this._gameManager.EndGame(true);
         }
     }
     
     // 停止当前波次
-    public stopCurrentWave(): void {
+    public StopCurrentWave(): void {
         this._waveState = WaveState.WAITING;
         this._enemySpawnQueue = [];
         console.log("当前波次已停止");
     }
     
     // 跳过等待时间，立即开始下一波
-    public skipWaiting(): void {
+    public SkipWaiting(): void {
         if (this._waveState === WaveState.WAITING) {
             this._prepareTimer = this.wavePrepareTime;
         }
     }
     
     // 重置波次管理器
-    public resetWaves(): void {
+    public ResetWaves(): void {
         this._currentWaveIndex = 0;
         this._waveState = WaveState.WAITING;
         this._enemySpawnQueue = [];
@@ -378,7 +378,7 @@ export class WaveManager extends Component {
     }
     
     // 获取波次统计信息
-    public getWaveStats(): {
+    public GetWaveStats(): {
         currentWave: number;
         totalWaves: number;
         waveState: WaveState;

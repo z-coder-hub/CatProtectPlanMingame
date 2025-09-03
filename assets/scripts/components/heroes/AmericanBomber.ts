@@ -98,7 +98,7 @@ export class AmericanBomber extends BaseHero {
         
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
                 this.heroState = HeroState.ATTACKING;
@@ -124,7 +124,7 @@ export class AmericanBomber extends BaseHero {
         if (!battleManager) return;
         
         // 找到敌人最密集的区域
-        const allEnemies = battleManager.getAllEnemies();
+        const allEnemies = battleManager.GetAllEnemies();
         if (allEnemies.length === 0) return;
         
         // 简化：选择一个随机敌人位置作为爆炸中心
@@ -183,7 +183,7 @@ export class AmericanBomber extends BaseHero {
         
         // AOE爆炸伤害
         const explosionRadius = 100;
-        const enemies = battleManager.getEnemiesInRange(position, explosionRadius);
+        const enemies = battleManager.GetEnemiesInRange(position, explosionRadius);
         
         for (const enemy of enemies) {
             const enemyUnit = enemy.getComponent(BaseMouse);

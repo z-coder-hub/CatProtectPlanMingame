@@ -82,7 +82,7 @@ export class SiameseMage extends BaseHero {
     protected onIdleState(dt: number): void {
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
                 this.heroState = HeroState.ATTACKING;
@@ -144,7 +144,7 @@ export class SiameseMage extends BaseHero {
         if (!battleManager) return;
         
         // 寻找范围内的敌人群体
-        const enemies = battleManager.getEnemiesInRange(this.node.position, this.attackRange);
+        const enemies = battleManager.GetEnemiesInRange(this.node.position, this.attackRange);
         if (enemies.length === 0) return;
         
         // 选择敌人最密集的位置作为爆炸中心
@@ -152,7 +152,7 @@ export class SiameseMage extends BaseHero {
         let maxEnemiesInArea = 0;
         
         for (const enemy of enemies) {
-            const enemiesInArea = battleManager.getEnemiesInRange(enemy.position, this.aoeRange);
+            const enemiesInArea = battleManager.GetEnemiesInRange(enemy.position, this.aoeRange);
             if (enemiesInArea.length > maxEnemiesInArea) {
                 maxEnemiesInArea = enemiesInArea.length;
                 bestTarget = enemy;
@@ -170,7 +170,7 @@ export class SiameseMage extends BaseHero {
         if (!battleManager) return;
         
         // 对爆炸范围内的所有敌人造成伤害
-        const affectedEnemies = battleManager.getEnemiesInRange(centerPosition, this.aoeRange);
+        const affectedEnemies = battleManager.GetEnemiesInRange(centerPosition, this.aoeRange);
         const explosionDamage = this.attackDamage * this.aoeDamage;
         
         for (const enemy of affectedEnemies) {

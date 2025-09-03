@@ -77,7 +77,7 @@ export class MaineThunder extends BaseHero {
         
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
                 this.heroState = HeroState.ATTACKING;
@@ -105,7 +105,7 @@ export class MaineThunder extends BaseHero {
         const battleManager = BattleManager.instance;
         if (!battleManager) return;
         
-        const nearbyEnemies = battleManager.getEnemiesInRange(primaryTarget.position, 100);
+        const nearbyEnemies = battleManager.GetEnemiesInRange(primaryTarget.position, 100);
         const chainDamage = this.attackDamage * 0.6; // 60%的链式伤害
         
         for (const enemy of nearbyEnemies) {

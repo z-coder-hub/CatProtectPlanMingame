@@ -288,10 +288,10 @@ export class BattleManager extends Component {
         
         // 老鼠到达城堡造成伤害（使用固定伤害值，因为老鼠没有attackDamage属性）
         const castleDamage = Math.floor(enemyUnit.maxHealth / 10);
-        this._gameManager.castleTakeDamage(castleDamage);
+        this._gameManager.CastleTakeDamage(castleDamage);
         
         // 移除敌人
-        this._gameManager.removeActiveEnemy(enemyUnit.node);
+        this._gameManager.RemoveActiveEnemy(enemyUnit.node);
         enemyUnit.die();
     }
     
@@ -306,18 +306,18 @@ export class BattleManager extends Component {
         if (enemyTypes.includes(componentName)) {
             // 获取敌人配置中的奖励金币
             const goldReward = 3; // 暂时硬编码，后续从配置读取
-            this._gameManager.addGold(goldReward);
+            this._gameManager.AddGold(goldReward);
             
             // 从活跃敌人列表移除
-            this._gameManager.removeActiveEnemy(unit.node);
+            this._gameManager.RemoveActiveEnemy(unit.node);
         } else {
             // 如果是英雄被摧毁
-            this._gameManager.removeDeployedHero(unit.node);
+            this._gameManager.RemoveDeployedHero(unit.node);
         }
     }
     
     // 获取战斗统计信息
-    public getBattleStats(): {
+    public GetBattleStats(): {
         activeHeroes: number;
         activeEnemies: number;
         averageHeroHealth: number;
@@ -360,7 +360,7 @@ export class BattleManager extends Component {
     }
     
     // 注册系统方法（参考老项目）
-    public registerHero(heroNode: Node): void {
+    public RegisterHero(heroNode: Node): void {
         if (!this._registeredHeroes.includes(heroNode)) {
             this._registeredHeroes.push(heroNode);
             
@@ -368,7 +368,7 @@ export class BattleManager extends Component {
             if (this.enableGridPositioning) {
                 const gridSystem = this.getGridSystem();
                 if (gridSystem) {
-                    const gridPos = gridSystem.findHeroPosition(heroNode);
+                    const gridPos = gridSystem.FindHeroPosition(heroNode);
                     if (gridPos) {
                         // 为英雄节点添加网格位置信息
                         (heroNode as any).gridRow = gridPos.row;
@@ -381,7 +381,7 @@ export class BattleManager extends Component {
         }
     }
     
-    public unregisterHero(heroNode: Node): void {
+    public UnregisterHero(heroNode: Node): void {
         const index = this._registeredHeroes.indexOf(heroNode);
         if (index >= 0) {
             this._registeredHeroes.splice(index, 1);
@@ -396,14 +396,14 @@ export class BattleManager extends Component {
         }
     }
     
-    public registerEnemy(enemyNode: Node): void {
+    public RegisterEnemy(enemyNode: Node): void {
         if (!this._registeredEnemies.includes(enemyNode)) {
             this._registeredEnemies.push(enemyNode);
             console.log(`[BattleManager] 敌人注册: ${enemyNode.name}, 当前敌人数: ${this._registeredEnemies.length}`);
         }
     }
     
-    public unregisterEnemy(enemyNode: Node): void {
+    public UnregisterEnemy(enemyNode: Node): void {
         const index = this._registeredEnemies.indexOf(enemyNode);
         if (index >= 0) {
             this._registeredEnemies.splice(index, 1);
@@ -421,12 +421,12 @@ export class BattleManager extends Component {
         console.log("[BattleManager] 所有敌人已被消灭！");
         
         if (this._gameManager) {
-            this._gameManager.onWaveComplete();
+            this._gameManager.OnWaveComplete();
         }
     }
     
     // 查找最近的敌人（参考老项目）
-    public findNearestEnemy(fromPosition: Vec3, maxRange: number = Number.MAX_VALUE): Node | null {
+    public FindNearestEnemy(fromPosition: Vec3, maxRange: number = Number.MAX_VALUE): Node | null {
         let nearestEnemy: Node | null = null;
         let minDistance = maxRange;
         
@@ -447,7 +447,7 @@ export class BattleManager extends Component {
     }
     
     // 查找指定网格位置的英雄
-    public findHeroAtGridPosition(gridPos: GridPosition): Node | null {
+    public FindHeroAtGridPosition(gridPos: GridPosition): Node | null {
         if (!this.enableGridPositioning) return null;
         
         for (const hero of this._registeredHeroes) {
@@ -467,7 +467,7 @@ export class BattleManager extends Component {
     public get registeredEnemies(): Node[] { return [...this._registeredEnemies]; }
     
     // 获取所有活跃敌人（为新英雄技能系统提供支持）
-    public getAllEnemies(): Node[] {
+    public GetAllEnemies(): Node[] {
         return this._registeredEnemies.filter(enemy => {
             if (!enemy || !enemy.isValid) return false;
             const enemyUnit = enemy.getComponent(BaseMouse);
@@ -476,7 +476,7 @@ export class BattleManager extends Component {
     }
     
     // 获取指定范围内的敌人（为AOE技能提供支持）
-    public getEnemiesInRange(centerPosition: Vec3, range: number): Node[] {
+    public GetEnemiesInRange(centerPosition: Vec3, range: number): Node[] {
         return this._registeredEnemies.filter(enemy => {
             if (!enemy || !enemy.isValid) return false;
             const enemyUnit = enemy.getComponent(BaseMouse);
@@ -488,7 +488,7 @@ export class BattleManager extends Component {
     }
     
     // 获取指定范围内的英雄（为辅助技能提供支持）
-    public getHeroesInRange(centerPosition: Vec3, range: number): Node[] {
+    public GetHeroesInRange(centerPosition: Vec3, range: number): Node[] {
         return this._registeredHeroes.filter(hero => {
             if (!hero || !hero.isValid) return false;
             const heroUnit = hero.getComponent(BaseHero);
@@ -500,7 +500,7 @@ export class BattleManager extends Component {
     }
     
     // 为英雄应用临时增益效果
-    public applyHeroBuff(hero: Node, buffType: 'attackSpeed' | 'attackRange', value: number, duration: number): void {
+    public ApplyHeroBuff(hero: Node, buffType: 'attackSpeed' | 'attackRange', value: number, duration: number): void {
         const heroUnit = hero.getComponent(BaseHero);
         if (!heroUnit) return;
         
@@ -530,7 +530,7 @@ export class BattleManager extends Component {
     }
     
     // 为链式攻击寻找下一个目标
-    public findChainTargets(startPosition: Vec3, excludeTarget: Node, maxTargets: number, maxRange: number): Node[] {
+    public FindChainTargets(startPosition: Vec3, excludeTarget: Node, maxTargets: number, maxRange: number): Node[] {
         const targets: Node[] = [];
         const availableEnemies = this._registeredEnemies.filter(enemy => {
             if (!enemy || !enemy.isValid || enemy === excludeTarget) return false;
@@ -557,7 +557,7 @@ export class BattleManager extends Component {
     }
     
     // 对多个目标造成伤害（用于AOE攻击）
-    public damageMultipleTargets(targets: Node[], damage: number, sourcePosition?: Vec3): void {
+    public DamageMultipleTargets(targets: Node[], damage: number, sourcePosition?: Vec3): void {
         for (const target of targets) {
             const targetUnit = target.getComponent(BaseMouse);
             if (targetUnit && targetUnit.isAlive) {

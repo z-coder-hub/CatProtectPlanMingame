@@ -43,7 +43,7 @@ export class HeroFactory {
      * @param parent 父节点
      * @returns 创建的英雄节点，如果失败返回null
      */
-    public static createHero(heroType: HeroType, parent?: Node): Node | null {
+    public static CreateHero(heroType: HeroType, parent?: Node): Node | null {
         // 检查英雄类型是否有效
         if (!HERO_CONFIGS[heroType]) {
             console.error(`未找到英雄类型配置: ${heroType}`);
@@ -91,11 +91,11 @@ export class HeroFactory {
      * @param parent 父节点
      * @returns 创建成功的英雄节点数组
      */
-    public static createMultipleHeroes(heroTypes: HeroType[], parent?: Node): Node[] {
+    public static CreateMultipleHeroes(heroTypes: HeroType[], parent?: Node): Node[] {
         const heroes: Node[] = [];
         
         for (const heroType of heroTypes) {
-            const hero = this.createHero(heroType, parent);
+            const hero = this.CreateHero(heroType, parent);
             if (hero) {
                 heroes.push(hero);
             }
@@ -110,7 +110,7 @@ export class HeroFactory {
      * @param heroType 英雄类型
      * @returns 英雄配置，如果不存在返回null
      */
-    public static getHeroConfig(heroType: HeroType) {
+    public static GetHeroConfig(heroType: HeroType) {
         return HERO_CONFIGS[heroType] || null;
     }
     
@@ -119,7 +119,7 @@ export class HeroFactory {
      * @param heroType 英雄类型
      * @returns 是否可用
      */
-    public static isHeroAvailable(heroType: HeroType): boolean {
+    public static IsHeroAvailable(heroType: HeroType): boolean {
         return !!(HERO_CONFIGS[heroType] && this.HERO_COMPONENTS[heroType]);
     }
     
@@ -127,7 +127,7 @@ export class HeroFactory {
      * 获取所有可用的英雄类型
      * @returns 可用英雄类型数组
      */
-    public static getAvailableHeroTypes(): HeroType[] {
+    public static GetAvailableHeroTypes(): HeroType[] {
         return Object.keys(this.HERO_COMPONENTS) as HeroType[];
     }
     
@@ -136,7 +136,7 @@ export class HeroFactory {
      * @param heroType 英雄类型
      * @returns 部署成本，如果英雄不存在返回0
      */
-    public static getHeroCost(heroType: HeroType): number {
+    public static GetHeroCost(heroType: HeroType): number {
         const config = HERO_CONFIGS[heroType];
         return config ? config.cost : 0;
     }
@@ -146,9 +146,9 @@ export class HeroFactory {
      * @param maxCost 最大可承受成本
      * @returns 符合成本要求的英雄类型数组
      */
-    public static getAffordableHeroes(maxCost: number): HeroType[] {
-        return this.getAvailableHeroTypes().filter(heroType => {
-            const cost = this.getHeroCost(heroType);
+    public static GetAffordableHeroes(maxCost: number): HeroType[] {
+        return this.GetAvailableHeroTypes().filter(heroType => {
+            const cost = this.GetHeroCost(heroType);
             return cost <= maxCost;
         });
     }
@@ -158,7 +158,7 @@ export class HeroFactory {
      * @param heroType 英雄类型
      * @returns 英雄详细信息
      */
-    public static getHeroInfo(heroType: HeroType): {
+    public static GetHeroInfo(heroType: HeroType): {
         type: HeroType;
         name: string;
         cost: number;
@@ -177,13 +177,13 @@ export class HeroFactory {
             type: heroType,
             name: config.name,
             cost: config.cost,
-            description: this.getHeroDescription(heroType),
+            description: this.GetHeroDescription(heroType),
             stats: {
                 attack: config.attackDamage,
                 range: config.attackRange,
                 speed: config.attackSpeed
             },
-            available: this.isHeroAvailable(heroType)
+            available: this.IsHeroAvailable(heroType)
         };
     }
     
@@ -192,7 +192,7 @@ export class HeroFactory {
      * @param heroType 英雄类型
      * @returns 英雄描述文本
      */
-    private static getHeroDescription(heroType: HeroType): string {
+    private static GetHeroDescription(heroType: HeroType): string {
         const descriptions = {
             [HeroType.ORANGE_CAT]: "基础远程射手，精准射击技能",
             [HeroType.PERSIAN_SNIPER]: "超远程狙击手，高暴击伤害",
@@ -216,13 +216,13 @@ export class HeroFactory {
      * @param heroNode 英雄节点
      * @returns 是否有效
      */
-    public static validateHeroNode(heroNode: Node): boolean {
+    public static ValidateHeroNode(heroNode: Node): boolean {
         if (!heroNode || !heroNode.isValid) {
             return false;
         }
         
         // 检查是否有有效的英雄组件
-        const availableTypes = this.getAvailableHeroTypes();
+        const availableTypes = this.GetAvailableHeroTypes();
         for (const heroType of availableTypes) {
             const ComponentClass = this.HERO_COMPONENTS[heroType];
             if (heroNode.getComponent(ComponentClass)) {
@@ -238,13 +238,13 @@ export class HeroFactory {
      * @param heroNode 英雄节点
      * @returns 英雄类型，如果无法确定返回null
      */
-    public static getHeroTypeFromNode(heroNode: Node): HeroType | null {
+    public static GetHeroTypeFromNode(heroNode: Node): HeroType | null {
         if (!heroNode || !heroNode.isValid) {
             return null;
         }
         
         // 检查节点上的英雄组件
-        const availableTypes = this.getAvailableHeroTypes();
+        const availableTypes = this.GetAvailableHeroTypes();
         for (const heroType of availableTypes) {
             const ComponentClass = this.HERO_COMPONENTS[heroType];
             const component = heroNode.getComponent(ComponentClass);

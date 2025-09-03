@@ -261,7 +261,7 @@ export class GameHUD extends Component {
     private updateDisplays(): void {
         if (!this._gameManager) return;
 
-        const stats = this._gameManager.getGameStats();
+        const stats = this._gameManager.GetGameStats();
 
         // 更新金币显示
         if (this._goldLabel) {
@@ -270,7 +270,7 @@ export class GameHUD extends Component {
 
         // 更新波次显示
         if (this._waveLabel && this._waveManager) {
-            const waveStats = this._waveManager.getWaveStats();
+            const waveStats = this._waveManager.GetWaveStats();
             this._waveLabel.string = `第${waveStats.currentWave}/${waveStats.totalWaves}波`;
         }
 
@@ -423,7 +423,7 @@ export class GameHUD extends Component {
         }
 
         // 调用GameManager的重启游戏方法
-        this._gameManager.restartGame();
+        this._gameManager.RestartGame();
     }
 
     // 按钮点击事件处理
@@ -435,10 +435,10 @@ export class GameHUD extends Component {
 
         switch (gameState) {
             case GameState.MENU:
-                this._gameManager.startGame();
+                this._gameManager.StartGame();
                 break;
             case GameState.DEPLOYMENT:
-                this._gameManager.startBattle();
+                this._gameManager.StartBattle();
                 break;
             case GameState.BATTLE:
             case GameState.PLAYING:
@@ -446,7 +446,7 @@ export class GameHUD extends Component {
                 break;
             case GameState.RESTING:
                 // 休息阶段允许手动跳过
-                this._gameManager.skipRestPhase();
+                this._gameManager.SkipRestPhase();
                 break;
         }
     }

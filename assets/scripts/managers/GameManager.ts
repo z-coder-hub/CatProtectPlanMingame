@@ -1,11 +1,12 @@
 import { _decorator, Component, Node, Vec3 } from 'cc';
-import { GameState, GameEvents } from '../types/GameTypes';
+import { GameState, GameEvents, EnemyType } from '../types/GameTypes';
 import { GAME_CONFIG } from '../types/GameConstants';
 import { BaseHero } from '../components/heroes/BaseHero';
 import { BaseMouse } from '../components/enemies/BaseMouse';
 import { BattleManager } from './BattleManager';
 import { WaveManager } from './WaveManager';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
+import { EnemyFactory } from '../systems/EnemyFactory';
 
 const { ccclass, property } = _decorator;
 
@@ -128,13 +129,13 @@ export class GameManager extends Component {
     }
     
     // 开始游戏
-    public startGame(): void {
+    public StartGame(): void {
         console.log("游戏开始！");
         this.setGameState(GameState.DEPLOYMENT);
     }
     
     // 开始战斗
-    public startBattle(): void {
+    public StartBattle(): void {
         if (this._gameState !== GameState.DEPLOYMENT) {
             console.warn("只能在部署状态开始战斗");
             return;
@@ -144,17 +145,17 @@ export class GameManager extends Component {
         console.log(`[GameManager] 战斗开始！当前波次: ${this.currentWave}`);
         
         // 启动波次管理器
-        const waveManager = this.getWaveManager();
+        const waveManager = this.GetWaveManager();
         if (waveManager) {
             console.log(`[GameManager] 启动第 ${this.currentWave} 波`);
-            waveManager.startWave(this.currentWave);
+            waveManager.StartWave(this.currentWave);
         } else {
             console.error("[GameManager] 未找到WaveManager，无法启动波次");
         }
     }
     
     // 游戏结束
-    public endGame(isVictory: boolean): void {
+    public EndGame(isVictory: boolean): void {
         if (isVictory) {
             this.setGameState(GameState.VICTORY);
             console.log("游戏胜利！");
@@ -165,21 +166,21 @@ export class GameManager extends Component {
     }
     
     // 重新开始游戏
-    public restartGame(): void {
+    public RestartGame(): void {
         // 重置游戏数据
         this.currentWave = 1;
         this.initializeGameConfig();
         
         // 清理已部署的英雄
-        this.clearAllHeroes();
+        this.ClearAllHeroes();
         
         // 清理敌人
-        this.clearAllEnemies();
+        this.ClearAllEnemies();
         
         // 重置波次管理器
-        const waveManager = this.getWaveManager();
+        const waveManager = this.GetWaveManager();
         if (waveManager) {
-            waveManager.resetWaves();
+            waveManager.ResetWaves();
         }
         
         // 重置游戏状态到部署阶段
@@ -198,13 +199,13 @@ export class GameManager extends Component {
     }
     
     // 添加金币
-    public addGold(amount: number): void {
+    public AddGold(amount: number): void {
         this.currentGold += amount;
         console.log(`获得金币: +${amount}, 当前金币: ${this.currentGold}`);
     }
     
     // 消费金币
-    public spendGold(amount: number): boolean {
+    public SpendGold(amount: number): boolean {
         if (this.currentGold >= amount) {
             this.currentGold -= amount;
             console.log(`消费金币: -${amount}, 当前金币: ${this.currentGold}`);
@@ -216,58 +217,85 @@ export class GameManager extends Component {
     }
     
     // 城堡受伤
-    public castleTakeDamage(damage: number): void {
+    public CastleTakeDamage(damage: number): void {
         this.castleHealth = Math.max(0, this.castleHealth - damage);
         console.log(`城堡受到伤害: ${damage}, 剩余血量: ${this.castleHealth}`);
         
         // 检查游戏失败
         if (this.castleHealth <= 0) {
-            this.endGame(false);
+            this.EndGame(false);
+        }
+    }
+    
+    // 在指定位置召唤敌人（用于老鼠王召唤等特殊情况）
+    public spawnEnemyAtPosition(enemyType: EnemyType, position: Vec3): Node | null {
+        try {
+            console.log(`在位置(${position.x.toFixed(1)}, ${position.y.toFixed(1)})召唤敌人: ${enemyType}`);
+            
+            // 使用EnemyFactory创建敌人
+            const enemyNode = EnemyFactory.createEnemy(
+                enemyType, 
+                this.node, 
+                { x: position.x, y: position.y }
+            );
+            
+            if (enemyNode) {
+                // 添加到活跃敌人列表
+                this.AddActiveEnemy(enemyNode);
+                console.log(`敌人召唤成功: ${enemyType}`);
+                return enemyNode;
+            } else {
+                console.error(`敌人召唤失败: ${enemyType}`);
+                return null;
+            }
+        } catch (error) {
+            console.error(`召唤敌人时发生错误: ${enemyType}`, error);
+            return null;
         }
     }
     
     // 波次完成（参考老项目）
-    public onWaveComplete(): void {
+    public OnWaveComplete(): void {
         console.log(`第 ${this.currentWave} 波完成`);
-        this.addGold(50); // 每波奖励50金币
+        this.AddGold(50); // 每波奖励50金币
         this.setGameState(GameState.RESTING);
         this._restTimer = this._restDuration;
-        this.clearAllHeroes(); // 清空英雄重新部署
-        this.clearAllEnemies(); // 清理所有剩余的敌人尸体
+        this.ClearAllHeroes(); // 清空英雄重新部署
+        this.ClearAllEnemies(); // 清理所有剩余的敌人尸体
     }
     
     // 更新休息阶段
     private updateRestPhase(dt: number): void {
         this._restTimer -= dt;
         if (this._restTimer <= 0) {
-            this.nextWave();
+            this.NextWave();
         }
     }
     
     // 手动跳过休息阶段
-    public skipRestPhase(): void {
+    public SkipRestPhase(): void {
         if (this._gameState === GameState.RESTING) {
             console.log("手动跳过休息阶段，立即开始下一波");
             this._restTimer = 0;
-            this.nextWave();
+            this.NextWave();
         } else {
             console.warn("只能在休息阶段跳过休息");
         }
     }
     
     // 进入下一波
-    public nextWave(): void {
+    public NextWave(): void {
         // 通知WaveManager准备下一波
-        const waveManager = this.getWaveManager();
+        const waveManager = this.GetWaveManager();
         if (waveManager) {
-            waveManager.prepareNextWave();
+            waveManager.PrepareNextWave();
             // 同步当前波次到GameManager
             this.currentWave = waveManager.currentWaveNumber;
         }
         
         // 检查是否达到最大波次
         if (this.currentWave > GAME_CONFIG.waves.length) {
-            this.endGame(true);
+            this.EndGame(true);
         } else {
             console.log(`进入第 ${this.currentWave} 波部署阶段`);
             this.setGameState(GameState.DEPLOYMENT);
@@ -275,7 +303,7 @@ export class GameManager extends Component {
     }
     
     // 添加英雄到已部署列表
-    public addDeployedHero(heroNode: Node): void {
+    public AddDeployedHero(heroNode: Node): void {
         if (!this._deployedHeroes.includes(heroNode)) {
             this._deployedHeroes.push(heroNode);
             console.log(`英雄已部署，当前英雄数: ${this._deployedHeroes.length}`);
@@ -283,7 +311,7 @@ export class GameManager extends Component {
     }
     
     // 移除已部署的英雄
-    public removeDeployedHero(heroNode: Node): void {
+    public RemoveDeployedHero(heroNode: Node): void {
         const index = this._deployedHeroes.indexOf(heroNode);
         if (index >= 0) {
             this._deployedHeroes.splice(index, 1);
@@ -292,8 +320,8 @@ export class GameManager extends Component {
     }
     
     // 清理所有英雄
-    public clearAllHeroes(): void {
-        const gridSystem = this.getGridSystem();
+    public ClearAllHeroes(): void {
+        const gridSystem = this.GetGridSystem();
         
         this.cleanupIndividualHeroes(gridSystem);
         this.clearHeroArrayAndGrid(gridSystem);
@@ -314,13 +342,13 @@ export class GameManager extends Component {
     private cleanupSingleHero(hero: Node, gridSystem: GridDeploymentSystem | null): void {
         // 清理网格占用状态
         if (gridSystem) {
-            gridSystem.clearHeroFromGrid(hero);
+            gridSystem.ClearHeroFromGrid(hero);
         }
         
         // 从BattleManager注销
-        const battleManager = this.getBattleManager();
+        const battleManager = this.GetBattleManager();
         if (battleManager) {
-            battleManager.unregisterHero(hero);
+            battleManager.UnregisterHero(hero);
         }
         
         hero.destroy();
@@ -332,19 +360,19 @@ export class GameManager extends Component {
         
         // 双重保险：确保网格系统完全清理
         if (gridSystem) {
-            gridSystem.clearAllGridPositions();
+            gridSystem.ClearAllGridPositions();
         }
     }
     
     // 添加敌人到活跃列表
-    public addActiveEnemy(enemyNode: Node): void {
+    public AddActiveEnemy(enemyNode: Node): void {
         if (!this._activeEnemies.includes(enemyNode)) {
             this._activeEnemies.push(enemyNode);
         }
     }
     
     // 移除活跃敌人
-    public removeActiveEnemy(enemyNode: Node): void {
+    public RemoveActiveEnemy(enemyNode: Node): void {
         const index = this._activeEnemies.indexOf(enemyNode);
         if (index >= 0) {
             this._activeEnemies.splice(index, 1);
@@ -352,7 +380,7 @@ export class GameManager extends Component {
     }
     
     // 清理所有敌人
-    public clearAllEnemies(): void {
+    public ClearAllEnemies(): void {
         for (const enemy of this._activeEnemies) {
             if (enemy && enemy.isValid) {
                 enemy.destroy();
@@ -363,7 +391,7 @@ export class GameManager extends Component {
     }
     
     // 事件系统
-    public addEventListener<K extends keyof GameEvents>(
+    public AddEventListener<K extends keyof GameEvents>(
         event: K, 
         callback: (data: GameEvents[K]) => void
     ): void {
@@ -373,7 +401,7 @@ export class GameManager extends Component {
         this._eventCallbacks.get(event)!.push(callback);
     }
     
-    public removeEventListener<K extends keyof GameEvents>(
+    public RemoveEventListener<K extends keyof GameEvents>(
         event: K, 
         callback: (data: GameEvents[K]) => void
     ): void {
@@ -400,7 +428,7 @@ export class GameManager extends Component {
     }
     
     // 获取游戏统计信息
-    public getGameStats(): {
+    public GetGameStats(): {
         wave: number;
         gold: number;
         castleHealth: number;
@@ -421,15 +449,15 @@ export class GameManager extends Component {
     }
     
     // 获取组件引用（参考老项目的缓存机制）
-    public getBattleManager(): BattleManager | null {
+    public GetBattleManager(): BattleManager | null {
         return this.getCachedComponent('_battleManagerCache', BattleManager);
     }
     
-    public getWaveManager(): WaveManager | null {
+    public GetWaveManager(): WaveManager | null {
         return this.getCachedComponent('_waveManagerCache', WaveManager);
     }
     
-    public getGridSystem(): GridDeploymentSystem | null {
+    public GetGridSystem(): GridDeploymentSystem | null {
         return this.getCachedComponent('_gridSystemCache', GridDeploymentSystem);
     }
     

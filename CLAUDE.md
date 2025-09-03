@@ -126,29 +126,51 @@ export class OrangeCat extends Component {
 - 保持项目结构简洁明了
 
 ### 6. 事件和通信设计
-- **避免过度事件驱动**: Cocos Creator 本身已有完整的事件分发机制，不要重复造轮子
-- **优先使用直接引用**: 组件间通信优先使用直接的方法调用和属性访问
-- **合理使用 Cocos 事件**: 只在必要时使用 `node.emit()` 和 `node.on()` 等内置事件机制
-- **避免自定义事件系统**: 不要创建额外的事件总线或消息系统，利用现有的单例模式和依赖注入
-- **接口优于事件**: 使用接口 (如 `IHeroDeploymentHandler`) 定义组件间的通信契约
-- **单例模式通信**: 通过 Manager 单例进行跨组件状态共享和方法调用
+- **优先使用 Cocos Creator 官方事件系统**: Cocos Creator 提供了成熟优化的事件框架，应作为首选通信方式
+- **充分利用节点事件**: 使用 `node.emit()` 和 `node.on()` 进行组件间通信，这是官方推荐的标准做法
+- **合理使用触摸事件**: 利用 `Node.EventType.TOUCH_*` 系列事件处理用户交互
+- **避免自定义事件总线**: 不要创建额外的事件总线系统，Cocos Creator的事件机制已足够强大
+- **结合直接引用**: 在合适场景下结合直接方法调用，与事件系统形成互补
+- **接口定义规范**: 使用接口 (如 `IHeroDeploymentHandler`) 定义组件间的通信契约
 
 #### 推荐的通信模式：
 ```typescript
-// ✅ 推荐：直接接口调用
-interface IGameHandler {
-    deployHero(type: HeroType, pos: GridPosition): boolean;
-}
+// ✅ 推荐：使用Cocos Creator官方事件系统
+this.node.emit('hero-deployed', { heroType: type, position: pos });
+this.node.on('wave-completed', this.onWaveCompleted, this);
 
-// ✅ 推荐：单例模式访问
-const gameManager = GameManager.instance;
-gameManager.spendGold(cost);
+// ✅ 推荐：触摸事件处理（实际代码示例）
+this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
+this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
+this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
 
-// ✅ 推荐：父子组件直接引用
+// ✅ 推荐：按钮事件处理
+button.node.on(Button.EventType.CLICK, this.onButtonClick, this);
+
+// ✅ 推荐：GameManager事件回调系统
+private _eventCallbacks = new Map<keyof GameEvents, Function[]>();
+
+// ✅ 推荐：结合直接引用（性能关键场景）
 this._heroSelectionPanel.setDeploymentHandler(this._gameHUD);
 
-// ❌ 避免：自定义事件系统
-this.eventBus.emit('hero-deployed', { type, position });
+// ❌ 避免：自定义事件总线
+this.customEventBus.emit('hero-deployed', { type, position });
+```
+
+#### 项目中的实际事件使用案例：
+```typescript
+// BaseHero.ts - 英雄点击事件
+protected setupClickEvents(): void {
+    this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
+}
+
+// HeroSelectionPanel.ts - 拖拽部署事件链
+buttonNode.on(Node.EventType.TOUCH_START, (event: EventTouch) => { /* 开始拖拽 */ });
+buttonNode.on(Node.EventType.TOUCH_MOVE, (event: EventTouch) => { /* 拖拽移动 */ });
+buttonNode.on(Node.EventType.TOUCH_END, (event: EventTouch) => { /* 完成部署 */ });
+
+// UIHelper.ts - 通用按钮事件
+button.node.on(Button.EventType.CLICK, callback, target);
 ```
 
 ## 核心系统
@@ -279,7 +301,19 @@ enum EnemyType {
   MOUSE_KING, MECH_MOUSE
 }
 
-enum UnitState { IDLE, MOVING, ATTACKING, DEAD }
+// 英雄状态枚举（英雄不会死亡，不会移动）
+enum HeroState { 
+  IDLE,       // 待机
+  ATTACKING   // 攻击中
+}
+
+// 敌人状态枚举
+enum EnemyState { 
+  IDLE,       // 待机
+  MOVING,     // 移动中
+  ATTACKING,  // 攻击中（预留状态，当前游戏机制中敌人不攻击）
+  DEAD        // 死亡
+}
 ```
 
 ### 核心接口 (游戏机制纯化后)
@@ -778,7 +812,7 @@ if (!manager) {
 - **多样化的敌人系统**: 从基础老鼠到BOSS单位，包含装甲、潜行、召唤等特殊机制
 - **智能网格部署**: 11x6网格的英雄部署和管理，支持实时预览和冲突检测
 - **实时游戏状态管理**: 金币、波次、城堡血量、英雄冷却的动态显示
-- **高效通信系统**: 基于接口和直接引用的组件间通信，避免过度事件驱动
+- **高效通信系统**: 优先使用Cocos Creator官方事件框架，结合接口定义和直接引用
 - **DRY架构**: BaseHero和BaseMouse统一外观系统，大幅减少重复代码
 - **统一标签系统**: 英雄18px大字体，老鼠22px大字体，提供清晰的视觉识别
 - **工厂模式**: HeroFactory和EnemyFactory提供统一的单位创建和管理

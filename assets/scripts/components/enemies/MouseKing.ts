@@ -328,7 +328,7 @@ export class MouseKing extends BaseMouse {
         
         // 老鼠王到达城堡造成巨大伤害
         const castleDamage = Math.floor(this.maxHealth / 5); // 基于血量计算的高伤害 (300/5=60点伤害)
-        this._gameManager.castleTakeDamage(castleDamage);
+        this._gameManager.CastleTakeDamage(castleDamage);
         
         console.log(`${this.unitName}到达城堡！造成 ${castleDamage} 点巨大伤害！`);
         
@@ -336,7 +336,7 @@ export class MouseKing extends BaseMouse {
         this.createBossReachEffect();
         
         // 移除自己
-        this._gameManager.removeActiveEnemy(this.node);
+        this._gameManager.RemoveActiveEnemy(this.node);
         this.die();
     }
     

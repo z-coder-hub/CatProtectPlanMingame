@@ -273,7 +273,7 @@ export class SkillSystem extends Component {
         const battleManager = BattleManager.instance;
         
         if (battleManager) {
-            const enemies = battleManager.getAllEnemies();
+            const enemies = battleManager.GetAllEnemies();
             for (const enemy of enemies) {
                 const enemyUnit = enemy.getComponent('BaseMouse');
                 if (enemyUnit && enemyUnit.isAlive) {
@@ -289,7 +289,7 @@ export class SkillSystem extends Component {
         const battleManager = BattleManager.instance;
         
         if (battleManager) {
-            const enemies = battleManager.getAllEnemies();
+            const enemies = battleManager.GetAllEnemies();
             for (const enemy of enemies) {
                 const distance = Vec3.distance(enemy.position, center);
                 if (distance <= radius) {

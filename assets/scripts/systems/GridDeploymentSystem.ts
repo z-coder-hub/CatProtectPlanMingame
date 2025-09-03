@@ -111,7 +111,7 @@ export class GridDeploymentSystem extends Component {
      * 获取网格的边界信息
      * @returns 包含网格左、右、上、下边界的对象
      */
-    public getGridBounds(): {
+    public GetGridBounds(): {
         left: number;
         right: number;
         top: number;
@@ -228,7 +228,7 @@ export class GridDeploymentSystem extends Component {
         // 更新每个网格槽位的世界坐标
         for (let row = 0; row < this.gridRows; row++) {
             for (let col = 0; col < this.gridColumns; col++) {
-                const worldPos = this.gridToWorldPosition({ row, col });
+                const worldPos = this.GridToWorldPosition({ row, col });
                 this._gridData[row][col].worldPosition = worldPos;
             }
         }
@@ -243,7 +243,7 @@ export class GridDeploymentSystem extends Component {
      * @param gridPos 网格坐标 {row, col}
      * @returns 对应的世界坐标Vec3
      */
-    public gridToWorldPosition(gridPos: GridPosition): Vec3 {
+    public GridToWorldPosition(gridPos: GridPosition): Vec3 {
         const x = this._gridStartPos.x + (gridPos.col + 0.5) * this._calculatedCellSize;
         const y = this._gridStartPos.y - (gridPos.row + 0.5) * this._calculatedCellSize;
         return new Vec3(x, y, 0);
@@ -254,11 +254,11 @@ export class GridDeploymentSystem extends Component {
      * @param worldPos 世界坐标Vec3
      * @returns 对应的网格坐标或null（如果超出范围）
      */
-    public worldToGridPosition(worldPos: Vec3): GridPosition | null {
+    public WorldToGridPosition(worldPos: Vec3): GridPosition | null {
         const col = Math.floor((worldPos.x - this._gridStartPos.x) / this._calculatedCellSize);
         const row = Math.floor((this._gridStartPos.y - worldPos.y) / this._calculatedCellSize);
 
-        if (this.isValidGridPosition({ row, col })) {
+        if (this.IsValidGridPosition({ row, col })) {
             return { row, col };
         }
         return null;
@@ -269,7 +269,7 @@ export class GridDeploymentSystem extends Component {
      * @param gridPos 要检查的网格坐标
      * @returns 坐标是否有效
      */
-    public isValidGridPosition(gridPos: GridPosition): boolean {
+    public IsValidGridPosition(gridPos: GridPosition): boolean {
         return gridPos.row >= 0 && gridPos.row < this.gridRows &&
             gridPos.col >= 0 && gridPos.col < this.gridColumns;
     }
@@ -281,8 +281,8 @@ export class GridDeploymentSystem extends Component {
      * @param gridPos 网格坐标
      * @returns 是否可以部署
      */
-    public canDeployAt(gridPos: GridPosition): boolean {
-        if (!this.isValidGridPosition(gridPos)) {
+    public CanDeployAt(gridPos: GridPosition): boolean {
+        if (!this.IsValidGridPosition(gridPos)) {
             return false;
         }
         return this._gridData[gridPos.row][gridPos.col].state === GridSlotState.EMPTY;
@@ -294,8 +294,8 @@ export class GridDeploymentSystem extends Component {
      * @param col 列索引
      * @returns 是否可以部署
      */
-    public canDeployHero(row: number, col: number): boolean {
-        return this.canDeployAt({ row, col });
+    public CanDeployHero(row: number, col: number): boolean {
+        return this.CanDeployAt({ row, col });
     }
 
     /**
@@ -306,7 +306,7 @@ export class GridDeploymentSystem extends Component {
      * @param col 列索引（当第二个参数为行索引时使用）
      * @returns 部署是否成功
      */
-    public deployHero(heroNode: Node, gridPos: GridPosition | number, col?: number): boolean {
+    public DeployHero(heroNode: Node, gridPos: GridPosition | number, col?: number): boolean {
         // 兼容两种调用方式
         let position: GridPosition;
         if (typeof gridPos === 'number' && col !== undefined) {
@@ -318,7 +318,7 @@ export class GridDeploymentSystem extends Component {
             return false;
         }
 
-        if (!this.canDeployAt(position)) {
+        if (!this.CanDeployAt(position)) {
             return false;
         }
 
@@ -338,8 +338,8 @@ export class GridDeploymentSystem extends Component {
      * @param gridPos 网格坐标
      * @returns 被移除的英雄节点或null
      */
-    public removeHero(gridPos: GridPosition): Node | null {
-        if (!this.isValidGridPosition(gridPos)) {
+    public RemoveHero(gridPos: GridPosition): Node | null {
+        if (!this.IsValidGridPosition(gridPos)) {
             return null;
         }
 
@@ -360,7 +360,7 @@ export class GridDeploymentSystem extends Component {
      * @param heroNode 要查找的英雄节点
      * @returns 网格坐标或null（如果未找到）
      */
-    public findHeroPosition(heroNode: Node): GridPosition | null {
+    public FindHeroPosition(heroNode: Node): GridPosition | null {
         for (let row = 0; row < this.gridRows; row++) {
             for (let col = 0; col < this.gridColumns; col++) {
                 if (this._gridData[row][col].heroNode === heroNode) {
@@ -376,13 +376,13 @@ export class GridDeploymentSystem extends Component {
      * @param heroNode 要清理的英雄节点
      * @returns 清理是否成功
      */
-    public clearHeroFromGrid(heroNode: Node): boolean {
-        const position = this.findHeroPosition(heroNode);
+    public ClearHeroFromGrid(heroNode: Node): boolean {
+        const position = this.FindHeroPosition(heroNode);
         if (position) {
-            const removedHero = this.removeHero(position);
+            const removedHero = this.RemoveHero(position);
             if (removedHero) {
                 console.log(`网格位置 (${position.row}, ${position.col}) 已清理，英雄: ${heroNode.name}`);
-                this.updateGridDisplay();
+                this.UpdateGridDisplay();
                 return true;
             }
         }
@@ -392,7 +392,7 @@ export class GridDeploymentSystem extends Component {
     /**
      * 清理所有网格位置的英雄（波次重置时使用）
      */
-    public clearAllGridPositions(): void {
+    public ClearAllGridPositions(): void {
         let clearedCount = 0;
         for (let row = 0; row < this.gridRows; row++) {
             for (let col = 0; col < this.gridColumns; col++) {
@@ -407,7 +407,7 @@ export class GridDeploymentSystem extends Component {
 
         if (clearedCount > 0) {
             console.log(`已清理 ${clearedCount} 个网格位置`);
-            this.updateGridDisplay();
+            this.UpdateGridDisplay();
         }
     }
 
@@ -417,7 +417,7 @@ export class GridDeploymentSystem extends Component {
      * 获取所有已部署的英雄节点列表
      * @returns 英雄节点数组
      */
-    public getAllDeployedHeroes(): Node[] {
+    public GetAllDeployedHeroes(): Node[] {
         const heroes: Node[] = [];
         for (let row = 0; row < this.gridRows; row++) {
             for (let col = 0; col < this.gridColumns; col++) {
@@ -436,7 +436,7 @@ export class GridDeploymentSystem extends Component {
      * @param radius 搜索半径
      * @returns 范围内的英雄节点数组
      */
-    public getHeroesInRadius(centerPos: Vec3, radius: number): Node[] {
+    public GetHeroesInRadius(centerPos: Vec3, radius: number): Node[] {
         const heroes: Node[] = [];
 
         for (let row = 0; row < this.gridRows; row++) {
@@ -458,7 +458,7 @@ export class GridDeploymentSystem extends Component {
      * 获取网格的统计信息
      * @returns 包含总槽位、已占用、可用槽位和占用率的统计对象
      */
-    public getGridStats(): {
+    public GetGridStats(): {
         totalSlots: number;
         occupiedSlots: number;
         availableSlots: number;
@@ -606,7 +606,7 @@ export class GridDeploymentSystem extends Component {
      * 更新网格显示
      * 在网格状态发生变化时调用
      */
-    public updateGridDisplay(): void {
+    public UpdateGridDisplay(): void {
         if (this.showGrid && this._gridGraphics) {
             this.drawGameGrid();
         }
@@ -630,7 +630,7 @@ export class GridDeploymentSystem extends Component {
      * 开始拖拽模式
      * 激活网格预览功能
      */
-    public startDragMode(): void {
+    public StartDragMode(): void {
         this._isDragMode = true;
         this._previewAnimationTimer = 0;
         console.log("网格拖拽模式已开启");
@@ -640,7 +640,7 @@ export class GridDeploymentSystem extends Component {
      * 结束拖拽模式
      * 清理预览状态
      */
-    public endDragMode(): void {
+    public EndDragMode(): void {
         this._isDragMode = false;
         this._currentHoverGrid = null;
         this.clearPreview();
@@ -651,10 +651,10 @@ export class GridDeploymentSystem extends Component {
      * 更新鼠标悬停位置
      * @param worldPosition 鼠标的世界坐标
      */
-    public updateHoverPosition(worldPosition: Vec3): void {
+    public UpdateHoverPosition(worldPosition: Vec3): void {
         if (!this._isDragMode) return;
 
-        const gridPos = this.worldToGridPosition(worldPosition);
+        const gridPos = this.WorldToGridPosition(worldPosition);
 
         // 检查是否切换到新的网格
         if (!this.isGridPositionEqual(gridPos, this._currentHoverGrid)) {
@@ -686,8 +686,8 @@ export class GridDeploymentSystem extends Component {
 
         if (!this._currentHoverGrid) return;
 
-        const worldPos = this.gridToWorldPosition(this._currentHoverGrid);
-        const canDeploy = this.canDeployAt(this._currentHoverGrid);
+        const worldPos = this.GridToWorldPosition(this._currentHoverGrid);
+        const canDeploy = this.CanDeployAt(this._currentHoverGrid);
 
         // 根据是否可部署选择颜色
         const color = canDeploy ?
@@ -701,7 +701,7 @@ export class GridDeploymentSystem extends Component {
      * 获取当前悬停的网格位置
      * @returns 当前悬停位置或null
      */
-    public getCurrentHoverGrid(): GridPosition | null {
+    public GetCurrentHoverGrid(): GridPosition | null {
         return this._currentHoverGrid;
     }
 
@@ -709,7 +709,7 @@ export class GridDeploymentSystem extends Component {
      * 检查是否处于拖拽模式
      * @returns 是否在拖拽模式
      */
-    public isDragMode(): boolean {
+    public IsDragMode(): boolean {
         return this._isDragMode;
     }
 
@@ -833,8 +833,8 @@ export class GridDeploymentSystem extends Component {
 
         this._previewGraphics.clear();
 
-        const worldPos = this.gridToWorldPosition(this._currentHoverGrid);
-        const canDeploy = this.canDeployAt(this._currentHoverGrid);
+        const worldPos = this.GridToWorldPosition(this._currentHoverGrid);
+        const canDeploy = this.CanDeployAt(this._currentHoverGrid);
 
         // 根据是否可部署选择颜色，应用动态透明度
         const color = canDeploy ?

@@ -6,6 +6,12 @@ import { ENEMY_CONFIGS } from '../types/GameConstants';
 import { BasicMouse } from '../components/enemies/BasicMouse';
 import { GiantMouse } from '../components/enemies/GiantMouse';
 import { SpeedMouse } from '../components/enemies/SpeedMouse';
+import { FastMouse } from '../components/enemies/FastMouse';
+import { ArmoredMouse } from '../components/enemies/ArmoredMouse';
+import { TankMouse } from '../components/enemies/TankMouse';
+import { StealthMouse } from '../components/enemies/StealthMouse';
+import { MouseKing } from '../components/enemies/MouseKing';
+import { MechMouse } from '../components/enemies/MechMouse';
 
 const { ccclass } = _decorator;
 
@@ -16,14 +22,13 @@ export class EnemyFactory {
     private static readonly ENEMY_COMPONENTS = {
         [EnemyType.BASIC_MOUSE]: BasicMouse,
         [EnemyType.GIANT_MOUSE]: GiantMouse,
+        [EnemyType.FAST_MOUSE]: FastMouse,
         [EnemyType.SPEED_MOUSE]: SpeedMouse,
-        // 暂时注释未实现的敌人
-        // [EnemyType.FAST_MOUSE]: FastMouse,
-        // [EnemyType.ARMORED_MOUSE]: ArmoredMouse,
-        // [EnemyType.TANK_MOUSE]: TankMouse,
-        // [EnemyType.STEALTH_MOUSE]: StealthMouse,
-        // [EnemyType.MOUSE_KING]: MouseKing,
-        // [EnemyType.MECH_MOUSE]: MechMouse,
+        [EnemyType.ARMORED_MOUSE]: ArmoredMouse,
+        [EnemyType.TANK_MOUSE]: TankMouse,
+        [EnemyType.STEALTH_MOUSE]: StealthMouse,
+        [EnemyType.MOUSE_KING]: MouseKing,
+        [EnemyType.MECH_MOUSE]: MechMouse,
     };
     
     /**

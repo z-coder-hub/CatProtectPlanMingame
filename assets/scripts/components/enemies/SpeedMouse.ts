@@ -51,7 +51,7 @@ export class SpeedMouse extends BaseMouse {
         
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            battleManager.registerEnemy(this.node);
+            battleManager.RegisterEnemy(this.node);
         }
     }
     
@@ -281,14 +281,14 @@ export class SpeedMouse extends BaseMouse {
         
         // 给予金币奖励
         if (this._gameManager) {
-            this._gameManager.addGold(this.goldReward);
+            this._gameManager.AddGold(this.goldReward);
             console.log(`获得 ${this.goldReward} 金币奖励`);
         }
         
         // 从战斗管理器注销
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            battleManager.unregisterEnemy(this.node);
+            battleManager.UnregisterEnemy(this.node);
         }
         
         // 清理残影

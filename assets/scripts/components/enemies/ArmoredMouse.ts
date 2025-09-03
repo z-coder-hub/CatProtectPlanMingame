@@ -68,7 +68,7 @@ export class ArmoredMouse extends BaseMouse {
         // 注册到BattleManager
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            battleManager.registerEnemy(this.node);
+            battleManager.RegisterEnemy(this.node);
         }
     }
     
@@ -422,13 +422,13 @@ export class ArmoredMouse extends BaseMouse {
         // 从BattleManager注销
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            battleManager.unregisterEnemy(this.node);
+            battleManager.UnregisterEnemy(this.node);
         }
         
         // 给予金币奖励
         if (this._gameManager) {
-            this._gameManager.addGold(this.goldReward);
-            this._gameManager.removeActiveEnemy(this.node);
+            this._gameManager.AddGold(this.goldReward);
+            this._gameManager.RemoveActiveEnemy(this.node);
         }
         
         // 创建死亡特效

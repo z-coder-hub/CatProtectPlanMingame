@@ -72,7 +72,7 @@ export abstract class BaseHero extends Component {
         // 注册到BattleManager
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            battleManager.registerHero(this.node);
+            battleManager.RegisterHero(this.node);
         }
     }
     

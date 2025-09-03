@@ -234,7 +234,7 @@ export class MechMouse extends BaseMouse {
         
         // 机械老鼠到达城堡造成高科技伤害
         const castleDamage = Math.floor(this.maxHealth / 4); // 基于血量计算的科技伤害 (250/4=62.5≈62点伤害)
-        this._gameManager.castleTakeDamage(castleDamage);
+        this._gameManager.CastleTakeDamage(castleDamage);
         
         console.log(`${this.unitName}对城堡发动科技攻击！造成 ${castleDamage} 点伤害！`);
         
@@ -242,7 +242,7 @@ export class MechMouse extends BaseMouse {
         this.createTechReachEffect();
         
         // 移除自己
-        this._gameManager.removeActiveEnemy(this.node);
+        this._gameManager.RemoveActiveEnemy(this.node);
         this.die();
     }
     

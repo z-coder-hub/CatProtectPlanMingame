@@ -37,7 +37,6 @@ export abstract class BaseMouse extends Component {
     protected _gameManager: GameManager | null = null;
     protected _healthBarNode: Node | null = null;
     protected _nameLabel: Label | null = null;
-    protected _graphics: Graphics | null = null; // 统一Graphics组件管理
     
     // 抽象属性，子类必须实现
     public abstract readonly enemyType: EnemyType;
@@ -55,7 +54,7 @@ export abstract class BaseMouse extends Component {
         // 注册到BattleManager
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            battleManager.registerEnemy(this.node);
+            battleManager.RegisterEnemy(this.node);
         }
     }
     
@@ -129,14 +128,6 @@ export abstract class BaseMouse extends Component {
         this.onDie();
     }
     
-    // 老鼠不再寻找英雄目标，因为没有攻击能力
-    // 移除 findNearestHero 方法
-    
-    // 老鼠不再需要检查攻击范围，因为没有攻击能力
-    // 移除 isTargetInRange 方法
-    
-    // 老鼠不再攻击目标，因为没有攻击能力
-    // 移除 attackTarget 方法
     
     /**
      * 通用的城堡位置获取方法
@@ -185,32 +176,22 @@ export abstract class BaseMouse extends Component {
     }
     
     /**
-     * 通用的到达城堡方法（老鼠不攻击，只是到达城堡造成扣血）
+     * 通用的到达城堡方法
      */
     protected reachCastle(): void {
         if (!this._gameManager) return;
         
-        // 老鼠到达城堡造成固定伤害（基于其最大生命值）
-        const castleDamage = Math.floor(this.maxHealth / 10); // 根据老鼠最大血量计算伤害
-        this._gameManager.castleTakeDamage(castleDamage);
+        const castleDamage = Math.floor(this.maxHealth / 10);
+        this._gameManager.CastleTakeDamage(castleDamage);
         
-        // 创建到达特效
         this.createCastleReachEffect();
-        
-        // 移除自己
-        this._gameManager.removeActiveEnemy(this.node);
+        this._gameManager.RemoveActiveEnemy(this.node);
         this.die();
         
         console.log(`${this.unitName}到达城堡，造成 ${castleDamage} 点伤害`);
     }
     
-    /**
-     * 创建城堡到达特效的通用方法
-     * 子类可以重写实现不同的特效
-     */
     protected createCastleReachEffect(): void {
-        // 基础到达特效实现
-        // 子类可以重写此方法实现特定的特效
     }
     
     /**
@@ -219,41 +200,26 @@ export abstract class BaseMouse extends Component {
     protected onDie(): void {
         console.log(`${this.unitName}死亡，奖励 ${this.goldReward} 金币`);
         
-        // 从BattleManager注销
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            battleManager.unregisterEnemy(this.node);
+            battleManager.UnregisterEnemy(this.node);
         }
         
-        // 给予金币奖励
         if (this._gameManager) {
-            this._gameManager.addGold(this.goldReward);
-            this._gameManager.removeActiveEnemy(this.node);
+            this._gameManager.AddGold(this.goldReward);
+            this._gameManager.RemoveActiveEnemy(this.node);
         }
         
-        // 创建死亡特效
         this.createDeathEffect();
-        
-        // 销毁节点，清理尸体
         this.node.destroy();
     }
     
-    /**
-     * 创建死亡特效的通用方法
-     * 子类可以重写实现不同的特效
-     */
     protected createDeathEffect(): void {
-        // 基础死亡特效实现
-        // 子类可以重写此方法实现特定的特效
     }
     
     // === 状态处理方法 (子类可重写) ===
     
-    /**
-     * 待机状态处理 - 老鼠默认朝城堡移动
-     */
     protected onIdleState(dt: number): void {
-        // 在塔防游戏中，敌人不攻击英雄，只移动向城堡
         this.moveTowardsCastle(dt);
     }
     
@@ -264,40 +230,24 @@ export abstract class BaseMouse extends Component {
         this.moveTowardsCastle(dt);
     }
     
-    /**
-     * 攻击状态处理
-     */
     protected onAttackState(dt: number): void {
-        // 在塔防游戏中，敌人不攻击英雄，立即回到移动状态
         this.currentTarget = null;
         this.enemyState = EnemyState.IDLE;
         this.moveTowardsCastle(dt);
     }
     
-    /**
-     * 死亡状态处理
-     */
     protected onDeadState(_dt: number): void {
-        // 死亡状态，不执行任何操作
     }
     
     // === 动作辅助方法 ===
     
     
-    /**
-     * 受伤回调
-     */
     protected onTakeDamage(damage: number): void {
         console.log(`${this.unitName}受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
-        // 子类可重写实现特定的受伤反馈
     }
     
     // === 抽象方法，子类必须实现 ===
     
-    /**
-     * 老鼠不再有攻击能力，移除 performAttack 抽象方法
-     * 子类如需特殊逻辑可重写 reachCastle 方法
-     */
     
     // === 工具方法 ===
     
@@ -329,27 +279,18 @@ export abstract class BaseMouse extends Component {
         TweenSystem.instance.ActionManager.removeAllActionsFromTarget(this.node);
     }
     
-    /**
-     * 创建老鼠名称标签 - 统一的标签创建方法
-     * 标签位置在老鼠上方，根据老鼠类型显示不同的名称和颜色
-     */
     protected createMouseNameLabel(): void {
-        // 根据敌人类型获取标签配置
         const labelConfig = this.getMouseLabelConfig();
         
         this._nameLabel = DrawingHelper.createLabel(this.node, {
             text: labelConfig.text,
             fontSize: labelConfig.fontSize,
             color: labelConfig.color,
-            position: { x: 0, y: labelConfig.yOffset, z: 0 }, // 统一在上方
+            position: { x: 0, y: labelConfig.yOffset, z: 0 },
             size: labelConfig.size
         });
     }
     
-    /**
-     * 获取老鼠标签配置 - 子类可以重写以自定义标签
-     * 统一使用大字体，提供基础配置
-     */
     protected getMouseLabelConfig(): {
         text: string;
         fontSize: number;
@@ -357,29 +298,13 @@ export abstract class BaseMouse extends Component {
         yOffset: number;
         size: { width: number; height: number };
     } {
-        // 统一的大字体配置，子类可以重写
         return {
             text: "老鼠",
-            fontSize: 22,           // 统一大字体
+            fontSize: 22,
             color: new Color(255, 255, 255),
-            yOffset: 35,            // 统一上方位置
-            size: { width: 60, height: 28 }  // 统一大尺寸
+            yOffset: 35,
+            size: { width: 60, height: 28 }
         };
     }
     
-    /**
-     * 获取Graphics组件的安全访问方法
-     * 子类应使用此方法而不是直接访问_graphics
-     */
-    protected getGraphics(): Graphics | null {
-        return this._graphics;
-    }
-    
-    /**
-     * 统一的Graphics设置方法
-     * 子类可以使用此方法安全地设置Graphics组件
-     */
-    protected setGraphics(graphics: Graphics): void {
-        this._graphics = graphics;
-    }
 }

@@ -223,7 +223,7 @@ export class PersianSniper extends BaseHero {
         if (!battleManager) return;
         
         // 寻找血量最高的敌人
-        const enemies = battleManager.getEnemiesInRange(this.node.position, this.attackRange);
+        const enemies = battleManager.GetEnemiesInRange(this.node.position, this.attackRange);
         if (enemies.length === 0) return;
         
         let targetEnemy: Node | null = null;

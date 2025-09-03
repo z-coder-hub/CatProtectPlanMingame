@@ -58,7 +58,7 @@ export class OrangeCat extends BaseHero {
         // 寻找最近的敌人
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
                 this.heroState = HeroState.ATTACKING;

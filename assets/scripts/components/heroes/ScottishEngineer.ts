@@ -82,7 +82,7 @@ export class ScottishEngineer extends BaseHero {
         
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
                 this.heroState = HeroState.ATTACKING;
@@ -106,7 +106,7 @@ export class ScottishEngineer extends BaseHero {
     private provideBuff(): void {
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearbyAllies = battleManager.getHeroesInRange(this.node.position, 80);
+            const nearbyAllies = battleManager.GetHeroesInRange(this.node.position, 80);
             
             for (const ally of nearbyAllies) {
                 const allyUnit = ally.getComponent(BaseHero);

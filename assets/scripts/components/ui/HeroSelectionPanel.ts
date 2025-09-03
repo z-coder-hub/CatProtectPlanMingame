@@ -48,12 +48,12 @@ export class HeroSelectionPanel extends Component {
         }
 
         // 初始更新按钮状态
-        this.updateHeroButtonStates();
+        this.UpdateHeroButtonStates();
     }
 
     protected update(_dt: number): void {
         // 实时更新英雄按钮状态（基于当前金币）
-        this.updateHeroButtonStates();
+        this.UpdateHeroButtonStates();
     }
 
     protected onDestroy(): void {
@@ -65,7 +65,7 @@ export class HeroSelectionPanel extends Component {
     /**
      * 部署英雄到网格
      */
-    public deployHeroToGrid(heroType: HeroType, gridRow: number, gridCol: number): boolean {
+    public DeployHeroToGrid(heroType: HeroType, gridRow: number, gridCol: number): boolean {
         console.log(`🚀 开始部署英雄: ${heroType} 到位置 (${gridRow}, ${gridCol})`);
 
         if (!this._gameManager || !this._gridSystem) {
@@ -73,23 +73,23 @@ export class HeroSelectionPanel extends Component {
             return false;
         }
 
-        const heroCost = HeroFactory.getHeroCost(heroType);
+        const heroCost = HeroFactory.GetHeroCost(heroType);
 
         // 检查金币
-        if (this._gameManager.getGameStats().gold < heroCost) {
+        if (this._gameManager.GetGameStats().gold < heroCost) {
             console.log("金币不足，无法部署英雄");
             return false;
         }
 
         // 检查网格位置
-        if (!this._gridSystem.canDeployHero(gridRow, gridCol)) {
+        if (!this._gridSystem.CanDeployHero(gridRow, gridCol)) {
             console.log("网格位置不可用");
             return false;
         }
 
         // 创建英雄
         console.log(`🏭 创建英雄: ${heroType}`);
-        const heroNode = HeroFactory.createHero(heroType, this._gridSystem.node);
+        const heroNode = HeroFactory.CreateHero(heroType, this._gridSystem.node);
         if (!heroNode) {
             console.log("❌ 英雄创建失败");
             return false;
@@ -98,14 +98,14 @@ export class HeroSelectionPanel extends Component {
 
         // 部署到网格
         console.log(`🗺️ 部署英雄到网格位置 (${gridRow}, ${gridCol})`);
-        const success = this._gridSystem.deployHero(heroNode, gridRow, gridCol);
+        const success = this._gridSystem.DeployHero(heroNode, gridRow, gridCol);
         if (success) {
             // 扣除金币
             console.log(`💰 扣除金币: ${heroCost}`);
-            this._gameManager.spendGold(heroCost);
+            this._gameManager.SpendGold(heroCost);
 
             // 添加到已部署列表
-            this._gameManager.addDeployedHero(heroNode);
+            this._gameManager.AddDeployedHero(heroNode);
 
             console.log(`✅ 成功部署 ${heroType}，消耗 ${heroCost} 金币`);
             return true;
@@ -120,14 +120,14 @@ export class HeroSelectionPanel extends Component {
     /**
      * 获取当前选中的英雄类型
      */
-    public getSelectedHeroType(): HeroType | null {
+    public GetSelectedHeroType(): HeroType | null {
         return this._selectedHeroType;
     }
 
     /**
      * 更新英雄按钮状态（通常在金币变化时调用）
      */
-    public updateHeroButtonStates(): void {
+    public UpdateHeroButtonStates(): void {
         this._heroButtons.forEach(buttonNode => {
             const heroType = buttonNode.name.replace('HeroButton_', '') as HeroType;
             const isSelected = heroType === this._selectedHeroType;
@@ -205,7 +205,7 @@ export class HeroSelectionPanel extends Component {
         contentNode.parent = viewNode;
         const contentTransform = contentNode.addComponent(UITransform);
 
-        const availableHeroes = HeroFactory.getAvailableHeroTypes();
+        const availableHeroes = HeroFactory.GetAvailableHeroTypes();
         const buttonWidth = 96; // 80 * 1.2 = 96
         const buttonHeight = 120; // 增加高度以容纳名称标签，100 * 1.2 = 120
         const buttonSpacing = 24; // 20 * 1.2 = 24
@@ -231,7 +231,7 @@ export class HeroSelectionPanel extends Component {
      * 自适应布局创建英雄按钮 - 使用Widget相对布局
      */
     private createHeroButtonsAdaptiveLayout(contentNode: Node, buttonWidth: number, buttonHeight: number, buttonSpacing: number): void {
-        const availableHeroes = HeroFactory.getAvailableHeroTypes();
+        const availableHeroes = HeroFactory.GetAvailableHeroTypes();
         const contentTransform = contentNode.getComponent(UITransform);
         if (!contentTransform) {
             console.error("Content节点缺少UITransform组件");
@@ -241,7 +241,7 @@ export class HeroSelectionPanel extends Component {
         const containerWidth = buttonWidth + buttonSpacing; // 每个容器的宽度
 
         availableHeroes.forEach((heroType, index) => {
-            const heroConfig = HeroFactory.getHeroConfig(heroType);
+            const heroConfig = HeroFactory.GetHeroConfig(heroType);
             if (!heroConfig) return;
 
             // 创建按钮容器，使用Widget进行相对定位
@@ -478,8 +478,8 @@ export class HeroSelectionPanel extends Component {
         // 检查是否可购买 - 使用英雄实际成本
         let canAfford = true;
         if (this._gameManager && heroType) {
-            const currentGold = this._gameManager.getGameStats().gold;
-            const heroCost = HeroFactory.getHeroCost(heroType);
+            const currentGold = this._gameManager.GetGameStats().gold;
+            const heroCost = HeroFactory.GetHeroCost(heroType);
             canAfford = currentGold >= heroCost;
         }
 
@@ -779,9 +779,9 @@ export class HeroSelectionPanel extends Component {
         console.log(`🟡 触摸开始: ${heroType}`);
 
         // 检查金币是否足够
-        const heroCost = HeroFactory.getHeroCost(heroType);
-        if (this._gameManager && this._gameManager.getGameStats().gold < heroCost) {
-            console.log(`❌ 金币不足，需要 ${heroCost} 金币，当前: ${this._gameManager.getGameStats().gold}`);
+        const heroCost = HeroFactory.GetHeroCost(heroType);
+        if (this._gameManager && this._gameManager.GetGameStats().gold < heroCost) {
+            console.log(`❌ 金币不足，需要 ${heroCost} 金币，当前: ${this._gameManager.GetGameStats().gold}`);
             this.showInsufficientFundsEffect(buttonNode);
             return;
         }
@@ -854,14 +854,14 @@ export class HeroSelectionPanel extends Component {
         }
 
         // 更新按钮状态
-        this.updateHeroButtonStates();
+        this.UpdateHeroButtonStates();
 
         // 创建拖拽预览
         this.createDragPreview(heroType);
 
         // 启动网格预览模式
         if (this._gridSystem) {
-            this._gridSystem.startDragMode();
+            this._gridSystem.StartDragMode();
         }
 
         // 更新预览位置
@@ -1000,7 +1000,7 @@ export class HeroSelectionPanel extends Component {
         console.log(`📍 更新拖拽预览位置: (${worldPos.x.toFixed(1)}, ${worldPos.y.toFixed(1)})`);
         // 更新网格预览
         if (this._gridSystem) {
-            this._gridSystem.updateHoverPosition(worldPos);
+            this._gridSystem.UpdateHoverPosition(worldPos);
         }
 
     }
@@ -1033,16 +1033,16 @@ export class HeroSelectionPanel extends Component {
         console.log(`🗺️ 父节点本地坐标: (${parentLocalPos.x.toFixed(1)}, ${parentLocalPos.y.toFixed(1)})`);
 
         // 使用网格系统的坐标转换方法
-        const gridPos = this._gridSystem.worldToGridPosition(parentLocalPos);
+        const gridPos = this._gridSystem.WorldToGridPosition(parentLocalPos);
 
         if (gridPos) {
             console.log(`📍 网格位置: (${gridPos.row}, ${gridPos.col})`);
-            const canDeploy = this._gridSystem.canDeployAt(gridPos);
+            const canDeploy = this._gridSystem.CanDeployAt(gridPos);
             console.log(`🎯 可部署: ${canDeploy}`);
 
             if (canDeploy) {
                 // 直接使用自己的部署方法
-                const success = this.deployHeroToGrid(this._selectedHeroType, gridPos.row, gridPos.col);
+                const success = this.DeployHeroToGrid(this._selectedHeroType, gridPos.row, gridPos.col);
                 if (success) {
                     console.log(`✅ 成功部署 ${this._selectedHeroType} 到网格 (${gridPos.row}, ${gridPos.col})`);
                 } else {
@@ -1079,7 +1079,7 @@ export class HeroSelectionPanel extends Component {
 
         // 结束网格预览模式
         if (this._gridSystem) {
-            this._gridSystem.endDragMode();
+            this._gridSystem.EndDragMode();
         }
 
         // 重新启用ScrollView滚动
@@ -1088,7 +1088,7 @@ export class HeroSelectionPanel extends Component {
         }
 
         // 更新按钮状态
-        this.updateHeroButtonStates();
+        this.UpdateHeroButtonStates();
     }
 
     // ========== 辅助工具方法 ==========

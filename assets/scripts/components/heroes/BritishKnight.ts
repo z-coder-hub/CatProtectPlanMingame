@@ -96,7 +96,7 @@ export class BritishKnight extends BaseHero {
         
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
                 this.heroState = HeroState.ATTACKING;
@@ -178,7 +178,7 @@ export class BritishKnight extends BaseHero {
         if (!battleManager) return false;
         
         // 寻找范围内的敌人
-        const enemies = battleManager.getEnemiesInRange(this.node.position, this.attackRange * 1.5);
+        const enemies = battleManager.GetEnemiesInRange(this.node.position, this.attackRange * 1.5);
         if (enemies.length === 0) return false;
         
         // 激活冲锋状态

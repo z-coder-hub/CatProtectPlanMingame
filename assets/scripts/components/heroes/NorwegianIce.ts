@@ -78,7 +78,7 @@ export class NorwegianIce extends BaseHero {
         
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
                 this.heroState = HeroState.ATTACKING;
@@ -92,7 +92,7 @@ export class NorwegianIce extends BaseHero {
         // 冰霜AOE攻击
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const enemies = battleManager.getEnemiesInRange(target.position, 80);
+            const enemies = battleManager.GetEnemiesInRange(target.position, 80);
             
             for (const enemy of enemies) {
                 const enemyUnit = enemy.getComponent(BaseMouse);

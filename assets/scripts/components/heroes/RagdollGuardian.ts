@@ -78,7 +78,7 @@ export class RagdollGuardian extends BaseHero {
         
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
                 this.heroState = HeroState.ATTACKING;
@@ -102,7 +102,7 @@ export class RagdollGuardian extends BaseHero {
     private activateGuardianAura(): void {
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearbyAllies = battleManager.getHeroesInRange(this.node.position, 120);
+            const nearbyAllies = battleManager.GetHeroesInRange(this.node.position, 120);
             
             for (const ally of nearbyAllies) {
                 const allyUnit = ally.getComponent(BaseHero);

@@ -91,7 +91,7 @@ export class RussianBlue extends BaseHero {
         
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            const nearestEnemy = battleManager.findNearestEnemy(this.node.position, this.attackRange);
+            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
             if (nearestEnemy) {
                 this.currentTarget = nearestEnemy;
                 this.heroState = HeroState.ATTACKING;
@@ -116,7 +116,7 @@ export class RussianBlue extends BaseHero {
         const direction = Vec3.subtract(new Vec3(), target.position, this.node.position);
         direction.normalize();
         
-        const allEnemies = battleManager.getAllEnemies();
+        const allEnemies = battleManager.GetAllEnemies();
         const hitTargets: Node[] = [];
         
         // 找到直线上的所有敌人

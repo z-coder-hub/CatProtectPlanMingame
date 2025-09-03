@@ -49,7 +49,7 @@ export class GiantMouse extends BaseMouse {
         
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            battleManager.registerEnemy(this.node);
+            battleManager.RegisterEnemy(this.node);
         }
     }
     
@@ -254,14 +254,14 @@ export class GiantMouse extends BaseMouse {
         
         // 给予金币奖励
         if (this._gameManager) {
-            this._gameManager.addGold(this.goldReward);
+            this._gameManager.AddGold(this.goldReward);
             console.log(`获得 ${this.goldReward} 金币奖励`);
         }
         
         // 从战斗管理器注销
         const battleManager = BattleManager.instance;
         if (battleManager) {
-            battleManager.unregisterEnemy(this.node);
+            battleManager.UnregisterEnemy(this.node);
         }
         
         // 创建死亡特效
@@ -291,7 +291,7 @@ export class GiantMouse extends BaseMouse {
     private dropBonusGold(): void {
         if (this._gameManager) {
             const bonusGold = 2;
-            this._gameManager.addGold(bonusGold);
+            this._gameManager.AddGold(bonusGold);
             console.log(`巨型老鼠掉落额外金币: ${bonusGold}`);
             
             // 创建金币掉落特效
