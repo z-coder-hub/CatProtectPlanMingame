@@ -39,8 +39,7 @@ assets/
 │   ├── managers/              # 管理器类
 │   │   ├── GameManager.ts     # 游戏总控制
 │   │   ├── BattleManager.ts   # 战斗管理
-│   │   ├── WaveManager.ts     # 波次管理
-│   │   └── ResourceManager.ts # 资源管理
+│   │   └── WaveManager.ts     # 波次管理
 │   ├── systems/               # 系统类
 │   │   ├── GameBootstrap.ts   # 游戏启动器
 │   │   ├── GridDeploymentSystem.ts # 网格部署系统
@@ -90,13 +89,13 @@ assets/
 export abstract class BaseHero extends Component {
     protected _graphics: Graphics | null = null;
     protected _nameLabel: Label | null = null;
-    
+
     protected initializeBaseVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
         this.drawHeroAppearance();
         this.createHeroNameLabel();
     }
-    
+
     protected abstract getHeroLabelConfig(): LabelConfig;
 }
 
@@ -111,7 +110,7 @@ export class OrangeCat extends BaseHero {
 export class OrangeCat extends Component {
     private _graphics: Graphics | null = null;
     private _nameLabel: Label | null = null;
-    
+
     private initializeVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
         // 重复的初始化代码...
@@ -212,7 +211,7 @@ button.node.on(Button.EventType.CLICK, callback, target);
 - **PersianSniper**: 波斯猫狙击手 - 高伤害狙击手，暴击能力
 - **BengalHunter**: 孟加拉猎手 - 快速攻击的机敏射手
 
-#### 法师英雄 (3种)  
+#### 法师英雄 (3种)
 - **SiameseMage**: 暹罗猫法师 - AOE魔法攻击，群体伤害
 - **MaineThunder**: 缅因雷猫 - 链式雷电攻击，连锁伤害
 - **NorwegianIce**: 挪威冰猫 - 冰系法术，减速效果
@@ -270,15 +269,15 @@ button.node.on(Button.EventType.CLICK, callback, target);
 
 ### 核心枚举
 ```typescript
-enum GameState { 
-  MENU, DEPLOYMENT, BATTLE, RESTING, PLAYING, 
-  VICTORY, GAME_OVER 
+enum GameState {
+  MENU, DEPLOYMENT, BATTLE, RESTING, PLAYING,
+  VICTORY, GAME_OVER
 }
 
 enum HeroType {
   // 远程英雄
   ORANGE_CAT, PERSIAN_SNIPER, BENGAL_HUNTER,
-  // 法师英雄  
+  // 法师英雄
   SIAMESE_MAGE, MAINE_THUNDER, NORWEGIAN_ICE,
   // 近战英雄
   BRITISH_KNIGHT, RAGDOLL_GUARDIAN,
@@ -302,13 +301,13 @@ enum EnemyType {
 }
 
 // 英雄状态枚举（英雄不会死亡，不会移动）
-enum HeroState { 
+enum HeroState {
   IDLE,       // 待机
   ATTACKING   // 攻击中
 }
 
 // 敌人状态枚举
-enum EnemyState { 
+enum EnemyState {
   IDLE,       // 待机
   MOVING,     // 移动中
   ATTACKING,  // 攻击中（预留状态，当前游戏机制中敌人不攻击）
@@ -334,14 +333,7 @@ interface EnemyUnitStats {
   moveSpeed: number;
 }
 
-// 组件间通信接口示例
-interface IHeroDeploymentHandler {
-  deployHeroToGrid(heroType: HeroType, gridRow: number, gridCol: number): boolean;
-}
 
-interface IGameStateHandler {
-  onGameStateChange(newState: GameState, oldState: GameState): void;
-}
 ```
 
 ## 开发规范
@@ -368,7 +360,7 @@ class MyComponent {
 // ✅ 正确：Cocos Creator生命周期方法遵循Cocos规则
 class MyComponent extends Component {
     protected onLoad(): void { ... }     // 遵循Cocos规则
-    protected start(): void { ... }      // 遵循Cocos规则  
+    protected start(): void { ... }      // 遵循Cocos规则
     protected update(dt: number): void { ... }  // 遵循Cocos规则
     protected onDestroy(): void { ... }  // 遵循Cocos规则
 }
@@ -535,7 +527,7 @@ node.setPosition(800, 600);
 ### 🚫 禁止使用延迟等待解决UI组件初始化问题
 **重要原则**: 在**UI组件创建和初始化阶段**，遇到UITransform缺失、组件依赖、布局更新等问题时，**绝对不要**使用`setTimeout`、`scheduleOnce`等延迟方法来"解决"问题。
 
-**适用范围**: 
+**适用范围**:
 - ✅ **禁止场景**: UI组件初始化、onLoad、start等生命周期中的组件设置
 - ✅ **允许场景**: 游戏逻辑中的定时效果、动画延迟、技能冷却、AI行为等
 
@@ -790,7 +782,7 @@ if (!manager) {
   - 更新英雄分类：远程(3种)、法师(3种)、近战(2种)、辅助(2种)、特殊(2种)
   - 详细描述每种英雄的特色和能力（如穿透、AOE、光环、暴击等）
   - 明确英雄工厂系统和创建流程
-- **扩展敌人系统**: 完善9种敌人类型的文档描述  
+- **扩展敌人系统**: 完善9种敌人类型的文档描述
   - 更新敌人分类：基础(2种)、快速(2种)、装甲(2种)、特殊(1种)、BOSS(2种)
   - 详细描述每种老鼠的特征（血量、速度、特殊能力等）
   - 强调老鼠无攻击能力，专注突破防线的设计理念

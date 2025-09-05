@@ -1,5 +1,6 @@
 import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, ScrollView, UITransform, Vec3, Widget } from 'cc';
 import { GameManager } from '../../managers/GameManager';
+import { LevelManager } from '../../managers/LevelManager';
 import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
 import { HeroFactory } from '../../systems/HeroFactory';
 import { HeroType } from '../../types/GameTypes';
@@ -26,6 +27,7 @@ export class HeroSelectionPanel extends Component {
 
     // 管理器引用
     private _gameManager: GameManager | null = null;
+    private _levelManager: LevelManager | null = null;
     private _gridSystem: GridDeploymentSystem | null = null;
 
     // ========== 生命周期方法 ==========
@@ -38,10 +40,14 @@ export class HeroSelectionPanel extends Component {
     protected start(): void {
         // 获取管理器引用
         this._gameManager = GameManager.instance;
+        this._levelManager = LevelManager.instance;
         this._gridSystem = GridDeploymentSystem.instance;
 
         if (!this._gameManager) {
             console.error("未找到GameManager实例");
+        }
+        if (!this._levelManager) {
+            console.error("未找到LevelManager实例");
         }
         if (!this._gridSystem) {
             console.error("未找到GridDeploymentSystem实例");
@@ -63,6 +69,38 @@ export class HeroSelectionPanel extends Component {
     // ========== 公共接口方法 ==========
 
     /**
+     * 获取已解锁的英雄类型列表
+     */
+    private getUnlockedHeroTypes(): HeroType[] {
+        // 如果LevelManager还未初始化，使用默认解锁英雄
+        if (!this._levelManager) {
+            console.warn("LevelManager未初始化，使用默认英雄列表");
+            return [HeroType.ORANGE_CAT]; // 默认只有橘猫可用
+        }
+
+        const unlockedHeroes = this._levelManager.GetUnlockedHeroes();
+        console.log(`获取已解锁英雄: ${unlockedHeroes.length} 个英雄`);
+        
+        // 确保至少有一个英雄可用
+        if (unlockedHeroes.length === 0) {
+            console.warn("没有解锁的英雄，使用默认橘猫");
+            return [HeroType.ORANGE_CAT];
+        }
+        
+        return unlockedHeroes;
+    }
+
+    /**
+     * 检查英雄是否已解锁
+     */
+    public IsHeroUnlocked(heroType: HeroType): boolean {
+        if (!this._levelManager) {
+            return heroType === HeroType.ORANGE_CAT; // 默认只有橘猫可用
+        }
+        return this._levelManager.IsHeroUnlocked(heroType);
+    }
+
+    /**
      * 部署英雄到网格
      */
     public DeployHeroToGrid(heroType: HeroType, gridRow: number, gridCol: number): boolean {
@@ -70,6 +108,12 @@ export class HeroSelectionPanel extends Component {
 
         if (!this._gameManager || !this._gridSystem) {
             console.log("❌ 缺少必要的管理器引用");
+            return false;
+        }
+
+        // 检查英雄是否已解锁
+        if (!this.IsHeroUnlocked(heroType)) {
+            console.log(`❌ 英雄 ${heroType} 尚未解锁`);
             return false;
         }
 
@@ -142,6 +186,32 @@ export class HeroSelectionPanel extends Component {
         });
     }
 
+    /**
+     * 刷新英雄面板（当有新英雄解锁时调用）
+     */
+    public RefreshHeroPanel(): void {
+        console.log("刷新英雄选择面板");
+        
+        // 清理现有按钮
+        this._heroButtons.forEach(button => {
+            if (button && button.isValid) {
+                button.destroy();
+            }
+        });
+        this._heroButtons = [];
+
+        // 重新创建面板（清理整个面板并重新创建）
+        const panelChildren = this.node.children.slice();
+        panelChildren.forEach(child => {
+            if (child && child.isValid) {
+                child.destroy();
+            }
+        });
+
+        // 重新创建面板
+        this.createHeroSelectionPanel();
+    }
+
     // ========== 面板创建方法 ==========
 
     /**
@@ -205,7 +275,7 @@ export class HeroSelectionPanel extends Component {
         contentNode.parent = viewNode;
         const contentTransform = contentNode.addComponent(UITransform);
 
-        const availableHeroes = HeroFactory.GetAvailableHeroTypes();
+        const availableHeroes = this.getUnlockedHeroTypes();
         const buttonWidth = 96; // 80 * 1.2 = 96
         const buttonHeight = 120; // 增加高度以容纳名称标签，100 * 1.2 = 120
         const buttonSpacing = 24; // 20 * 1.2 = 24
@@ -231,7 +301,7 @@ export class HeroSelectionPanel extends Component {
      * 自适应布局创建英雄按钮 - 使用Widget相对布局
      */
     private createHeroButtonsAdaptiveLayout(contentNode: Node, buttonWidth: number, buttonHeight: number, buttonSpacing: number): void {
-        const availableHeroes = HeroFactory.GetAvailableHeroTypes();
+        const availableHeroes = this.getUnlockedHeroTypes();
         const contentTransform = contentNode.getComponent(UITransform);
         if (!contentTransform) {
             console.error("Content节点缺少UITransform组件");
@@ -475,17 +545,25 @@ export class HeroSelectionPanel extends Component {
     private drawHeroButtonBackground(graphics: Graphics, width: number, height: number, isSelected: boolean, heroType?: HeroType): void {
         graphics.clear();
 
-        // 检查是否可购买 - 使用英雄实际成本
+        // 检查英雄解锁状态
+        let isUnlocked = true;
         let canAfford = true;
-        if (this._gameManager && heroType) {
-            const currentGold = this._gameManager.GetGameStats().gold;
-            const heroCost = HeroFactory.GetHeroCost(heroType);
-            canAfford = currentGold >= heroCost;
+        
+        if (heroType) {
+            isUnlocked = this.IsHeroUnlocked(heroType);
+            
+            if (this._gameManager && isUnlocked) {
+                const currentGold = this._gameManager.GetGameStats().gold;
+                const heroCost = HeroFactory.GetHeroCost(heroType);
+                canAfford = currentGold >= heroCost;
+            }
         }
 
         // 背景色
         let bgColor: Color;
-        if (isSelected) {
+        if (!isUnlocked) {
+            bgColor = new Color(30, 30, 30, 200); // 未解锁：深黑色
+        } else if (isSelected) {
             bgColor = new Color(100, 255, 100, 200); // 选中：亮绿色
         } else if (!canAfford) {
             bgColor = new Color(100, 50, 50, 200); // 买不起：暗红色
@@ -498,11 +576,45 @@ export class HeroSelectionPanel extends Component {
         graphics.fill();
 
         // 边框
-        const borderColor = isSelected ? new Color(0, 255, 0) :
-            !canAfford ? new Color(255, 0, 0) : new Color(150, 150, 150);
+        let borderColor: Color;
+        if (!isUnlocked) {
+            borderColor = new Color(60, 60, 60); // 未解锁：深灰色边框
+        } else if (isSelected) {
+            borderColor = new Color(0, 255, 0); // 选中：绿色边框
+        } else if (!canAfford) {
+            borderColor = new Color(255, 0, 0); // 买不起：红色边框
+        } else {
+            borderColor = new Color(150, 150, 150); // 普通：浅灰色边框
+        }
+        
         graphics.strokeColor = borderColor;
         graphics.lineWidth = isSelected ? 3 : 2;
         graphics.rect(-width / 2, -height / 2, width, height);
+        graphics.stroke();
+
+        // 如果未解锁，添加锁定图标
+        if (!isUnlocked) {
+            this.drawLockIcon(graphics, width, height);
+        }
+    }
+
+    /**
+     * 绘制锁定图标
+     */
+    private drawLockIcon(graphics: Graphics, width: number, height: number): void {
+        const lockSize = Math.min(width, height) * 0.3;
+        const lockX = 0;
+        const lockY = 0;
+
+        // 锁身
+        graphics.fillColor = new Color(255, 255, 0); // 金黄色锁
+        graphics.rect(lockX - lockSize / 2, lockY - lockSize / 3, lockSize, lockSize * 0.6);
+        graphics.fill();
+
+        // 锁环
+        graphics.strokeColor = new Color(255, 255, 0);
+        graphics.lineWidth = lockSize * 0.15;
+        graphics.arc(lockX, lockY - lockSize / 6, lockSize * 0.3, Math.PI, 0, false);
         graphics.stroke();
     }
 

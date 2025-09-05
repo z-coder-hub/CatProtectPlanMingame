@@ -16,6 +16,7 @@ export class FastMouse extends BaseMouse {
     public goldReward: number = 4;
     
     // 私有属性（只保留FastMouse特有的属性）
+    private _graphics: Graphics | null = null;
     private _healthBarContainer: Node | null = null;
     private _healthBarForeground: Graphics | null = null;
     
@@ -96,9 +97,8 @@ export class FastMouse extends BaseMouse {
     
     // 初始化外观
     private initializeVisuals(): void {
-        // 使用基类的统一Graphics管理
-        const graphics = this.node.addComponent(Graphics);
-        this.setGraphics(graphics);
+        // 添加Graphics组件绘制外观
+        this._graphics = this.node.addComponent(Graphics);
         
         this.drawFastMouseAppearance();
     }
@@ -127,47 +127,46 @@ export class FastMouse extends BaseMouse {
     
     // 绘制快速老鼠外观
     private drawFastMouseAppearance(): void {
-        const graphics = this.getGraphics();
-        if (!graphics) return;
+        if (!this._graphics) return;
         
-        graphics.clear();
+        this._graphics.clear();
         
         // 绘制快速老鼠身体（亮绿色，表示速度）
-        graphics.fillColor = new Color(50, 205, 50); // 亮绿色
-        graphics.circle(0, 0, 12);
-        graphics.fill();
+        this._graphics.fillColor = new Color(50, 205, 50); // 亮绿色
+        this._graphics.circle(0, 0, 12);
+        this._graphics.fill();
         
         // 绘制轮廓
-        graphics.strokeColor = new Color(34, 139, 34); // 深绿色轮廓
-        graphics.lineWidth = 2;
-        graphics.circle(0, 0, 12);
-        graphics.stroke();
+        this._graphics.strokeColor = new Color(34, 139, 34); // 深绿色轮廓
+        this._graphics.lineWidth = 2;
+        this._graphics.circle(0, 0, 12);
+        this._graphics.stroke();
         
         // 绘制速度线条（表示快速移动）
-        graphics.strokeColor = new Color(255, 255, 0); // 黄色速度线
-        graphics.lineWidth = 2;
+        this._graphics.strokeColor = new Color(255, 255, 0); // 黄色速度线
+        this._graphics.lineWidth = 2;
         // 左侧速度线
-        graphics.moveTo(-8, -8);
-        graphics.lineTo(-12, -12);
-        graphics.moveTo(-8, 0);
-        graphics.lineTo(-12, 0);
-        graphics.moveTo(-8, 8);
-        graphics.lineTo(-12, 12);
+        this._graphics.moveTo(-8, -8);
+        this._graphics.lineTo(-12, -12);
+        this._graphics.moveTo(-8, 0);
+        this._graphics.lineTo(-12, 0);
+        this._graphics.moveTo(-8, 8);
+        this._graphics.lineTo(-12, 12);
         // 右侧速度线
-        graphics.moveTo(8, -8);
-        graphics.lineTo(12, -12);
-        graphics.moveTo(8, 0);
-        graphics.lineTo(12, 0);
-        graphics.moveTo(8, 8);
-        graphics.lineTo(12, 12);
-        graphics.stroke();
+        this._graphics.moveTo(8, -8);
+        this._graphics.lineTo(12, -12);
+        this._graphics.moveTo(8, 0);
+        this._graphics.lineTo(12, 0);
+        this._graphics.moveTo(8, 8);
+        this._graphics.lineTo(12, 12);
+        this._graphics.stroke();
         
         // 绘制眼睛（红色，表示警觉）
-        graphics.fillColor = new Color(255, 0, 0); // 红色眼睛
-        graphics.circle(-4, -4, 2);
-        graphics.fill();
-        graphics.circle(4, -4, 2);
-        graphics.fill();
+        this._graphics.fillColor = new Color(255, 0, 0); // 红色眼睛
+        this._graphics.circle(-4, -4, 2);
+        this._graphics.fill();
+        this._graphics.circle(4, -4, 2);
+        this._graphics.fill();
     }
     
     // 重写标签配置 - 使用统一大字体
@@ -314,18 +313,17 @@ export class FastMouse extends BaseMouse {
     
     // 播放受伤效果
     private playHurtEffect(): void {
-        const graphics = this.getGraphics();
-        if (!graphics) return;
+        if (!this._graphics) return;
         
         // 使用DrawingHelper绘制受伤效果，但用红色高亮
-        graphics.clear();
-        graphics.fillColor = new Color(255, 100, 100); // 红色受伤效果
-        graphics.circle(0, 0, 12);
-        graphics.fill();
+        this._graphics.clear();
+        this._graphics.fillColor = new Color(255, 100, 100); // 红色受伤效果
+        this._graphics.circle(0, 0, 12);
+        this._graphics.fill();
         
         // 200ms后恢复原色
         this.scheduleOnce(() => {
-            if (graphics && this.node.isValid) {
+            if (this._graphics && this.node.isValid) {
                 this.drawFastMouseAppearance();
             }
         }, 0.2);

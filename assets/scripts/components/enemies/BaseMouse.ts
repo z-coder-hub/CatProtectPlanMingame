@@ -70,10 +70,6 @@ export abstract class BaseMouse extends Component {
             case EnemyState.MOVING:
                 this.onMovingState(dt);
                 break;
-            case EnemyState.ATTACKING:
-                // 老鼠不再攻击，自动转为移动状态
-                this.enemyState = EnemyState.MOVING;
-                break;
             case EnemyState.DEAD:
                 this.onDeadState(dt);
                 break;
@@ -230,11 +226,7 @@ export abstract class BaseMouse extends Component {
         this.moveTowardsCastle(dt);
     }
     
-    protected onAttackState(dt: number): void {
-        this.currentTarget = null;
-        this.enemyState = EnemyState.IDLE;
-        this.moveTowardsCastle(dt);
-    }
+    // 移除onAttackState方法 - 老鼠不具备攻击能力
     
     protected onDeadState(_dt: number): void {
     }

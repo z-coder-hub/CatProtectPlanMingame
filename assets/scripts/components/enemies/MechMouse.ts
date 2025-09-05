@@ -15,6 +15,9 @@ export class MechMouse extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.MECH_MOUSE;
     
+    // 私有属性
+    private _graphics: Graphics | null = null;
+    
     // 科技视觉效果属性
     private _engineGlow: number = 0;          // 引擎发光效果
     
@@ -36,123 +39,124 @@ export class MechMouse extends BaseMouse {
     
     protected initializeMouseVisuals(): void {
         // 创建机械老鼠外观 - 银灰色科技外观
-        const graphics = this.node.addComponent(Graphics);
+        this._graphics = this.node.addComponent(Graphics);
         
         // 绘制机械老鼠身体
-        this.drawMechMouseAppearance(graphics);
+        this.drawMechMouseAppearance();
         
         console.log(`${this.unitName}外观创建完成`);
     }
     
     /**
      * 绘制机械老鼠外观
-     * @param graphics 绘图组件
      */
-    private drawMechMouseAppearance(graphics: Graphics): void {
-        graphics.clear();
+    private drawMechMouseAppearance(): void {
+        if (!this._graphics) return;
+        
+        this._this._graphics.clear();
         
         // 机械外观颜色
         const bodyColor = new Color(120, 120, 140, 255);    // 银灰色机械身体
         const glowColor = new Color(100, 150, 255, 255);    // 蓝色科技光
         
         // 绘制机械身体主体（矩形科技造型）
-        graphics.fillColor = bodyColor;
-        graphics.strokeColor = new Color(80, 80, 100, 255);
-        graphics.lineWidth = 2;
+        this._this._graphics.fillColor = bodyColor;
+        this._this._graphics.strokeColor = new Color(80, 80, 100, 255);
+        this._this._graphics.lineWidth = 2;
         
         // 主体 - 科技感矩形身体
-        graphics.roundRect(-15, -8, 30, 16, 3);
-        graphics.fill();
-        graphics.stroke();
+        this._graphics.roundRect(-15, -8, 30, 16, 3);
+        this._graphics.fill();
+        this._graphics.stroke();
         
         // 装甲板细节
-        graphics.fillColor = new Color(140, 140, 160, 255);
-        graphics.roundRect(-12, -6, 24, 12, 2);
-        graphics.fill();
+        this._graphics.fillColor = new Color(140, 140, 160, 255);
+        this._graphics.roundRect(-12, -6, 24, 12, 2);
+        this._graphics.fill();
         
         // 科技纹理线条
-        graphics.strokeColor = new Color(160, 160, 180, 255);
-        graphics.lineWidth = 1;
+        this._graphics.strokeColor = new Color(160, 160, 180, 255);
+        this._graphics.lineWidth = 1;
         for (let i = -10; i <= 10; i += 5) {
-            graphics.moveTo(i, -5);
-            graphics.lineTo(i, 5);
+            this._graphics.moveTo(i, -5);
+            this._graphics.lineTo(i, 5);
         }
-        graphics.stroke();
+        this._graphics.stroke();
         
         // 头部 - 机械头盔
-        graphics.fillColor = new Color(100, 100, 120, 255);
-        graphics.roundRect(-10, 0, 20, 12, 2);
-        graphics.fill();
-        graphics.stroke();
+        this._graphics.fillColor = new Color(100, 100, 120, 255);
+        this._graphics.roundRect(-10, 0, 20, 12, 2);
+        this._graphics.fill();
+        this._graphics.stroke();
         
         // 眼部 - 发光的机械眼
         const eyeColor = new Color(0, 200, 255, 255);    // 蓝色机械眼
         
-        graphics.fillColor = eyeColor;
-        graphics.circle(-5, 4, 3);
-        graphics.fill();
-        graphics.circle(5, 4, 3);
-        graphics.fill();
+        this._graphics.fillColor = eyeColor;
+        this._graphics.circle(-5, 4, 3);
+        this._graphics.fill();
+        this._graphics.circle(5, 4, 3);
+        this._graphics.fill();
         
         // 机械眼瞳孔
-        graphics.fillColor = new Color(255, 255, 255, 255);
-        graphics.circle(-5, 4, 1);
-        graphics.fill();
-        graphics.circle(5, 4, 1);
-        graphics.fill();
+        this._graphics.fillColor = new Color(255, 255, 255, 255);
+        this._graphics.circle(-5, 4, 1);
+        this._graphics.fill();
+        this._graphics.circle(5, 4, 1);
+        this._graphics.fill();
         
         // 科技装置口
-        graphics.fillColor = new Color(100, 100, 120, 255);
-        graphics.circle(0, -2, 4);
-        graphics.fill();
+        this._graphics.fillColor = new Color(100, 100, 120, 255);
+        this._graphics.circle(0, -2, 4);
+        this._graphics.fill();
         
         // 科技装置内部
-        graphics.fillColor = new Color(50, 50, 70, 255);
-        graphics.circle(0, -2, 2);
-        graphics.fill();
+        this._graphics.fillColor = new Color(50, 50, 70, 255);
+        this._graphics.circle(0, -2, 2);
+        this._graphics.fill();
         
         // 机械天线/传感器
-        graphics.strokeColor = new Color(120, 120, 140, 255);
-        graphics.lineWidth = 2;
-        graphics.moveTo(-8, 10);
-        graphics.lineTo(-8, 16);
-        graphics.moveTo(8, 10);
-        graphics.lineTo(8, 16);
-        graphics.stroke();
+        this._graphics.strokeColor = new Color(120, 120, 140, 255);
+        this._graphics.lineWidth = 2;
+        this._graphics.moveTo(-8, 10);
+        this._graphics.lineTo(-8, 16);
+        this._graphics.moveTo(8, 10);
+        this._graphics.lineTo(8, 16);
+        this._graphics.stroke();
         
         // 天线顶端指示灯
-        graphics.fillColor = new Color(100, 255, 100, 255);
-        graphics.circle(-8, 16, 2);
-        graphics.fill();
-        graphics.circle(8, 16, 2);
-        graphics.fill();
+        this._graphics.fillColor = new Color(100, 255, 100, 255);
+        this._graphics.circle(-8, 16, 2);
+        this._graphics.fill();
+        this._graphics.circle(8, 16, 2);
+        this._graphics.fill();
         
         // 机械履带/脚部
-        graphics.fillColor = new Color(80, 80, 100, 255);
-        graphics.roundRect(-12, -16, 8, 6, 1);
-        graphics.fill();
-        graphics.roundRect(4, -16, 8, 6, 1);
-        graphics.fill();
+        this._graphics.fillColor = new Color(80, 80, 100, 255);
+        this._graphics.roundRect(-12, -16, 8, 6, 1);
+        this._graphics.fill();
+        this._graphics.roundRect(4, -16, 8, 6, 1);
+        this._graphics.fill();
         
         // 履带纹理
-        graphics.strokeColor = new Color(100, 100, 120, 255);
-        graphics.lineWidth = 1;
+        this._graphics.strokeColor = new Color(100, 100, 120, 255);
+        this._graphics.lineWidth = 1;
         for (let i = -10; i <= 10; i += 3) {
-            graphics.moveTo(i, -15);
-            graphics.lineTo(i, -11);
+            this._graphics.moveTo(i, -15);
+            this._graphics.lineTo(i, -11);
         }
-        graphics.stroke();
+        this._graphics.stroke();
         
         // 机械尾部 - 推进器
-        graphics.fillColor = new Color(100, 100, 120, 255);
-        graphics.circle(14, -4, 4);
-        graphics.fill();
+        this._graphics.fillColor = new Color(100, 100, 120, 255);
+        this._graphics.circle(14, -4, 4);
+        this._graphics.fill();
         
         // 推进器火焰效果（移动时显示）
         const thrusterColor = new Color(255, Math.floor(100 + this._engineGlow * 155), 0, 255);
-        graphics.fillColor = thrusterColor;
-        graphics.circle(18, -4, 2);
-        graphics.fill();
+        this._graphics.fillColor = thrusterColor;
+        this._graphics.circle(18, -4, 2);
+        this._graphics.fill();
         
     }
     

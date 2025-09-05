@@ -158,8 +158,8 @@ export class AmericanBomber extends BaseHero {
             progress += 0.016 / duration; // 假设60FPS
             
             if (progress >= 1.0) {
-                // 爆炸
-                this.explodeBomb(endPos);
+                // 爆炸 - 先爆炸再销毁节点
+                this.explodeBomb(endPos, bombNode.parent);
                 bombNode.destroy();
                 return;
             }
@@ -177,7 +177,7 @@ export class AmericanBomber extends BaseHero {
         flyBomb();
     }
     
-    private explodeBomb(position: Vec3): void {
+    private explodeBomb(position: Vec3, parentNode?: Node | null): void {
         const battleManager = BattleManager.instance;
         if (!battleManager) return;
         
@@ -195,7 +195,7 @@ export class AmericanBomber extends BaseHero {
             }
         }
         
-        this.createExplosionEffect(position);
+        this.createExplosionEffect(position, parentNode);
     }
     
     private createAttackEffect(): void {
@@ -216,10 +216,11 @@ export class AmericanBomber extends BaseHero {
         }, 0.4);
     }
     
-    private createExplosionEffect(position: Vec3): void {
+    private createExplosionEffect(position: Vec3, parentNode?: Node | null): void {
         // 使用EffectHelper创建标准化的爆炸效果
-        if (this.node.parent) {
-            EffectHelper.createExplosionEffect(position, this.node.parent, 100);
+        const effectParent = parentNode || this.node.parent;
+        if (effectParent) {
+            EffectHelper.createExplosionEffect(position, effectParent, 100);
         }
     }
     

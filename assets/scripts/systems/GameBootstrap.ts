@@ -1,7 +1,6 @@
 import { _decorator, Component, find, Node } from 'cc';
 import { GameHUD } from '../components/ui/GameHUD';
 import { HeroSelectionPanel } from '../components/ui/HeroSelectionPanel';
-import { ResourceManager } from '../managers/ResourceManager';
 import { GridDeploymentSystem } from './GridDeploymentSystem';
 
 const { ccclass, property } = _decorator;
@@ -33,7 +32,6 @@ export class GameBootstrap extends Component {
     private _canvasNode: Node | null = null;
 
     // 系统组件引用
-    private _resourceManager: ResourceManager | null = null;
     private _gridSystem: GridDeploymentSystem | null = null;
 
     // UI组件引用
@@ -43,10 +41,6 @@ export class GameBootstrap extends Component {
         return this._canvasNode;
     }
 
-    // 获取资源管理器
-    public get resourceManager(): ResourceManager | null {
-        return this._resourceManager;
-    }
 
     // 获取网格系统
     public get gridSystem(): GridDeploymentSystem | null {
@@ -113,10 +107,6 @@ export class GameBootstrap extends Component {
     private createBasicSystems(): void {
         if (!this._canvasNode) return;
 
-        // 创建ResourceManager
-        const resourceNode = new Node("ResourceManager");
-        resourceNode.parent = this._canvasNode;
-        this._resourceManager = resourceNode.addComponent(ResourceManager);
 
         // 创建GridDeploymentSystem
         const gridNode = new Node("GridDeploymentSystem");
@@ -130,8 +120,6 @@ export class GameBootstrap extends Component {
 
     // 加载游戏资源
     private loadGameResources(): void {
-        if (!this._resourceManager) return;
-
         // 资源预加载暂时不需要，使用动态创建组件的方式
 
         this.log("游戏资源加载完成");

@@ -14,6 +14,9 @@ export class TankMouse extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.TANK_MOUSE;
     
+    // 私有属性
+    private _graphics: Graphics | null = null;
+    
     @property({ tooltip: "护甲值(减少受到的伤害)" })
     public armorValue: number = 5;
     
@@ -35,47 +38,56 @@ export class TankMouse extends BaseMouse {
     
     protected initializeMouseVisuals(): void {
         // 创建坦克老鼠外观 - 深灰色厚重外观
-        const graphics = this.node.addComponent(Graphics);
+        this._graphics = this.node.addComponent(Graphics);
+        
+        this.drawTankMouseAppearance();
+    }
+    
+    /**
+     * 绘制坦克老鼠外观
+     */
+    private drawTankMouseAppearance(): void {
+        if (!this._graphics) return;
         
         // 绘制坦克老鼠身体（厚重的矩形 + 装甲细节）
-        graphics.fillColor = new Color(80, 80, 80, 255);      // 深灰色装甲
-        graphics.strokeColor = new Color(50, 50, 50, 255);    // 更深的边框
-        graphics.lineWidth = 3;
+        this._graphics.fillColor = new Color(80, 80, 80, 255);      // 深灰色装甲
+        this._graphics.strokeColor = new Color(50, 50, 50, 255);    // 更深的边框
+        this._graphics.lineWidth = 3;
         
         // 主体 - 厚重的矩形
-        graphics.roundRect(-18, -12, 36, 24, 4);
-        graphics.fill();
-        graphics.stroke();
+        this._graphics.roundRect(-18, -12, 36, 24, 4);
+        this._graphics.fill();
+        this._graphics.stroke();
         
         // 装甲板细节
-        graphics.fillColor = new Color(100, 100, 100, 255);   // 稍亮的装甲细节
-        graphics.roundRect(-14, -8, 28, 16, 2);
-        graphics.fill();
+        this._graphics.fillColor = new Color(100, 100, 100, 255);   // 稍亮的装甲细节
+        this._graphics.roundRect(-14, -8, 28, 16, 2);
+        this._graphics.fill();
         
         // 装甲纹理线条
-        graphics.strokeColor = new Color(120, 120, 120, 255);
-        graphics.lineWidth = 1;
-        graphics.moveTo(-12, -6);
-        graphics.lineTo(12, -6);
-        graphics.moveTo(-12, 0);
-        graphics.lineTo(12, 0);
-        graphics.moveTo(-12, 6);
-        graphics.lineTo(12, 6);
-        graphics.stroke();
+        this._graphics.strokeColor = new Color(120, 120, 120, 255);
+        this._graphics.lineWidth = 1;
+        this._graphics.moveTo(-12, -6);
+        this._graphics.lineTo(12, -6);
+        this._graphics.moveTo(-12, 0);
+        this._graphics.lineTo(12, 0);
+        this._graphics.moveTo(-12, 6);
+        this._graphics.lineTo(12, 6);
+        this._graphics.stroke();
         
         // 眼睛 - 小而坚毅
-        graphics.fillColor = new Color(255, 0, 0, 255);       // 红色眼睛
-        graphics.circle(-6, 3, 2);
-        graphics.fill();
-        graphics.circle(6, 3, 2);
-        graphics.fill();
+        this._graphics.fillColor = new Color(255, 0, 0, 255);       // 红色眼睛
+        this._graphics.circle(-6, 3, 2);
+        this._graphics.fill();
+        this._graphics.circle(6, 3, 2);
+        this._graphics.fill();
         
         // 履带/脚部
-        graphics.fillColor = new Color(60, 60, 60, 255);
-        graphics.rect(-16, -16, 8, 4);
-        graphics.fill();
-        graphics.rect(8, -16, 8, 4);
-        graphics.fill();
+        this._graphics.fillColor = new Color(60, 60, 60, 255);
+        this._graphics.rect(-16, -16, 8, 4);
+        this._graphics.fill();
+        this._graphics.rect(8, -16, 8, 4);
+        this._graphics.fill();
         
         console.log(`${this.unitName}外观创建完成`);
     }

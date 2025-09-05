@@ -1,9 +1,8 @@
-import { _decorator, Component, Node, Vec3, instantiate } from 'cc';
-import { WaveConfig, EnemyType } from '../types/GameTypes';
+import { _decorator, Component, Node, Vec3 } from 'cc';
+import { WaveConfig, EnemyType, LevelConfig } from '../types/GameTypes';
 import { GAME_CONFIG } from '../types/GameConstants';
 import { GameManager } from './GameManager';
 import { BattleManager } from './BattleManager';
-import { ResourceManager, ResourceManagerHelper } from './ResourceManager';
 import { BasicMouse } from '../components/enemies/BasicMouse';
 import { FastMouse } from '../components/enemies/FastMouse';
 import { ArmoredMouse } from '../components/enemies/ArmoredMouse';
@@ -39,6 +38,9 @@ export class WaveManager extends Component {
     @property({ tooltip: "是否自动开始下一波" })
     public autoStartNextWave: boolean = false;
     
+    // 关卡配置
+    private _currentLevelConfig: LevelConfig | null = null;
+    
     // 当前波次状态
     private _currentWaveIndex: number = 0;
     private _waveState: WaveState = WaveState.WAITING;
@@ -52,7 +54,6 @@ export class WaveManager extends Component {
     // 引用其他管理器
     private _gameManager: GameManager | null = null;
     private _battleManager: BattleManager | null = null;
-    private _resourceManager: ResourceManager | null = null;
     
     // 获取当前波次状态
     public get waveState(): WaveState {
@@ -64,11 +65,16 @@ export class WaveManager extends Component {
     }
     
     public get totalWaves(): number {
-        return GAME_CONFIG.waves.length;
+        return this._currentLevelConfig ? this._currentLevelConfig.waves.length : 0;
     }
     
     public get isLastWave(): boolean {
         return this._currentWaveIndex >= this.totalWaves - 1;
+    }
+    
+    // 获取当前关卡配置
+    public get currentLevelConfig(): LevelConfig | null {
+        return this._currentLevelConfig;
     }
     
     // 单例实例
@@ -94,7 +100,6 @@ export class WaveManager extends Component {
         // 获取管理器引用
         this._gameManager = GameManager.instance;
         this._battleManager = BattleManager.instance;
-        this._resourceManager = ResourceManager.instance;
         
         if (!this._gameManager) {
             console.error("未找到GameManager实例");
@@ -102,9 +107,28 @@ export class WaveManager extends Component {
         if (!this._battleManager) {
             console.error("未找到BattleManager实例");
         }
-        if (!this._resourceManager) {
-            console.error("未找到ResourceManager实例");
-        }
+    }
+    
+    // ====================== 关卡配置管理 ======================
+    
+    /**
+     * 设置关卡配置
+     */
+    public SetLevelConfig(levelConfig: LevelConfig): void {
+        this._currentLevelConfig = levelConfig;
+        console.log(`WaveManager设置关卡配置: ${levelConfig.name}, 波次数: ${levelConfig.waves.length}`);
+        
+        // 重置波次状态
+        this.ResetWaves();
+    }
+    
+    /**
+     * 清除关卡配置
+     */
+    public ClearLevelConfig(): void {
+        this._currentLevelConfig = null;
+        this.ResetWaves();
+        console.log("WaveManager关卡配置已清除");
     }
     
     protected onDestroy(): void {
@@ -128,27 +152,32 @@ export class WaveManager extends Component {
     }
     
     
-    // 开始波次（参考老项目接口）
+    // 开始波次
     public StartWave(waveNumber: number): void {
         if (this._waveState === WaveState.SPAWNING) {
             console.warn("波次已经在进行中");
             return;
         }
         
-        // 使用传入的波次编号
-        this._currentWaveIndex = waveNumber - 1; // 转换为索引
-        
-        if (this._currentWaveIndex >= GAME_CONFIG.waves.length || this._currentWaveIndex < 0) {
-            console.log(`无效的波次编号: ${waveNumber}`);
+        if (!this._currentLevelConfig) {
+            console.error("未设置关卡配置，无法开始波次");
             return;
         }
         
-        this._currentWaveConfig = GAME_CONFIG.waves[this._currentWaveIndex];
+        // 使用传入的波次编号
+        this._currentWaveIndex = waveNumber - 1; // 转换为索引
+        
+        if (this._currentWaveIndex >= this._currentLevelConfig.waves.length || this._currentWaveIndex < 0) {
+            console.error(`无效的波次编号: ${waveNumber}, 关卡波次总数: ${this._currentLevelConfig.waves.length}`);
+            return;
+        }
+        
+        this._currentWaveConfig = this._currentLevelConfig.waves[this._currentWaveIndex];
         this.setupWaveSpawning();
         this._waveState = WaveState.SPAWNING;
         this._waveTimer = 0;
         
-        console.log(`[WaveManager] 开始第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}）`);
+        console.log(`[WaveManager] 开始关卡 ${this._currentLevelConfig.name} 第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}）`);
         
         // 通知GameManager同步当前波次
         if (this._gameManager) {
@@ -332,15 +361,20 @@ export class WaveManager extends Component {
         
         console.log(`[WaveManager] prepareNextWave调用，当前索引增加到: ${this._currentWaveIndex}，波次号: ${this.currentWaveNumber}`);
         
-        if (this._currentWaveIndex >= GAME_CONFIG.waves.length) {
-            // 所有波次完成
-            console.log("所有波次已完成，准备结束游戏");
+        if (!this._currentLevelConfig) {
+            console.error("没有关卡配置，无法准备下一波");
+            return;
+        }
+        
+        if (this._currentWaveIndex >= this._currentLevelConfig.waves.length) {
+            // 关卡所有波次完成
+            console.log(`关卡 ${this._currentLevelConfig.name} 所有波次已完成`);
             this.onAllWavesCompleted();
         } else {
             // 准备下一波
             this._waveState = WaveState.WAITING;
             this._prepareTimer = 0;
-            console.log(`准备第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}），等待手动开始`);
+            console.log(`准备关卡 ${this._currentLevelConfig.name} 第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}），等待手动开始`);
         }
     }
     
@@ -385,12 +419,16 @@ export class WaveManager extends Component {
         remainingEnemies: number;
         activeEnemies: number;
         preparationTimeLeft: number;
+        levelName: string;
+        levelId: string;
+        waveProgress: number;
     } {
         const remainingEnemies = this._enemySpawnQueue.reduce(
             (total, spawn) => total + spawn.remainingCount, 0
         );
         
         const preparationTimeLeft = Math.max(0, this.wavePrepareTime - this._prepareTimer);
+        const waveProgress = this.totalWaves > 0 ? (this.currentWaveNumber / this.totalWaves) * 100 : 0;
         
         return {
             currentWave: this.currentWaveNumber,
@@ -398,7 +436,10 @@ export class WaveManager extends Component {
             waveState: this._waveState,
             remainingEnemies: remainingEnemies,
             activeEnemies: this._gameManager?.activeEnemies.length || 0,
-            preparationTimeLeft: preparationTimeLeft
+            preparationTimeLeft: preparationTimeLeft,
+            levelName: this._currentLevelConfig?.name || "未知关卡",
+            levelId: this._currentLevelConfig?.id || "unknown",
+            waveProgress: Math.min(waveProgress, 100)
         };
     }
 }
