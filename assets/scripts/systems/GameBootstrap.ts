@@ -2,6 +2,12 @@ import { _decorator, Component, find, Node } from 'cc';
 import { GameHUD } from '../components/ui/GameHUD';
 import { HeroSelectionPanel } from '../components/ui/HeroSelectionPanel';
 import { GridDeploymentSystem } from './GridDeploymentSystem';
+// 导入管理器类以实现类型安全的组件添加
+import { BattleManager } from '../managers/BattleManager';
+import { WaveManager } from '../managers/WaveManager';
+import { GameManager } from '../managers/GameManager';
+import { LevelManager } from '../managers/LevelManager';
+import { Castle } from '../components/game/Castle';
 
 const { ccclass, property } = _decorator;
 
@@ -129,20 +135,29 @@ export class GameBootstrap extends Component {
     private createGameManagers(): void {
         if (!this._canvasNode) return;
 
-        // 创建BattleManager
+        // 创建LevelManager（必须在其他管理器之前创建，因为它们有依赖关系）
+        const levelManagerNode = new Node("LevelManager");
+        levelManagerNode.parent = this._canvasNode;
+        levelManagerNode.addComponent(LevelManager);
+        this.log("LevelManager创建完成");
+
+        // 创建BattleManager（使用类型安全的组件添加）
         const battleManagerNode = new Node("BattleManager");
         battleManagerNode.parent = this._canvasNode;
-        battleManagerNode.addComponent('BattleManager');
+        battleManagerNode.addComponent(BattleManager);
+        this.log("BattleManager创建完成");
 
         // 创建WaveManager
         const waveManagerNode = new Node("WaveManager");
         waveManagerNode.parent = this._canvasNode;
-        waveManagerNode.addComponent('WaveManager');
+        waveManagerNode.addComponent(WaveManager);
+        this.log("WaveManager创建完成");
 
-        // 创建GameManager
+        // 创建GameManager（最后创建，因为它需要引用其他管理器）
         const gameManagerNode = new Node("GameManager");
         gameManagerNode.parent = this._canvasNode;
-        gameManagerNode.addComponent('GameManager');
+        gameManagerNode.addComponent(GameManager);
+        this.log("GameManager创建完成");
 
         this.log("游戏管理器创建完成");
     }
@@ -163,10 +178,11 @@ export class GameBootstrap extends Component {
         heroSelectionNode.addComponent(HeroSelectionPanel);
 
 
-        // 创建Castle
+        // 创建Castle（使用类型安全的组件添加）
         const castleNode = new Node("Castle");
         castleNode.parent = this._canvasNode;
-        castleNode.addComponent('Castle');
+        castleNode.addComponent(Castle);
+        this.log("Castle创建完成");
 
         this.log("游戏界面创建完成");
     }

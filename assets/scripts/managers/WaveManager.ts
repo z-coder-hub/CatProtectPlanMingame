@@ -8,6 +8,9 @@ import { FastMouse } from '../components/enemies/FastMouse';
 import { ArmoredMouse } from '../components/enemies/ArmoredMouse';
 import { GiantMouse } from '../components/enemies/GiantMouse';
 import { SpeedMouse } from '../components/enemies/SpeedMouse';
+import { MouseKing } from '../components/enemies/MouseKing';
+import { MechMouse } from '../components/enemies/MechMouse';
+import { BaseMouse } from '../components/enemies/BaseMouse';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 
 const { ccclass, property } = _decorator;
@@ -17,7 +20,8 @@ export enum WaveState {
     WAITING = "waiting",     // 等待开始
     SPAWNING = "spawning",   // 生成中
     COMPLETED = "completed", // 已完成
-    FAILED = "failed"        // 失败
+    FAILED = "failed",       // 失败
+    STOPPED = "stopped"      // 已停止（关卡间休息）
 }
 
 // 敌人生成信息
@@ -36,7 +40,7 @@ export class WaveManager extends Component {
     public wavePrepareTime: number = 5;
     
     @property({ tooltip: "是否自动开始下一波" })
-    public autoStartNextWave: boolean = false;
+    public autoStartNextWave: boolean = true;
     
     // 关卡配置
     private _currentLevelConfig: LevelConfig | null = null;
@@ -148,6 +152,9 @@ export class WaveManager extends Component {
             case WaveState.COMPLETED:
                 this.updateCompletedState(dt);
                 break;
+            case WaveState.STOPPED:
+                // 已停止状态，不执行任何更新
+                break;
         }
     }
     
@@ -210,7 +217,9 @@ export class WaveManager extends Component {
         if (this._prepareTimer >= this.wavePrepareTime) {
             this._prepareTimer = 0;
             if (this.autoStartNextWave) {
+                // 开始当前设置的波次（这个值已经在PrepareNextWave中被正确设置）
                 this.StartWave(this.currentWaveNumber);
+                console.log(`[WaveManager] 等待时间结束，自动开始第 ${this.currentWaveNumber} 波`);
             }
         }
     }
@@ -247,14 +256,20 @@ export class WaveManager extends Component {
             // 所有敌人都被清理，通知游戏管理器波次完成
             console.log(`第 ${this.currentWaveNumber} 波所有敌人已清理`);
             
-            // 通知GameManager波次完成
+            // 通知GameManager波次完成，让它决定下一步动作
             if (this._gameManager) {
                 this._gameManager.OnWaveComplete();
             }
             
-            // 重置波次状态，等待下一波开始
-            this._waveState = WaveState.WAITING;
-            this._prepareTimer = 0;
+            // 检查是否是最后一波，如果是则停止，否则等待下一波
+            if (this.isLastWave) {
+                console.log(`关卡最后一波完成，停止波次管理器`);
+                this._waveState = WaveState.STOPPED;
+            } else {
+                console.log(`准备下一波，进入等待状态`);
+                this._waveState = WaveState.WAITING;
+                this._prepareTimer = 0;
+            }
         }
     }
     
@@ -319,27 +334,68 @@ export class WaveManager extends Component {
         return new Vec3(randomX, spawnY, 0);
     }
     
-    // 创建敌人节点（参考老项目）
+    // 创建敌人节点（支持所有敌人类型）
     private async createEnemyNode(enemyType: EnemyType): Promise<Node | null> {
         const enemyNode = new Node(`Enemy_${enemyType}_${Date.now()}`);
         
         // 根据敌人类型添加对应组件
         switch (enemyType) {
+            // 基础单位
             case EnemyType.BASIC_MOUSE:
                 enemyNode.addComponent(BasicMouse);
-                break;
-            case EnemyType.FAST_MOUSE:
-                enemyNode.addComponent(FastMouse);
-                break;
-            case EnemyType.ARMORED_MOUSE:
-                enemyNode.addComponent(ArmoredMouse);
                 break;
             case EnemyType.GIANT_MOUSE:
                 enemyNode.addComponent(GiantMouse);
                 break;
+                
+            // 快速单位
+            case EnemyType.FAST_MOUSE:
+                enemyNode.addComponent(FastMouse);
+                break;
             case EnemyType.SPEED_MOUSE:
                 enemyNode.addComponent(SpeedMouse);
                 break;
+                
+            // 装甲单位
+            case EnemyType.ARMORED_MOUSE:
+                enemyNode.addComponent(ArmoredMouse);
+                break;
+            case EnemyType.TANK_MOUSE:
+                // 坦克老鼠暂时使用装甲老鼠组件，后续可创建专用组件
+                enemyNode.addComponent(ArmoredMouse);
+                break;
+                
+            // 特殊单位
+            case EnemyType.STEALTH_MOUSE:
+                // 潜行老鼠暂时使用基础老鼠组件，后续可创建专用组件
+                enemyNode.addComponent(BasicMouse);
+                break;
+                
+            // BOSS单位
+            case EnemyType.MOUSE_KING:
+                enemyNode.addComponent(MouseKing);
+                break;
+            case EnemyType.MECH_MOUSE:
+                enemyNode.addComponent(MechMouse);
+                break;
+                
+            // 特殊BOSS单位（关卡专用）
+            case EnemyType.ICE_KING:
+                // 冰原霸主使用机械老鼠作为基础，后续可创建专用组件
+                enemyNode.addComponent(MechMouse);
+                console.log("生成冰原霸主（使用机械老鼠组件）");
+                break;
+            case EnemyType.FLAME_DEMON:
+                // 炎魔使用机械老鼠作为基础，后续可创建专用组件
+                enemyNode.addComponent(MechMouse);
+                console.log("生成炎魔（使用机械老鼠组件）");
+                break;
+            case EnemyType.VOLCANO_HEART:
+                // 火山之心使用机械老鼠作为基础，后续可创建专用组件
+                enemyNode.addComponent(MechMouse);
+                console.log("生成火山之心（使用机械老鼠组件）");
+                break;
+                
             default:
                 console.warn(`未知或未实现的敌人类型: ${enemyType}`);
                 enemyNode.destroy();
@@ -374,7 +430,7 @@ export class WaveManager extends Component {
             // 准备下一波
             this._waveState = WaveState.WAITING;
             this._prepareTimer = 0;
-            console.log(`准备关卡 ${this._currentLevelConfig.name} 第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}），等待手动开始`);
+            console.log(`准备关卡 ${this._currentLevelConfig.name} 第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}），等待${this.wavePrepareTime}秒后自动开始`);
         }
     }
     
@@ -387,11 +443,13 @@ export class WaveManager extends Component {
         }
     }
     
-    // 停止当前波次
+    // 停止当前波次（关卡间休息时使用）
     public StopCurrentWave(): void {
-        this._waveState = WaveState.WAITING;
+        this._waveState = WaveState.STOPPED;
         this._enemySpawnQueue = [];
-        console.log("当前波次已停止");
+        this._prepareTimer = 0;
+        this._waveTimer = 0;
+        console.log("波次管理器已完全停止（关卡间休息）");
     }
     
     // 跳过等待时间，立即开始下一波

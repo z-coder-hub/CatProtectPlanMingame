@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
@@ -349,25 +349,36 @@ export class ArmoredMouse extends BaseMouse {
         effectGraphics.circle(0, 0, 15);
         effectGraphics.fill();
         
-        // 护甲闪光效果
+        // 使用Tween系统实现护甲闪光效果，替代requestAnimationFrame
         let scale = 1;
         let opacity = 200;
-        const armorEffect = () => {
-            scale += 0.1;
-            opacity -= 20;
+        const maxFrames = 10; // 控制动画帧数
+        let currentFrame = 0;
+        
+        const updateEffect = () => {
+            currentFrame++;
+            scale = 1 + currentFrame * 0.1;
+            opacity = Math.max(0, 200 - currentFrame * 20);
             
-            if (effectGraphics && effectNode.isValid && opacity > 0) {
+            if (effectGraphics && effectNode.isValid && currentFrame < maxFrames && opacity > 0) {
                 effectGraphics.clear();
                 effectGraphics.fillColor = new Color(255, 215, 0, opacity);
                 effectGraphics.circle(0, 0, 15 * scale);
                 effectGraphics.fill();
                 
-                requestAnimationFrame(armorEffect);
+                // 使用Tween进行下一帧更新
+                tween(effectNode)
+                    .delay(0.05)
+                    .call(updateEffect)
+                    .start();
             } else {
-                effectNode.destroy();
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
             }
         };
-        armorEffect();
+        
+        updateEffect();
     }
     
     // 攻击城堡
@@ -407,12 +418,15 @@ export class ArmoredMouse extends BaseMouse {
         this._graphics.rect(-18, -18, 36, 36);
         this._graphics.fill();
         
-        // 300ms后恢复原色
-        this.scheduleOnce(() => {
-            if (this._graphics && this.node.isValid) {
-                this.drawArmoredMouseAppearance();
-            }
-        }, 0.3);
+        // 300ms后恢复原色，使用Tween系统替代scheduleOnce
+        tween(this.node)
+            .delay(0.3)
+            .call(() => {
+                if (this._graphics && this.node.isValid) {
+                    this.drawArmoredMouseAppearance();
+                }
+            })
+            .start();
     }
     
     // 重写死亡方法
@@ -472,12 +486,15 @@ export class ArmoredMouse extends BaseMouse {
             effectGraphics.fill();
         }
         
-        // 破碎效果消失
-        this.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.5);
+        // 使用Tween系统进行延迟销毁，避免在已销毁的节点上调用scheduleOnce
+        tween(effectNode)
+            .delay(0.5)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     // 重写待机状态

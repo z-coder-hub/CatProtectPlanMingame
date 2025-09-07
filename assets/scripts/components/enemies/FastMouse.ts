@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
@@ -321,12 +321,15 @@ export class FastMouse extends BaseMouse {
         this._graphics.circle(0, 0, 12);
         this._graphics.fill();
         
-        // 200ms后恢复原色
-        this.scheduleOnce(() => {
-            if (this._graphics && this.node.isValid) {
-                this.drawFastMouseAppearance();
-            }
-        }, 0.2);
+        // 200ms后恢复原色，使用Tween系统替代scheduleOnce
+        tween(this.node)
+            .delay(0.2)
+            .call(() => {
+                if (this._graphics && this.node.isValid) {
+                    this.drawFastMouseAppearance();
+                }
+            })
+            .start();
     }
     
     // 重写死亡方法，只处理特有的血条清理

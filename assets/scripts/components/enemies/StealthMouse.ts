@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics } from 'cc';
+import { _decorator, Color, Graphics, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
@@ -58,7 +58,7 @@ export class StealthMouse extends BaseMouse {
     private drawStealthMouseAppearance(isStealthed: boolean): void {
         if (!this._graphics) return;
         
-        this._this._graphics.clear();
+        this._graphics.clear();
         
         // 根据潜行状态调整透明度和颜色
         const alpha = isStealthed ? 128 : 255;  // 潜行时半透明
@@ -191,19 +191,22 @@ export class StealthMouse extends BaseMouse {
         // 左闪
         this.node.setPosition(originalPos.x - dodgeDistance, originalPos.y, originalPos.z);
         
-        this.scheduleOnce(() => {
-            if (this.node && this.node.isValid) {
-                // 右闪
-                this.node.setPosition(originalPos.x + dodgeDistance, originalPos.y, originalPos.z);
-                
-                this.scheduleOnce(() => {
-                    if (this.node && this.node.isValid) {
-                        // 回到原位
-                        this.node.setPosition(originalPos);
-                    }
-                }, 0.05);
-            }
-        }, 0.05);
+        tween(this)
+            .delay(0.05)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    // 右闪
+                    this.node.setPosition(originalPos.x + dodgeDistance, originalPos.y, originalPos.z);
+                }
+            })
+            .delay(0.05)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    // 回到原位
+                    this.node.setPosition(originalPos);
+                }
+            })
+            .start();
     }
     
     /**
@@ -262,14 +265,20 @@ export class StealthMouse extends BaseMouse {
         const fadeSteps = 10;
         const fadeInterval = fadeOutDuration / fadeSteps;
         
+        let currentTween = tween(this);
+        
         for (let i = 1; i <= fadeSteps; i++) {
-            this.scheduleOnce(() => {
-                if (this.node && this.node.isValid) {
-                    const newOpacity = originalOpacity * (1 - i / fadeSteps);
-                    this.node.opacity = newOpacity;
-                }
-            }, i * fadeInterval);
+            currentTween = currentTween
+                .delay(fadeInterval)
+                .call(() => {
+                    if (this.node && this.node.isValid) {
+                        const newOpacity = originalOpacity * (1 - i / fadeSteps);
+                        this.node.opacity = newOpacity;
+                    }
+                });
         }
+        
+        currentTween.start();
         
         console.log(`${this.unitName}潜行消失...`);
     }

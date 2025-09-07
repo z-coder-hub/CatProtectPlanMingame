@@ -13,6 +13,7 @@ export class GameHUD extends Component {
     // UI组件引用 - 信息显示
     private _goldLabel: Label | null = null;
     private _waveLabel: Label | null = null;
+    private _levelLabel: Label | null = null;        // 关卡信息标签
     private _castleHealthLabel: Label | null = null;
     private _castleHealthBar: Graphics | null = null;
     private _playPauseButton: Node | null = null;
@@ -59,6 +60,9 @@ export class GameHUD extends Component {
 
         // 创建独立的控制按钮区域（大幅下移）
         this.createControlButtonArea();
+
+        // 创建独立的关卡信息区域（在信息显示区域下方）
+        this.createLevelInfoArea();
     }
 
 
@@ -110,12 +114,37 @@ export class GameHUD extends Component {
         this.createCastleHealthDisplay(infoPanelNode);
     }
 
+    // 创建独立的关卡信息区域
+    private createLevelInfoArea(): void {
+        const levelAreaNode = new Node("LevelInfoArea");
+        levelAreaNode.parent = this.node;
+
+        // 设置在信息显示区域下方，宽度与上方信息区域一致（450px）
+        UIHelper.SetupLeftAlignWidget(levelAreaNode, 450, 40, 0, 80, 0); // top=80确保在信息区域下方，宽度450px与信息区域对齐
+
+        // 创建背景
+        UIHelper.CreatePanelWithBackground(levelAreaNode, new Color(40, 40, 40, 180));
+
+        // 创建关卡信息标签
+        const levelNode = new Node("LevelDisplay");
+        levelNode.parent = levelAreaNode;
+
+        // 在关卡信息区域内左对齐显示，保持与信息区域内容的边距一致
+        UIHelper.SetupLeftAlignWidget(levelNode, 430, 40, 15); // 左边距15px，宽度稍小于父容器
+
+        const levelLabel = levelNode.addComponent(Label);
+        this._levelLabel = levelLabel;
+        this._levelLabel.string = "1-1: 初来乍到";
+        this._levelLabel.fontSize = 20;
+        this._levelLabel.color = new Color(135, 206, 235); // 天蓝色
+    }
+
     // 创建金币显示
     private createGoldDisplay(parent: Node): void {
         const goldNode = new Node("GoldDisplay");
         goldNode.parent = parent;
 
-        // 使用UIHelper设置布局
+        // 使用UIHelper设置布局 - 回到最左侧位置
         UIHelper.SetupLeftAlignWidget(goldNode, 30, 58.5, 15);
 
         // 使用UIHelper创建金币图标
@@ -129,8 +158,8 @@ export class GameHUD extends Component {
         const goldLabelNode = new Node("GoldLabel");
         goldLabelNode.parent = goldNode;
 
-        // 使用UIHelper设置文本标签的布局
-        UIHelper.SetupLeftAlignWidget(goldLabelNode, 30, 58.5, 30 + 15 + 15);
+        // 使用UIHelper设置文本标签的布局 - 调整到金币图标右侧
+        UIHelper.SetupLeftAlignWidget(goldLabelNode, 30, 58.5, 15 + 30 + 15);
 
         const goldLabel = goldLabelNode.addComponent(Label);
         this._goldLabel = goldLabel;
@@ -144,8 +173,8 @@ export class GameHUD extends Component {
         const waveNode = new Node("WaveDisplay");
         waveNode.parent = parent;
 
-        // 使用UIHelper设置布局
-        UIHelper.SetupLeftAlignWidget(waveNode, 30, 58.5, 30 + 15 + 15 + 30 + 100);
+        // 使用UIHelper设置布局 - 调整位置，紧跟金币显示之后
+        UIHelper.SetupLeftAlignWidget(waveNode, 30, 58.5, 15 + 30 + 15 + 30 + 100);
 
         const waveLabel = waveNode.addComponent(Label);
         this._waveLabel = waveLabel;
@@ -241,7 +270,7 @@ export class GameHUD extends Component {
 
         // 使用UIHelper创建单个按钮，高度占容器的70%
         const buttons = UIHelper.CreateEqualWidthButtons(
-            ["开始"],
+            ["开始战斗"],
             controlPanelNode,
             0.7, // 按钮高度占容器高度的70%
             10,  // 按钮间距10像素
@@ -263,6 +292,16 @@ export class GameHUD extends Component {
 
         const stats = this._gameManager.GetGameStats();
 
+        // 更新关卡信息显示
+        if (this._levelLabel) {
+            const currentLevel = this._gameManager.currentLevelConfig;
+            if (currentLevel) {
+                this._levelLabel.string = `${currentLevel.id}: ${currentLevel.name}`;
+            } else {
+                this._levelLabel.string = "未选择关卡";
+            }
+        }
+        
         // 更新金币显示
         if (this._goldLabel) {
             this._goldLabel.string = stats.gold.toString();
@@ -316,10 +355,10 @@ export class GameHUD extends Component {
 
         switch (gameState) {
             case GameState.MENU:
-                this.setButtonText(this._playPauseButton, "开始");
+                this.setButtonText(this._playPauseButton, "开始战斗");
                 break;
             case GameState.DEPLOYMENT:
-                this.setButtonText(this._playPauseButton, "战斗");
+                this.setButtonText(this._playPauseButton, "开始战斗");
                 break;
             case GameState.BATTLE:
             case GameState.PLAYING:
@@ -328,7 +367,7 @@ export class GameHUD extends Component {
             case GameState.RESTING:
                 if (this._gameManager) {
                     const remainingTime = Math.ceil(this._gameManager.restTimer);
-                    this.setButtonText(this._playPauseButton, `休息${remainingTime}s | 点击跳过`);
+                    this.setButtonText(this._playPauseButton, `跳过休息(${remainingTime}s)`);
                 }
                 break;
             case GameState.GAME_OVER:
@@ -428,16 +467,24 @@ export class GameHUD extends Component {
 
     // 按钮点击事件处理
     private onPlayPauseButtonClicked(): void {
-        console.log("播放/暂停按钮被点击");
+        console.log("开始战斗按钮被点击");
         if (!this._gameManager) return;
 
         const gameState = this._gameManager.gameState;
 
         switch (gameState) {
             case GameState.MENU:
+                // 直接进入部署阶段并开始战斗
                 this._gameManager.StartGame();
+                // 立即开始战斗，跳过部署等待
+                setTimeout(() => {
+                    if (this._gameManager && this._gameManager.gameState === GameState.DEPLOYMENT) {
+                        this._gameManager.StartBattle();
+                    }
+                }, 100); // 短暂延迟确保状态切换完成
                 break;
             case GameState.DEPLOYMENT:
+                // 直接开始战斗
                 this._gameManager.StartBattle();
                 break;
             case GameState.BATTLE:

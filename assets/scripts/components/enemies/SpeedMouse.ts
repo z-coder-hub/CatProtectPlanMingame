@@ -237,22 +237,28 @@ export class SpeedMouse extends BaseMouse {
         
         console.log("疾速老鼠受伤后加速！");
         
-        // 1秒后恢复正常速度
-        this.scheduleOnce(() => {
-            this.moveSpeed = originalSpeed;
-        }, 1);
+        // 1秒后恢复正常速度，使用Tween系统替代scheduleOnce
+        tween(this.node)
+            .delay(1)
+            .call(() => {
+                this.moveSpeed = originalSpeed;
+            })
+            .start();
         
         // 加速视觉效果
         if (this._graphics) {
             this._graphics.fillColor = new Color(255, 255, 150); // 更亮的颜色
             this.drawSpeedMouseAppearance();
             
-            this.scheduleOnce(() => {
-                if (this._graphics) {
-                    this._graphics.fillColor = new Color(200, 200, 50);
-                    this.drawSpeedMouseAppearance();
-                }
-            }, 1);
+            tween(this.node)
+                .delay(1)
+                .call(() => {
+                    if (this._graphics && this.node.isValid) {
+                        this._graphics.fillColor = new Color(200, 200, 50);
+                        this.drawSpeedMouseAppearance();
+                    }
+                })
+                .start();
         }
     }
     
@@ -267,12 +273,15 @@ export class SpeedMouse extends BaseMouse {
             this._graphics.fillColor = new Color(255, 100, 100);
             this.drawSpeedMouseAppearance();
             
-            this.scheduleOnce(() => {
-                if (this._graphics) {
-                    this._graphics.fillColor = originalColor;
-                    this.drawSpeedMouseAppearance();
-                }
-            }, 0.1);
+            tween(this.node)
+                .delay(0.1)
+                .call(() => {
+                    if (this._graphics && this.node.isValid) {
+                        this._graphics.fillColor = originalColor;
+                        this.drawSpeedMouseAppearance();
+                    }
+                })
+                .start();
         }
     }
     

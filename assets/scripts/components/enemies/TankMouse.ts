@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics } from 'cc';
+import { _decorator, Color, Graphics, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
@@ -145,9 +145,15 @@ export class TankMouse extends BaseMouse {
         // 护甲特效：稍微缩放表示防护
         this.node.setScale(originalScale.x * 0.95, originalScale.y * 0.95, originalScale.z);
         
-        this.scheduleOnce(() => {
-            this.node.setScale(originalScale);
-        }, 0.1);
+        // 使用Tween系统替代scheduleOnce
+        tween(this.node)
+            .delay(0.1)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.node.setScale(originalScale);
+                }
+            })
+            .start();
     }
     
     /**
@@ -157,15 +163,18 @@ export class TankMouse extends BaseMouse {
         // 重型单位死亡震动效果
         const originalPos = this.node.position.clone();
         
-        // 震动效果
+        // 使用Tween系统创建震动效果
         for (let i = 0; i < 3; i++) {
-            this.scheduleOnce(() => {
-                if (this.node && this.node.isValid) {
-                    const offsetX = (Math.random() - 0.5) * 10;
-                    const offsetY = (Math.random() - 0.5) * 10;
-                    this.node.setPosition(originalPos.x + offsetX, originalPos.y + offsetY, originalPos.z);
-                }
-            }, i * 0.05);
+            tween(this.node)
+                .delay(i * 0.05)
+                .call(() => {
+                    if (this.node && this.node.isValid) {
+                        const offsetX = (Math.random() - 0.5) * 10;
+                        const offsetY = (Math.random() - 0.5) * 10;
+                        this.node.setPosition(originalPos.x + offsetX, originalPos.y + offsetY, originalPos.z);
+                    }
+                })
+                .start();
         }
         
         console.log(`${this.unitName}死亡，装甲破碎！`);

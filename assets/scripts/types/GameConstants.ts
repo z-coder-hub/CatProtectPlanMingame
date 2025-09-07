@@ -192,7 +192,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         health: 25,
         maxHealth: 25,
         moveSpeed: 100,
-        goldReward: 4
+        goldReward: 5
     },
 
     [EnemyType.SPEED_MOUSE]: {
@@ -202,7 +202,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         health: 15,
         maxHealth: 15,
         moveSpeed: 120,
-        goldReward: 5
+        goldReward: 8
     },
 
     // === 装甲单位 ===
@@ -223,7 +223,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         health: 150,
         maxHealth: 150,
         moveSpeed: 30,
-        goldReward: 10,
+        goldReward: 12,
         armorValue: 5
     },
 
@@ -236,7 +236,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         health: 30,
         maxHealth: 30,
         moveSpeed: 65,
-        goldReward: 7,
+        goldReward: 10,
         stealthChance: 0.3
     },
 
@@ -249,7 +249,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         health: 300,
         maxHealth: 300,
         moveSpeed: 35,
-        goldReward: 25,
+        goldReward: 30,
         summonCount: 3,
         summonType: EnemyType.BASIC_MOUSE
     },
@@ -261,7 +261,47 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         health: 250,
         maxHealth: 250,
         moveSpeed: 50,
-        goldReward: 30
+        goldReward: 25
+    },
+
+    // === 特殊BOSS单位（关卡专用） ===
+    [EnemyType.ICE_KING]: {
+        type: EnemyType.ICE_KING,
+        name: "冰原霸主",
+        category: EnemyCategory.BOSS,
+        health: 500,
+        maxHealth: 500,
+        moveSpeed: 25,
+        goldReward: 50,
+        slowEffect: 0.3,       // 冰霜光环减速周围英雄
+        armorValue: 8
+    },
+
+    [EnemyType.FLAME_DEMON]: {
+        type: EnemyType.FLAME_DEMON,
+        name: "炎魔",
+        category: EnemyCategory.BOSS,
+        health: 400,
+        maxHealth: 400,
+        moveSpeed: 40,
+        goldReward: 40,
+        explosionDamage: 50,   // 死亡爆炸伤害
+        explosionRange: 100    // 爆炸范围
+    },
+
+    [EnemyType.VOLCANO_HEART]: {
+        type: EnemyType.VOLCANO_HEART,
+        name: "火山之心",
+        category: EnemyCategory.BOSS,
+        health: 600,
+        maxHealth: 600,
+        moveSpeed: 20,
+        goldReward: 80,
+        armorValue: 10,
+        summonCount: 2,
+        summonType: EnemyType.FLAME_DEMON,
+        explosionDamage: 100,
+        explosionRange: 150
     }
 };
 
@@ -398,7 +438,7 @@ export const WAVE_CONFIGS: WaveConfig[] = [
 export const GAME_CONFIG: GameConfig = {
     initialGold: 110,                    // 优化的初始金币，确保能部署2个橘猫+有余量
     castleHealth: 120,                   // 增加城堡血量，提供更多容错
-    restDuration: 120,                   // 波次间休息时长120秒，支持手动跳过
+    restDuration: 120,                   // 关卡间休息时长120秒，支持手动跳过
     gridConfig: {
         rows: 11,
         cols: 6

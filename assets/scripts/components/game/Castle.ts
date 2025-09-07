@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, Graphics, Label, Node, UITransform } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, UITransform, tween } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { UIHelper } from '../../utils/UIHelper';
 
@@ -121,8 +121,11 @@ export class Castle extends Component {
             );
 
             shakeCount++;
-            // 使用Cocos Creator调度系统而不是setTimeout
-            this.scheduleOnce(shake, 0.05);
+            // 使用Tween系统替代scheduleOnce
+            tween(this.node)
+                .delay(0.05)
+                .call(shake)
+                .start();
         };
 
         shake();

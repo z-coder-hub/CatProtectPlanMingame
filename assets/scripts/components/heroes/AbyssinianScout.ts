@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Node } from 'cc';
+import { _decorator, Color, Graphics, Node, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType, HeroState } from '../../types/GameTypes';
@@ -165,34 +165,43 @@ export class AbyssinianScout extends BaseHero {
         scoutGraphics.circle(0, 0, 100);
         scoutGraphics.stroke();
         
-        // 雷达扫描效果
-        let angle = 0;
-        const scanEffect = () => {
-            angle += 10;
-            
-            if (scoutGraphics && scoutNode.isValid && angle < 360) {
-                scoutGraphics.clear();
-                scoutGraphics.strokeColor = new Color(255, 255, 0, 150);
-                scoutGraphics.lineWidth = 2;
-                scoutGraphics.circle(0, 0, 100);
-                scoutGraphics.stroke();
-                
-                // 扫描线
-                const rad = (angle * Math.PI) / 180;
-                const x = 100 * Math.cos(rad);
-                const y = 100 * Math.sin(rad);
-                scoutGraphics.strokeColor = new Color(255, 255, 0, 255);
-                scoutGraphics.lineWidth = 3;
-                scoutGraphics.moveTo(0, 0);
-                scoutGraphics.lineTo(x, y);
-                scoutGraphics.stroke();
-                
-                requestAnimationFrame(scanEffect);
-            } else {
-                scoutNode.destroy();
-            }
-        };
-        scanEffect();
+        // 雷达扫描效果 - 使用tween系统
+        const totalAngle = 360;
+        const animationDuration = (totalAngle / 10) * 0.016; // 根据原始逻辑计算时间
+        
+        // 使用tween创建扫描动画
+        tween({ angle: 0 })
+            .to(animationDuration, { angle: totalAngle }, {
+                onUpdate: (target: any, ratio: number) => {
+                    if (!scoutGraphics || !scoutNode.isValid) return;
+                    
+                    const currentAngle = target.angle;
+                    
+                    if (currentAngle < 360) {
+                        scoutGraphics.clear();
+                        scoutGraphics.strokeColor = new Color(255, 255, 0, 150);
+                        scoutGraphics.lineWidth = 2;
+                        scoutGraphics.circle(0, 0, 100);
+                        scoutGraphics.stroke();
+                        
+                        // 扫描线
+                        const rad = (currentAngle * Math.PI) / 180;
+                        const x = 100 * Math.cos(rad);
+                        const y = 100 * Math.sin(rad);
+                        scoutGraphics.strokeColor = new Color(255, 255, 0, 255);
+                        scoutGraphics.lineWidth = 3;
+                        scoutGraphics.moveTo(0, 0);
+                        scoutGraphics.lineTo(x, y);
+                        scoutGraphics.stroke();
+                    }
+                },
+                onComplete: () => {
+                    if (scoutNode && scoutNode.isValid) {
+                        scoutNode.destroy();
+                    }
+                }
+            })
+            .start();
     }
     
     // 重写标签配置，使用"阿比猫"名称

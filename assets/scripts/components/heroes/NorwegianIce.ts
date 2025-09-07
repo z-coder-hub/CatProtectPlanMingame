@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
+import { _decorator, Color, Graphics, Node, Vec3, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType, HeroState } from '../../types/GameTypes';
@@ -128,23 +128,32 @@ export class NorwegianIce extends BaseHero {
         effectGraphics.circle(0, 0, 80);
         effectGraphics.fill();
         
-        // 效果动画
-        let opacity = 150;
-        const fadeEffect = () => {
-            opacity -= 10;
-            
-            if (effectGraphics && effectNode.isValid && opacity > 0) {
-                effectGraphics.clear();
-                effectGraphics.fillColor = new Color(173, 216, 230, opacity);
-                effectGraphics.circle(0, 0, 80);
-                effectGraphics.fill();
-                
-                requestAnimationFrame(fadeEffect);
-            } else {
-                effectNode.destroy();
-            }
-        };
-        fadeEffect();
+        // 效果动画 - 使用tween系统
+        const initialOpacity = 150;
+        const animationDuration = (initialOpacity / 10) * 0.016; // 根据原始逻辑计算时间
+        
+        // 使用tween创建淡入动画
+        tween({ opacity: initialOpacity })
+            .to(animationDuration, { opacity: 0 }, {
+                onUpdate: (target: any, ratio: number) => {
+                    if (!effectGraphics || !effectNode.isValid) return;
+                    
+                    const currentOpacity = initialOpacity - (initialOpacity * ratio);
+                    
+                    if (currentOpacity > 0) {
+                        effectGraphics.clear();
+                        effectGraphics.fillColor = new Color(173, 216, 230, Math.max(0, currentOpacity));
+                        effectGraphics.circle(0, 0, 80);
+                        effectGraphics.fill();
+                    }
+                },
+                onComplete: () => {
+                    if (effectNode && effectNode.isValid) {
+                        effectNode.destroy();
+                    }
+                }
+            })
+            .start();
     }
     
     // 重写标签配置，使用"挪威猫"名称

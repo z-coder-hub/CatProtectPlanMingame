@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Node } from 'cc';
+import { _decorator, Color, Graphics, Node, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType, HeroState } from '../../types/GameTypes';
@@ -157,26 +157,35 @@ export class ScottishEngineer extends BaseHero {
         buffGraphics.circle(0, 0, 80);
         buffGraphics.stroke();
         
-        // 扩散效果
-        let radius = 80;
-        let opacity = 150;
-        const expandEffect = () => {
-            radius += 5;
-            opacity -= 15;
-            
-            if (buffGraphics && buffNode.isValid && opacity > 0) {
-                buffGraphics.clear();
-                buffGraphics.strokeColor = new Color(0, 255, 0, opacity);
-                buffGraphics.lineWidth = 2;
-                buffGraphics.circle(0, 0, radius);
-                buffGraphics.stroke();
-                
-                requestAnimationFrame(expandEffect);
-            } else {
-                buffNode.destroy();
-            }
-        };
-        expandEffect();
+        // 扩散效果 - 使用tween系统
+        const initialRadius = 80;
+        const initialOpacity = 150;
+        const animationDuration = (initialOpacity / 15) * 0.016; // 根据原始逻辑计算时间
+        
+        // 使用tween创建扩散动画
+        tween({ radius: initialRadius, opacity: initialOpacity })
+            .to(animationDuration, { radius: initialRadius + 5 * (initialOpacity / 15), opacity: 0 }, {
+                onUpdate: (target: any, ratio: number) => {
+                    if (!buffGraphics || !buffNode.isValid) return;
+                    
+                    const currentRadius = initialRadius + (target.radius - initialRadius) * ratio;
+                    const currentOpacity = initialOpacity - (initialOpacity * ratio);
+                    
+                    if (currentOpacity > 0) {
+                        buffGraphics.clear();
+                        buffGraphics.strokeColor = new Color(0, 255, 0, Math.max(0, currentOpacity));
+                        buffGraphics.lineWidth = 2;
+                        buffGraphics.circle(0, 0, currentRadius);
+                        buffGraphics.stroke();
+                    }
+                },
+                onComplete: () => {
+                    if (buffNode && buffNode.isValid) {
+                        buffNode.destroy();
+                    }
+                }
+            })
+            .start();
     }
     
     // 重写标签配置，使用"苏格兰猫"名称

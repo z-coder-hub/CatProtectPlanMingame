@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Vec3, Node } from 'cc';
+import { _decorator, Color, Graphics, Vec3, Node, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
@@ -224,9 +224,14 @@ export class MouseKing extends BaseMouse {
             );
             
             // 延迟召唤，避免同时创建造成卡顿
-            this.scheduleOnce(() => {
-                this.createSummonedEnemy(spawnPos);
-            }, i * 0.2);
+            tween(this.node)
+                .delay(i * 0.2)
+                .call(() => {
+                    if (this.node && this.node.isValid) {
+                        this.createSummonedEnemy(spawnPos);
+                    }
+                })
+                .start();
         }
         
         this._summonCount++;
@@ -261,22 +266,28 @@ export class MouseKing extends BaseMouse {
         // 发光效果（放大再缩回）
         this.node.setScale(originalScale.x * 1.2, originalScale.y * 1.2, originalScale.z);
         
-        this.scheduleOnce(() => {
-            if (this.node && this.node.isValid) {
-                this.node.setScale(originalScale);
-            }
-        }, 0.3);
+        tween(this.node)
+            .delay(0.3)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.node.setScale(originalScale);
+                }
+            })
+            .start();
         
         // 闪烁效果
         const originalOpacity = this.node.opacity;
         this.node.opacity = 255;
         
         for (let i = 1; i <= 3; i++) {
-            this.scheduleOnce(() => {
-                if (this.node && this.node.isValid) {
-                    this.node.opacity = i % 2 === 0 ? originalOpacity : 200;
-                }
-            }, i * 0.1);
+            tween(this.node)
+                .delay(i * 0.1)
+                .call(() => {
+                    if (this.node && this.node.isValid) {
+                        this.node.opacity = i % 2 === 0 ? originalOpacity : 200;
+                    }
+                })
+                .start();
         }
         
         console.log(`${this.unitName}召唤特效完成`);
@@ -350,17 +361,20 @@ export class MouseKing extends BaseMouse {
         
         // 强烈震动
         for (let i = 0; i < 8; i++) {
-            this.scheduleOnce(() => {
-                if (this.node && this.node.isValid) {
-                    const shakeX = (Math.random() - 0.5) * 20;
-                    const shakeY = (Math.random() - 0.5) * 20;
-                    this.node.setPosition(originalPos.x + shakeX, originalPos.y + shakeY, originalPos.z);
-                    
-                    // 同时放大
-                    const scaleMultiplier = 1 + (Math.random() * 0.3);
-                    this.node.setScale(originalScale.x * scaleMultiplier, originalScale.y * scaleMultiplier, originalScale.z);
-                }
-            }, i * 0.05);
+            tween(this.node)
+                .delay(i * 0.05)
+                .call(() => {
+                    if (this.node && this.node.isValid) {
+                        const shakeX = (Math.random() - 0.5) * 20;
+                        const shakeY = (Math.random() - 0.5) * 20;
+                        this.node.setPosition(originalPos.x + shakeX, originalPos.y + shakeY, originalPos.z);
+                        
+                        // 同时放大
+                        const scaleMultiplier = 1 + (Math.random() * 0.3);
+                        this.node.setScale(originalScale.x * scaleMultiplier, originalScale.y * scaleMultiplier, originalScale.z);
+                    }
+                })
+                .start();
         }
     }
     
@@ -374,12 +388,15 @@ export class MouseKing extends BaseMouse {
         // 膨胀然后收缩消失
         this.node.setScale(originalScale.x * 2, originalScale.y * 2, originalScale.z);
         
-        this.scheduleOnce(() => {
-            if (this.node && this.node.isValid) {
-                this.node.setScale(0, 0, 0);
-                this.node.opacity = 0;
-            }
-        }, 0.5);
+        tween(this.node)
+            .delay(0.5)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.node.setScale(0, 0, 0);
+                    this.node.opacity = 0;
+                }
+            })
+            .start();
         
         console.log(`${this.unitName}王者陨落！`);
     }

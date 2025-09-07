@@ -81,14 +81,17 @@ export enum EnemyType {
 
     // BOSS单位
     MOUSE_KING = "MouseKing",           // 老鼠王
-    MECH_MOUSE = "MechMouse"            // 机械老鼠
+    MECH_MOUSE = "MechMouse",           // 机械老鼠
+    
+    // 特殊BOSS单位（关卡专用）
+    ICE_KING = "IceKing",               // 冰原霸主
+    FLAME_DEMON = "FlameDemon",         // 炎魔
+    VOLCANO_HEART = "VolcanoHeart"      // 火山之心
 }
 
 // 游戏状态枚举
 export enum GameState {
     MENU = "menu",
-    WORLD_SELECTION = "world_selection", // 世界选择
-    LEVEL_SELECTION = "level_selection", // 关卡选择
     DEPLOYMENT = "deployment",     // 部署阶段
     BATTLE = "battle",            // 战斗阶段
     RESTING = "resting",          // 休息阶段

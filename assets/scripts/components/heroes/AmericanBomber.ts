@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
+import { _decorator, Color, Graphics, Node, Vec3, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType, HeroState } from '../../types/GameTypes';
@@ -148,33 +148,33 @@ export class AmericanBomber extends BaseHero {
         bombGraphics.circle(0, 0, 5);
         bombGraphics.fill();
         
-        // 炸弹飞行轨迹（抛物线）
+        // 炸弹飞行轨迹（抛物线）- 使用tween系统
         const startPos = Vec3.clone(this.node.position);
         const endPos = targetPosition;
         const duration = 1.5; // 1.5秒飞行时间
-        let progress = 0;
         
-        const flyBomb = () => {
-            progress += 0.016 / duration; // 假设60FPS
-            
-            if (progress >= 1.0) {
-                // 爆炸 - 先爆炸再销毁节点
-                this.explodeBomb(endPos, bombNode.parent);
-                bombNode.destroy();
-                return;
-            }
-            
-            // 抛物线轨迹
-            const x = startPos.x + (endPos.x - startPos.x) * progress;
-            const y = startPos.y + (endPos.y - startPos.y) * progress + Math.sin(progress * Math.PI) * 50;
-            const z = startPos.z + (endPos.z - startPos.z) * progress;
-            
-            bombNode.setPosition(x, y, z);
-            
-            requestAnimationFrame(flyBomb);
-        };
-        
-        flyBomb();
+        // 使用tween创建抛物线飞行动画
+        tween(bombNode)
+            .to(duration, { position: endPos }, {
+                onUpdate: (target: Node, ratio: number) => {
+                    if (!target || !target.isValid) return;
+                    
+                    // 抛物线轨迹
+                    const x = startPos.x + (endPos.x - startPos.x) * ratio;
+                    const y = startPos.y + (endPos.y - startPos.y) * ratio + Math.sin(ratio * Math.PI) * 50;
+                    const z = startPos.z + (endPos.z - startPos.z) * ratio;
+                    
+                    target.setPosition(x, y, z);
+                },
+                onComplete: () => {
+                    if (bombNode && bombNode.isValid) {
+                        // 爆炸 - 先爆炸再销毁节点
+                        this.explodeBomb(endPos, bombNode.parent);
+                        bombNode.destroy();
+                    }
+                }
+            })
+            .start();
     }
     
     private explodeBomb(position: Vec3, parentNode?: Node | null): void {

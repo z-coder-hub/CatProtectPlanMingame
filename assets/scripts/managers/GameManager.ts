@@ -31,12 +31,11 @@ export class GameManager extends Component {
     public castleNode: Node | null = null;
     
     // ====================== 关卡系统状态 ======================
-    private _currentWorldId: number = 1;           // 当前选择的世界ID
-    private _currentLevelId: string = "1-1";       // 当前选择的关卡ID
+    private _currentLevelIndex: number = 0;        // 当前关卡索引（0-19，对应20个关卡）
     private _currentLevelConfig: LevelConfig | null = null; // 当前关卡配置
     
     // 游戏状态
-    private _gameState: GameState = GameState.WORLD_SELECTION; // 改为世界选择开始
+    private _gameState: GameState = GameState.MENU; // 从菜单开始
     private _maxCastleHealth: number = 100;
     
     // 已部署的英雄列表
@@ -58,6 +57,11 @@ export class GameManager extends Component {
     private _levelManagerCache: LevelManager | null = null;
     private _gridSystemCache: GridDeploymentSystem | null = null;
     
+    // 状态转换计时器（符合Cocos Creator生命周期规范）
+    private _stateTransitionTimer: number = 0;
+    private _pendingStateTransition: GameState | null = null;
+    private _stateTransitionDelay: number = 3.0; // 3秒延迟
+    
     // 获取游戏状态
     public get gameState(): GameState {
         return this._gameState;
@@ -70,14 +74,9 @@ export class GameManager extends Component {
     
     // ====================== 关卡系统访问方法 ======================
     
-    // 获取当前世界ID
-    public get currentWorldId(): number {
-        return this._currentWorldId;
-    }
-    
-    // 获取当前关卡ID
-    public get currentLevelId(): string {
-        return this._currentLevelId;
+    // 获取当前关卡索引
+    public get currentLevelIndex(): number {
+        return this._currentLevelIndex;
     }
     
     // 获取当前关卡配置
@@ -85,9 +84,9 @@ export class GameManager extends Component {
         return this._currentLevelConfig;
     }
     
-    // 获取当前世界配置
-    public get currentWorldConfig(): WorldConfig | null {
-        return LEVEL_CONFIGS.getWorldById(this._currentWorldId);
+    // 获取当前关卡ID
+    public get currentLevelId(): string {
+        return this._currentLevelConfig?.id || "unknown";
     }
     
     // 获取当前关卡名称
@@ -95,9 +94,9 @@ export class GameManager extends Component {
         return this._currentLevelConfig?.name || "未知关卡";
     }
     
-    // 获取当前世界名称
-    public get currentWorldName(): string {
-        return this.currentWorldConfig?.name || "未知世界";
+    // 获取游戏总关卡数
+    public get totalLevels(): number {
+        return LEVEL_CONFIGS.getAllLevels().length;
     }
     
     // 获取已部署英雄列表
@@ -152,6 +151,14 @@ export class GameManager extends Component {
         if (this._gameState === GameState.RESTING) {
             this.updateRestPhase(dt);
         }
+        
+        // 更新状态转换计时器（替代setTimeout的规范实现）
+        if (this._pendingStateTransition && this._stateTransitionTimer > 0) {
+            this._stateTransitionTimer -= dt;
+            if (this._stateTransitionTimer <= 0) {
+                this.executeStateTransition();
+            }
+        }
     }
     
     protected onDestroy(): void {
@@ -162,52 +169,54 @@ export class GameManager extends Component {
     
     // 初始化游戏配置
     private initializeGameConfig(): void {
-        // 设置默认关卡
-        this.selectLevel("1-1");
+        // 设置从第一关开始
+        this.loadLevel(0);
         
-        // 设置初始游戏状态为世界选择
-        this._gameState = GameState.WORLD_SELECTION;
-        console.log("游戏初始化完成，状态设置为世界选择");
+        // 设置初始游戏状态为菜单
+        this._gameState = GameState.MENU;
+        console.log("游戏初始化完成，准备从第一关开始");
     }
     
-    // ====================== 关卡选择和管理方法 ======================
+    // ====================== 线性关卡管理方法 ======================
     
-    // 选择世界
-    public SelectWorld(worldId: number): boolean {
-        const world = LEVEL_CONFIGS.getWorldById(worldId);
-        if (!world) {
-            console.error(`未找到世界: ${worldId}`);
+    // 加载指定索引的关卡
+    public loadLevel(levelIndex: number): boolean {
+        const allLevels = LEVEL_CONFIGS.getAllLevels();
+        
+        if (levelIndex < 0 || levelIndex >= allLevels.length) {
+            console.error(`无效的关卡索引: ${levelIndex}, 总关卡数: ${allLevels.length}`);
             return false;
         }
         
-        this._currentWorldId = worldId;
-        console.log(`选择世界: ${world.name} (ID: ${worldId})`);
-        this.setGameState(GameState.LEVEL_SELECTION);
-        return true;
-    }
-    
-    // 选择关卡
-    public SelectLevel(levelId: string): boolean {
-        const levelConfig = LEVEL_CONFIGS.getLevelById(levelId);
-        if (!levelConfig) {
-            console.error(`未找到关卡配置: ${levelId}`);
-            return false;
-        }
-        
-        this._currentLevelId = levelId;
-        this._currentLevelConfig = levelConfig;
-        this._currentWorldId = levelConfig.worldId;
+        this._currentLevelIndex = levelIndex;
+        this._currentLevelConfig = allLevels[levelIndex];
         
         // 应用关卡配置
-        this.applyLevelConfig(levelConfig);
+        this.applyLevelConfig(this._currentLevelConfig);
         
-        console.log(`选择关卡: ${levelConfig.name} (${levelId})`);
+        console.log(`加载关卡: ${this._currentLevelConfig.name} (${this._currentLevelConfig.id}) - 索引: ${levelIndex}`);
         return true;
     }
     
-    // 简化的选择关卡方法（兼容旧代码）
-    private selectLevel(levelId: string): boolean {
-        return this.SelectLevel(levelId);
+    // 重新开始游戏（从第一关开始）
+    public RestartGame(): void {
+        console.log("重新开始游戏，从第一关开始");
+        this.loadLevel(0);
+        this.setGameState(GameState.MENU);
+    }
+    
+    // 进入下一关
+    public NextLevel(): boolean {
+        const nextIndex = this._currentLevelIndex + 1;
+        const totalLevels = this.totalLevels;
+        
+        if (nextIndex >= totalLevels) {
+            console.log("所有关卡已完成！游戏通关！");
+            return false;
+        }
+        
+        console.log(`进入下一关: 第${nextIndex + 1}关`);
+        return this.loadLevel(nextIndex);
     }
     
     // 应用关卡配置
@@ -301,8 +310,30 @@ export class GameManager extends Component {
         // 发放奖励（在LevelManager处理解锁后）
         this.processLevelRewards(levelConfig.rewards);
         
-        // 设置胜利状态
-        this.setGameState(GameState.VICTORY);
+        // 检查是否有下一关
+        const nextIndex = this._currentLevelIndex + 1;
+        const totalLevels = this.totalLevels;
+        
+        if (nextIndex >= totalLevels) {
+            // 所有关卡完成，游戏通关
+            this.setGameState(GameState.VICTORY);
+            console.log("🎉 恭喜！所有关卡已完成，游戏通关！");
+        } else {
+            // 有下一关，进入关卡间休息阶段（120秒）
+            this.setGameState(GameState.RESTING);
+            this._restTimer = this._restDuration; // 120秒休息时间
+            console.log(`关卡胜利！进入关卡间休息阶段，${this._restDuration}秒后自动进入第${nextIndex + 1}关...`);
+            
+            // 清空所有英雄，准备重新部署
+            this.ClearAllHeroes();
+            this.ClearAllEnemies();
+            
+            // 先暂停WaveManager，避免它在休息期间自动开始
+            const waveManager = this.GetWaveManager();
+            if (waveManager) {
+                waveManager.StopCurrentWave();
+            }
+        }
     }
     
     // 计算关卡完成时间（简化实现）
@@ -324,7 +355,13 @@ export class GameManager extends Component {
     // 处理关卡失败
     private handleLevelDefeat(): void {
         console.log(`关卡失败: ${this.currentLevelName}`);
+        console.log("游戏失败，将从第一关重新开始");
+        
+        // 设置游戏失败状态
         this.setGameState(GameState.GAME_OVER);
+        
+        // 使用组件生命周期规范的状态转换机制 
+        this.scheduleGameRestart(this._stateTransitionDelay);
     }
     
     // 处理关卡奖励
@@ -336,15 +373,32 @@ export class GameManager extends Component {
                     console.log(`获得金币奖励: ${reward.value}`);
                     break;
                 case RewardType.HERO_UNLOCK:
-                    // TODO: 集成英雄解锁系统
-                    console.log(`解锁英雄: ${reward.value}`);
+                    // 集成英雄解锁系统
+                    const levelManager = this.GetLevelManager();
+                    const heroType = reward.value as HeroType;
+                    console.log(`尝试解锁英雄: ${heroType} (type: ${typeof heroType})`);
+                    if (levelManager && levelManager.UnlockHero(heroType)) {
+                        console.log(`成功解锁英雄: ${heroType}`);
+                        // 触发英雄解锁事件通知UI
+                        this.emitEvent('hero-unlocked', { heroType: heroType });
+                    } else {
+                        console.warn(`英雄解锁失败: ${heroType}`);
+                    }
                     break;
                 case RewardType.ACHIEVEMENT:
                     // TODO: 集成成就系统
                     console.log(`获得成就: ${reward.value}`);
                     break;
+                case RewardType.BUFF:
+                    // 处理增益效果
+                    console.log(`获得增益: ${reward.value} - ${reward.description}`);
+                    break;
+                case RewardType.TITLE:
+                    // 处理称号奖励
+                    console.log(`获得称号: ${reward.value} - ${reward.description}`);
+                    break;
                 default:
-                    console.log(`获得奖励: ${reward.type} - ${reward.value}`);
+                    console.log(`获得未知奖励: ${reward.type} - ${reward.value}`);
             }
         }
     }
@@ -503,30 +557,63 @@ export class GameManager extends Component {
             console.log(`关卡 ${this.currentLevelName} 所有波次完成！`);
             this.CompleteLevel(true); // 关卡胜利
         } else {
-            // 进入休息阶段，准备下一波
-            this.setGameState(GameState.RESTING);
-            this._restTimer = this._restDuration;
-            this.ClearAllHeroes(); // 清空英雄重新部署
+            // 波次间准备下一波（保留英雄，只清理敌人）
             this.ClearAllEnemies(); // 清理所有剩余的敌人尸体
+            this.NextWave(); // 准备下一波，WaveManager会自动等待5秒后开始
         }
     }
     
-    // 更新休息阶段
+    // 更新休息阶段（关卡间休息）
     private updateRestPhase(dt: number): void {
         this._restTimer -= dt;
         if (this._restTimer <= 0) {
-            this.NextWave();
+            // 关卡间休息结束，加载下一关并进入部署阶段
+            const nextIndex = this._currentLevelIndex + 1;
+            console.log(`关卡间休息结束，加载第${nextIndex + 1}关`);
+            
+            if (this.loadLevel(nextIndex)) {
+                // 直接开始战斗，不需要部署阶段
+                this.setGameState(GameState.BATTLE);
+                console.log(`休息结束，自动开始第${nextIndex + 1}关第${this.currentWave}波`);
+                
+                // 启动波次管理器
+                const waveManager = this.GetWaveManager();
+                if (waveManager) {
+                    waveManager.StartWave(this.currentWave);
+                } else {
+                    console.error("未找到WaveManager，无法启动波次");
+                }
+            } else {
+                console.error("加载下一关失败");
+            }
         }
     }
     
-    // 手动跳过休息阶段
+    // 手动跳过休息阶段（关卡间）
     public SkipRestPhase(): void {
         if (this._gameState === GameState.RESTING) {
-            console.log("手动跳过休息阶段，立即开始下一波");
+            console.log("手动跳过关卡间休息阶段，立即进入下一关");
             this._restTimer = 0;
-            this.NextWave();
+            
+            // 加载下一关
+            const nextIndex = this._currentLevelIndex + 1;
+            if (this.loadLevel(nextIndex)) {
+                // 可以选择直接开始战斗或进入部署阶段
+                this.setGameState(GameState.BATTLE);
+                console.log(`跳过休息，直接开始第${nextIndex + 1}关第${this.currentWave}波`);
+                
+                // 启动波次管理器
+                const waveManager = this.GetWaveManager();
+                if (waveManager) {
+                    waveManager.StartWave(this.currentWave);
+                } else {
+                    console.error("未找到WaveManager，无法启动波次");
+                }
+            } else {
+                console.error("跳过休息时加载下一关失败");
+            }
         } else {
-            console.warn("只能在休息阶段跳过休息");
+            console.warn("只能在关卡间休息阶段跳过休息");
         }
     }
     
@@ -552,8 +639,9 @@ export class GameManager extends Component {
             console.log(`关卡 ${this.currentLevelName} 完成，总共 ${totalWaves} 波`);
             this.CompleteLevel(true);
         } else {
-            console.log(`进入第 ${this.currentWave} 波部署阶段 (共 ${totalWaves} 波)`);
-            this.setGameState(GameState.DEPLOYMENT);
+            console.log(`准备第 ${this.currentWave} 波，${waveManager?.wavePrepareTime || 5}秒后自动开始 (共 ${totalWaves} 波)`);
+            // 保持战斗状态，让WaveManager处理等待和自动开始
+            this.setGameState(GameState.BATTLE);
         }
     }
     
@@ -749,5 +837,61 @@ export class GameManager extends Component {
         const component = this.node.parent?.getComponentInChildren(componentClass) || null;
         (this as any)[cacheKey] = component;
         return component;
+    }
+    
+    // ====================== 状态转换管理方法（符合Cocos Creator规范）======================
+    
+    /**
+     * 安排状态转换（替代setTimeout的规范实现）
+     * @param targetState 目标状态
+     * @param delay 延迟时间（秒）
+     */
+    private scheduleStateTransition(targetState: GameState, delay: number): void {
+        this._pendingStateTransition = targetState;
+        this._stateTransitionTimer = delay;
+        console.log(`已安排状态转换: ${targetState}, 延迟: ${delay}秒`);
+    }
+    
+    /**
+     * 执行待定的状态转换
+     */
+    private executeStateTransition(): void {
+        if (!this._pendingStateTransition) return;
+        
+        const targetState = this._pendingStateTransition;
+        this._pendingStateTransition = null;
+        this._stateTransitionTimer = 0;
+        
+        this.setGameState(targetState);
+        
+        if (targetState === GameState.DEPLOYMENT) {
+            console.log("自动进入下一关");
+        }
+    }
+    
+    /**
+     * 安排游戏重启（替代setTimeout的规范实现）
+     * @param delay 延迟时间（秒）
+     */
+    private scheduleGameRestart(delay: number): void {
+        // 使用特殊标记表示重启操作
+        this._pendingStateTransition = null; // 清除状态转换
+        this._stateTransitionTimer = delay;
+        
+        // 使用scheduleOnce进行游戏重启（这里是合规的游戏逻辑使用）
+        this.scheduleOnce(() => {
+            this.RestartGame();
+        }, delay);
+        
+        console.log(`已安排游戏重启, 延迟: ${delay}秒`);
+    }
+    
+    /**
+     * 取消待定的状态转换
+     */
+    public cancelPendingStateTransition(): void {
+        this._pendingStateTransition = null;
+        this._stateTransitionTimer = 0;
+        console.log("已取消待定的状态转换");
     }
 }

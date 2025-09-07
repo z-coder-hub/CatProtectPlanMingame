@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Vec3 } from 'cc';
+import { _decorator, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
@@ -53,15 +53,15 @@ export class MechMouse extends BaseMouse {
     private drawMechMouseAppearance(): void {
         if (!this._graphics) return;
         
-        this._this._graphics.clear();
+        this._graphics.clear();
         
         // 机械外观颜色
         const bodyColor = new Color(120, 120, 140, 255);    // 银灰色机械身体
         const glowColor = new Color(100, 150, 255, 255);    // 蓝色科技光
         
         // 绘制机械身体主体（矩形科技造型）
-        this._this._graphics.fillColor = bodyColor;
-        this._this._graphics.strokeColor = new Color(80, 80, 100, 255);
+        this._graphics.fillColor = bodyColor;
+        this._graphics.strokeColor = new Color(80, 80, 100, 255);
         this._this._graphics.lineWidth = 2;
         
         // 主体 - 科技感矩形身体
@@ -181,7 +181,7 @@ export class MechMouse extends BaseMouse {
     private updateTechAppearance(): void {
         const graphics = this.node.getComponent(Graphics);
         if (graphics) {
-            this.drawMechMouseAppearance(graphics);
+            this.drawMechMouseAppearance();
         }
     }
     
@@ -260,19 +260,25 @@ export class MechMouse extends BaseMouse {
         // 电磁脉冲扩散
         this.node.setScale(originalScale.x * 0.5, originalScale.y * 0.5, originalScale.z);
         
-        // 快速扩散然后消失
-        this.scheduleOnce(() => {
-            if (this.node && this.node.isValid) {
-                this.node.setScale(originalScale.x * 3, originalScale.y * 3, originalScale.z);
-                this.node.opacity = 100;
-            }
-        }, 0.1);
+        // 快速扩散然后消失 - 使用tween系统替代scheduleOnce
+        tween(this.node)
+            .delay(0.1)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.node.setScale(originalScale.x * 3, originalScale.y * 3, originalScale.z);
+                    this.node.opacity = 100;
+                }
+            })
+            .start();
         
-        this.scheduleOnce(() => {
-            if (this.node && this.node.isValid) {
-                this.node.opacity = 0;
-            }
-        }, 0.3);
+        tween(this.node)
+            .delay(0.3)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.node.opacity = 0;
+                }
+            })
+            .start();
     }
     
     /**
@@ -283,30 +289,39 @@ export class MechMouse extends BaseMouse {
         const originalScale = this.node.scale.clone();
         const originalOpacity = this.node.opacity;
         
-        // 第一阶段：电路短路闪烁
+        // 第一阶段：电路短路闪烁 - 使用tween系统替代scheduleOnce
         for (let i = 1; i <= 8; i++) {
-            this.scheduleOnce(() => {
-                if (this.node && this.node.isValid) {
-                    this.node.opacity = i % 2 === 0 ? originalOpacity : 50;
-                }
-            }, i * 0.05);
+            tween(this.node)
+                .delay(i * 0.05)
+                .call(() => {
+                    if (this.node && this.node.isValid) {
+                        this.node.opacity = i % 2 === 0 ? originalOpacity : 50;
+                    }
+                })
+                .start();
         }
         
-        // 第二阶段：爆炸扩散
-        this.scheduleOnce(() => {
-            if (this.node && this.node.isValid) {
-                this.node.setScale(originalScale.x * 2, originalScale.y * 2, originalScale.z);
-                this.node.opacity = 200;
-            }
-        }, 0.5);
+        // 第二阶段：爆炸扩散 - 使用tween系统替代scheduleOnce
+        tween(this.node)
+            .delay(0.5)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.node.setScale(originalScale.x * 2, originalScale.y * 2, originalScale.z);
+                    this.node.opacity = 200;
+                }
+            })
+            .start();
         
-        // 第三阶段：消失
-        this.scheduleOnce(() => {
-            if (this.node && this.node.isValid) {
-                this.node.setScale(0, 0, 0);
-                this.node.opacity = 0;
-            }
-        }, 0.7);
+        // 第三阶段：消失 - 使用tween系统替代scheduleOnce
+        tween(this.node)
+            .delay(0.7)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.node.setScale(0, 0, 0);
+                    this.node.opacity = 0;
+                }
+            })
+            .start();
         
         console.log(`${this.unitName}机械系统损毁，爆炸解体！`);
     }

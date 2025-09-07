@@ -29,6 +29,9 @@ export class HeroSelectionPanel extends Component {
     private _gameManager: GameManager | null = null;
     private _levelManager: LevelManager | null = null;
     private _gridSystem: GridDeploymentSystem | null = null;
+    
+    // 缓存上次的解锁状态，用于检测变化
+    private _lastUnlockedHeroes: Set<HeroType> = new Set();
 
     // ========== 生命周期方法 ==========
 
@@ -53,6 +56,15 @@ export class HeroSelectionPanel extends Component {
             console.error("未找到GridDeploymentSystem实例");
         }
 
+        // 监听英雄解锁事件
+        if (this._gameManager) {
+            this._gameManager.AddEventListener('hero-unlocked', this.onHeroUnlocked);
+        }
+
+        // 初始化解锁状态缓存
+        const initialUnlockedHeroes = this.getUnlockedHeroTypes();
+        this._lastUnlockedHeroes = new Set(initialUnlockedHeroes);
+        
         // 初始更新按钮状态
         this.UpdateHeroButtonStates();
     }
@@ -64,14 +76,60 @@ export class HeroSelectionPanel extends Component {
 
     protected onDestroy(): void {
         this.cleanupDrag();
+        
+        // 清理事件监听
+        if (this._gameManager) {
+            this._gameManager.RemoveEventListener('hero-unlocked', this.onHeroUnlocked);
+        }
+    }
+
+    // ========== 事件处理方法 ==========
+
+    /**
+     * 英雄解锁事件处理
+     */
+    private onHeroUnlocked = (data: { heroType: HeroType }): void => {
+        const heroType = data.heroType;
+        console.log(`🎉 收到英雄解锁事件: ${heroType}`);
+        
+        // 刷新英雄面板以显示新解锁的英雄
+        this.RefreshHeroPanel();
     }
 
     // ========== 公共接口方法 ==========
 
     /**
-     * 获取已解锁的英雄类型列表
+     * 获取所有英雄类型列表（包括已解锁和未解锁的）
+     */
+    private getAllHeroTypes(): HeroType[] {
+        // 返回所有英雄类型，按分类排序
+        return [
+            // 远程英雄
+            HeroType.ORANGE_CAT,
+            HeroType.PERSIAN_SNIPER,
+            HeroType.BENGAL_HUNTER,
+            // 法师英雄
+            HeroType.SIAMESE_MAGE,
+            HeroType.MAINE_THUNDER,
+            HeroType.NORWEGIAN_ICE,
+            // 近战英雄
+            HeroType.BRITISH_KNIGHT,
+            HeroType.RAGDOLL_GUARDIAN,
+            // 辅助英雄
+            HeroType.SCOTTISH_ENGINEER,
+            HeroType.ABYSSINIAN_SCOUT,
+            // 特殊英雄
+            HeroType.RUSSIAN_BLUE,
+            HeroType.AMERICAN_BOMBER
+        ];
+    }
+
+    /**
+     * 获取已解锁的英雄类型列表（保留兼容性）
      */
     private getUnlockedHeroTypes(): HeroType[] {
+        const allHeroes = this.getAllHeroTypes();
+        
         // 如果LevelManager还未初始化，使用默认解锁英雄
         if (!this._levelManager) {
             console.warn("LevelManager未初始化，使用默认英雄列表");
@@ -190,7 +248,168 @@ export class HeroSelectionPanel extends Component {
      * 刷新英雄面板（当有新英雄解锁时调用）
      */
     public RefreshHeroPanel(): void {
-        console.log("刷新英雄选择面板");
+        console.log("智能刷新英雄选择面板");
+        
+        const currentAllHeroes = this.getAllHeroTypes();
+        const currentUnlockedHeroes = this.getUnlockedHeroTypes();
+        console.log(`所有英雄数量: ${currentAllHeroes.length}, 已解锁: ${currentUnlockedHeroes.length}`);
+        
+        // 检查是否有新英雄需要添加
+        const needsFullRefresh = this.checkIfNeedsFullRefresh(currentAllHeroes);
+        
+        if (needsFullRefresh) {
+            console.log("检测到需要重建按钮（英雄数量变化）");
+            this.recreateHeroButtons();
+        } else {
+            console.log("英雄数量未变，检查解锁状态变化");
+            // 检查是否有解锁状态变化
+            if (this.hasUnlockStatusChanged(currentUnlockedHeroes)) {
+                console.log("检测到解锁状态变化，重新创建按钮");
+                this.recreateHeroButtons();
+            } else {
+                console.log("没有状态变化，只更新按钮外观");
+                this.UpdateHeroButtonStates();
+            }
+        }
+    }
+
+    /**
+     * 检查解锁状态是否发生变化
+     */
+    private hasUnlockStatusChanged(currentUnlockedHeroes: HeroType[]): boolean {
+        const currentSet = new Set(currentUnlockedHeroes);
+        
+        // 比较新旧解锁状态
+        if (this._lastUnlockedHeroes.size !== currentSet.size) {
+            console.log(`解锁数量变化: ${this._lastUnlockedHeroes.size} → ${currentSet.size}`);
+            this._lastUnlockedHeroes = currentSet;
+            return true;
+        }
+        
+        // 检查具体的解锁英雄是否有变化
+        for (const hero of currentSet) {
+            if (!this._lastUnlockedHeroes.has(hero)) {
+                console.log(`新解锁英雄: ${hero}`);
+                this._lastUnlockedHeroes = currentSet;
+                return true;
+            }
+        }
+        
+        for (const hero of this._lastUnlockedHeroes) {
+            if (!currentSet.has(hero)) {
+                console.log(`英雄被锁定: ${hero}`);
+                this._lastUnlockedHeroes = currentSet;
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * 检查是否需要完全刷新面板
+     */
+    private checkIfNeedsFullRefresh(currentAllHeroes: HeroType[]): boolean {
+        // 如果按钮数量与所有英雄数量不匹配，需要刷新
+        if (this._heroButtons.length !== currentAllHeroes.length) {
+            return true;
+        }
+        
+        // 检查每个英雄是否都有对应按钮
+        for (const heroType of currentAllHeroes) {
+            const hasButton = this._heroButtons.some(button => 
+                button && button.isValid && button.name === `HeroButton_${heroType}`
+            );
+            if (!hasButton) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * 重新创建英雄按钮（保持面板结构不变）
+     */
+    private recreateHeroButtons(): void {
+        // 只清理按钮，保持ScrollView和面板结构
+        this._heroButtons.forEach(button => {
+            if (button && button.isValid) {
+                button.destroy();
+            }
+        });
+        this._heroButtons = [];
+
+        // 找到Content节点
+        const contentNode = this.findContentNode();
+        if (!contentNode) {
+            console.error("找不到Content节点，进行完整面板重建");
+            this.fullPanelRebuild();
+            return;
+        }
+
+        // 清理Content节点的子节点（按钮容器）
+        const contentChildren = contentNode.children.slice();
+        contentChildren.forEach(child => {
+            if (child && child.isValid) {
+                child.destroy();
+            }
+        });
+
+        // 重新创建按钮
+        const buttonWidth = 96;
+        const buttonHeight = 120;
+        const buttonSpacing = 24;
+        
+        this.createHeroButtonsAdaptiveLayout(contentNode, buttonWidth, buttonHeight, buttonSpacing);
+        
+        // 更新Content尺寸
+        this.updateContentSize(contentNode);
+        
+        console.log(`成功重新创建 ${this._heroButtons.length} 个英雄按钮`);
+    }
+
+    /**
+     * 查找Content节点
+     */
+    private findContentNode(): Node | null {
+        const scrollViewNode = this.node.getChildByName("HeroScrollView");
+        if (!scrollViewNode) return null;
+        
+        const viewNode = scrollViewNode.getChildByName("View");
+        if (!viewNode) return null;
+        
+        const contentNode = viewNode.getChildByName("Content");
+        return contentNode;
+    }
+
+    /**
+     * 更新Content节点尺寸
+     */
+    private updateContentSize(contentNode: Node): void {
+        const availableHeroes = this.getAllHeroTypes();
+        const buttonWidth = 96;
+        const buttonSpacing = 24;
+        const paddingTotal = buttonSpacing * 2;
+        
+        const contentTransform = contentNode.getComponent(UITransform);
+        if (contentTransform) {
+            const panelTransform = this.node.getComponent(UITransform);
+            const panelWidth = panelTransform ? panelTransform.width : 800;
+            
+            const minContentWidth = availableHeroes.length * (buttonWidth + buttonSpacing) + paddingTotal;
+            const contentWidth = Math.max(minContentWidth, (panelWidth - 36) + 120);
+            
+            contentTransform.setContentSize(contentWidth, contentTransform.height);
+            console.log(`更新Content尺寸: 宽度=${contentWidth}, 英雄数量=${availableHeroes.length}`);
+        }
+    }
+
+    /**
+     * 完整面板重建（兜底方案）
+     */
+    private fullPanelRebuild(): void {
+        console.warn("执行完整面板重建");
         
         // 清理现有按钮
         this._heroButtons.forEach(button => {
@@ -199,14 +418,26 @@ export class HeroSelectionPanel extends Component {
             }
         });
         this._heroButtons = [];
+        this._heroScrollView = null;
 
-        // 重新创建面板（清理整个面板并重新创建）
+        // 清理子节点
         const panelChildren = this.node.children.slice();
         panelChildren.forEach(child => {
             if (child && child.isValid) {
                 child.destroy();
             }
         });
+
+        // 清理主节点组件
+        const existingGraphics = this.node.getComponent(Graphics);
+        if (existingGraphics) {
+            existingGraphics.destroy();
+        }
+        
+        const existingWidget = this.node.getComponent(Widget);
+        if (existingWidget) {
+            existingWidget.destroy();
+        }
 
         // 重新创建面板
         this.createHeroSelectionPanel();
@@ -275,7 +506,7 @@ export class HeroSelectionPanel extends Component {
         contentNode.parent = viewNode;
         const contentTransform = contentNode.addComponent(UITransform);
 
-        const availableHeroes = this.getUnlockedHeroTypes();
+        const availableHeroes = this.getAllHeroTypes();
         const buttonWidth = 96; // 80 * 1.2 = 96
         const buttonHeight = 120; // 增加高度以容纳名称标签，100 * 1.2 = 120
         const buttonSpacing = 24; // 20 * 1.2 = 24
@@ -301,7 +532,7 @@ export class HeroSelectionPanel extends Component {
      * 自适应布局创建英雄按钮 - 使用Widget相对布局
      */
     private createHeroButtonsAdaptiveLayout(contentNode: Node, buttonWidth: number, buttonHeight: number, buttonSpacing: number): void {
-        const availableHeroes = this.getUnlockedHeroTypes();
+        const availableHeroes = this.getAllHeroTypes();
         const contentTransform = contentNode.getComponent(UITransform);
         if (!contentTransform) {
             console.error("Content节点缺少UITransform组件");
@@ -383,14 +614,17 @@ export class HeroSelectionPanel extends Component {
         const buttonBg = buttonNode.addComponent(Graphics);
         this.drawHeroButtonBackground(buttonBg, width, height, false, heroType);
 
+        // 检查英雄解锁状态
+        const isUnlocked = this.IsHeroUnlocked(heroType);
+
         // 英雄图标
-        this.createHeroIcon(buttonNode, heroType);
+        this.createHeroIcon(buttonNode, heroType, isUnlocked);
 
         // 名称标签
-        this.createAdaptiveNameLabel(buttonNode, heroType);
+        this.createAdaptiveNameLabel(buttonNode, heroType, isUnlocked);
 
         // 价格标签
-        this.createAdaptivePriceLabel(buttonNode, heroConfig.cost);
+        this.createAdaptivePriceLabel(buttonNode, heroConfig.cost, isUnlocked);
 
         // 添加触摸事件
         this.setupHeroButtonEvents(buttonNode, heroType);
@@ -401,7 +635,7 @@ export class HeroSelectionPanel extends Component {
     /**
      * 创建自适应价格标签
      */
-    private createAdaptivePriceLabel(parent: Node, cost: number): void {
+    private createAdaptivePriceLabel(parent: Node, cost: number, isUnlocked: boolean = true): void {
 
         // 创建价格背景节点
         const priceBgNode = new Node("PriceBackground");
@@ -421,7 +655,9 @@ export class HeroSelectionPanel extends Component {
 
         // 价格背景
         const priceBg = priceBgNode.addComponent(Graphics);
-        priceBg.fillColor = new Color(0, 0, 0, 150);
+        priceBg.fillColor = isUnlocked 
+            ? new Color(0, 0, 0, 150)       // 解锁时：正常黑色背景
+            : new Color(60, 60, 60, 120);   // 未解锁时：深灰色背景，降低透明度
         priceBg.rect(-24, -9.6, 48, 19.2); // (-20, -8, 40, 16) * 1.2
         priceBg.fill();
 
@@ -443,15 +679,15 @@ export class HeroSelectionPanel extends Component {
 
         // 价格文本
         const priceLabel = priceNode.addComponent(Label);
-        priceLabel.string = `${cost}`;
-        priceLabel.fontSize = 14.4; // 12 * 1.2 = 14.4，固定字体大小
-        priceLabel.color = new Color(255, 215, 0);
+        priceLabel.string = isUnlocked ? `${cost}` : '🔒'; // 未解锁时显示锁定图标
+        priceLabel.fontSize = isUnlocked ? 14.4 : 16; // 未解锁时稍大的字体显示锁定图标
+        priceLabel.color = isUnlocked ? new Color(255, 215, 0) : new Color(100, 100, 100); // 未解锁时更深的灰色
     }
 
     /**
      * 创建自适应名称标签
      */
-    private createAdaptiveNameLabel(parent: Node, heroType: HeroType): void {
+    private createAdaptiveNameLabel(parent: Node, heroType: HeroType, isUnlocked: boolean = true): void {
 
         // 获取英雄名称
         const heroName = this.getHeroDisplayName(heroType);
@@ -475,7 +711,9 @@ export class HeroSelectionPanel extends Component {
 
         // 名称背景
         const nameBg = nameBgNode.addComponent(Graphics);
-        nameBg.fillColor = new Color(0, 0, 0, 150);
+        nameBg.fillColor = isUnlocked 
+            ? new Color(0, 0, 0, 150)       // 解锁时：正常黑色背景
+            : new Color(60, 60, 60, 120);   // 未解锁时：深灰色背景，降低透明度
         nameBg.rect(-bgWidth / 2, -9.6, bgWidth, 19.2);
         nameBg.fill();
 
@@ -499,7 +737,7 @@ export class HeroSelectionPanel extends Component {
         const nameLabel = nameNode.addComponent(Label);
         nameLabel.string = heroName;
         nameLabel.fontSize = 18; // 18px字体，与游戏内标签保持一致
-        nameLabel.color = new Color(255, 255, 255); // 白色文字
+        nameLabel.color = isUnlocked ? new Color(255, 255, 255) : new Color(120, 120, 120); // 未解锁时更深的灰色文字
     }
 
     /**
@@ -562,7 +800,7 @@ export class HeroSelectionPanel extends Component {
         // 背景色
         let bgColor: Color;
         if (!isUnlocked) {
-            bgColor = new Color(30, 30, 30, 200); // 未解锁：深黑色
+            bgColor = new Color(25, 25, 25, 180); // 未解锁：更深的灰色背景，降低透明度
         } else if (isSelected) {
             bgColor = new Color(100, 255, 100, 200); // 选中：亮绿色
         } else if (!canAfford) {
@@ -578,7 +816,7 @@ export class HeroSelectionPanel extends Component {
         // 边框
         let borderColor: Color;
         if (!isUnlocked) {
-            borderColor = new Color(60, 60, 60); // 未解锁：深灰色边框
+            borderColor = new Color(80, 80, 80); // 未解锁：深灰色边框，稍微提亮以保持可见性
         } else if (isSelected) {
             borderColor = new Color(0, 255, 0); // 选中：绿色边框
         } else if (!canAfford) {
@@ -602,26 +840,31 @@ export class HeroSelectionPanel extends Component {
      * 绘制锁定图标
      */
     private drawLockIcon(graphics: Graphics, width: number, height: number): void {
-        const lockSize = Math.min(width, height) * 0.3;
+        const lockSize = Math.min(width, height) * 0.4; // 增大锁定图标尺寸
         const lockX = 0;
         const lockY = 0;
 
-        // 锁身
-        graphics.fillColor = new Color(255, 255, 0); // 金黄色锁
+        // 锁身（改为更明显的白色）
+        graphics.fillColor = new Color(200, 200, 200); // 浅灰色锁身，在深灰背景上更明显
         graphics.rect(lockX - lockSize / 2, lockY - lockSize / 3, lockSize, lockSize * 0.6);
         graphics.fill();
 
         // 锁环
-        graphics.strokeColor = new Color(255, 255, 0);
+        graphics.strokeColor = new Color(200, 200, 200);
         graphics.lineWidth = lockSize * 0.15;
         graphics.arc(lockX, lockY - lockSize / 6, lockSize * 0.3, Math.PI, 0, false);
         graphics.stroke();
+        
+        // 添加一个锁孔
+        graphics.fillColor = new Color(100, 100, 100);
+        graphics.circle(lockX, lockY, lockSize * 0.08);
+        graphics.fill();
     }
 
     /**
      * 创建英雄图标
      */
-    private createHeroIcon(parent: Node, heroType: HeroType): void {
+    private createHeroIcon(parent: Node, heroType: HeroType, isUnlocked: boolean = true): void {
         const iconNode = new Node("HeroIcon");
         iconNode.parent = parent;
 
@@ -642,16 +885,33 @@ export class HeroSelectionPanel extends Component {
 
         // 1.2倍缩放因子
         const scale = 1.2;
+        
+        // 未解锁英雄的透明度和饱和度调整
+        const alpha = isUnlocked ? 255 : 80; // 未解锁时大幅降低透明度（从120降到80）
+        
+        // 应用置灰效果的颜色转换函数
+        const applyGrayEffect = (color: Color): Color => {
+            if (isUnlocked) return color;
+            
+            // 将颜色转为灰度，几乎完全置灰
+            const gray = (color.r * 0.299 + color.g * 0.587 + color.b * 0.114);
+            return new Color(
+                Math.round(gray * 0.9 + color.r * 0.1), // 90%灰度 + 10%原色（从70%/30%调整）
+                Math.round(gray * 0.9 + color.g * 0.1),
+                Math.round(gray * 0.9 + color.b * 0.1),
+                alpha
+            );
+        };
 
         // 根据英雄类型绘制不同图标
         switch (heroType) {
             case HeroType.ORANGE_CAT:
                 // 橘猫 - 橙色圆形 + 弓箭
-                iconGraphics.fillColor = new Color(255, 165, 0);
+                iconGraphics.fillColor = applyGrayEffect(new Color(255, 165, 0));
                 iconGraphics.circle(0, 0, 18 * scale); // 18 * 1.2 = 21.6
                 iconGraphics.fill();
 
-                iconGraphics.strokeColor = new Color(139, 69, 19);
+                iconGraphics.strokeColor = applyGrayEffect(new Color(139, 69, 19));
                 iconGraphics.lineWidth = 3 * scale; // 3 * 1.2 = 3.6
                 iconGraphics.moveTo(-10 * scale, 0); // -12
                 iconGraphics.lineTo(10 * scale, 0); // 12
@@ -663,11 +923,11 @@ export class HeroSelectionPanel extends Component {
 
             case HeroType.PERSIAN_SNIPER:
                 // 波斯猫 - 银色圆形 + 准星
-                iconGraphics.fillColor = new Color(192, 192, 192);
+                iconGraphics.fillColor = applyGrayEffect(new Color(192, 192, 192));
                 iconGraphics.circle(0, 0, 18 * scale);
                 iconGraphics.fill();
 
-                iconGraphics.strokeColor = new Color(64, 64, 64);
+                iconGraphics.strokeColor = applyGrayEffect(new Color(64, 64, 64));
                 iconGraphics.lineWidth = 2 * scale;
                 iconGraphics.circle(0, 0, 12 * scale);
                 iconGraphics.moveTo(0, -15 * scale);
@@ -679,11 +939,11 @@ export class HeroSelectionPanel extends Component {
 
             case HeroType.SIAMESE_MAGE:
                 // 暹罗法师 - 蓝色方形 + 魔法帽
-                iconGraphics.fillColor = new Color(100, 100, 255);
+                iconGraphics.fillColor = applyGrayEffect(new Color(100, 100, 255));
                 iconGraphics.rect(-15 * scale, -15 * scale, 30 * scale, 30 * scale);
                 iconGraphics.fill();
 
-                iconGraphics.fillColor = new Color(128, 0, 128);
+                iconGraphics.fillColor = applyGrayEffect(new Color(128, 0, 128));
                 iconGraphics.moveTo(0, 15 * scale);
                 iconGraphics.lineTo(-8 * scale, -5 * scale);
                 iconGraphics.lineTo(8 * scale, -5 * scale);
@@ -889,6 +1149,13 @@ export class HeroSelectionPanel extends Component {
      */
     private onHeroButtonTouchStart(heroType: HeroType, buttonNode: Node, event: EventTouch): void {
         console.log(`🟡 触摸开始: ${heroType}`);
+
+        // 检查英雄是否已解锁
+        if (!this.IsHeroUnlocked(heroType)) {
+            console.log(`❌ 英雄 ${heroType} 尚未解锁`);
+            this.showLockedHeroEffect(buttonNode);
+            return;
+        }
 
         // 检查金币是否足够
         const heroCost = HeroFactory.GetHeroCost(heroType);
@@ -1213,6 +1480,28 @@ export class HeroSelectionPanel extends Component {
         buttonNode.setScale(originalScale.x * 0.9, originalScale.y * 0.9);
 
         // 使用Cocos Creator的调度系统而不是setTimeout
+        this.scheduleOnce(() => {
+            if (buttonNode && buttonNode.isValid) {
+                buttonNode.setScale(originalScale);
+            }
+        }, 0.2);
+    }
+
+    /**
+     * 显示英雄锁定效果
+     */
+    private showLockedHeroEffect(buttonNode: Node): void {
+        const originalScale = buttonNode.scale;
+        
+        // 摇摆效果表示锁定
+        buttonNode.setScale(originalScale.x * 1.1, originalScale.y * 1.1);
+        
+        this.scheduleOnce(() => {
+            if (buttonNode && buttonNode.isValid) {
+                buttonNode.setScale(originalScale.x * 0.95, originalScale.y * 0.95);
+            }
+        }, 0.1);
+        
         this.scheduleOnce(() => {
             if (buttonNode && buttonNode.isValid) {
                 buttonNode.setScale(originalScale);

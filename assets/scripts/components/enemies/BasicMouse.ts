@@ -1,4 +1,4 @@
-import { _decorator, Node, Vec3, Graphics, Color } from 'cc';
+import { _decorator, Node, Vec3, Graphics, Color, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
@@ -227,11 +227,14 @@ export class BasicMouse extends BaseMouse {
         DrawingHelper.drawHurtEffect(this._graphics, 'basicMouse', 1.2);
         
         // 200ms后恢复原色
-        this.scheduleOnce(() => {
-            if (this._graphics && this.node.isValid) {
-                this.drawMouseAppearance();
-            }
-        }, 0.2);
+        tween(this.node)
+            .delay(0.2)
+            .call(() => {
+                if (this._graphics && this.node.isValid) {
+                    this.drawMouseAppearance();
+                }
+            })
+            .start();
     }
     
     // 重写死亡特效方法

@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
+import { _decorator, Color, Graphics, Node, Vec3, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType, HeroState } from '../../types/GameTypes';
@@ -187,25 +187,34 @@ export class RussianBlue extends BaseHero {
         effectGraphics.circle(0, 0, 15);
         effectGraphics.fill();
         
-        // 闪光效果
-        let scale = 1;
-        let opacity = alpha;
-        const flashEffect = () => {
-            scale += 0.2;
-            opacity -= 25;
-            
-            if (effectGraphics && effectNode.isValid && opacity > 0) {
-                effectGraphics.clear();
-                effectGraphics.fillColor = new Color(255, 255, 255, opacity);
-                effectGraphics.circle(0, 0, 15 * scale);
-                effectGraphics.fill();
-                
-                requestAnimationFrame(flashEffect);
-            } else {
-                effectNode.destroy();
-            }
-        };
-        flashEffect();
+        // 闪光效果 - 使用tween系统
+        const initialScale = 1;
+        const initialOpacity = alpha;
+        const animationDuration = (initialOpacity / 25) * 0.016; // 根据原始逻辑计算时间
+        
+        // 使用tween创建闪光动画
+        tween({ scale: initialScale, opacity: initialOpacity })
+            .to(animationDuration, { scale: initialScale + 0.2 * (initialOpacity / 25), opacity: 0 }, {
+                onUpdate: (target: any, ratio: number) => {
+                    if (!effectGraphics || !effectNode.isValid) return;
+                    
+                    const currentScale = initialScale + (target.scale - initialScale) * ratio;
+                    const currentOpacity = initialOpacity - (initialOpacity * ratio);
+                    
+                    if (currentOpacity > 0) {
+                        effectGraphics.clear();
+                        effectGraphics.fillColor = new Color(255, 255, 255, Math.max(0, currentOpacity));
+                        effectGraphics.circle(0, 0, 15 * currentScale);
+                        effectGraphics.fill();
+                    }
+                },
+                onComplete: () => {
+                    if (effectNode && effectNode.isValid) {
+                        effectNode.destroy();
+                    }
+                }
+            })
+            .start();
     }
     
     // 重写标签配置，使用"俄蓝猫"名称
