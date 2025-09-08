@@ -101,13 +101,14 @@ export class BasicMouse extends BaseMouse {
         DrawingHelper.drawEnemyAppearance(this._graphics, 'basicMouse', 1.2);
     }
     
-    // 重写标签配置 - 使用统一大字体
+    // 实现BaseMouse的抽象方法 - 老鼠标签配置
     protected getMouseLabelConfig() {
-        const baseConfig = super.getMouseLabelConfig();
         return {
-            ...baseConfig,
             text: "鼠",
-            color: new Color(255, 255, 255), // 白色文字
+            fontSize: 22,
+            color: new Color(255, 255, 255),
+            yOffset: 35,
+            size: { width: 60, height: 28 }
         };
     }
     

@@ -2,7 +2,7 @@ import { _decorator, Component, Node, Vec3 } from 'cc';
 import { BaseHero } from '../components/heroes/BaseHero';
 import { BaseMouse } from '../components/enemies/BaseMouse';
 import { GameManager } from './GameManager';
-import { GridPosition } from '../types/GameTypes';
+import { GridPosition, HeroType, HeroCategory } from '../types/GameTypes';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 
 // 通用单位类型
@@ -111,12 +111,16 @@ export class BattleManager extends Component {
         const heroUnit = heroNode.getComponent(BaseHero);
         if (!heroUnit || !heroUnit.isAlive) return;
         
+        const isRangedShooter = this.isRangedShooterHero(heroUnit.heroType);
+        
         // 如果英雄有当前目标且目标仍然有效
         if (heroUnit.currentTarget && heroUnit.currentTarget.isValid) {
             const targetUnit = heroUnit.currentTarget.getComponent(BaseMouse);
             
-            // 检查目标是否还活着且在范围内
-            if (targetUnit && targetUnit.isAlive && heroUnit.isTargetInRange(heroUnit.currentTarget)) {
+            // 检查目标是否还活着且在范围内（射击英雄无范围限制）
+            const targetInRange = isRangedShooter || heroUnit.isTargetInRange(heroUnit.currentTarget);
+            
+            if (targetUnit && targetUnit.isAlive && targetInRange) {
                 // 攻击当前目标
                 if (heroUnit.canAttack) {
                     this.performAttack(heroUnit, targetUnit);
@@ -132,7 +136,9 @@ export class BattleManager extends Component {
         const target = this.findBestTarget(heroNode, enemies);
         if (target) {
             heroUnit.currentTarget = target.node;
-            if (heroUnit.canAttack && heroUnit.isTargetInRange(target.node)) {
+            const targetInRange = isRangedShooter || heroUnit.isTargetInRange(target.node);
+            
+            if (heroUnit.canAttack && targetInRange) {
                 this.performAttack(heroUnit, target.unit);
             }
         }
@@ -172,6 +178,7 @@ export class BattleManager extends Component {
         if (!attackerUnit) return null;
         
         const validTargets: BattleTarget[] = [];
+        const isRangedShooter = this.isRangedShooterHero(attackerUnit.heroType);
         
         for (const targetNode of targetNodes) {
             if (!targetNode || !targetNode.isValid) continue;
@@ -179,8 +186,10 @@ export class BattleManager extends Component {
             const targetUnit = targetNode.getComponent(BaseMouse);
             if (!targetUnit || !targetUnit.isAlive) continue;
             
-            // 检查是否在攻击范围内
-            if (attackerUnit.isTargetInRange(targetNode)) {
+            // 远程射击英雄无范围限制，其他英雄检查攻击范围
+            const inRange = isRangedShooter || attackerUnit.isTargetInRange(targetNode);
+            
+            if (inRange) {
                 const distance = attackerUnit.getDistanceToTarget(targetNode);
                 const priority = this.calculateTargetPriority(targetUnit, distance);
                 
@@ -444,6 +453,32 @@ export class BattleManager extends Component {
         }
         
         return nearestEnemy;
+    }
+    
+    // 为远程射击英雄提供的全局寻敌方法
+    public FindNearestEnemyGlobal(heroNode: Node): Node | null {
+        const heroUnit = heroNode.getComponent(BaseHero);
+        if (!heroUnit) return null;
+        
+        // 检查是否为远程射击英雄类型
+        if (!this.isRangedShooterHero(heroUnit.heroType)) {
+            // 非射击英雄使用普通范围限制
+            return this.FindNearestEnemy(heroNode.position, heroUnit.attackRange);
+        }
+        
+        // 射击英雄使用全局搜索（无范围限制）
+        return this.FindNearestEnemy(heroNode.position, Number.MAX_VALUE);
+    }
+    
+    // 判断是否为远程射击英雄类型
+    private isRangedShooterHero(heroType: HeroType): boolean {
+        const rangedShooterTypes = [
+            HeroType.ORANGE_CAT,      // 橘猫射手
+            HeroType.PERSIAN_SNIPER,  // 波斯猫狙击手
+            HeroType.BENGAL_HUNTER    // 孟加拉猎手
+        ];
+        
+        return rangedShooterTypes.includes(heroType);
     }
     
     // 查找指定网格位置的英雄

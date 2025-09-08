@@ -11,7 +11,6 @@ const { ccclass } = _decorator;
 export class RussianBlue extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.RUSSIAN_BLUE;
-    private _graphics: Graphics | null = null;
     
     // 实现BaseHero的抽象方法
     protected initializeHeroStats(): void {
@@ -35,8 +34,8 @@ export class RussianBlue extends BaseHero {
     
     
     private initializeVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        this._graphics = this.node.getComponent(Graphics);
+        // 使用基类BaseHero的_graphics属性
+        // this._graphics由BaseHero管理
         
         this.drawRussianBlueAppearance();
     }
@@ -217,13 +216,14 @@ export class RussianBlue extends BaseHero {
             .start();
     }
     
-    // 重写标签配置，使用"俄蓝猫"名称
+    // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "俄蓝猫",
-            size: { width: 70, height: 24 }
+            text: this.unitName || "俄罗斯蓝猫精英",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 130, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
 }

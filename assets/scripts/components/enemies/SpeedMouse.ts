@@ -127,11 +127,12 @@ export class SpeedMouse extends BaseMouse {
     
     // 重写标签配置 - 使用统一大字体
     protected getMouseLabelConfig() {
-        const baseConfig = super.getMouseLabelConfig();
         return {
-            ...baseConfig,
             text: "疾速",
+            fontSize: 22,
             color: new Color(255, 255, 100), // 亮黄色
+            yOffset: 35,
+            size: { width: 60, height: 28 }
         };
     }
     

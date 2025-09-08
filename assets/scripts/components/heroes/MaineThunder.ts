@@ -39,10 +39,10 @@ export class MaineThunder extends BaseHero {
     
     // 初始化外观
     private initializeVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        let graphics = this.node.getComponent(Graphics);
+        // 使用基类BaseHero的_graphics属性
+        if (!this._graphics) return;
         
-        this.drawMaineThunderAppearance(graphics);
+        this.drawMaineThunderAppearance(this._graphics);
     }
     
     // 绘制缅因雷猫外观
@@ -158,13 +158,14 @@ export class MaineThunder extends BaseHero {
         }, 0.2);
     }
     
-    // 重写标签配置，使用"缅因猫"名称
+    // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "缅因猫",
-            size: { width: 70, height: 24 }
+            text: this.unitName || "缅因猫雷法",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 110, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
     

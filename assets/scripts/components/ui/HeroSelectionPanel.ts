@@ -357,7 +357,7 @@ export class HeroSelectionPanel extends Component {
         });
 
         // 重新创建按钮
-        const buttonWidth = 96;
+        const buttonWidth = 110; // 增加宽度以容纳完整英雄名称
         const buttonHeight = 120;
         const buttonSpacing = 24;
         
@@ -388,7 +388,7 @@ export class HeroSelectionPanel extends Component {
      */
     private updateContentSize(contentNode: Node): void {
         const availableHeroes = this.getAllHeroTypes();
-        const buttonWidth = 96;
+        const buttonWidth = 110; // 增加宽度以容纳完整英雄名称
         const buttonSpacing = 24;
         const paddingTotal = buttonSpacing * 2;
         
@@ -507,7 +507,7 @@ export class HeroSelectionPanel extends Component {
         const contentTransform = contentNode.addComponent(UITransform);
 
         const availableHeroes = this.getAllHeroTypes();
-        const buttonWidth = 96; // 80 * 1.2 = 96
+        const buttonWidth = 110; // 增加宽度以容纳完整英雄名称
         const buttonHeight = 120; // 增加高度以容纳名称标签，100 * 1.2 = 120
         const buttonSpacing = 24; // 20 * 1.2 = 24
         const paddingTotal = buttonSpacing * 2;
@@ -698,7 +698,7 @@ export class HeroSelectionPanel extends Component {
 
         // 设置名称背景的UITransform
         const bgTransform = nameBgNode.addComponent(UITransform);
-        const bgWidth = Math.max(48, heroName.length * 12);
+        const bgWidth = Math.max(60, heroName.length * 10); // 调整宽度计算以适应完整名称
         bgTransform.setContentSize(bgWidth, 19.2);
 
         // 使用Widget进行顶部对齐
@@ -741,37 +741,11 @@ export class HeroSelectionPanel extends Component {
     }
 
     /**
-     * 获取英雄显示名称 - 与游戏内标签保持一致的简洁名称
+     * 获取英雄显示名称 - 使用完整的英雄名称
      */
     private getHeroDisplayName(heroType: HeroType): string {
-        switch (heroType) {
-            case HeroType.ORANGE_CAT:
-                return "橘猫";
-            case HeroType.PERSIAN_SNIPER:
-                return "波斯猫";
-            case HeroType.BENGAL_HUNTER:
-                return "孟加拉猫";
-            case HeroType.SIAMESE_MAGE:
-                return "暹罗猫";
-            case HeroType.MAINE_THUNDER:
-                return "缅因猫";
-            case HeroType.NORWEGIAN_ICE:
-                return "挪威猫";
-            case HeroType.BRITISH_KNIGHT:
-                return "英短骑士";
-            case HeroType.RAGDOLL_GUARDIAN:
-                return "布偶猫";
-            case HeroType.SCOTTISH_ENGINEER:
-                return "苏格兰猫";
-            case HeroType.ABYSSINIAN_SCOUT:
-                return "阿比猫";
-            case HeroType.RUSSIAN_BLUE:
-                return "俄蓝猫";
-            case HeroType.AMERICAN_BOMBER:
-                return "美短猫";
-            default:
-                return "未知英雄";
-        }
+        const heroConfig = HeroFactory.GetHeroConfig(heroType);
+        return heroConfig ? heroConfig.name : "未知英雄";
     }
 
 

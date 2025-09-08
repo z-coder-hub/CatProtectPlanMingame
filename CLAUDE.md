@@ -6,7 +6,7 @@
 
 这是一个名为 "CatProtectPlanMingame" 的猫咪城堡防御游戏项目 - 使用 **Cocos Creator 3.8.6** 构建的塔防类迷你游戏，采用 **TypeScript** 开发。玩家通过部署不同类型的猫咪英雄来防御老鼠等敌人的攻击，保护城堡。
 
-**游戏模式**: 线性关卡进度系统，从第1关开始逐步推进到第20关。游戏失败后自动重置到第1关重新开始，没有关卡选择界面。
+**游戏模式**: 10关渐进解锁系统，前3关快速解锁全部12种英雄，后7关为独特BOSS挑战。游戏失败后自动重置到第1关重新开始，没有关卡选择界面。
 
 ## 技术栈
 
@@ -27,12 +27,12 @@ assets/
 │   │   │   ├── PersianSniper.ts # 波斯猫狙击手
 │   │   │   ├── SiameseMage.ts # 暹罗猫法师
 │   │   │   └── ... (其他9种英雄)
-│   │   ├── enemies/           # 敌人组件 (9种老鼠类型)
+│   │   ├── enemies/           # 敌人组件 (16种老鼠类型，含7种新BOSS)
 │   │   │   ├── BaseMouse.ts   # 老鼠抽象基类
 │   │   │   ├── BasicMouse.ts  # 基础老鼠
 │   │   │   ├── GiantMouse.ts  # 巨型老鼠
 │   │   │   ├── FastMouse.ts   # 快速老鼠
-│   │   │   └── ... (其他6种老鼠)
+│   │   │   └── ... (其他13种老鼠，含7种新BOSS)
 │   │   ├── game/              # 游戏对象
 │   │   │   └── Castle.ts      # 城堡
 │   │   └── ui/                # UI组件
@@ -41,7 +41,8 @@ assets/
 │   ├── managers/              # 管理器类
 │   │   ├── GameManager.ts     # 游戏总控制
 │   │   ├── BattleManager.ts   # 战斗管理
-│   │   └── WaveManager.ts     # 波次管理
+│   │   ├── WaveManager.ts     # 波次管理
+│   │   └── LevelManager.ts    # 关卡管理
 │   ├── systems/               # 系统类
 │   │   ├── GameBootstrap.ts   # 游戏启动器
 │   │   ├── GridDeploymentSystem.ts # 网格部署系统
@@ -50,7 +51,8 @@ assets/
 │   │   └── SkillSystem.ts     # 技能系统
 │   ├── types/                 # 类型定义
 │   │   ├── GameTypes.ts       # 游戏类型定义
-│   │   └── GameConstants.ts   # 游戏常量配置
+│   │   ├── GameConstants.ts   # 游戏常量配置
+│   │   └── LevelConfigs.ts    # 关卡配置系统
 │   └── utils/                 # 工具类
 │       ├── DrawingHelper.ts   # 绘图辅助工具
 │       ├── EffectHelper.ts    # 特效辅助工具
@@ -85,48 +87,26 @@ assets/
 - **避免代码重复**: 通过继承、组合、工具类等方式消除重复实现
 - **配置集中管理**: 相同的配置项应统一管理，避免分散在各个文件中
 
-#### DRY 实践示例：
-```typescript
-// ✅ 推荐：基类统一实现
-export abstract class BaseHero extends Component {
-    protected _graphics: Graphics | null = null;
-    protected _nameLabel: Label | null = null;
+#### DRY 实践要点：
+- **基类统一实现**：将通用的初始化、渲染、事件处理逻辑提取到抽象基类
+- **子类专注差异**：子类只需实现自己独有的特性和行为
+- **配置驱动设计**：通过配置参数而非硬编码来区分不同实例
+- **工具类复用**：将通用功能封装到工具类中供多个组件使用
 
-    protected initializeBaseVisuals(): void {
-        this._graphics = this.node.addComponent(Graphics);
-        this.drawHeroAppearance();
-        this.createHeroNameLabel();
-    }
+### 5. 抽象方法设计原则
+- **强制抽象与可选重写平衡**: 在抽象基类设计中，区分必须实现的核心功能和可选的特殊行为
+- **强制抽象的判断标准**: 当每个子类都必须提供不同实现时，应设为抽象方法
+- **可选重写的判断标准**: 当只有部分子类需要特殊化行为时，应提供合理的默认实现
+- **避免过度抽象**: 不强制子类实现它们不需要的功能，保持设计的最小化原则
+- **类型安全优先**: 利用编译器检查确保关键方法的正确实现
 
-    protected abstract getHeroLabelConfig(): LabelConfig;
-}
-
-// ✅ 推荐：子类只实现差异化部分
-export class OrangeCat extends BaseHero {
-    protected getHeroLabelConfig() {
-        return { text: "橘猫", fontSize: 18, /* ... */ };
-    }
-}
-
-// ❌ 避免：每个子类重复相同代码
-export class OrangeCat extends Component {
-    private _graphics: Graphics | null = null;
-    private _nameLabel: Label | null = null;
-
-    private initializeVisuals(): void {
-        this._graphics = this.node.addComponent(Graphics);
-        // 重复的初始化代码...
-    }
-}
-```
-
-### 5. 代码库清洁
+### 6. 代码库清洁
 - 及时删除废弃的代码和文件
 - 避免注释掉的代码长期保留
 - 定期清理未使用的import和方法
 - 保持项目结构简洁明了
 
-### 6. 事件和通信设计
+### 7. 事件和通信设计
 - **优先使用 Cocos Creator 官方事件系统**: Cocos Creator 提供了成熟优化的事件框架，应作为首选通信方式
 - **充分利用节点事件**: 使用 `node.emit()` 和 `node.on()` 进行组件间通信，这是官方推荐的标准做法
 - **合理使用触摸事件**: 利用 `Node.EventType.TOUCH_*` 系列事件处理用户交互
@@ -134,45 +114,11 @@ export class OrangeCat extends Component {
 - **结合直接引用**: 在合适场景下结合直接方法调用，与事件系统形成互补
 - **接口定义规范**: 使用接口 (如 `IHeroDeploymentHandler`) 定义组件间的通信契约
 
-#### 推荐的通信模式：
-```typescript
-// ✅ 推荐：使用Cocos Creator官方事件系统
-this.node.emit('hero-deployed', { heroType: type, position: pos });
-this.node.on('wave-completed', this.onWaveCompleted, this);
-
-// ✅ 推荐：触摸事件处理（实际代码示例）
-this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
-this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
-this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
-
-// ✅ 推荐：按钮事件处理
-button.node.on(Button.EventType.CLICK, this.onButtonClick, this);
-
-// ✅ 推荐：GameManager事件回调系统
-private _eventCallbacks = new Map<keyof GameEvents, Function[]>();
-
-// ✅ 推荐：结合直接引用（性能关键场景）
-this._heroSelectionPanel.setDeploymentHandler(this._gameHUD);
-
-// ❌ 避免：自定义事件总线
-this.customEventBus.emit('hero-deployed', { type, position });
-```
-
-#### 项目中的实际事件使用案例：
-```typescript
-// BaseHero.ts - 英雄点击事件
-protected setupClickEvents(): void {
-    this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
-}
-
-// HeroSelectionPanel.ts - 拖拽部署事件链
-buttonNode.on(Node.EventType.TOUCH_START, (event: EventTouch) => { /* 开始拖拽 */ });
-buttonNode.on(Node.EventType.TOUCH_MOVE, (event: EventTouch) => { /* 拖拽移动 */ });
-buttonNode.on(Node.EventType.TOUCH_END, (event: EventTouch) => { /* 完成部署 */ });
-
-// UIHelper.ts - 通用按钮事件
-button.node.on(Button.EventType.CLICK, callback, target);
-```
+#### 通信设计要点：
+- **优先官方事件系统**：充分利用Cocos Creator提供的节点事件、触摸事件、按钮事件
+- **事件与直接调用结合**：在性能关键场景使用直接方法调用，在松耦合场景使用事件通信
+- **接口定义通信契约**：通过接口明确组件间的通信协议和责任边界
+- **避免过度设计**：不要创建不必要的自定义事件总线，利用现有机制即可满足需求
 
 ## 核心系统
 
@@ -186,6 +132,7 @@ button.node.on(Button.EventType.CLICK, callback, target);
 - 战斗逻辑处理
 - 目标分配和攻击计算
 - 伤害处理和单位死亡
+- **全局攻击系统**: 智能识别远程射击英雄类型，提供无范围限制的目标搜索
 
 ### 波次管理器 (WaveManager)
 - 敌人波次生成
@@ -208,10 +155,40 @@ button.node.on(Button.EventType.CLICK, callback, target);
   - 统一的点击事件处理和技能触发
   - 通过英雄类型枚举自动选择对应的外观绘制方式
 
-#### 远程英雄 (3种)
-- **OrangeCat**: 橘猫射手 - 基础射手，高攻速，子弹攻击
-- **PersianSniper**: 波斯猫狙击手 - 高伤害狙击手，暴击能力
-- **BengalHunter**: 孟加拉猎手 - 快速攻击的机敏射手
+#### 抽象方法设计原则
+BaseHero采用**强制抽象**与**可选重写**相结合的设计模式，在强制一致性和灵活性之间达到平衡：
+
+**🔒 强制抽象方法设计理念：**
+- **核心身份标识**：每个英雄必须明确自己的类型和特征
+- **属性和外观初始化**：每个英雄有不同的数值配置和视觉表现
+- **攻击行为实现**：每个英雄有独特的攻击方式和逻辑
+- **标签配置**：每个英雄需要提供完整的名称和显示配置
+
+**🔓 可选重写方法设计理念：**
+- **特殊技能系统**：只有部分英雄拥有主动技能，其他使用空实现
+- **点击行为处理**：多数英雄使用默认行为，少数需要特殊处理
+- **状态处理逻辑**：通用的AI状态机适用于大部分英雄
+
+**🎯 设计目标：**
+- **强制一致性**：确保所有英雄都有必需的核心功能
+- **避免重复实现**：为通用行为提供合理的默认实现
+- **保持灵活性**：允许特殊英雄重写默认行为
+- **类型安全保障**：编译时检查确保接口完整性
+
+此设计模式确保新增英雄时只需关注差异化特性，而无需重复实现通用功能。
+
+#### 远程英雄 (3种) - 全局攻击能力
+- **OrangeCat**: 橘猫射手 - 基础射手，高攻速，子弹攻击，**全局射程**
+- **PersianSniper**: 波斯猫狙击手 - 高伤害狙击手，暴击能力，**全局射程**
+- **BengalHunter**: 孟加拉猎手 - 快速攻击的机敏射手，**全局射程**
+
+**重要特性**：所有远程射击英雄拥有**全局攻击能力**，可以攻击地图上任意位置的敌人，不受传统攻击范围限制。这使得远程英雄具有独特的战术价值，能够优先清理高价值目标或远距离威胁。
+
+**战术优势**：
+- 🎯 **目标优先级**：自动锁定最近敌人，无论距离多远
+- 🚀 **灵活部署**：可部署在任意位置，不受射程约束
+- ⚡ **快速响应**：敌人一出现即可立即攻击，减少"等待时间"
+- 🎪 **阵型自由**：与近战/法师英雄形成明确差异化定位
 
 #### 法师英雄 (3种)
 - **SiameseMage**: 暹罗猫法师 - AOE魔法攻击，群体伤害
@@ -237,7 +214,7 @@ button.node.on(Button.EventType.CLICK, callback, target);
 4. 可选重写 `onHeroClickHandler()` 自定义点击行为
 
 ### 敌人类 (DRY原则重构)
-敌人系统同样采用统一的基类架构，包含**9种敌人类型**分为5个分类：
+敌人系统同样采用统一的基类架构，包含**16种敌人类型**分为5个分类（含7种新BOSS）：
 
 - **BaseMouse**: 老鼠抽象基类，统一实现移动、标签等通用功能
   - 统一的名称标签创建和配置（22px大字体）
@@ -260,9 +237,19 @@ button.node.on(Button.EventType.CLICK, callback, target);
 #### 特殊单位 (1种)
 - **StealthMouse**: 潜行老鼠 - 潜行躲避攻击能力
 
-#### BOSS单位 (2种)
+#### BOSS单位 (9种：2种基础BOSS + 7种新BOSS)
+**基础BOSS**:
 - **MouseKing**: 老鼠王 - 超高血量，可召唤小兵
 - **MechMouse**: 机械老鼠 - 高血量，特殊机械属性
+
+**关卡4-10新BOSS**:
+- **ArmorOverlord**: 重甲统领 - 超高护甲值，减伤80%
+- **ShadowAssassin**: 潜影刺客 - 永久潜行，免疫50%伤害
+- **StormTyrant**: 疾风暴君 - 极速移动，召唤疾速小兵
+- **GiantBehemoth**: 巨兽霸主 - 超大血量，践踏范围伤害
+- **ThunderMaster**: 雷电大师 - 链式雷电攻击，电流场护盾
+- **MechCommander**: 机械军团长 - 无限召唤机械兵，自我修复
+- **UltimateOverlord**: 终极霸王 - 融合所有BOSS能力，最终挑战
 
 ### 游戏对象
 - **Castle**: 城堡，玩家需要保护的目标
@@ -298,8 +285,12 @@ enum EnemyType {
   ARMORED_MOUSE, TANK_MOUSE,
   // 特殊单位
   STEALTH_MOUSE,
-  // BOSS单位
-  MOUSE_KING, MECH_MOUSE
+  // 基础BOSS单位
+  MOUSE_KING, MECH_MOUSE,
+  // 新BOSS单位（关卡4-10专用）
+  ARMOR_OVERLORD, SHADOW_ASSASSIN, STORM_TYRANT,
+  GIANT_BEHEMOTH, THUNDER_MASTER, MECH_COMMANDER, 
+  ULTIMATE_OVERLORD
 }
 
 // 英雄状态枚举（英雄不会死亡，不会移动）
@@ -398,12 +389,18 @@ export class UIHelper {
 
 ## 游戏配置
 
-所有游戏数值配置集中在 `GameConstants.ts` 中：
-- 英雄属性配置
-- 敌人属性配置
-- 波次配置
+游戏数值配置分布在两个文件中：
+**`GameConstants.ts`** - 基础配置：
+- 英雄属性配置（12种英雄的完整属性）
+- 敌人属性配置（16种老鼠的完整属性，含7种新BOSS）
 - UI常量
 - 游戏常量
+
+**`LevelConfigs.ts`** - 关卡系统：
+- 10关渐进解锁配置（前3关解锁，后7关BOSS挑战）
+- 波次配置（每关3个波次，共30个波次）
+- 世界配置（英雄解锁世界+BOSS挑战世界）
+- 奖励配置和解锁条件
 
 ## 扩展指南
 

@@ -1,9 +1,8 @@
 import { _decorator, Color, Graphics, Node } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
-import { HeroType, HeroState } from '../../types/GameTypes';
+import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
-import { BattleManager } from '../../managers/BattleManager';
 
 const { ccclass } = _decorator;
 
@@ -11,7 +10,6 @@ const { ccclass } = _decorator;
 export class BengalHunter extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.BENGAL_HUNTER;
-    private _graphics: Graphics | null = null;
     
     // 实现BaseHero的抽象方法
     protected initializeHeroStats(): void {
@@ -28,8 +26,8 @@ export class BengalHunter extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        this._graphics = this.node.getComponent(Graphics);
+        // 父类已创建Graphics组件，直接使用
+        // _graphics由基类管理
         this.drawBengalHunterAppearance();
     }
     
@@ -66,18 +64,7 @@ export class BengalHunter extends BaseHero {
         this._graphics.stroke();
     }
     
-    protected onIdleState(dt: number): void {
-        if (!this.isAlive) return;
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
-            if (nearestEnemy) {
-                this.currentTarget = nearestEnemy;
-                this.heroState = HeroState.ATTACKING;
-            }
-        }
-    }
+    // 移除onIdleState重写，使用BaseHero的全局寻敌逻辑
     
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
@@ -124,13 +111,14 @@ export class BengalHunter extends BaseHero {
         }, 0.3);
     }
     
-    // 重写标签配置，使用"孟加拉猫"名称
+    // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "孟加拉猫",
-            size: { width: 80, height: 24 }
+            text: this.unitName || "孟加拉猫猎手",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 120, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
     

@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Vec3 } from 'cc';
 import { 
     GameState, GameEvents, EnemyType, LevelConfig, WorldConfig,
-    LevelCompletionStatus, RewardType
+    LevelCompletionStatus, RewardType, HeroType
 } from '../types/GameTypes';
 import { GAME_CONFIG } from '../types/GameConstants';
 import { LEVEL_CONFIGS } from '../types/LevelConfigs';
@@ -181,20 +181,27 @@ export class GameManager extends Component {
     
     // 加载指定索引的关卡
     public loadLevel(levelIndex: number): boolean {
-        const allLevels = LEVEL_CONFIGS.getAllLevels();
-        
-        if (levelIndex < 0 || levelIndex >= allLevels.length) {
-            console.error(`无效的关卡索引: ${levelIndex}, 总关卡数: ${allLevels.length}`);
+        const totalLevels = LEVEL_CONFIGS.getAllLevels().length;
+        if (levelIndex < 0 || levelIndex >= totalLevels) {
+            console.error(`无效的关卡索引: ${levelIndex}, 总关卡数: ${totalLevels}`);
             return false;
         }
         
         this._currentLevelIndex = levelIndex;
-        this._currentLevelConfig = allLevels[levelIndex];
+        // 直接使用 LEVEL_CONFIGS 中的完整配置，包含英雄解锁奖励
+        const fullLevelConfig = LEVEL_CONFIGS.getAllLevels()[levelIndex];
+        if (fullLevelConfig) {
+            this._currentLevelConfig = fullLevelConfig;
+            console.log(`🎯 使用完整关卡配置: ${fullLevelConfig.name}, 奖励数量: ${fullLevelConfig.rewards.length}`);
+        } else {
+            console.error(`❌ 无法获取关卡配置，索引: ${levelIndex}，总数: ${LEVEL_CONFIGS.getAllLevels().length}`);
+            return false;
+        }
         
         // 应用关卡配置
         this.applyLevelConfig(this._currentLevelConfig);
         
-        console.log(`加载关卡: ${this._currentLevelConfig.name} (${this._currentLevelConfig.id}) - 索引: ${levelIndex}`);
+        console.log(`加载关卡: ${this._currentLevelConfig.name} - 索引: ${levelIndex}`);
         return true;
     }
     
@@ -238,6 +245,25 @@ export class GameManager extends Component {
         }
         
         console.log(`应用关卡配置: ${config.name}, 初始金币: ${config.initialGold}`);
+    }
+    
+    // 处理英雄解锁
+    private processHeroUnlocks(heroTypes: HeroType[]): void {
+        const levelManager = this.GetLevelManager();
+        if (!levelManager) {
+            console.warn("未找到LevelManager，无法解锁英雄");
+            return;
+        }
+        
+        for (const heroType of heroTypes) {
+            if (levelManager.UnlockHero(heroType)) {
+                console.log(`成功解锁英雄: ${heroType}`);
+                // 触发英雄解锁事件通知UI
+                this.emitEvent('hero-unlocked', { heroType: heroType });
+            } else {
+                console.warn(`英雄解锁失败: ${heroType}`);
+            }
+        }
     }
     
     // 开始关卡（进入部署阶段）
@@ -295,6 +321,10 @@ export class GameManager extends Component {
         const levelConfig = this._currentLevelConfig!;
         console.log(`关卡胜利: ${levelConfig.name}`);
         
+        // 立即处理英雄解锁奖励（确保玩家立即看到解锁的英雄）
+        console.log("🎉 关卡胜利！立即处理英雄解锁奖励...");
+        this.processLevelRewards(levelConfig.rewards);
+        
         // 计算完成时间和分数（简化计算）
         const completionTime = this.calculateCompletionTime();
         const score = this.calculateLevelScore();
@@ -306,9 +336,6 @@ export class GameManager extends Component {
         } else {
             console.warn("未找到LevelManager，无法记录关卡完成");
         }
-        
-        // 发放奖励（在LevelManager处理解锁后）
-        this.processLevelRewards(levelConfig.rewards);
         
         // 检查是否有下一关
         const nextIndex = this._currentLevelIndex + 1;
@@ -366,7 +393,9 @@ export class GameManager extends Component {
     
     // 处理关卡奖励
     private processLevelRewards(rewards: any[]): void {
+        console.log(`📦 处理关卡奖励，总数: ${rewards.length}`);
         for (const reward of rewards) {
+            console.log(`🎁 处理奖励: type=${reward.type}, value=${reward.value}, description=${reward.description}`);
             switch (reward.type) {
                 case RewardType.GOLD:
                     this.AddGold(reward.value as number);

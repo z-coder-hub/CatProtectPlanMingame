@@ -379,21 +379,41 @@ export class WaveManager extends Component {
                 enemyNode.addComponent(MechMouse);
                 break;
                 
-            // 特殊BOSS单位（关卡专用）
-            case EnemyType.ICE_KING:
-                // 冰原霸主使用机械老鼠作为基础，后续可创建专用组件
-                enemyNode.addComponent(MechMouse);
-                console.log("生成冰原霸主（使用机械老鼠组件）");
+            // 新BOSS单位（关卡4-10专用）
+            case EnemyType.ARMOR_OVERLORD:
+                // 重甲统领使用坦克老鼠作为基础组件
+                enemyNode.addComponent(ArmoredMouse);
+                console.log("生成重甲统领（使用装甲老鼠组件）");
                 break;
-            case EnemyType.FLAME_DEMON:
-                // 炎魔使用机械老鼠作为基础，后续可创建专用组件
-                enemyNode.addComponent(MechMouse);
-                console.log("生成炎魔（使用机械老鼠组件）");
+            case EnemyType.SHADOW_ASSASSIN:
+                // 潜影刺客使用基础老鼠作为基础组件
+                enemyNode.addComponent(BasicMouse);
+                console.log("生成潜影刺客（使用基础老鼠组件）");
                 break;
-            case EnemyType.VOLCANO_HEART:
-                // 火山之心使用机械老鼠作为基础，后续可创建专用组件
+            case EnemyType.STORM_TYRANT:
+                // 疾风暴君使用疾速老鼠作为基础组件
+                enemyNode.addComponent(SpeedMouse);
+                console.log("生成疾风暴君（使用疾速老鼠组件）");
+                break;
+            case EnemyType.GIANT_BEHEMOTH:
+                // 巨兽霸主使用巨型老鼠作为基础组件
+                enemyNode.addComponent(GiantMouse);
+                console.log("生成巨兽霸主（使用巨型老鼠组件）");
+                break;
+            case EnemyType.THUNDER_MASTER:
+                // 雷电大师使用机械老鼠作为基础组件
                 enemyNode.addComponent(MechMouse);
-                console.log("生成火山之心（使用机械老鼠组件）");
+                console.log("生成雷电大师（使用机械老鼠组件）");
+                break;
+            case EnemyType.MECH_COMMANDER:
+                // 机械军团长使用机械老鼠作为基础组件
+                enemyNode.addComponent(MechMouse);
+                console.log("生成机械军团长（使用机械老鼠组件）");
+                break;
+            case EnemyType.ULTIMATE_OVERLORD:
+                // 终极霸王使用老鼠王作为基础组件
+                enemyNode.addComponent(MouseKing);
+                console.log("生成终极霸王（使用老鼠王组件）");
                 break;
                 
             default:

@@ -53,18 +53,7 @@ export class OrangeCat extends BaseHero {
         }
     }
     
-    // 重写待机状态，自动搜索和攻击敌人
-    protected onIdleState(dt: number): void {
-        // 寻找最近的敌人
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
-            if (nearestEnemy) {
-                this.currentTarget = nearestEnemy;
-                this.heroState = HeroState.ATTACKING;
-            }
-        }
-    }
+    // 移除onIdleState重写，使用BaseHero的全局寻敌逻辑
     
     // 重写攻击方法
     protected onAttack(target: Node): void {
@@ -304,13 +293,14 @@ export class OrangeCat extends BaseHero {
         this.initializeAnimation();
     }
     
-    // 重写标签配置，使用"橘猫"名称
+    // 实现BaseHero的抽象方法 - 英雄标签配置
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "橘猫",
-            size: { width: 60, height: 24 }
+            text: this.unitName || "橘猫射手",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 100, height: 24 }
         };
     }
     

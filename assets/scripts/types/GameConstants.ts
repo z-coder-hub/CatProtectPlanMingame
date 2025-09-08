@@ -4,12 +4,14 @@ import { EnemyCategory, EnemyConfig, EnemyType, GameConfig, HeroCategory, HeroCo
 // 英雄配置 - 完整的猫咪英雄配置
 export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
     // === 远程英雄 ===
+    // 注意：远程射击英雄（橘猫、波斯猫、孟加拉猫）拥有全局攻击能力，
+    // attackRange仅用于UI显示和平衡性参考，实际攻击无范围限制
     [HeroType.ORANGE_CAT]: {
         type: HeroType.ORANGE_CAT,
         name: "橘猫射手",
         category: HeroCategory.RANGED,
         attackDamage: 25,
-        attackRange: 150,
+        attackRange: 150,  // 全局攻击，此值仅用于显示
         attackSpeed: 1.2,
         cost: 40,
         bulletSpeed: 300,
@@ -21,7 +23,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         name: "波斯猫狙击手",
         category: HeroCategory.RANGED,
         attackDamage: 50,
-        attackRange: 250,
+        attackRange: 250,  // 全局攻击，此值仅用于显示
         attackSpeed: 0.6,
         cost: 70,
         bulletSpeed: 500,
@@ -35,7 +37,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         name: "孟加拉猫猎手",
         category: HeroCategory.RANGED,
         attackDamage: 20,        // 从18提升到20，修复略弱问题
-        attackRange: 160,
+        attackRange: 160,  // 全局攻击，此值仅用于显示
         attackSpeed: 2.0,
         cost: 55,
         bulletSpeed: 350,
@@ -264,180 +266,100 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         goldReward: 25
     },
 
-    // === 特殊BOSS单位（关卡专用） ===
-    [EnemyType.ICE_KING]: {
-        type: EnemyType.ICE_KING,
-        name: "冰原霸主",
+    // === 新BOSS单位（关卡4-10专用） ===
+    [EnemyType.ARMOR_OVERLORD]: {
+        type: EnemyType.ARMOR_OVERLORD,
+        name: "重甲统领",
         category: EnemyCategory.BOSS,
-        health: 500,
-        maxHealth: 500,
+        health: 1200,
+        maxHealth: 1200,
         moveSpeed: 25,
-        goldReward: 50,
-        slowEffect: 0.3,       // 冰霜光环减速周围英雄
-        armorValue: 8
+        goldReward: 100,
+        armorValue: 15        // 超高护甲值，减伤80%
     },
 
-    [EnemyType.FLAME_DEMON]: {
-        type: EnemyType.FLAME_DEMON,
-        name: "炎魔",
+    [EnemyType.SHADOW_ASSASSIN]: {
+        type: EnemyType.SHADOW_ASSASSIN,
+        name: "潜影刺客",
         category: EnemyCategory.BOSS,
-        health: 400,
-        maxHealth: 400,
-        moveSpeed: 40,
-        goldReward: 40,
-        explosionDamage: 50,   // 死亡爆炸伤害
-        explosionRange: 100    // 爆炸范围
+        health: 800,
+        maxHealth: 800,
+        moveSpeed: 55,
+        goldReward: 80,
+        stealthChance: 1.0,   // 永久潜行
+        damageReduction: 0.5  // 免疫50%伤害
     },
 
-    [EnemyType.VOLCANO_HEART]: {
-        type: EnemyType.VOLCANO_HEART,
-        name: "火山之心",
+    [EnemyType.STORM_TYRANT]: {
+        type: EnemyType.STORM_TYRANT,
+        name: "疾风暴君",
         category: EnemyCategory.BOSS,
         health: 600,
         maxHealth: 600,
+        moveSpeed: 85,        // 极速移动
+        goldReward: 90,
+        summonCount: 5,
+        summonType: EnemyType.SPEED_MOUSE
+    },
+
+    [EnemyType.GIANT_BEHEMOTH]: {
+        type: EnemyType.GIANT_BEHEMOTH,
+        name: "巨兽霸主",
+        category: EnemyCategory.BOSS,
+        health: 1800,
+        maxHealth: 1800,
         moveSpeed: 20,
-        goldReward: 80,
+        goldReward: 120,
+        aoeAttackRange: 120   // 践踏范围伤害
+    },
+
+    [EnemyType.THUNDER_MASTER]: {
+        type: EnemyType.THUNDER_MASTER,
+        name: "雷电大师",
+        category: EnemyCategory.BOSS,
+        health: 1000,
+        maxHealth: 1000,
+        moveSpeed: 35,
+        goldReward: 110,
+        chainTargets: 5,      // 雷电链式攻击
+        shieldStrength: 200   // 电流场护盾
+    },
+
+    [EnemyType.MECH_COMMANDER]: {
+        type: EnemyType.MECH_COMMANDER,
+        name: "机械军团长",
+        category: EnemyCategory.BOSS,
+        health: 1200,
+        maxHealth: 1200,
+        moveSpeed: 40,
+        goldReward: 150,
+        summonCount: 999,     // 无限召唤
+        summonType: EnemyType.MECH_MOUSE,
+        healRate: 50         // 自我修复能力
+    },
+
+    [EnemyType.ULTIMATE_OVERLORD]: {
+        type: EnemyType.ULTIMATE_OVERLORD,
+        name: "终极霸王",
+        category: EnemyCategory.BOSS,
+        health: 2500,
+        maxHealth: 2500,
+        moveSpeed: 30,
+        goldReward: 200,
         armorValue: 10,
-        summonCount: 2,
-        summonType: EnemyType.FLAME_DEMON,
-        explosionDamage: 100,
-        explosionRange: 150
+        stealthChance: 0.3,
+        summonCount: 3,
+        summonType: EnemyType.MOUSE_KING,
+        chainTargets: 3,
+        damageReduction: 0.2  // 融合所有BOSS能力
     }
 };
 
-// 波次配置 - 重新设计的平衡版本，使用现有敌人类型
-export const WAVE_CONFIGS: WaveConfig[] = [
-    // === 第一阶段: 基础训练 (1-3波) ===
-    {
-        waveNumber: 1,
-        enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 3, spawnDelay: 1.5 }
-        ]
-    },
-    {
-        waveNumber: 2,
-        enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 5, spawnDelay: 1.0 }
-        ]
-    },
-    {
-        waveNumber: 3,
-        enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 6, spawnDelay: 0.8 },
-            { type: EnemyType.FAST_MOUSE, count: 2, spawnDelay: 1.5 }
-        ]
-    },
-
-    // === 第二阶段: 装甲威胁 (4-6波) ===
-    {
-        waveNumber: 4,
-        enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 6, spawnDelay: 0.6 },
-            { type: EnemyType.FAST_MOUSE, count: 3, spawnDelay: 1.0 },
-            { type: EnemyType.ARMORED_MOUSE, count: 1, spawnDelay: 2.0 }
-        ]
-    },
-    {
-        waveNumber: 5,
-        enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 7, spawnDelay: 0.5 },
-            { type: EnemyType.ARMORED_MOUSE, count: 2, spawnDelay: 1.5 },
-            { type: EnemyType.GIANT_MOUSE, count: 1, spawnDelay: 3.0 }
-        ]
-    },
-    {
-        waveNumber: 6,
-        enemies: [
-            { type: EnemyType.FAST_MOUSE, count: 5, spawnDelay: 0.6 },
-            { type: EnemyType.ARMORED_MOUSE, count: 2, spawnDelay: 1.2 },
-            { type: EnemyType.SPEED_MOUSE, count: 3, spawnDelay: 1.5 }
-        ]
-    },
-
-    // === 第三阶段: 高速突击 (7-9波) ===
-    {
-        waveNumber: 7,
-        enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 8, spawnDelay: 0.4 },
-            { type: EnemyType.SPEED_MOUSE, count: 4, spawnDelay: 0.8 }
-        ]
-    },
-    {
-        waveNumber: 8,
-        enemies: [
-            { type: EnemyType.FAST_MOUSE, count: 6, spawnDelay: 0.5 },
-            { type: EnemyType.GIANT_MOUSE, count: 2, spawnDelay: 2.5 },
-            { type: EnemyType.SPEED_MOUSE, count: 4, spawnDelay: 0.7 }
-        ]
-    },
-    {
-        waveNumber: 9,
-        enemies: [
-            { type: EnemyType.ARMORED_MOUSE, count: 4, spawnDelay: 1.0 },
-            { type: EnemyType.FAST_MOUSE, count: 6, spawnDelay: 0.4 },
-            { type: EnemyType.GIANT_MOUSE, count: 2, spawnDelay: 3.0 }
-        ]
-    },
-
-    // === 第四阶段: 混合突击 (10-12波) ===
-    {
-        waveNumber: 10,
-        enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 10, spawnDelay: 0.3 },
-            { type: EnemyType.FAST_MOUSE, count: 6, spawnDelay: 0.4 },
-            { type: EnemyType.ARMORED_MOUSE, count: 3, spawnDelay: 0.8 }
-        ]
-    },
-    {
-        waveNumber: 11,
-        enemies: [
-            { type: EnemyType.SPEED_MOUSE, count: 8, spawnDelay: 0.3 },
-            { type: EnemyType.GIANT_MOUSE, count: 2, spawnDelay: 2.0 },
-            { type: EnemyType.ARMORED_MOUSE, count: 3, spawnDelay: 1.0 }
-        ]
-    },
-    {
-        waveNumber: 12,
-        enemies: [
-            { type: EnemyType.GIANT_MOUSE, count: 3, spawnDelay: 1.5 },
-            { type: EnemyType.SPEED_MOUSE, count: 10, spawnDelay: 0.2 },
-            { type: EnemyType.ARMORED_MOUSE, count: 4, spawnDelay: 0.8 }
-        ]
-    },
-
-    // === 第五阶段: 终极挑战 (13-15波) ===
-    {
-        waveNumber: 13,
-        enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 20, spawnDelay: 0.2 },
-            { type: EnemyType.FAST_MOUSE, count: 15, spawnDelay: 0.3 },
-            { type: EnemyType.GIANT_MOUSE, count: 2, spawnDelay: 4.0 }
-        ]
-    },
-    {
-        waveNumber: 14,
-        enemies: [
-            { type: EnemyType.SPEED_MOUSE, count: 25, spawnDelay: 0.15 },
-            { type: EnemyType.ARMORED_MOUSE, count: 8, spawnDelay: 0.5 },
-            { type: EnemyType.GIANT_MOUSE, count: 3, spawnDelay: 2.0 }
-        ]
-    },
-    {
-        waveNumber: 15,
-        enemies: [
-            { type: EnemyType.BASIC_MOUSE, count: 30, spawnDelay: 0.1 },
-            { type: EnemyType.FAST_MOUSE, count: 20, spawnDelay: 0.15 },
-            { type: EnemyType.SPEED_MOUSE, count: 15, spawnDelay: 0.2 },
-            { type: EnemyType.ARMORED_MOUSE, count: 10, spawnDelay: 0.3 },
-            { type: EnemyType.GIANT_MOUSE, count: 5, spawnDelay: 1.0 }
-        ]
-    }
-];
 
 // 游戏配置
 export const GAME_CONFIG: GameConfig = {
-    initialGold: 110,                    // 优化的初始金币，确保能部署2个橘猫+有余量
-    castleHealth: 120,                   // 增加城堡血量，提供更多容错
+    initialGold: 250,                    // 关卡1的初始金币
+    castleHealth: 120,                   // 城堡血量
     restDuration: 120,                   // 关卡间休息时长120秒，支持手动跳过
     gridConfig: {
         rows: 11,
@@ -445,7 +367,7 @@ export const GAME_CONFIG: GameConfig = {
     },
     heroConfigs: HERO_CONFIGS,
     enemyConfigs: ENEMY_CONFIGS,
-    waves: WAVE_CONFIGS
+    totalLevels: 10                      // 总关卡数
 };
 
 // UI常量

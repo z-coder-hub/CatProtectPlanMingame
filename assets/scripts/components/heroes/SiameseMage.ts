@@ -52,13 +52,14 @@ export class SiameseMage extends BaseHero {
     
     // 继承父类start()方法，无需重写
     
-    // 重写标签配置，使用"暹罗猫"名称
+    // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "暹罗猫",
-            size: { width: 70, height: 24 }
+            text: this.unitName || "暹罗猫法师",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 110, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
     

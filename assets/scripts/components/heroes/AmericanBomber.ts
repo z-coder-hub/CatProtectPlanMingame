@@ -12,7 +12,6 @@ const { ccclass } = _decorator;
 export class AmericanBomber extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.AMERICAN_BOMBER;
-    private _graphics: Graphics | null = null;
     private _bombTimer: number = 0;
     
     // 实现BaseHero的抽象方法
@@ -48,8 +47,8 @@ export class AmericanBomber extends BaseHero {
     
     
     private initializeVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        this._graphics = this.node.getComponent(Graphics);
+        // 使用基类BaseHero的_graphics属性
+        // this._graphics由BaseHero管理
         this.drawAmericanBomberAppearance();
     }
     
@@ -224,13 +223,14 @@ export class AmericanBomber extends BaseHero {
         }
     }
     
-    // 重写标签配置，使用"美短猫"名称
+    // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "美短猫",
-            size: { width: 70, height: 24 }
+            text: this.unitName || "美国短毛猫爆破兵",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 150, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
 }

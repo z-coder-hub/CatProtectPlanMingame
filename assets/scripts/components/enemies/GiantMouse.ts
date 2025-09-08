@@ -118,12 +118,12 @@ export class GiantMouse extends BaseMouse {
     
     // 重写标签配置 - 使用统一大字体
     protected getMouseLabelConfig() {
-        const baseConfig = super.getMouseLabelConfig();
         return {
-            ...baseConfig,
             text: "巨鼠",
+            fontSize: 22,
             color: new Color(255, 100, 100), // 红色文字
             yOffset: 50, // 巨型老鼠更高，需要更大的偏移
+            size: { width: 60, height: 28 }
         };
     }
     

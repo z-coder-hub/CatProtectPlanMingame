@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween } from 'cc';
+import { _decorator, Node, Vec3, Graphics, Color, Animation, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType, HeroState } from '../../types/GameTypes';
@@ -18,10 +18,8 @@ export class BritishKnight extends BaseHero {
     public skillCooldown: number = 12;
     
     // 私有属性
-    private _skillTimer: number = 0;
-    private _graphics: Graphics | null = null;
+    // _graphics由BaseHero管理
     private _animation: Animation | null = null;
-    private _nameLabel: Label | null = null;
     private _isPlayingAttackAnimation: boolean = false;
     private _isCharged: boolean = false; // 冲锋状态
     
@@ -45,18 +43,18 @@ export class BritishKnight extends BaseHero {
     protected initializeHeroVisuals(): void {
         this.initializeVisuals();
         this.initializeAnimation();
-        this.setupClickEvents();
+        // 移除setupClickEvents，使用BaseHero的统一系统
     }
     
     // 继承父类start()方法，无需重写
     
     
     private initializeVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        this._graphics = this.node.getComponent(Graphics);
+        // 使用基类BaseHero的_graphics属性
+        // this._graphics由BaseHero管理
         
         this.drawBritishKnightAppearance();
-        this.createNameLabel();
+        // 移除createNameLabel，使用BaseHero的统一标签系统
     }
     
     private drawBritishKnightAppearance(): void {
@@ -64,14 +62,15 @@ export class BritishKnight extends BaseHero {
         DrawingHelper.drawHeroAppearance(this._graphics, 'british');
     }
     
-    private createNameLabel(): void {
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
-            text: "英短骑士",
-            fontSize: 18,  // 放大字体
-            color: new Color(255, 255, 255),
-            position: { x: 0, y: 40, z: 0 },  // 提高位置适应更大字体
-            size: { width: 80, height: 24 }   // 增大标签尺寸
-        });
+    // 重写标签配置，使用完整英雄名称
+    protected getHeroLabelConfig() {
+        return {
+            text: this.unitName || "英国短毛猫骑士",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 140, height: 24 }  // 增加宽度以容纳完整名称
+        };
     }
     
     private initializeAnimation(): void {
@@ -83,13 +82,7 @@ export class BritishKnight extends BaseHero {
         }
     }
     
-    protected update(dt: number): void {
-        super.update(dt);
-        
-        if (this._skillTimer > 0) {
-            this._skillTimer -= dt;
-        }
-    }
+    // 使用BaseHero的统一update方法
     
     protected onIdleState(dt: number): void {
         if (!this.isAlive) return;
@@ -168,18 +161,14 @@ export class BritishKnight extends BaseHero {
             .start();
     }
     
-    // 重装冲锋技能
-    public useSkill(): boolean {
-        if (this._skillTimer > 0 || !this.isAlive) {
-            return false;
-        }
-        
+    // 重写基类的技能使用方法
+    protected onUseSkill(): void {
         const battleManager = BattleManager.instance;
-        if (!battleManager) return false;
+        if (!battleManager) return;
         
         // 寻找范围内的敌人
         const enemies = battleManager.GetEnemiesInRange(this.node.position, this.attackRange * 1.5);
-        if (enemies.length === 0) return false;
+        if (enemies.length === 0) return;
         
         // 激活冲锋状态
         this._isCharged = true;
@@ -195,9 +184,7 @@ export class BritishKnight extends BaseHero {
             console.log("英短骑士冲锋状态结束");
         }, 3);
         
-        this._skillTimer = this.skillCooldown;
         console.log("英短骑士激活重装冲锋！");
-        return true;
     }
     
     private createChargeEffect(): void {
@@ -227,35 +214,18 @@ export class BritishKnight extends BaseHero {
         }
     }
     
-    public getSkillCooldownRemaining(): number {
-        return Math.max(0, this._skillTimer);
-    }
-    
-    public isSkillReady(): boolean {
-        return this._skillTimer <= 0 && this.isAlive;
-    }
+    // 移除重复的技能冷却方法，使用BaseHero的canUseSkill
     
     
     
-    private setupClickEvents(): void {
-        this.node.on(Node.EventType.TOUCH_END, this.onHeroClick, this);
-    }
-    
-    private onHeroClick(event: EventTouch): void {
-        if (!this.isAlive) return;
-        
-        event.propagationStopped = true;
-        
-        if (this.isSkillReady()) {
-            const skillUsed = this.useSkill();
-            if (skillUsed) {
-                console.log("英短骑士释放重装冲锋技能！");
-                this.createClickFeedback();
-            } else {
-                console.log("英短骑士技能释放失败");
-            }
+    // 重写BaseHero的点击处理方法
+    protected onHeroClickHandler(): void {
+        if (this.canUseSkill) {
+            this.useSkill();
+            console.log("英短骑士释放重装冲锋技能！");
+            this.createClickFeedback();
         } else {
-            console.log(`英短骑士技能冷却中，剩余时间: ${this.getSkillCooldownRemaining().toFixed(1)}秒`);
+            console.log("英短骑士技能冷却中");
             this.createCooldownFeedback();
         }
     }

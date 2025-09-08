@@ -266,13 +266,14 @@ export class PersianSniper extends BaseHero {
         }
     }
     
-    // 重写标签配置，使用"波斯猫"名称
+    // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "波斯猫",
-            size: { width: 70, height: 24 }
+            text: this.unitName || "波斯猫狙击手",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 120, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
     

@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Vec3, tween } from 'cc';
+import { _decorator, Color, Graphics, Vec3, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyState } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
@@ -62,7 +62,7 @@ export class MechMouse extends BaseMouse {
         // 绘制机械身体主体（矩形科技造型）
         this._graphics.fillColor = bodyColor;
         this._graphics.strokeColor = new Color(80, 80, 100, 255);
-        this._this._graphics.lineWidth = 2;
+        this._graphics.lineWidth = 2;
         
         // 主体 - 科技感矩形身体
         this._graphics.roundRect(-15, -8, 30, 16, 3);
@@ -179,8 +179,7 @@ export class MechMouse extends BaseMouse {
      * 更新科技外观效果
      */
     private updateTechAppearance(): void {
-        const graphics = this.node.getComponent(Graphics);
-        if (graphics) {
+        if (this._graphics) {
             this.drawMechMouseAppearance();
         }
     }
@@ -256,6 +255,7 @@ export class MechMouse extends BaseMouse {
     private createTechReachEffect(): void {
         // 科技攻击特效 - 电磁脉冲效果
         const originalScale = this.node.scale.clone();
+        const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);
         
         // 电磁脉冲扩散
         this.node.setScale(originalScale.x * 0.5, originalScale.y * 0.5, originalScale.z);
@@ -266,7 +266,7 @@ export class MechMouse extends BaseMouse {
             .call(() => {
                 if (this.node && this.node.isValid) {
                     this.node.setScale(originalScale.x * 3, originalScale.y * 3, originalScale.z);
-                    this.node.opacity = 100;
+                    uiOpacity.opacity = 100;
                 }
             })
             .start();
@@ -275,7 +275,7 @@ export class MechMouse extends BaseMouse {
             .delay(0.3)
             .call(() => {
                 if (this.node && this.node.isValid) {
-                    this.node.opacity = 0;
+                    uiOpacity.opacity = 0;
                 }
             })
             .start();
@@ -287,7 +287,8 @@ export class MechMouse extends BaseMouse {
     protected createDeathEffect(): void {
         // 机械爆炸特效 - 多阶段爆炸
         const originalScale = this.node.scale.clone();
-        const originalOpacity = this.node.opacity;
+        const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);
+        const originalOpacity = uiOpacity.opacity;
         
         // 第一阶段：电路短路闪烁 - 使用tween系统替代scheduleOnce
         for (let i = 1; i <= 8; i++) {
@@ -295,7 +296,7 @@ export class MechMouse extends BaseMouse {
                 .delay(i * 0.05)
                 .call(() => {
                     if (this.node && this.node.isValid) {
-                        this.node.opacity = i % 2 === 0 ? originalOpacity : 50;
+                        uiOpacity.opacity = i % 2 === 0 ? originalOpacity : 50;
                     }
                 })
                 .start();
@@ -307,7 +308,7 @@ export class MechMouse extends BaseMouse {
             .call(() => {
                 if (this.node && this.node.isValid) {
                     this.node.setScale(originalScale.x * 2, originalScale.y * 2, originalScale.z);
-                    this.node.opacity = 200;
+                    uiOpacity.opacity = 200;
                 }
             })
             .start();
@@ -318,7 +319,7 @@ export class MechMouse extends BaseMouse {
             .call(() => {
                 if (this.node && this.node.isValid) {
                     this.node.setScale(0, 0, 0);
-                    this.node.opacity = 0;
+                    uiOpacity.opacity = 0;
                 }
             })
             .start();

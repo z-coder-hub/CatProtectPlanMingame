@@ -11,7 +11,6 @@ const { ccclass } = _decorator;
 export class AbyssinianScout extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.ABYSSINIAN_SCOUT;
-    private _graphics: Graphics | null = null;
     private _scoutTimer: number = 0;
     
     // 实现BaseHero的抽象方法
@@ -29,8 +28,8 @@ export class AbyssinianScout extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        this._graphics = this.node.getComponent(Graphics);
+        // 使用基类BaseHero的_graphics属性
+        // this._graphics由BaseHero管理
         this.drawAbyssinianScoutAppearance();
     }
     
@@ -204,13 +203,14 @@ export class AbyssinianScout extends BaseHero {
             .start();
     }
     
-    // 重写标签配置，使用"阿比猫"名称
+    // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "阿比猫",
-            size: { width: 70, height: 24 }
+            text: this.unitName || "阿比西尼亚猫侦察兵",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 150, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
 }

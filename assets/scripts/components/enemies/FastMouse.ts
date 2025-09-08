@@ -171,11 +171,12 @@ export class FastMouse extends BaseMouse {
     
     // 重写标签配置 - 使用统一大字体
     protected getMouseLabelConfig() {
-        const baseConfig = super.getMouseLabelConfig();
         return {
-            ...baseConfig,
             text: "快鼠",
+            fontSize: 22,
             color: new Color(50, 205, 50), // 绿色文字
+            yOffset: 35,
+            size: { width: 60, height: 28 }
         };
     }
     

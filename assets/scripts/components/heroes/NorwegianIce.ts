@@ -11,7 +11,6 @@ const { ccclass } = _decorator;
 export class NorwegianIce extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.NORWEGIAN_ICE;
-    private _graphics: Graphics | null = null;
     
     // 实现BaseHero的抽象方法
     protected initializeHeroStats(): void {
@@ -28,8 +27,8 @@ export class NorwegianIce extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 父类已创建Graphics组件，直接获取引用
-        this._graphics = this.node.getComponent(Graphics);
+        // 父类已创建Graphics组件，直接使用基类的_graphics
+        // this._graphics已由BaseHero管理
         this.drawNorwegianIceAppearance();
     }
     
@@ -156,13 +155,14 @@ export class NorwegianIce extends BaseHero {
             .start();
     }
     
-    // 重写标签配置，使用"挪威猫"名称
+    // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "挪威猫",
-            size: { width: 70, height: 24 }
+            text: this.unitName || "挪威森林猫冰法",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 140, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
 }

@@ -158,13 +158,14 @@ export class RagdollGuardian extends BaseHero {
         }, 2.0);
     }
     
-    // 重写标签配置，使用"布偶猫"名称
+    // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
-        const baseConfig = super.getHeroLabelConfig();
         return {
-            ...baseConfig,
-            text: "布偶猫",
-            size: { width: 70, height: 24 }
+            text: this.unitName || "布偶猫守护者",
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: 120, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
     

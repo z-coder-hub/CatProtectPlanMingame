@@ -82,6 +82,15 @@ export abstract class BaseMouse extends Component {
     // 抽象方法，子类必须实现具体的老鼠外观
     protected abstract initializeMouseVisuals(): void;
     
+    // 抽象方法，子类必须实现老鼠标签配置
+    protected abstract getMouseLabelConfig(): {
+        text: string;
+        fontSize: number;
+        color: Color;
+        yOffset: number;
+        size: { width: number; height: number };
+    };
+    
     // === 通用属性访问器 ===
     public get isAlive(): boolean {
         return this.currentHealth > 0 && this.enemyState !== EnemyState.DEAD;
@@ -229,17 +238,14 @@ export abstract class BaseMouse extends Component {
     // 移除onAttackState方法 - 老鼠不具备攻击能力
     
     protected onDeadState(_dt: number): void {
+        // 死亡状态的默认处理（通常为空）
     }
     
-    // === 动作辅助方法 ===
-    
+    // === 事件回调方法 (子类可重写) ===
     
     protected onTakeDamage(damage: number): void {
         console.log(`${this.unitName}受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
     }
-    
-    // === 抽象方法，子类必须实现 ===
-    
     
     // === 工具方法 ===
     
@@ -282,21 +288,4 @@ export abstract class BaseMouse extends Component {
             size: labelConfig.size
         });
     }
-    
-    protected getMouseLabelConfig(): {
-        text: string;
-        fontSize: number;
-        color: Color;
-        yOffset: number;
-        size: { width: number; height: number };
-    } {
-        return {
-            text: "老鼠",
-            fontSize: 22,
-            color: new Color(255, 255, 255),
-            yOffset: 35,
-            size: { width: 60, height: 28 }
-        };
-    }
-    
 }

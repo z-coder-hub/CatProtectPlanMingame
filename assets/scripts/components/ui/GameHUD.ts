@@ -134,7 +134,7 @@ export class GameHUD extends Component {
 
         const levelLabel = levelNode.addComponent(Label);
         this._levelLabel = levelLabel;
-        this._levelLabel.string = "1-1: 初来乍到";
+        this._levelLabel.string = "关卡1: 新手训练";
         this._levelLabel.fontSize = 20;
         this._levelLabel.color = new Color(135, 206, 235); // 天蓝色
     }
@@ -293,12 +293,20 @@ export class GameHUD extends Component {
         const stats = this._gameManager.GetGameStats();
 
         // 更新关卡信息显示
-        if (this._levelLabel) {
-            const currentLevel = this._gameManager.currentLevelConfig;
-            if (currentLevel) {
-                this._levelLabel.string = `${currentLevel.id}: ${currentLevel.name}`;
+        if (this._levelLabel && this._gameManager) {
+            // 在休闲时间显示特殊信息，避免误导玩家
+            if (stats.gameState === GameState.RESTING) {
+                const remainingTime = Math.ceil(this._gameManager.restTimer);
+                const nextLevelIndex = this._gameManager.currentLevelIndex + 1;
+                this._levelLabel.string = `关卡间休息 - ${remainingTime}秒后进入关卡${nextLevelIndex + 1}`;
             } else {
-                this._levelLabel.string = "未选择关卡";
+                const levelIndex = this._gameManager.currentLevelIndex;
+                const currentLevel = this._gameManager.currentLevelConfig;
+                if (currentLevel) {
+                    this._levelLabel.string = `关卡${levelIndex + 1}: ${currentLevel.name}`;
+                } else {
+                    this._levelLabel.string = "未选择关卡";
+                }
             }
         }
         

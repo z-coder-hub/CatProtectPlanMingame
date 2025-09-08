@@ -83,10 +83,14 @@ export enum EnemyType {
     MOUSE_KING = "MouseKing",           // 老鼠王
     MECH_MOUSE = "MechMouse",           // 机械老鼠
     
-    // 特殊BOSS单位（关卡专用）
-    ICE_KING = "IceKing",               // 冰原霸主
-    FLAME_DEMON = "FlameDemon",         // 炎魔
-    VOLCANO_HEART = "VolcanoHeart"      // 火山之心
+    // 新BOSS单位（关卡4-10专用）
+    ARMOR_OVERLORD = "ArmorOverlord",       // 重甲统领
+    SHADOW_ASSASSIN = "ShadowAssassin",     // 潜影刺客
+    STORM_TYRANT = "StormTyrant",           // 疾风暴君
+    GIANT_BEHEMOTH = "GiantBehemoth",       // 巨兽霸主
+    THUNDER_MASTER = "ThunderMaster",       // 雷电大师
+    MECH_COMMANDER = "MechCommander",       // 机械军团长
+    ULTIMATE_OVERLORD = "UltimateOverlord"  // 终极霸王
 }
 
 // 游戏状态枚举
@@ -151,6 +155,13 @@ export interface EnemyConfig extends EnemyUnitStats {
     summonType?: EnemyType;        // 召唤单位类型
     stealthChance?: number;        // 潜行躲避几率(0-1)
     armorValue?: number;           // 护甲值(减少伤害)
+    
+    // 新BOSS专用属性
+    chainTargets?: number;         // 链式攻击目标数(雷电大师)
+    shieldStrength?: number;       // 护盾强度(雷电大师)
+    healRate?: number;             // 自我修复速度/秒(机械军团长)
+    damageReduction?: number;      // 伤害减免比例(0-1，潜影刺客等)
+    aoeAttackRange?: number;       // 范围攻击半径(巨兽霸主践踏)
 }
 
 // 位置相关接口
@@ -197,7 +208,7 @@ export interface GameConfig {
     gridConfig: GridConfig;        // 网格配置
     heroConfigs: Record<HeroType, HeroConfig>;     // 英雄配置
     enemyConfigs: Record<EnemyType, EnemyConfig>;  // 敌人配置
-    waves: WaveConfig[];           // 波次配置（旧版本兼容，新版本使用关卡配置）
+    totalLevels: number;          // 总关卡数
 }
 
 // ====================== 关卡系统接口 ======================

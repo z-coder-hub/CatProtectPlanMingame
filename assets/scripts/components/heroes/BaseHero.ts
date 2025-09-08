@@ -101,6 +101,13 @@ export abstract class BaseHero extends Component {
     // === 抽象方法，子类必须实现 ===
     protected abstract initializeHeroStats(): void;
     protected abstract initializeHeroVisuals(): void;
+    protected abstract getHeroLabelConfig(): {
+        text: string;
+        fontSize: number;
+        color: Color;
+        yOffset: number;
+        size: { width: number; height: number };
+    };
     
     // === 统一外观系统方法 ===
     
@@ -182,25 +189,6 @@ export abstract class BaseHero extends Component {
         });
     }
     
-    /**
-     * 获取英雄标签配置 - 子类可以重写以自定义标签
-     */
-    protected getHeroLabelConfig(): {
-        text: string;
-        fontSize: number;
-        color: Color;
-        yOffset: number;
-        size: { width: number; height: number };
-    } {
-        // 默认配置，基于英雄名称
-        return {
-            text: this.unitName,
-            fontSize: 18,           // 统一大字体
-            color: new Color(255, 255, 255),
-            yOffset: 35,            // 统一上方位置
-            size: { width: 70, height: 24 }  // 统一大尺寸
-        };
-    }
     
     /**
      * 设置点击事件
@@ -263,23 +251,8 @@ export abstract class BaseHero extends Component {
         const battleManager = BattleManager.instance;
         if (!battleManager) return null;
         
-        const enemies = battleManager.registeredEnemies;
-        if (enemies.length === 0) return null;
-        
-        let nearestEnemy: Node | null = null;
-        let nearestDistance = Infinity;
-        
-        const heroPos = this.node.position;
-        
-        for (const enemy of enemies) {
-            const distance = Vec3.distance(heroPos, enemy.position);
-            if (distance < nearestDistance && distance <= this.attackRange) {
-                nearestDistance = distance;
-                nearestEnemy = enemy;
-            }
-        }
-        
-        return nearestEnemy;
+        // 使用BattleManager的全局寻敌方法，自动处理远程射击英雄的全局攻击
+        return battleManager.FindNearestEnemyGlobal(this.node);
     }
     
     /**
@@ -288,8 +261,26 @@ export abstract class BaseHero extends Component {
     protected isTargetInRange(target: Node): boolean {
         if (!target || !target.isValid) return false;
         
+        // 远程射击英雄拥有全局攻击能力，无范围限制
+        if (this.isRangedShooterHero()) {
+            return true;
+        }
+        
         const distance = Vec3.distance(this.node.position, target.position);
         return distance <= this.attackRange;
+    }
+    
+    /**
+     * 判断当前英雄是否为远程射击英雄类型
+     */
+    protected isRangedShooterHero(): boolean {
+        const rangedShooterTypes = [
+            HeroType.ORANGE_CAT,      // 橘猫射手
+            HeroType.PERSIAN_SNIPER,  // 波斯猫狙击手
+            HeroType.BENGAL_HUNTER    // 孟加拉猎手
+        ];
+        
+        return rangedShooterTypes.indexOf(this.heroType) !== -1;
     }
     
     /**
@@ -319,7 +310,7 @@ export abstract class BaseHero extends Component {
     /**
      * 待机状态处理
      */
-    protected onIdleState(dt: number): void {
+    protected onIdleState(_dt: number): void {
         // 寻找敌人
         const target = this.findNearestEnemy();
         if (target) {
@@ -331,7 +322,7 @@ export abstract class BaseHero extends Component {
     /**
      * 攻击状态处理
      */
-    protected onAttackState(dt: number): void {
+    protected onAttackState(_dt: number): void {
         if (!this.currentTarget || !this.currentTarget.isValid) {
             this.heroState = HeroState.IDLE;
             return;
@@ -396,7 +387,7 @@ export abstract class BaseHero extends Component {
     /**
      * 创建缓动动画
      */
-    protected createTween(duration: number): any {
+    protected createTween(_duration: number): any {
         return tween(this.node).tag(1001);
     }
     

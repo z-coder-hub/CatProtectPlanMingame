@@ -21,7 +21,9 @@
       "WebFetch(domain:docs.cocos.com)",
       "Bash(do if [[ \"$file\" != \"BaseHero.ts\" ]])",
       "Bash(then echo \"=== $file ===\")",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(do)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

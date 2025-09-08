@@ -199,12 +199,12 @@ export class ArmoredMouse extends BaseMouse {
     
     // 重写标签配置 - 使用统一大字体
     protected getMouseLabelConfig() {
-        const baseConfig = super.getMouseLabelConfig();
         return {
-            ...baseConfig,
             text: "甲鼠",
+            fontSize: 22,
             color: new Color(255, 215, 0), // 金色文字
             yOffset: 45, // 装甲老鼠更高，需要更大的偏移
+            size: { width: 60, height: 28 }
         };
     }
     
