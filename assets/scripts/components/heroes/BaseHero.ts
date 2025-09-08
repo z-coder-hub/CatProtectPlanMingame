@@ -87,15 +87,8 @@ export abstract class BaseHero extends Component {
             this._skillTimer -= dt;
         }
         
-        // 根据状态执行对应行为
-        switch (this.heroState) {
-            case HeroState.IDLE:
-                this.onIdleState(dt);
-                break;
-            case HeroState.ATTACKING:
-                this.onAttackState(dt);
-                break;
-        }
+        // 状态管理现在完全由 BattleManager 处理，移除重复的状态逻辑
+        // BattleManager.updateBattle() 负责目标分配和攻击执行
     }
     
     // === 抽象方法，子类必须实现 ===
@@ -244,16 +237,6 @@ export abstract class BaseHero extends Component {
     // === 战斗方法 ===
     // 英雄不会受到伤害或死亡，移除相关方法
     
-    /**
-     * 寻找最近的敌人
-     */
-    protected findNearestEnemy(): Node | null {
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return null;
-        
-        // 使用BattleManager的全局寻敌方法，自动处理远程射击英雄的全局攻击
-        return battleManager.FindNearestEnemyGlobal(this.node);
-    }
     
     /**
      * 检查目标是否在攻击范围内
@@ -261,27 +244,10 @@ export abstract class BaseHero extends Component {
     protected isTargetInRange(target: Node): boolean {
         if (!target || !target.isValid) return false;
         
-        // 远程射击英雄拥有全局攻击能力，无范围限制
-        if (this.isRangedShooterHero()) {
-            return true;
-        }
-        
         const distance = Vec3.distance(this.node.position, target.position);
         return distance <= this.attackRange;
     }
     
-    /**
-     * 判断当前英雄是否为远程射击英雄类型
-     */
-    protected isRangedShooterHero(): boolean {
-        const rangedShooterTypes = [
-            HeroType.ORANGE_CAT,      // 橘猫射手
-            HeroType.PERSIAN_SNIPER,  // 波斯猫狙击手
-            HeroType.BENGAL_HUNTER    // 孟加拉猎手
-        ];
-        
-        return rangedShooterTypes.indexOf(this.heroType) !== -1;
-    }
     
     /**
      * 获取到目标的距离
@@ -305,39 +271,8 @@ export abstract class BaseHero extends Component {
         this.onAttack(target);
     }
     
-    // === 状态处理方法 (子类可重写) ===
-    
-    /**
-     * 待机状态处理
-     */
-    protected onIdleState(_dt: number): void {
-        // 寻找敌人
-        const target = this.findNearestEnemy();
-        if (target) {
-            this.currentTarget = target;
-            this.heroState = HeroState.ATTACKING;
-        }
-    }
-    
-    /**
-     * 攻击状态处理
-     */
-    protected onAttackState(_dt: number): void {
-        if (!this.currentTarget || !this.currentTarget.isValid) {
-            this.heroState = HeroState.IDLE;
-            return;
-        }
-        
-        // 检查目标是否仍在范围内
-        if (!this.isTargetInRange(this.currentTarget)) {
-            this.currentTarget = null;
-            this.heroState = HeroState.IDLE;
-            return;
-        }
-        
-        // 攻击目标
-        this.attackTarget(this.currentTarget);
-    }
+    // === 状态处理方法已完全移除 ===
+    // 现在完全由 BattleManager 处理目标选择、分配和攻击逻辑
     
     // === 事件回调方法 (子类可重写) ===
     // 英雄不会受伤或死亡，移除相关回调方法

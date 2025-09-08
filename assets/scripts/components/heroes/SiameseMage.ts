@@ -80,16 +80,7 @@ export class SiameseMage extends BaseHero {
         }
     }
     
-    protected onIdleState(dt: number): void {
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
-            if (nearestEnemy) {
-                this.currentTarget = nearestEnemy;
-                this.heroState = HeroState.ATTACKING;
-            }
-        }
-    }
+    // 目标分配由 BattleManager 统一处理
     
     protected onAttack(target: Node): void {
         if (!target) return;

@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
-import { HeroType, HeroState } from '../../types/GameTypes';
+import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
 
@@ -72,18 +72,7 @@ export class MaineThunder extends BaseHero {
         graphics.stroke();
     }
     
-    protected onIdleState(dt: number): void {
-        if (!this.isAlive) return;
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
-            if (nearestEnemy) {
-                this.currentTarget = nearestEnemy;
-                this.heroState = HeroState.ATTACKING;
-            }
-        }
-    }
+    // 目标分配由 BattleManager 统一处理
     
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;

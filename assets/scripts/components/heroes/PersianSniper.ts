@@ -65,7 +65,7 @@ export class PersianSniper extends BaseHero {
     
     // 使用基类的update方法
     
-    // 使用基类的onIdleState方法
+    // 目标分配由 BattleManager 统一处理
     
     protected onAttack(target: Node): void {
         if (!target) return;
@@ -93,7 +93,7 @@ export class PersianSniper extends BaseHero {
     
     private moveBulletToTarget(bulletNode: Node, target: Node, direction: Vec3): void {
         const startPosition = Vec3.clone(this.node.position);
-        const maxRange = this.attackRange + 400; // 狙击手射程更远
+        const maxRange = this.attackRange; // 使用配置的攻击范围
         
         let targetPosition = Vec3.clone(target.position);
         

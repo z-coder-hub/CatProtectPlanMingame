@@ -4,14 +4,14 @@ import { EnemyCategory, EnemyConfig, EnemyType, GameConfig, HeroCategory, HeroCo
 // 英雄配置 - 完整的猫咪英雄配置
 export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
     // === 远程英雄 ===
-    // 注意：远程射击英雄（橘猫、波斯猫、孟加拉猫）拥有全局攻击能力，
-    // attackRange仅用于UI显示和平衡性参考，实际攻击无范围限制
+    // 注意：远程射击英雄（橘猫、波斯猫、孟加拉猫）拥有超大范围攻击能力，
+    // 攻击范围设置为超大值，可以覆盖整个战场区域
     [HeroType.ORANGE_CAT]: {
         type: HeroType.ORANGE_CAT,
         name: "橘猫射手",
         category: HeroCategory.RANGED,
         attackDamage: 25,
-        attackRange: 150,  // 全局攻击，此值仅用于显示
+        attackRange: 3000, // 超大攻击范围，覆盖整个战场
         attackSpeed: 1.2,
         cost: 40,
         bulletSpeed: 300,
@@ -23,7 +23,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         name: "波斯猫狙击手",
         category: HeroCategory.RANGED,
         attackDamage: 50,
-        attackRange: 250,  // 全局攻击，此值仅用于显示
+        attackRange: 4000, // 超大攻击范围，覆盖整个战场
         attackSpeed: 0.6,
         cost: 70,
         bulletSpeed: 500,
@@ -37,7 +37,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         name: "孟加拉猫猎手",
         category: HeroCategory.RANGED,
         attackDamage: 20,        // 从18提升到20，修复略弱问题
-        attackRange: 160,  // 全局攻击，此值仅用于显示
+        attackRange: 3500, // 超大攻击范围，覆盖整个战场
         attackSpeed: 2.0,
         cost: 55,
         bulletSpeed: 350,

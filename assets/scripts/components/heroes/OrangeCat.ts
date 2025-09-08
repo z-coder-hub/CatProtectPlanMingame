@@ -53,7 +53,7 @@ export class OrangeCat extends BaseHero {
         }
     }
     
-    // 移除onIdleState重写，使用BaseHero的全局寻敌逻辑
+    // 目标分配由 BattleManager 统一处理
     
     // 重写攻击方法
     protected onAttack(target: Node): void {
@@ -89,7 +89,7 @@ export class OrangeCat extends BaseHero {
     // 移动子弹到目标
     private moveBulletToTarget(bulletNode: Node, target: Node, direction: Vec3): void {
         const startPosition = Vec3.clone(this.node.position);
-        const maxRange = this.attackRange + 300; // 增加子弹飞行距离
+        const maxRange = this.attackRange; // 使用配置的攻击范围
         
         // 计算目标位置：目标当前位置 + 预测移动
         let targetPosition = Vec3.clone(target.position);

@@ -77,18 +77,7 @@ export class ScottishEngineer extends BaseHero {
         graphics.stroke();
     }
     
-    protected onIdleState(dt: number): void {
-        if (!this.isAlive) return;
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            const nearestEnemy = battleManager.FindNearestEnemy(this.node.position, this.attackRange);
-            if (nearestEnemy) {
-                this.currentTarget = nearestEnemy;
-                this.heroState = HeroState.ATTACKING;
-            }
-        }
-    }
+    // 目标分配由 BattleManager 统一处理
     
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;

@@ -64,7 +64,7 @@ export class BengalHunter extends BaseHero {
         this._graphics.stroke();
     }
     
-    // 移除onIdleState重写，使用BaseHero的全局寻敌逻辑
+    // 目标分配由 BattleManager 统一处理
     
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
