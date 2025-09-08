@@ -11,8 +11,15 @@ export class SimpleObjectPool {
     
     // 获取子弹节点
     public static getBulletNode(): Node {
-        if (this._bulletPool.length > 0) {
+        // 从池中获取有效的节点
+        while (this._bulletPool.length > 0) {
             const bulletNode = this._bulletPool.pop()!;
+            
+            // 检查节点是否仍然有效
+            if (!bulletNode || !bulletNode.isValid) {
+                continue; // 节点无效，继续寻找
+            }
+            
             bulletNode.active = true;
             
             // 重新绘制子弹图形，确保可见
@@ -27,20 +34,22 @@ export class SimpleObjectPool {
             return bulletNode;
         }
         
-        // 池中没有可用对象，创建新的
+        // 池中没有有效对象，创建新的
         return this.createBulletNode();
     }
     
     // 回收子弹节点
     public static recycleBulletNode(bulletNode: Node): void {
         if (!bulletNode || !bulletNode.isValid) {
+            console.warn("[SimpleObjectPool] 尝试回收无效的子弹节点");
             return;
         }
         
         // 重置子弹状态
         bulletNode.setPosition(0, 0, 0);
+        bulletNode.active = false; // 设置为非激活状态
         
-        // 清理graphics但保持节点激活，这样重用时更简单
+        // 清理graphics
         const graphics = bulletNode.getComponent(Graphics);
         if (graphics) {
             graphics.clear();
@@ -49,8 +58,10 @@ export class SimpleObjectPool {
         // 如果池未满，放入池中
         if (this._bulletPool.length < this._maxPoolSize) {
             this._bulletPool.push(bulletNode);
+            console.log(`[SimpleObjectPool] 子弹回收到池，当前池大小: ${this._bulletPool.length}`);
         } else {
             // 池已满，直接销毁
+            console.log("[SimpleObjectPool] 池已满，销毁子弹节点");
             bulletNode.destroy();
         }
     }
@@ -76,6 +87,18 @@ export class SimpleObjectPool {
             }
         }
         this._bulletPool = [];
+        console.log("[SimpleObjectPool] 对象池已清空");
+    }
+    
+    // 清理无效节点（定期维护）
+    public static cleanupInvalidNodes(): void {
+        const originalLength = this._bulletPool.length;
+        this._bulletPool = this._bulletPool.filter(bullet => bullet && bullet.isValid);
+        const cleanedCount = originalLength - this._bulletPool.length;
+        
+        if (cleanedCount > 0) {
+            console.log(`[SimpleObjectPool] 清理了 ${cleanedCount} 个无效节点，当前池大小: ${this._bulletPool.length}`);
+        }
     }
     
     // 获取池状态信息

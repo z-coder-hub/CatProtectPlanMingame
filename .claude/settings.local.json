@@ -1,31 +1,55 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(mkdir:*)",
-      "Bash(cp:*)",
-      "Bash(rm:*)",
-      "Bash(npm start)",
-      "Bash(npm run:*)",
-      "Bash(find:*)",
-      "Bash(grep:*)",
-      "mcp__ide__getDiagnostics",
-      "Bash(true)",
-      "Bash(sed:*)",
-      "mcp__ide__executeCode",
-      "Bash(for file in RagdollGuardian.ts AbyssinianScout.ts BengalHunter.ts NorwegianIce.ts ScottishEngineer.ts)",
-      "Bash(do echo \"=== $file ===\")",
-      "Bash(done)",
-      "Bash(mv:*)",
-      "Bash(for file in RagdollGuardian.ts AbyssinianScout.ts BengalHunter.ts ScottishEngineer.ts)",
-      "Bash(for:*)",
-      "WebFetch(domain:docs.cocos.com)",
-      "Bash(do if [[ \"$file\" != \"BaseHero.ts\" ]])",
-      "Bash(then echo \"=== $file ===\")",
-      "Bash(fi)",
-      "Bash(do)",
-      "Bash(echo:*)"
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/shiyuanchen/Project/CatProtectPlanMingame/.claude/hooks/mcp-security-scan.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__gemini",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/shiyuanchen/Project/CatProtectPlanMingame/.claude/hooks/gemini-context-injector.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/shiyuanchen/Project/CatProtectPlanMingame/.claude/hooks/subagent-context-injector.sh"
+          }
+        ]
+      }
     ],
-    "deny": [],
-    "ask": []
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/shiyuanchen/Project/CatProtectPlanMingame/.claude/hooks/notify.sh input"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/shiyuanchen/Project/CatProtectPlanMingame/.claude/hooks/notify.sh complete"
+          }
+        ]
+      }
+    ]
   }
 }

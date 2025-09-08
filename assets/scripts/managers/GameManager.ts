@@ -12,6 +12,7 @@ import { WaveManager } from './WaveManager';
 import { LevelManager } from './LevelManager';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 import { EnemyFactory } from '../systems/EnemyFactory';
+import { SimpleObjectPool } from '../utils/SimpleObjectPool';
 
 const { ccclass, property } = _decorator;
 
@@ -37,6 +38,7 @@ export class GameManager extends Component {
     // 游戏状态
     private _gameState: GameState = GameState.MENU; // 从菜单开始
     private _maxCastleHealth: number = 100;
+    private _poolCleanupTimer: number = 0; // 对象池清理计时器
     
     // 已部署的英雄列表
     private _deployedHeroes: Node[] = [];
@@ -158,6 +160,13 @@ export class GameManager extends Component {
             if (this._stateTransitionTimer <= 0) {
                 this.executeStateTransition();
             }
+        }
+        
+        // 定期清理对象池（每10秒一次）
+        this._poolCleanupTimer += dt;
+        if (this._poolCleanupTimer >= 10.0) {
+            SimpleObjectPool.cleanupInvalidNodes();
+            this._poolCleanupTimer = 0;
         }
     }
     

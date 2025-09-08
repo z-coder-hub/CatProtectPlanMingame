@@ -261,15 +261,8 @@ export class WaveManager extends Component {
                 this._gameManager.OnWaveComplete();
             }
             
-            // 检查是否是最后一波，如果是则停止，否则等待下一波
-            if (this.isLastWave) {
-                console.log(`关卡最后一波完成，停止波次管理器`);
-                this._waveState = WaveState.STOPPED;
-            } else {
-                console.log(`准备下一波，进入等待状态`);
-                this._waveState = WaveState.WAITING;
-                this._prepareTimer = 0;
-            }
+            // GameManager会通过PrepareNextWave或CompleteLevel来设置正确的状态
+            // 移除这里的isLastWave检查，避免索引提前增加导致的错误判断
         }
     }
     

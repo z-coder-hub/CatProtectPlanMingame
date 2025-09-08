@@ -88,92 +88,120 @@ export class PersianSniper extends BaseHero {
             this._activeBullets.add(bulletNode);
         }
         
-        this.moveBulletToTarget(bulletNode, target, direction);
+        // 让子弹直线飞行
+        this.launchBulletInDirection(bulletNode, direction);
     }
     
-    private moveBulletToTarget(bulletNode: Node, target: Node, direction: Vec3): void {
-        const startPosition = Vec3.clone(this.node.position);
-        const maxRange = this.attackRange; // 使用配置的攻击范围
+    // 让子弹朝指定方向直线飞行
+    private launchBulletInDirection(bulletNode: Node, direction: Vec3): void {
+        // 游戏边界定义
+        const gameBounds = {
+            minX: -600,
+            maxX: 600,
+            minY: -400,
+            maxY: 400
+        };
         
-        let targetPosition = Vec3.clone(target.position);
+        // 计算子弹飞行的最大距离（直到飞出边界）
+        const maxTravelDistance = this.calculateMaxTravelDistance(bulletNode.position, direction, gameBounds);
         
-        const targetUnit = target.getComponent(BaseMouse);
-        if (targetUnit && targetUnit.moveSpeed > 0) {
-            const timeToReach = Vec3.distance(startPosition, targetPosition) / this.bulletSpeed;
-            const predictedOffset = Vec3.multiplyScalar(new Vec3(), direction, targetUnit.moveSpeed * timeToReach * 0.3);
-            targetPosition = Vec3.add(targetPosition, targetPosition, predictedOffset);
-        }
+        // 计算最终位置
+        const finalPosition = Vec3.add(
+            new Vec3(), 
+            bulletNode.position, 
+            Vec3.multiplyScalar(new Vec3(), direction, maxTravelDistance)
+        );
         
-        const directionToTarget = Vec3.subtract(new Vec3(), targetPosition, startPosition);
-        const distanceToTarget = directionToTarget.length();
-        if (distanceToTarget > maxRange) {
-            directionToTarget.normalize();
-            targetPosition = Vec3.add(new Vec3(), startPosition, Vec3.multiplyScalar(new Vec3(), directionToTarget, maxRange));
-        }
+        // 计算飞行时间
+        const travelTime = maxTravelDistance / this.bulletSpeed;
         
-        const distance = Vec3.distance(startPosition, targetPosition);
-        const duration = distance / this.bulletSpeed;
-        
+        // 开始子弹飞行动画
         const bulletTween = tween(bulletNode)
-            .to(duration, { position: targetPosition })
+            .to(travelTime, { position: finalPosition })
             .call(() => {
-                if (target && target.isValid) {
-                    const finalDistance = Vec3.distance(bulletNode.position, target.position);
-                    if (finalDistance <= 40) {
-                        this.onBulletHitTarget(bulletNode, target);
-                        return;
-                    }
-                }
+                // 飞出边界，销毁子弹
                 this.safeDestroyBullet(bulletNode);
             });
         
-        let checkCount = 0;
-        const maxChecks = Math.floor(duration * 10);
+        // 启动碰撞检测
+        this.startBulletCollisionDetection(bulletNode);
         
-        const addPeriodicCheck = () => {
-            if (checkCount >= maxChecks) return;
-            
-            bulletTween.delay(0.1).call(() => {
-                if (!target || !target.isValid) {
-                    Tween.stopAllByTarget(bulletNode);
-                    this.safeDestroyBullet(bulletNode);
-                    return;
-                }
-                
-                const currentDistance = Vec3.distance(bulletNode.position, target.position);
-                if (currentDistance <= 30) {
-                    Tween.stopAllByTarget(bulletNode);
-                    this.onBulletHitTarget(bulletNode, target);
-                    return;
-                }
-                
-                checkCount++;
-                if (checkCount < maxChecks) {
-                    addPeriodicCheck();
-                }
-            });
-        };
-        
-        addPeriodicCheck();
         bulletTween.start();
     }
     
-    private onBulletHitTarget(bulletNode: Node, target: Node): void {
-        const targetUnit = target.getComponent(BaseMouse);
-        if (targetUnit) {
+    // 计算子弹能飞行的最大距离（直到飞出边界）
+    private calculateMaxTravelDistance(startPos: Vec3, direction: Vec3, bounds: any): number {
+        let maxDistance = 2000; // 默认最大距离
+        
+        // 计算与各个边界的交点，取最近的
+        if (direction.x > 0) {
+            const distToRightBound = (bounds.maxX - startPos.x) / direction.x;
+            maxDistance = Math.min(maxDistance, distToRightBound);
+        } else if (direction.x < 0) {
+            const distToLeftBound = (bounds.minX - startPos.x) / direction.x;
+            maxDistance = Math.min(maxDistance, distToLeftBound);
+        }
+        
+        if (direction.y > 0) {
+            const distToTopBound = (bounds.maxY - startPos.y) / direction.y;
+            maxDistance = Math.min(maxDistance, distToTopBound);
+        } else if (direction.y < 0) {
+            const distToBottomBound = (bounds.minY - startPos.y) / direction.y;
+            maxDistance = Math.min(maxDistance, distToBottomBound);
+        }
+        
+        return Math.max(maxDistance, 100); // 确保至少飞行100像素
+    }
+    
+    // 启动子弹碰撞检测
+    private startBulletCollisionDetection(bulletNode: Node): void {
+        const collisionCheckInterval = 0.02; // 50fps检测频率
+        const hitRadius = 25; // 碰撞检测半径
+        
+        const collisionCheckFunction = () => {
+            if (!bulletNode || !bulletNode.isValid) {
+                this.unschedule(collisionCheckFunction);
+                return;
+            }
+            
+            // 获取所有敌人并检测碰撞
+            const gameManager = GameManager.instance;
+            if (gameManager && gameManager.activeEnemies) {
+                for (const enemy of gameManager.activeEnemies) {
+                    if (!enemy || !enemy.isValid) continue;
+                    
+                    const distance = Vec3.distance(bulletNode.position, enemy.position);
+                    if (distance <= hitRadius) {
+                        // 击中敌人
+                        this.unschedule(collisionCheckFunction);
+                        Tween.stopAllByTarget(bulletNode);
+                        this.onBulletHitEnemy(bulletNode, enemy);
+                        return;
+                    }
+                }
+            }
+        };
+        
+        // 启动碰撞检测调度
+        this.schedule(collisionCheckFunction, collisionCheckInterval);
+    }
+    
+    private onBulletHitEnemy(bulletNode: Node, enemy: Node): void {
+        const enemyUnit = enemy.getComponent(BaseMouse);
+        if (enemyUnit) {
             let damage = this.attackDamage;
             
             // 暴击判定
             if (Math.random() < this.critChance) {
                 damage *= this.critMultiplier;
-                this.createCriticalHitEffect(target.position);
+                this.createCriticalHitEffect(bulletNode.position);
                 console.log(`波斯猫暴击！造成 ${damage} 点伤害`);
             }
             
-            targetUnit.takeDamage(damage);
+            enemyUnit.takeDamage(damage);
         }
         
-        this.createHitEffect(target.position);
+        this.createHitEffect(bulletNode.position);
         this.safeDestroyBullet(bulletNode);
     }
     
@@ -192,6 +220,9 @@ export class PersianSniper extends BaseHero {
     private safeDestroyBullet(bulletNode: Node): void {
         if (bulletNode && bulletNode.isValid) {
             Tween.stopAllByTarget(bulletNode);
+            
+            // 取消该子弹的所有调度任务
+            this.unscheduleAllCallbacks();
             
             if (this && this._activeBullets) {
                 this._activeBullets.delete(bulletNode);

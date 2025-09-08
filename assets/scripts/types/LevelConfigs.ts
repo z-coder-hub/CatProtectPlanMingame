@@ -17,12 +17,12 @@ const COMPLETE_10_LEVELS: LevelConfig[] = [
         name: "新手训练",
         description: "基础防御训练！解锁4种核心英雄类型体验多样化战术",
         difficulty: DifficultyLevel.EASY,
-        initialGold: 250,
+        initialGold: 400,        // 难度降低：提升初始金币
         waves: [
             {
                 waveNumber: 1,
                 enemies: [
-                    { type: EnemyType.BASIC_MOUSE, count: 5, spawnDelay: 1.5 }
+                    { type: EnemyType.BASIC_MOUSE, count: 3, spawnDelay: 2.0 }  // 难度降低：减少敌人数量
                 ]
             },
             {
@@ -41,7 +41,7 @@ const COMPLETE_10_LEVELS: LevelConfig[] = [
             }
         ],
         rewards: [
-            { type: RewardType.GOLD, value: 150, description: "关卡完成奖励" },
+            { type: RewardType.GOLD, value: 250, description: "关卡完成奖励" },  // 难度降低：增加奖励金币
             { type: RewardType.HERO_UNLOCK, value: HeroType.PERSIAN_SNIPER, description: "解锁波斯狙击手" },
             { type: RewardType.HERO_UNLOCK, value: HeroType.SIAMESE_MAGE, description: "解锁暹罗法师" },
             { type: RewardType.HERO_UNLOCK, value: HeroType.BRITISH_KNIGHT, description: "解锁英短骑士" },
@@ -60,7 +60,7 @@ const COMPLETE_10_LEVELS: LevelConfig[] = [
         name: "进阶学习",
         description: "组合战术精通！解锁快射、雷法、防御和射程增益英雄",
         difficulty: DifficultyLevel.NORMAL,
-        initialGold: 300,
+        initialGold: 450,        // 难度降低：提升初始金币
         waves: [
             {
                 waveNumber: 1,

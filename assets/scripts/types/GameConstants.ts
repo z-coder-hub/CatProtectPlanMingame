@@ -49,25 +49,25 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.SIAMESE_MAGE,
         name: "暹罗猫法师",
         category: HeroCategory.MAGE,
-        attackDamage: 20,        // 平衡性调整：从35降低到20（降低43%），防止AOE过度清理
-        attackRange: 180,
-        attackSpeed: 0.8,
-        cost: 65,
-        skillCooldown: 8,
-        aoeDamage: 1.5,
-        aoeRange: 80
+        attackDamage: 28,        // 难度降低：从20提升到28，增强AOE伤害
+        attackRange: 200,        // 攻击范围扩大
+        attackSpeed: 0.9,        // 攻速提升
+        cost: 50,               // 成本降低
+        skillCooldown: 6,       // 冷却时间减少
+        aoeDamage: 1.8,         // AOE伤害倍数提升
+        aoeRange: 90            // AOE范围扩大
     },
 
     [HeroType.MAINE_THUNDER]: {
         type: HeroType.MAINE_THUNDER,
         name: "缅因猫雷法",
         category: HeroCategory.MAGE,
-        attackDamage: 25,        // 平衡性调整：从45进一步降低到25（降低44%），链式攻击需要适度伤害
-        attackRange: 200,
-        attackSpeed: 0.6,
-        cost: 90,
-        skillCooldown: 10,
-        chainTargets: 3
+        attackDamage: 32,        // 难度降低：从25提升到32，增强链式伤害
+        attackRange: 220,        // 攻击范围扩大
+        attackSpeed: 0.7,        // 攻速提升
+        cost: 70,               // 成本大幅降低
+        skillCooldown: 8,       // 冷却时间减少
+        chainTargets: 4         // 链式目标数增加
     },
 
     [HeroType.NORWEGIAN_ICE]: {
@@ -156,10 +156,10 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackDamage: 42,        // 平衡性调整：从70降低到42（降低40%），AOE爆炸伤害适度控制
         attackRange: 120,
         attackSpeed: 0.5,
-        cost: 95,
-        skillCooldown: 15,
-        aoeDamage: 2.0,
-        aoeRange: 100
+        cost: 75,               // 成本降低
+        skillCooldown: 12,      // 冷却时间减少
+        aoeDamage: 2.5,         // AOE伤害倍数提升
+        aoeRange: 120           // AOE范围扩大
     }
 };
 
@@ -170,9 +170,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.BASIC_MOUSE,
         name: "基础老鼠",
         category: EnemyCategory.BASIC,
-        health: 70,           // 平衡性调整：从40提升到70（增加75%），需要3-4击才能消灭
-        maxHealth: 70,
-        moveSpeed: 60,
+        health: 25,           // 难度降低：从70降到25，2-3击就能消灭
+        maxHealth: 25,
+        moveSpeed: 50,        // 速度略微降低，给玩家更多反应时间
         goldReward: 3
     },
 
@@ -180,9 +180,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.GIANT_MOUSE,
         name: "巨型老鼠",
         category: EnemyCategory.BASIC,
-        health: 200,          // 平衡性调整：从120提升到200（增加67%），需要集火攻击
-        maxHealth: 200,
-        moveSpeed: 40,
+        health: 80,           // 难度降低：从200降到80，更容易击杀
+        maxHealth: 80,
+        moveSpeed: 35,        // 移动速度降低
         goldReward: 8
     },
 
@@ -191,9 +191,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.FAST_MOUSE,
         name: "快速老鼠",
         category: EnemyCategory.FAST,
-        health: 45,           // 平衡性调整：从25提升到45（增加80%），需要2-3击才能消灭
-        maxHealth: 45,
-        moveSpeed: 100,
+        health: 20,           // 难度降低：从45降到20，容易击杀但速度快
+        maxHealth: 20,
+        moveSpeed: 80,        // 速度降低，给玩家更多瞄准时间
         goldReward: 5
     },
 
@@ -201,9 +201,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.SPEED_MOUSE,
         name: "疾速老鼠",
         category: EnemyCategory.FAST,
-        health: 35,           // 平衡性调整：从15提升到35（增加133%），防止一击秒杀
-        maxHealth: 35,
-        moveSpeed: 120,
+        health: 15,           // 难度降低：从35降到15，保持脆皮特性
+        maxHealth: 15,
+        moveSpeed: 90,        // 速度大幅降低，更容易追踪
         goldReward: 8
     },
 
@@ -212,9 +212,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.ARMORED_MOUSE,
         name: "装甲老鼠",
         category: EnemyCategory.ARMORED,
-        health: 130,          // 平衡性调整：从80提升到130（增加63%），有护甲的坦克单位
-        maxHealth: 130,
-        moveSpeed: 45,
+        health: 60,           // 难度降低：从130降到60，降低坦克属性
+        maxHealth: 60,
+        moveSpeed: 40,        // 略微降低速度
         goldReward: 6
     },
 
@@ -222,11 +222,11 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.TANK_MOUSE,
         name: "坦克老鼠",
         category: EnemyCategory.ARMORED,
-        health: 250,          // 平衡性调整：从150提升到250（增加67%），超级坦克单位
-        maxHealth: 250,
-        moveSpeed: 30,
+        health: 120,          // 难度降低：从250降到120，更容易击杀
+        maxHealth: 120,
+        moveSpeed: 25,        // 速度进一步降低
         goldReward: 12,
-        armorValue: 5
+        armorValue: 3         // 护甲值降低，减少伤害减免
     },
 
     // === 特殊单位 ===
@@ -235,11 +235,11 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.STEALTH_MOUSE,
         name: "潜行老鼠",
         category: EnemyCategory.SPECIAL,
-        health: 55,           // 平衡性调整：从30提升到55（增加83%），潜行加高血量
-        maxHealth: 55,
-        moveSpeed: 65,
+        health: 30,           // 难度降低：从55降到30，降低血量
+        maxHealth: 30,
+        moveSpeed: 55,        // 速度降低
         goldReward: 10,
-        stealthChance: 0.3
+        stealthChance: 0.2    // 潜行几率降低
     },
 
 
@@ -248,11 +248,11 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.MOUSE_KING,
         name: "老鼠王",
         category: EnemyCategory.BOSS,
-        health: 450,          // 平衡性调整：从300提升到450（增加50%），BOSS需要持续作战
-        maxHealth: 450,
-        moveSpeed: 35,
+        health: 200,          // 难度降低：从450降到200，更合理的BOSS血量
+        maxHealth: 200,
+        moveSpeed: 30,        // 速度降低
         goldReward: 30,
-        summonCount: 3,
+        summonCount: 2,       // 召唤数量减少
         summonType: EnemyType.BASIC_MOUSE
     },
 
@@ -260,9 +260,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.MECH_MOUSE,
         name: "机械老鼠",
         category: EnemyCategory.BOSS,
-        health: 400,          // 平衡性调整：从250提升到400（增加60%），机械BOSS增强
-        maxHealth: 400,
-        moveSpeed: 50,
+        health: 180,          // 难度降低：从400降到180
+        maxHealth: 180,
+        moveSpeed: 40,        // 速度降低
         goldReward: 25
     },
 
@@ -271,34 +271,34 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.ARMOR_OVERLORD,
         name: "重甲统领",
         category: EnemyCategory.BOSS,
-        health: 1800,        // 平衡性调整：从1200提升到1800（增加50%），重甲统领超高血量
-        maxHealth: 1800,
-        moveSpeed: 25,
+        health: 400,         // 难度降低：从1800降到400，更合理的重甲BOSS血量
+        maxHealth: 400,
+        moveSpeed: 20,       // 速度降低
         goldReward: 100,
-        armorValue: 15        // 超高护甲值，减伤80%
+        armorValue: 8        // 护甲值降低，减少过度减伤
     },
 
     [EnemyType.SHADOW_ASSASSIN]: {
         type: EnemyType.SHADOW_ASSASSIN,
         name: "潜影刺客",
         category: EnemyCategory.BOSS,
-        health: 1200,        // 平衡性调整：从800提升到1200（增加50%），潜影刺客高生存力
-        maxHealth: 1200,
-        moveSpeed: 55,
+        health: 300,         // 难度降低：从1200降到300
+        maxHealth: 300,
+        moveSpeed: 45,       // 速度降低，更容易追踪
         goldReward: 80,
-        stealthChance: 1.0,   // 永久潜行
-        damageReduction: 0.5  // 免疫50%伤害
+        stealthChance: 0.6,  // 潜行几率降低，不再永久潜行
+        damageReduction: 0.3 // 减伤降低到30%
     },
 
     [EnemyType.STORM_TYRANT]: {
         type: EnemyType.STORM_TYRANT,
         name: "疾风暴君",
         category: EnemyCategory.BOSS,
-        health: 900,         // 平衡性调整：从600提升到900（增加50%），疾风暴君高速高血
-        maxHealth: 900,
-        moveSpeed: 85,        // 极速移动
+        health: 250,         // 难度降低：从900降到250
+        maxHealth: 250,
+        moveSpeed: 60,       // 速度降低，更容易应对
         goldReward: 90,
-        summonCount: 5,
+        summonCount: 3,      // 召唤数量减少
         summonType: EnemyType.SPEED_MOUSE
     },
 
@@ -306,61 +306,61 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.GIANT_BEHEMOTH,
         name: "巨兽霸主",
         category: EnemyCategory.BOSS,
-        health: 2700,        // 平衡性调整：从1800提升到2700（增加50%），巨兽霸主超高生命值
-        maxHealth: 2700,
-        moveSpeed: 20,
+        health: 500,         // 难度降低：从2700降到500
+        maxHealth: 500,
+        moveSpeed: 15,       // 速度进一步降低
         goldReward: 120,
-        aoeAttackRange: 120   // 践踏范围伤害
+        aoeAttackRange: 80   // 践踏范围减少
     },
 
     [EnemyType.THUNDER_MASTER]: {
         type: EnemyType.THUNDER_MASTER,
         name: "雷电大师",
         category: EnemyCategory.BOSS,
-        health: 1500,        // 平衡性调整：从1000提升到1500（增加50%），雷电大师中高血量
-        maxHealth: 1500,
-        moveSpeed: 35,
+        health: 350,         // 难度降低：从1500降到350
+        maxHealth: 350,
+        moveSpeed: 30,       // 速度降低
         goldReward: 110,
-        chainTargets: 5,      // 雷电链式攻击
-        shieldStrength: 200   // 电流场护盾
+        chainTargets: 3,     // 链式攻击目标减少
+        shieldStrength: 100  // 护盾强度减半
     },
 
     [EnemyType.MECH_COMMANDER]: {
         type: EnemyType.MECH_COMMANDER,
         name: "机械军团长",
         category: EnemyCategory.BOSS,
-        health: 1800,        // 平衡性调整：从1200提升到1800（增加50%），机械军团长高血量
-        maxHealth: 1800,
-        moveSpeed: 40,
+        health: 400,         // 难度降低：从1800降到400
+        maxHealth: 400,
+        moveSpeed: 35,       // 速度降低
         goldReward: 150,
-        summonCount: 999,     // 无限召唤
+        summonCount: 6,      // 限制召唤数量，不再无限召唤
         summonType: EnemyType.MECH_MOUSE,
-        healRate: 50         // 自我修复能力
+        healRate: 20         // 自我修复速度降低
     },
 
     [EnemyType.ULTIMATE_OVERLORD]: {
         type: EnemyType.ULTIMATE_OVERLORD,
         name: "终极霸王",
         category: EnemyCategory.BOSS,
-        health: 3750,        // 平衡性调整：从2500提升到3750（增加50%），终极霸王最高生命值
-        maxHealth: 3750,
-        moveSpeed: 30,
+        health: 800,         // 难度降低：从3750降到800，更合理的最终BOSS血量
+        maxHealth: 800,
+        moveSpeed: 25,       // 速度降低
         goldReward: 200,
-        armorValue: 10,
-        stealthChance: 0.3,
-        summonCount: 3,
+        armorValue: 5,       // 护甲值降低
+        stealthChance: 0.15, // 潜行几率大幅降低
+        summonCount: 2,      // 召唤数量减少
         summonType: EnemyType.MOUSE_KING,
-        chainTargets: 3,
-        damageReduction: 0.2  // 融合所有BOSS能力
+        chainTargets: 2,     // 链式攻击目标减少
+        damageReduction: 0.1 // 减伤降低
     }
 };
 
 
 // 游戏配置
 export const GAME_CONFIG: GameConfig = {
-    initialGold: 250,                    // 关卡1的初始金币
-    castleHealth: 120,                   // 城堡血量
-    restDuration: 120,                   // 关卡间休息时长120秒，支持手动跳过
+    initialGold: 400,                    // 难度降低：从250增加到400，提供更多初始金币
+    castleHealth: 200,                   // 难度降低：从120增加到200，增强城堡防御
+    restDuration: 90,                    // 难度降低：从120减到90秒，减少等待时间
     gridConfig: {
         rows: 11,
         cols: 6
