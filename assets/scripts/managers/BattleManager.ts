@@ -111,14 +111,12 @@ export class BattleManager extends Component {
         const heroUnit = heroNode.getComponent(BaseHero);
         if (!heroUnit || !heroUnit.isAlive) return;
         
-        const isRangedShooter = this.isRangedShooterHero(heroUnit.heroType);
-        
         // 如果英雄有当前目标且目标仍然有效
         if (heroUnit.currentTarget && heroUnit.currentTarget.isValid) {
             const targetUnit = heroUnit.currentTarget.getComponent(BaseMouse);
             
-            // 检查目标是否还活着且在范围内（射击英雄无范围限制）
-            const targetInRange = isRangedShooter || heroUnit.isTargetInRange(heroUnit.currentTarget);
+            // 检查目标是否还活着且在范围内
+            const targetInRange = heroUnit.IsTargetInRange(heroUnit.currentTarget);
             
             if (targetUnit && targetUnit.isAlive && targetInRange) {
                 // 攻击当前目标
@@ -136,7 +134,7 @@ export class BattleManager extends Component {
         const target = this.findBestTarget(heroNode, enemies);
         if (target) {
             heroUnit.currentTarget = target.node;
-            const targetInRange = isRangedShooter || heroUnit.isTargetInRange(target.node);
+            const targetInRange = heroUnit.IsTargetInRange(target.node);
             
             if (heroUnit.canAttack && targetInRange) {
                 this.performAttack(heroUnit, target.unit);
@@ -160,11 +158,9 @@ export class BattleManager extends Component {
     private performAttack(attacker: BaseHero, target: BaseMouse): void {
         if (!attacker || !target || !attacker.isAlive || !target.isAlive) return;
         
-        // 对目标造成伤害
-        target.takeDamage(attacker.attackDamage);
-        
-        // 重置攻击计时器  
-        // 注意：BaseHero中没有attackTarget方法，攻击逻辑已在performAttack中处理
+        // 调用BaseHero的attackTarget方法，让英雄执行具体的攻击逻辑
+        // 这样橘猫等射击英雄可以发射子弹，而不是直接造成伤害
+        attacker.AttackTarget(target.node);
         
         // 如果目标死亡，给予奖励
         if (!target.isAlive) {
@@ -178,7 +174,6 @@ export class BattleManager extends Component {
         if (!attackerUnit) return null;
         
         const validTargets: BattleTarget[] = [];
-        const isRangedShooter = this.isRangedShooterHero(attackerUnit.heroType);
         
         for (const targetNode of targetNodes) {
             if (!targetNode || !targetNode.isValid) continue;
@@ -186,11 +181,11 @@ export class BattleManager extends Component {
             const targetUnit = targetNode.getComponent(BaseMouse);
             if (!targetUnit || !targetUnit.isAlive) continue;
             
-            // 远程射击英雄无范围限制，其他英雄检查攻击范围
-            const inRange = isRangedShooter || attackerUnit.isTargetInRange(targetNode);
+            // 检查目标是否在攻击范围内
+            const inRange = attackerUnit.IsTargetInRange(targetNode);
             
             if (inRange) {
-                const distance = attackerUnit.getDistanceToTarget(targetNode);
+                const distance = attackerUnit.GetDistanceToTarget(targetNode);
                 const priority = this.calculateTargetPriority(targetUnit, distance);
                 
                 validTargets.push({
@@ -455,31 +450,7 @@ export class BattleManager extends Component {
         return nearestEnemy;
     }
     
-    // 为远程射击英雄提供的全局寻敌方法
-    public FindNearestEnemyGlobal(heroNode: Node): Node | null {
-        const heroUnit = heroNode.getComponent(BaseHero);
-        if (!heroUnit) return null;
-        
-        // 检查是否为远程射击英雄类型
-        if (!this.isRangedShooterHero(heroUnit.heroType)) {
-            // 非射击英雄使用普通范围限制
-            return this.FindNearestEnemy(heroNode.position, heroUnit.attackRange);
-        }
-        
-        // 射击英雄使用全局搜索（无范围限制）
-        return this.FindNearestEnemy(heroNode.position, Number.MAX_VALUE);
-    }
-    
-    // 判断是否为远程射击英雄类型
-    private isRangedShooterHero(heroType: HeroType): boolean {
-        const rangedShooterTypes = [
-            HeroType.ORANGE_CAT,      // 橘猫射手
-            HeroType.PERSIAN_SNIPER,  // 波斯猫狙击手
-            HeroType.BENGAL_HUNTER    // 孟加拉猎手
-        ];
-        
-        return rangedShooterTypes.includes(heroType);
-    }
+    // 移除了远程英雄的特殊处理逻辑，现在所有英雄都使用统一的攻击范围检查
     
     // 查找指定网格位置的英雄
     public FindHeroAtGridPosition(gridPos: GridPosition): Node | null {

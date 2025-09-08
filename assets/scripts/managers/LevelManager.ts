@@ -141,7 +141,7 @@ export class LevelManager extends Component {
         }
 
         // 检查解锁条件
-        const canUnlock = this.checkUnlockConditions(level.unlockConditions);
+        const canUnlock = this.CheckUnlockConditions(level.unlockConditions);
         return canUnlock ? LevelCompletionStatus.AVAILABLE : LevelCompletionStatus.LOCKED;
     }
 
@@ -296,7 +296,7 @@ export class LevelManager extends Component {
     /**
      * 检查解锁条件
      */
-    public checkUnlockConditions(conditions: UnlockCondition[]): boolean {
+    public CheckUnlockConditions(conditions: UnlockCondition[]): boolean {
         if (!conditions || conditions.length === 0) {
             return true;
         }
@@ -338,7 +338,7 @@ export class LevelManager extends Component {
         allLevels.forEach(level => {
             const currentStatus = this.GetLevelStatus(level.id);
             if (currentStatus === LevelCompletionStatus.LOCKED) {
-                const canUnlock = this.checkUnlockConditions(level.unlockConditions);
+                const canUnlock = this.CheckUnlockConditions(level.unlockConditions);
                 if (canUnlock) {
                     this._levelRecords[level.id].status = LevelCompletionStatus.AVAILABLE;
                     console.log(`解锁新关卡: ${level.name} (${level.id})`);

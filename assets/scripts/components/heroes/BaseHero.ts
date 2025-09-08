@@ -241,7 +241,7 @@ export abstract class BaseHero extends Component {
     /**
      * 检查目标是否在攻击范围内
      */
-    protected isTargetInRange(target: Node): boolean {
+    public IsTargetInRange(target: Node): boolean {
         if (!target || !target.isValid) return false;
         
         const distance = Vec3.distance(this.node.position, target.position);
@@ -252,16 +252,16 @@ export abstract class BaseHero extends Component {
     /**
      * 获取到目标的距离
      */
-    public getDistanceToTarget(target: Node): number {
+    public GetDistanceToTarget(target: Node): number {
         if (!target || !target.isValid) return Infinity;
         
         return Vec3.distance(this.node.position, target.position);
     }
     
     /**
-     * 攻击目标
+     * 攻击目标 - BattleManager调用此方法来触发英雄攻击
      */
-    protected attackTarget(target: Node): void {
+    public AttackTarget(target: Node): void {
         if (!this.canAttack || !target || !target.isValid) return;
         
         // 重置攻击计时器

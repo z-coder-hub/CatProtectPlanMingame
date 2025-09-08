@@ -10,8 +10,8 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.ORANGE_CAT,
         name: "橘猫射手",
         category: HeroCategory.RANGED,
-        attackDamage: 25,
-        attackRange: 3000, // 超大攻击范围，覆盖整个战场
+        attackDamage: 15,        // 平衡性调整：从25降低到15（降低40%），防止秒杀低血量敌人
+        attackRange: 1000,  // 远程英雄大范围攻击，覆盖整个战场区域
         attackSpeed: 1.2,
         cost: 40,
         bulletSpeed: 300,
@@ -22,8 +22,8 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.PERSIAN_SNIPER,
         name: "波斯猫狙击手",
         category: HeroCategory.RANGED,
-        attackDamage: 50,
-        attackRange: 4000, // 超大攻击范围，覆盖整个战场
+        attackDamage: 30,        // 平衡性调整：从50降低到30（降低40%），防止一击秒杀所有基础敌人
+        attackRange: 1000,  // 远程英雄大范围攻击，覆盖整个战场区域
         attackSpeed: 0.6,
         cost: 70,
         bulletSpeed: 500,
@@ -36,8 +36,8 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.BENGAL_HUNTER,
         name: "孟加拉猫猎手",
         category: HeroCategory.RANGED,
-        attackDamage: 20,        // 从18提升到20，修复略弱问题
-        attackRange: 3500, // 超大攻击范围，覆盖整个战场
+        attackDamage: 12,        // 平衡性调整：从20降低到12（降低40%），与其他远程英雄同比例
+        attackRange: 1000,  // 远程英雄大范围攻击，覆盖整个战场区域
         attackSpeed: 2.0,
         cost: 55,
         bulletSpeed: 350,
@@ -49,7 +49,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.SIAMESE_MAGE,
         name: "暹罗猫法师",
         category: HeroCategory.MAGE,
-        attackDamage: 35,
+        attackDamage: 20,        // 平衡性调整：从35降低到20（降低43%），防止AOE过度清理
         attackRange: 180,
         attackSpeed: 0.8,
         cost: 65,
@@ -62,7 +62,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.MAINE_THUNDER,
         name: "缅因猫雷法",
         category: HeroCategory.MAGE,
-        attackDamage: 45,        // 从60降低到45，修复过强问题
+        attackDamage: 25,        // 平衡性调整：从45进一步降低到25（降低44%），链式攻击需要适度伤害
         attackRange: 200,
         attackSpeed: 0.6,
         cost: 90,
@@ -74,7 +74,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.NORWEGIAN_ICE,
         name: "挪威森林猫冰法",
         category: HeroCategory.MAGE,
-        attackDamage: 35,        // 从30提升到35，修复过弱问题
+        attackDamage: 20,        // 平衡性调整：从35降低到20（降低43%），与其他法师同比例
         attackRange: 170,
         attackSpeed: 1.0,
         cost: 75,
@@ -89,7 +89,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.BRITISH_KNIGHT,
         name: "英国短毛猫骑士",
         category: HeroCategory.MELEE,
-        attackDamage: 45,
+        attackDamage: 30,        // 平衡性调整：从45降低到30（降低33%），近战英雄保持相对高伤害
         attackRange: 60,
         attackSpeed: 0.8,
         cost: 65,               // 从80降低到65，修复性价比问题
@@ -100,7 +100,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.RAGDOLL_GUARDIAN,
         name: "布偶猫守护者",
         category: HeroCategory.MELEE,
-        attackDamage: 40,        // 从35提升到40，修复过弱问题
+        attackDamage: 25,        // 平衡性调整：从40降低到25（降低38%），防御型近战适度伤害
         attackRange: 70,
         attackSpeed: 1.0,
         cost: 60,
@@ -112,7 +112,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.SCOTTISH_ENGINEER,
         name: "苏格兰折耳猫工程师",
         category: HeroCategory.SUPPORT,
-        attackDamage: 20,
+        attackDamage: 15,        // 平衡性调整：从20降低到15（降低25%），辅助英雄适度减少
         attackRange: 120,
         attackSpeed: 1.0,
         cost: 50,
@@ -125,7 +125,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.ABYSSINIAN_SCOUT,
         name: "阿比西尼亚猫侦察兵",
         category: HeroCategory.SUPPORT,
-        attackDamage: 15,
+        attackDamage: 12,        // 平衡性调整：从15降低到12（降低20%），侦察兵保持较低攻击力
         attackRange: 140,
         attackSpeed: 1.2,
         cost: 45,
@@ -139,7 +139,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.RUSSIAN_BLUE,
         name: "俄罗斯蓝猫精英",
         category: HeroCategory.SPECIAL,
-        attackDamage: 35,        // 从45降低到35，修复过强问题
+        attackDamage: 22,        // 平衡性调整：从35进一步降低到22（降低37%），穿透攻击需要适度伤害
         attackRange: 140,
         attackSpeed: 1.8,
         cost: 85,
@@ -153,7 +153,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.AMERICAN_BOMBER,
         name: "美国短毛猫爆破兵",
         category: HeroCategory.SPECIAL,
-        attackDamage: 70,
+        attackDamage: 42,        // 平衡性调整：从70降低到42（降低40%），AOE爆炸伤害适度控制
         attackRange: 120,
         attackSpeed: 0.5,
         cost: 95,
@@ -170,8 +170,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.BASIC_MOUSE,
         name: "基础老鼠",
         category: EnemyCategory.BASIC,
-        health: 40,
-        maxHealth: 40,
+        health: 70,           // 平衡性调整：从40提升到70（增加75%），需要3-4击才能消灭
+        maxHealth: 70,
         moveSpeed: 60,
         goldReward: 3
     },
@@ -180,8 +180,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.GIANT_MOUSE,
         name: "巨型老鼠",
         category: EnemyCategory.BASIC,
-        health: 120,
-        maxHealth: 120,
+        health: 200,          // 平衡性调整：从120提升到200（增加67%），需要集火攻击
+        maxHealth: 200,
         moveSpeed: 40,
         goldReward: 8
     },
@@ -191,8 +191,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.FAST_MOUSE,
         name: "快速老鼠",
         category: EnemyCategory.FAST,
-        health: 25,
-        maxHealth: 25,
+        health: 45,           // 平衡性调整：从25提升到45（增加80%），需要2-3击才能消灭
+        maxHealth: 45,
         moveSpeed: 100,
         goldReward: 5
     },
@@ -201,8 +201,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.SPEED_MOUSE,
         name: "疾速老鼠",
         category: EnemyCategory.FAST,
-        health: 15,
-        maxHealth: 15,
+        health: 35,           // 平衡性调整：从15提升到35（增加133%），防止一击秒杀
+        maxHealth: 35,
         moveSpeed: 120,
         goldReward: 8
     },
@@ -212,8 +212,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.ARMORED_MOUSE,
         name: "装甲老鼠",
         category: EnemyCategory.ARMORED,
-        health: 80,
-        maxHealth: 80,
+        health: 130,          // 平衡性调整：从80提升到130（增加63%），有护甲的坦克单位
+        maxHealth: 130,
         moveSpeed: 45,
         goldReward: 6
     },
@@ -222,8 +222,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.TANK_MOUSE,
         name: "坦克老鼠",
         category: EnemyCategory.ARMORED,
-        health: 150,
-        maxHealth: 150,
+        health: 250,          // 平衡性调整：从150提升到250（增加67%），超级坦克单位
+        maxHealth: 250,
         moveSpeed: 30,
         goldReward: 12,
         armorValue: 5
@@ -235,8 +235,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.STEALTH_MOUSE,
         name: "潜行老鼠",
         category: EnemyCategory.SPECIAL,
-        health: 30,
-        maxHealth: 30,
+        health: 55,           // 平衡性调整：从30提升到55（增加83%），潜行加高血量
+        maxHealth: 55,
         moveSpeed: 65,
         goldReward: 10,
         stealthChance: 0.3
@@ -248,8 +248,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.MOUSE_KING,
         name: "老鼠王",
         category: EnemyCategory.BOSS,
-        health: 300,
-        maxHealth: 300,
+        health: 450,          // 平衡性调整：从300提升到450（增加50%），BOSS需要持续作战
+        maxHealth: 450,
         moveSpeed: 35,
         goldReward: 30,
         summonCount: 3,
@@ -260,8 +260,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.MECH_MOUSE,
         name: "机械老鼠",
         category: EnemyCategory.BOSS,
-        health: 250,
-        maxHealth: 250,
+        health: 400,          // 平衡性调整：从250提升到400（增加60%），机械BOSS增强
+        maxHealth: 400,
         moveSpeed: 50,
         goldReward: 25
     },
@@ -271,8 +271,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.ARMOR_OVERLORD,
         name: "重甲统领",
         category: EnemyCategory.BOSS,
-        health: 1200,
-        maxHealth: 1200,
+        health: 1800,        // 平衡性调整：从1200提升到1800（增加50%），重甲统领超高血量
+        maxHealth: 1800,
         moveSpeed: 25,
         goldReward: 100,
         armorValue: 15        // 超高护甲值，减伤80%
@@ -282,8 +282,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.SHADOW_ASSASSIN,
         name: "潜影刺客",
         category: EnemyCategory.BOSS,
-        health: 800,
-        maxHealth: 800,
+        health: 1200,        // 平衡性调整：从800提升到1200（增加50%），潜影刺客高生存力
+        maxHealth: 1200,
         moveSpeed: 55,
         goldReward: 80,
         stealthChance: 1.0,   // 永久潜行
@@ -294,8 +294,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.STORM_TYRANT,
         name: "疾风暴君",
         category: EnemyCategory.BOSS,
-        health: 600,
-        maxHealth: 600,
+        health: 900,         // 平衡性调整：从600提升到900（增加50%），疾风暴君高速高血
+        maxHealth: 900,
         moveSpeed: 85,        // 极速移动
         goldReward: 90,
         summonCount: 5,
@@ -306,8 +306,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.GIANT_BEHEMOTH,
         name: "巨兽霸主",
         category: EnemyCategory.BOSS,
-        health: 1800,
-        maxHealth: 1800,
+        health: 2700,        // 平衡性调整：从1800提升到2700（增加50%），巨兽霸主超高生命值
+        maxHealth: 2700,
         moveSpeed: 20,
         goldReward: 120,
         aoeAttackRange: 120   // 践踏范围伤害
@@ -317,8 +317,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.THUNDER_MASTER,
         name: "雷电大师",
         category: EnemyCategory.BOSS,
-        health: 1000,
-        maxHealth: 1000,
+        health: 1500,        // 平衡性调整：从1000提升到1500（增加50%），雷电大师中高血量
+        maxHealth: 1500,
         moveSpeed: 35,
         goldReward: 110,
         chainTargets: 5,      // 雷电链式攻击
@@ -329,8 +329,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.MECH_COMMANDER,
         name: "机械军团长",
         category: EnemyCategory.BOSS,
-        health: 1200,
-        maxHealth: 1200,
+        health: 1800,        // 平衡性调整：从1200提升到1800（增加50%），机械军团长高血量
+        maxHealth: 1800,
         moveSpeed: 40,
         goldReward: 150,
         summonCount: 999,     // 无限召唤
@@ -342,8 +342,8 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         type: EnemyType.ULTIMATE_OVERLORD,
         name: "终极霸王",
         category: EnemyCategory.BOSS,
-        health: 2500,
-        maxHealth: 2500,
+        health: 3750,        // 平衡性调整：从2500提升到3750（增加50%），终极霸王最高生命值
+        maxHealth: 3750,
         moveSpeed: 30,
         goldReward: 200,
         armorValue: 10,

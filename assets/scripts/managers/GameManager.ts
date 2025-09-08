@@ -170,7 +170,7 @@ export class GameManager extends Component {
     // 初始化游戏配置
     private initializeGameConfig(): void {
         // 设置从第一关开始
-        this.loadLevel(0);
+        this.LoadLevel(0);
         
         // 设置初始游戏状态为菜单
         this._gameState = GameState.MENU;
@@ -180,7 +180,7 @@ export class GameManager extends Component {
     // ====================== 线性关卡管理方法 ======================
     
     // 加载指定索引的关卡
-    public loadLevel(levelIndex: number): boolean {
+    public LoadLevel(levelIndex: number): boolean {
         const totalLevels = LEVEL_CONFIGS.getAllLevels().length;
         if (levelIndex < 0 || levelIndex >= totalLevels) {
             console.error(`无效的关卡索引: ${levelIndex}, 总关卡数: ${totalLevels}`);
@@ -208,7 +208,7 @@ export class GameManager extends Component {
     // 重新开始游戏（从第一关开始）
     public RestartGame(): void {
         console.log("重新开始游戏，从第一关开始");
-        this.loadLevel(0);
+        this.LoadLevel(0);
         this.setGameState(GameState.MENU);
     }
     
@@ -223,7 +223,7 @@ export class GameManager extends Component {
         }
         
         console.log(`进入下一关: 第${nextIndex + 1}关`);
-        return this.loadLevel(nextIndex);
+        return this.LoadLevel(nextIndex);
     }
     
     // 应用关卡配置
@@ -541,7 +541,7 @@ export class GameManager extends Component {
     }
     
     // 在指定位置召唤敌人（用于老鼠王召唤等特殊情况）
-    public spawnEnemyAtPosition(enemyType: EnemyType, position: Vec3): Node | null {
+    public SpawnEnemyAtPosition(enemyType: EnemyType, position: Vec3): Node | null {
         try {
             console.log(`在位置(${position.x.toFixed(1)}, ${position.y.toFixed(1)})召唤敌人: ${enemyType}`);
             
@@ -600,7 +600,7 @@ export class GameManager extends Component {
             const nextIndex = this._currentLevelIndex + 1;
             console.log(`关卡间休息结束，加载第${nextIndex + 1}关`);
             
-            if (this.loadLevel(nextIndex)) {
+            if (this.LoadLevel(nextIndex)) {
                 // 直接开始战斗，不需要部署阶段
                 this.setGameState(GameState.BATTLE);
                 console.log(`休息结束，自动开始第${nextIndex + 1}关第${this.currentWave}波`);
@@ -626,7 +626,7 @@ export class GameManager extends Component {
             
             // 加载下一关
             const nextIndex = this._currentLevelIndex + 1;
-            if (this.loadLevel(nextIndex)) {
+            if (this.LoadLevel(nextIndex)) {
                 // 可以选择直接开始战斗或进入部署阶段
                 this.setGameState(GameState.BATTLE);
                 console.log(`跳过休息，直接开始第${nextIndex + 1}关第${this.currentWave}波`);
@@ -918,7 +918,7 @@ export class GameManager extends Component {
     /**
      * 取消待定的状态转换
      */
-    public cancelPendingStateTransition(): void {
+    public CancelPendingStateTransition(): void {
         this._pendingStateTransition = null;
         this._stateTransitionTimer = 0;
         console.log("已取消待定的状态转换");

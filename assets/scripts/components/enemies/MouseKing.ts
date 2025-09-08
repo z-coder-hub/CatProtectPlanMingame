@@ -249,7 +249,7 @@ export class MouseKing extends BaseMouse {
         
         try {
             // 通过GameManager创建敌人
-            gameManager.spawnEnemyAtPosition(this.summonType, position);
+            gameManager.SpawnEnemyAtPosition(this.summonType, position);
             console.log(`${this.unitName}召唤了一只${this.summonType}在位置(${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
         } catch (error) {
             console.error(`${this.unitName}召唤敌人失败:`, error);
