@@ -115,9 +115,9 @@ export class HeroSelectionPanel extends Component {
             // 近战英雄
             HeroType.BRITISH_KNIGHT,
             HeroType.RAGDOLL_GUARDIAN,
-            // 辅助英雄
-            HeroType.SCOTTISH_ENGINEER,
-            HeroType.ABYSSINIAN_SCOUT,
+            // 射击英雄 - 新增
+            HeroType.SCOTTISH_MARKSMAN,
+            HeroType.ABYSSINIAN_ARCHER,
             // 特殊英雄
             HeroType.RUSSIAN_BLUE,
             HeroType.AMERICAN_BOMBER
@@ -1004,8 +1004,8 @@ export class HeroSelectionPanel extends Component {
                 iconGraphics.stroke();
                 break;
 
-            case HeroType.SCOTTISH_ENGINEER:
-                // 苏格兰工程师 - 橙色圆形 + 扳手
+            case HeroType.SCOTTISH_MARKSMAN:
+                // 苏格兰射手 - 橙色圆形 + 弓箭
                 iconGraphics.fillColor = new Color(255, 140, 0);
                 iconGraphics.circle(0, 0, 14 * scale);
                 iconGraphics.fill();
@@ -1019,8 +1019,8 @@ export class HeroSelectionPanel extends Component {
                 iconGraphics.stroke();
                 break;
 
-            case HeroType.ABYSSINIAN_SCOUT:
-                // 阿比西尼亚侦察兵 - 棕色六边形 + 望远镜
+            case HeroType.ABYSSINIAN_ARCHER:
+                // 阿比西尼亚弓箭手 - 棕色六边形 + 箭矢
                 iconGraphics.fillColor = new Color(160, 82, 45);
                 const sides = 6;
                 const radius = 14 * scale;
@@ -1304,13 +1304,13 @@ export class HeroSelectionPanel extends Component {
                 graphics.fill();
                 break;
 
-            case HeroType.SCOTTISH_ENGINEER:
+            case HeroType.SCOTTISH_MARKSMAN:
                 graphics.fillColor = new Color(255, 140, 0, alpha);
                 graphics.circle(0, 0, halfSize * 0.8);
                 graphics.fill();
                 break;
 
-            case HeroType.ABYSSINIAN_SCOUT:
+            case HeroType.ABYSSINIAN_ARCHER:
                 graphics.fillColor = new Color(160, 82, 45, alpha);
                 graphics.circle(0, 0, halfSize * 0.9);
                 graphics.fill();

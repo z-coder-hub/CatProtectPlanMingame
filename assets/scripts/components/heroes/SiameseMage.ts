@@ -92,6 +92,8 @@ export class SiameseMage extends BaseHero {
     // 已移除多余的performAttack包装方法，直接使用onAttack实现
     
     private castMagicMissile(target: Node): void {
+        if (!target || !target.isValid) return;
+        
         // 暹罗猫使用瞬发魔法攻击
         const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit) {

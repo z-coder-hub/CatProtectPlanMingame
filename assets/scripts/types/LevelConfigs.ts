@@ -45,7 +45,7 @@ const COMPLETE_10_LEVELS: LevelConfig[] = [
             { type: RewardType.HERO_UNLOCK, value: HeroType.PERSIAN_SNIPER, description: "解锁波斯狙击手" },
             { type: RewardType.HERO_UNLOCK, value: HeroType.SIAMESE_MAGE, description: "解锁暹罗法师" },
             { type: RewardType.HERO_UNLOCK, value: HeroType.BRITISH_KNIGHT, description: "解锁英短骑士" },
-            { type: RewardType.HERO_UNLOCK, value: HeroType.SCOTTISH_ENGINEER, description: "解锁苏格兰工程师" }
+            { type: RewardType.HERO_UNLOCK, value: HeroType.SCOTTISH_MARKSMAN, description: "解锁苏格兰射手" }
         ],
         unlockConditions: [], // 初始关卡
         estimatedDuration: 3,
@@ -88,7 +88,7 @@ const COMPLETE_10_LEVELS: LevelConfig[] = [
             { type: RewardType.HERO_UNLOCK, value: HeroType.BENGAL_HUNTER, description: "解锁孟加拉猎手" },
             { type: RewardType.HERO_UNLOCK, value: HeroType.MAINE_THUNDER, description: "解锁缅因雷法" },
             { type: RewardType.HERO_UNLOCK, value: HeroType.RAGDOLL_GUARDIAN, description: "解锁布偶守护者" },
-            { type: RewardType.HERO_UNLOCK, value: HeroType.ABYSSINIAN_SCOUT, description: "解锁阿比侦察兵" }
+            { type: RewardType.HERO_UNLOCK, value: HeroType.ABYSSINIAN_ARCHER, description: "解锁阿比西尼亚弓箭手" }
         ],
         unlockConditions: [
             { type: UnlockConditionType.COMPLETE_LEVEL, targetId: "1", description: "完成新手训练" }

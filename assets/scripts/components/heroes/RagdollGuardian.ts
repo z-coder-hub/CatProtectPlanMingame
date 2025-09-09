@@ -76,7 +76,7 @@ export class RagdollGuardian extends BaseHero {
     // 目标分配由 BattleManager 统一处理
     
     protected onAttack(target: Node): void {
-        if (!target || !this.isAlive) return;
+        if (!target || !this.isAlive || !target.isValid) return;
         
         const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit && targetUnit.isAlive) {

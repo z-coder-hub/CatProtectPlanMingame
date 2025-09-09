@@ -565,6 +565,8 @@ export class BattleManager extends Component {
     // 对多个目标造成伤害（用于AOE攻击）
     public DamageMultipleTargets(targets: Node[], damage: number, sourcePosition?: Vec3): void {
         for (const target of targets) {
+            if (!target || !target.isValid) continue;
+            
             const targetUnit = target.getComponent(BaseMouse);
             if (targetUnit && targetUnit.isAlive) {
                 targetUnit.takeDamage(damage);

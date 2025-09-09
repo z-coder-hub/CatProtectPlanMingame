@@ -37,12 +37,7 @@ export class AmericanBomber extends BaseHero {
     protected update(dt: number): void {
         super.update(dt);
         
-        // 每5秒扔一颗炸弹
-        this._bombTimer += dt;
-        if (this._bombTimer >= 5.0) {
-            this._bombTimer = 0;
-            this.throwBomb();
-        }
+        // 近战爆破手不需要定时炸弹，只在攻击时使用爆炸弹
     }
     
     
@@ -53,43 +48,64 @@ export class AmericanBomber extends BaseHero {
     }
     
     private drawAmericanBomberAppearance(): void {
-        if (!this._graphics) return;
+        const graphics = this.getGraphics();
+        if (!graphics) return;
         
-        this._graphics.clear();
+        graphics.clear();
         
-        // 绘制美国短毛猫身体（红白蓝三色方形）
+        // 绘制美国短毛猫爆破手身体（红白蓝三色，更紧凑的近战造型）
         // 红色底部
-        this._graphics.fillColor = new Color(220, 20, 60); // 深红色
-        this._graphics.rect(-20, -20, 40, 13);
-        this._graphics.fill();
+        graphics.fillColor = new Color(220, 20, 60); // 深红色
+        graphics.rect(-16, -16, 32, 11);
+        graphics.fill();
         
         // 白色中部
-        this._graphics.fillColor = new Color(255, 255, 255);
-        this._graphics.rect(-20, -7, 40, 14);
-        this._graphics.fill();
+        graphics.fillColor = new Color(255, 255, 255);
+        graphics.rect(-16, -5, 32, 10);
+        graphics.fill();
         
         // 蓝色顶部
-        this._graphics.fillColor = new Color(0, 0, 139); // 深蓝色
-        this._graphics.rect(-20, 7, 40, 13);
-        this._graphics.fill();
+        graphics.fillColor = new Color(0, 0, 139); // 深蓝色
+        graphics.rect(-16, 5, 32, 11);
+        graphics.fill();
         
         // 边框
-        this._graphics.strokeColor = new Color(0, 0, 0);
-        this._graphics.lineWidth = 2;
-        this._graphics.rect(-20, -20, 40, 40);
-        this._graphics.stroke();
+        graphics.strokeColor = new Color(0, 0, 0);
+        graphics.lineWidth = 2;
+        graphics.rect(-16, -16, 32, 32);
+        graphics.stroke();
         
-        // 炸弹标识（黑色圆形）
-        this._graphics.fillColor = new Color(0, 0, 0);
-        this._graphics.circle(12, -12, 6);
-        this._graphics.fill();
+        // 爆破手护目镜（黄色）
+        graphics.fillColor = new Color(255, 215, 0);
+        graphics.circle(0, -8, 5);
+        graphics.fill();
         
-        // 引线
-        this._graphics.strokeColor = new Color(255, 255, 0);
-        this._graphics.lineWidth = 2;
-        this._graphics.moveTo(18, -12);
-        this._graphics.lineTo(22, -16);
-        this._graphics.stroke();
+        // 护目镜反光
+        graphics.fillColor = new Color(255, 255, 255);
+        graphics.circle(-2, -10, 2);
+        graphics.fill();
+        
+        // 手雷（左右各一个，绿色）
+        graphics.fillColor = new Color(34, 139, 34);
+        graphics.circle(-12, 8, 4);
+        graphics.circle(12, 8, 4);
+        graphics.fill();
+        
+        // 手雷引线
+        graphics.strokeColor = new Color(255, 255, 0);
+        graphics.lineWidth = 1;
+        graphics.moveTo(-12, 4);
+        graphics.lineTo(-12, 0);
+        graphics.moveTo(12, 4);
+        graphics.lineTo(12, 0);
+        graphics.stroke();
+        
+        // 爆炸范围指示圆（半透明橙色）
+        graphics.strokeColor = new Color(255, 69, 0, 100);
+        graphics.lineWidth = 1;
+        const range = this.attackRange * 0.4; // 显示攻击范围的40%
+        graphics.circle(0, 0, range);
+        graphics.stroke();
     }
     
     // 目标分配由 BattleManager 统一处理
@@ -97,93 +113,132 @@ export class AmericanBomber extends BaseHero {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
         
-        const targetUnit = target.getComponent(BaseMouse);
-        if (targetUnit && targetUnit.isAlive) {
-            targetUnit.takeDamage(this.attackDamage);
-        }
-        
+        // 近战爆炸弹攻击 - 发射近程爆炸弹
+        this.fireExplosiveBomb(target);
         this.createAttackEffect();
     }
     
-    // 已移除多余的performAttack包装方法，直接使用onAttack实现
-    
-    private throwBomb(): void {
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return;
+    // 近战爆炸弹攻击 - 直接向目标发射爆炸弹
+    private fireExplosiveBomb(target: Node): void {
+        if (!target || !target.isValid) return;
         
-        // 找到敌人最密集的区域
-        const allEnemies = battleManager.GetAllEnemies();
-        if (allEnemies.length === 0) return;
+        const explosiveBomb = new Node("ExplosiveBomb");
+        explosiveBomb.parent = this.node.parent;
+        explosiveBomb.setPosition(this.node.position);
         
-        // 简化：选择一个随机敌人位置作为爆炸中心
-        const randomIndex = Math.floor(Math.random() * allEnemies.length);
-        const targetEnemy = allEnemies[randomIndex];
-        if (!targetEnemy || !targetEnemy.isValid) return;
+        const graphics = explosiveBomb.addComponent(Graphics);
+        graphics.fillColor = new Color(34, 139, 34, 200); // 绿色炸弹
+        graphics.strokeColor = new Color(255, 69, 0, 255); // 橙色边框
+        graphics.lineWidth = 2;
+        graphics.circle(0, 0, 4);
+        graphics.fill();
+        graphics.stroke();
         
-        const bombTarget = Vec3.clone(targetEnemy.position);
+        // 引线效果
+        graphics.strokeColor = new Color(255, 255, 0, 255);
+        graphics.lineWidth = 1;
+        graphics.moveTo(0, -4);
+        graphics.lineTo(0, -8);
+        graphics.stroke();
         
-        // 创建炸弹投掷效果
-        this.createBombProjectile(bombTarget);
-    }
-    
-    private createBombProjectile(targetPosition: Vec3): void {
-        const bombNode = new Node("Bomb");
-        bombNode.parent = this.node.parent;
-        bombNode.setPosition(this.node.position);
+        // 计算飞行轨迹（近战短程）
+        const startPos = this.node.position.clone();
+        const targetPos = target.position.clone();
+        const distance = Vec3.distance(startPos, targetPos);
+        const duration = distance / (this.bulletSpeed || 250); // 稍慢的爆炸弹速度
         
-        const bombGraphics = bombNode.addComponent(Graphics);
-        bombGraphics.fillColor = new Color(0, 0, 0);
-        bombGraphics.circle(0, 0, 5);
-        bombGraphics.fill();
-        
-        // 炸弹飞行轨迹（抛物线）- 使用tween系统
-        const startPos = Vec3.clone(this.node.position);
-        const endPos = targetPosition;
-        const duration = 1.5; // 1.5秒飞行时间
-        
-        // 使用tween创建抛物线飞行动画
-        tween(bombNode)
-            .to(duration, { position: endPos }, {
-                onUpdate: (target: Node, ratio: number) => {
-                    if (!target || !target.isValid) return;
-                    
-                    // 抛物线轨迹
-                    const x = startPos.x + (endPos.x - startPos.x) * ratio;
-                    const y = startPos.y + (endPos.y - startPos.y) * ratio + Math.sin(ratio * Math.PI) * 50;
-                    const z = startPos.z + (endPos.z - startPos.z) * ratio;
-                    
-                    target.setPosition(x, y, z);
-                },
-                onComplete: () => {
-                    if (bombNode && bombNode.isValid) {
-                        // 爆炸 - 先爆炸再销毁节点
-                        this.explodeBomb(endPos, bombNode.parent);
-                        bombNode.destroy();
-                    }
+        // 爆炸弹飞行动画（简单直线）
+        tween(explosiveBomb)
+            .to(duration, { position: targetPos })
+            .call(() => {
+                // 接触引爆 - 大范围AOE爆炸
+                this.detonateExplosiveBomb(targetPos);
+                
+                if (explosiveBomb && explosiveBomb.isValid) {
+                    explosiveBomb.destroy();
                 }
             })
             .start();
     }
     
-    private explodeBomb(position: Vec3, parentNode?: Node | null): void {
+    private detonateExplosiveBomb(position: Vec3): void {
         const battleManager = BattleManager.instance;
         if (!battleManager) return;
         
-        // AOE爆炸伤害
-        const explosionRadius = 100;
+        const config = HERO_CONFIGS[HeroType.AMERICAN_BOMBER];
+        const explosionRadius = config.aoeRange || 120;
+        const aoeDamageMultiplier = config.aoeDamage || 2.5;
+        
+        // 获取爆炸范围内的所有敌人
         const enemies = battleManager.GetEnemiesInRange(position, explosionRadius);
         
         for (const enemy of enemies) {
             const enemyUnit = enemy.getComponent(BaseMouse);
             if (enemyUnit && enemyUnit.isAlive) {
                 const distance = Vec3.distance(enemy.position, position);
-                const damageMultiplier = Math.max(0.3, 1 - distance / explosionRadius);
-                const damage = this.attackDamage * 2 * damageMultiplier; // 炸弹伤害是普攻的2倍
+                const damageMultiplier = Math.max(0.4, 1 - distance / explosionRadius);
+                const damage = this.attackDamage * aoeDamageMultiplier * damageMultiplier;
                 enemyUnit.takeDamage(damage);
             }
         }
         
-        this.createExplosionEffect(position, parentNode);
+        this.createMegaExplosionEffect(position);
+    }
+    
+    private createMegaExplosionEffect(position: Vec3): void {
+        const explosionNode = new Node("MegaExplosion");
+        explosionNode.parent = this.node.parent;
+        explosionNode.setPosition(position);
+        
+        const graphics = explosionNode.addComponent(Graphics);
+        const config = HERO_CONFIGS[HeroType.AMERICAN_BOMBER];
+        const explosionRadius = config.aoeRange || 120;
+        
+        // 多层爆炸效果
+        const colors = [
+            new Color(255, 69, 0, 255),    // 橙红色内核
+            new Color(255, 140, 0, 200),   // 橙色中层  
+            new Color(255, 215, 0, 150),   // 金色外层
+            new Color(255, 255, 255, 100)  // 白色冲击波
+        ];
+        
+        for (let i = 0; i < colors.length; i++) {
+            const radius = (explosionRadius * 0.3) + (i * 15);
+            graphics.fillColor = colors[i];
+            graphics.circle(0, 0, radius);
+            graphics.fill();
+        }
+        
+        // 爆炸扩散动画
+        tween({ scale: 0.5, opacity: 255 })
+            .to(0.6, { scale: 2.0, opacity: 0 }, {
+                onUpdate: (target: any, ratio: number) => {
+                    if (!graphics || !explosionNode.isValid) return;
+                    
+                    const currentScale = 0.5 + (target.scale - 0.5) * ratio;
+                    const currentOpacity = 255 - (255 * ratio);
+                    
+                    explosionNode.setScale(currentScale, currentScale, 1);
+                    
+                    // 重新绘制带透明度的爆炸
+                    if (currentOpacity > 0) {
+                        graphics.clear();
+                        for (let i = 0; i < colors.length; i++) {
+                            const radius = (explosionRadius * 0.3) + (i * 15);
+                            const color = colors[i];
+                            graphics.fillColor = new Color(color.r, color.g, color.b, currentOpacity * (color.a / 255));
+                            graphics.circle(0, 0, radius);
+                            graphics.fill();
+                        }
+                    }
+                },
+                onComplete: () => {
+                    if (explosionNode && explosionNode.isValid) {
+                        explosionNode.destroy();
+                    }
+                }
+            })
+            .start();
     }
     
     private createAttackEffect(): void {
@@ -192,34 +247,48 @@ export class AmericanBomber extends BaseHero {
         effectNode.setPosition(this.node.position);
         
         const effectGraphics = effectNode.addComponent(Graphics);
-        effectGraphics.strokeColor = new Color(220, 20, 60, 200);
-        effectGraphics.lineWidth = 3;
-        effectGraphics.rect(-25, -25, 50, 50);
-        effectGraphics.stroke();
+        
+        // 近战爆破手的发射效果 - 火花四溅
+        const sparkColors = [
+            new Color(255, 69, 0, 255),   // 橙红色
+            new Color(255, 140, 0, 200),  // 橙色
+            new Color(255, 215, 0, 150)   // 金色
+        ];
+        
+        // 绘制火花效果
+        for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI * 2) / 8;
+            const length = 15 + Math.random() * 10;
+            const x = length * Math.cos(angle);
+            const y = length * Math.sin(angle);
+            
+            effectGraphics.strokeColor = sparkColors[i % 3];
+            effectGraphics.lineWidth = 2;
+            effectGraphics.moveTo(0, 0);
+            effectGraphics.lineTo(x, y);
+            effectGraphics.stroke();
+        }
+        
+        // 中心发光效果
+        effectGraphics.fillColor = new Color(255, 255, 255, 200);
+        effectGraphics.circle(0, 0, 8);
+        effectGraphics.fill();
         
         this.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
-        }, 0.4);
-    }
-    
-    private createExplosionEffect(position: Vec3, parentNode?: Node | null): void {
-        // 使用EffectHelper创建标准化的爆炸效果
-        const effectParent = parentNode || this.node.parent;
-        if (effectParent) {
-            EffectHelper.createExplosionEffect(position, effectParent, 100);
-        }
+        }, 0.3);
     }
     
     // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "美国短毛猫爆破兵",
+            text: this.unitName || "美国短毛猫爆破手",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,
-            size: { width: 150, height: 24 }  // 增加宽度以容纳完整名称
+            size: { width: 160, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
 }

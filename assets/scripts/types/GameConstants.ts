@@ -1,17 +1,15 @@
 // 游戏常量配置文件
 import { EnemyCategory, EnemyConfig, EnemyType, GameConfig, HeroCategory, HeroConfig, HeroType, WaveConfig } from './GameTypes';
 
-// 英雄配置 - 完整的猫咪英雄配置
+// 英雄配置 - 按照新设计文档完全重构的12种英雄配置
 export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
-    // === 远程英雄 ===
-    // 注意：远程射击英雄（橘猫、波斯猫、孟加拉猫）拥有超大范围攻击能力，
-    // 攻击范围设置为超大值，可以覆盖整个战场区域
+    // === 射击英雄 - 物理射击子类 (4种，67%中的一半) ===
     [HeroType.ORANGE_CAT]: {
         type: HeroType.ORANGE_CAT,
         name: "橘猫射手",
-        category: HeroCategory.RANGED,
-        attackDamage: 15,        // 平衡性调整：从25降低到15（降低40%），防止秒杀低血量敌人
-        attackRange: 1000,  // 远程英雄大范围攻击，覆盖整个战场区域
+        category: HeroCategory.RANGED_PHYSICAL,
+        attackDamage: 15,        // 基础物理射手，均衡型
+        attackRange: 1000,       // 超大攻击范围，覆盖整个战场
         attackSpeed: 1.2,
         cost: 40,
         bulletSpeed: 300,
@@ -21,9 +19,9 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
     [HeroType.PERSIAN_SNIPER]: {
         type: HeroType.PERSIAN_SNIPER,
         name: "波斯猫狙击手",
-        category: HeroCategory.RANGED,
-        attackDamage: 30,        // 平衡性调整：从50降低到30（降低40%），防止一击秒杀所有基础敌人
-        attackRange: 1000,  // 远程英雄大范围攻击，覆盖整个战场区域
+        category: HeroCategory.RANGED_PHYSICAL,
+        attackDamage: 30,        // 高伤害精确狙击手
+        attackRange: 1000,       // 超大攻击范围，覆盖整个战场
         attackSpeed: 0.6,
         cost: 70,
         bulletSpeed: 500,
@@ -35,64 +33,90 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
     [HeroType.BENGAL_HUNTER]: {
         type: HeroType.BENGAL_HUNTER,
         name: "孟加拉猫猎手",
-        category: HeroCategory.RANGED,
-        attackDamage: 12,        // 平衡性调整：从20降低到12（降低40%），与其他远程英雄同比例
-        attackRange: 1000,  // 远程英雄大范围攻击，覆盖整个战场区域
+        category: HeroCategory.RANGED_PHYSICAL,
+        attackDamage: 12,        // 高攻速连射专家
+        attackRange: 1000,       // 超大攻击范围，覆盖整个战场
         attackSpeed: 2.0,
         cost: 55,
         bulletSpeed: 350,
         skillCooldown: 6
     },
 
-    // === 法师英雄 ===
+    [HeroType.SCOTTISH_MARKSMAN]: {
+        type: HeroType.SCOTTISH_MARKSMAN,
+        name: "苏格兰折耳猫射手",
+        category: HeroCategory.RANGED_PHYSICAL,
+        attackDamage: 20,        // 多重锁定射手，精确制导
+        attackRange: 1000,       // 超大攻击范围，覆盖整个战场
+        attackSpeed: 1.0,
+        cost: 65,
+        bulletSpeed: 400,
+        skillCooldown: 10,
+        multiTargets: 3          // 同时锁定3个目标
+    },
+
+    // === 射击英雄 - 魔法射击子类 (4种，67%中的另一半) ===
     [HeroType.SIAMESE_MAGE]: {
         type: HeroType.SIAMESE_MAGE,
         name: "暹罗猫法师",
-        category: HeroCategory.MAGE,
-        attackDamage: 28,        // 难度降低：从20提升到28，增强AOE伤害
-        attackRange: 200,        // 攻击范围扩大
-        attackSpeed: 0.9,        // 攻速提升
-        cost: 50,               // 成本降低
-        skillCooldown: 6,       // 冷却时间减少
-        aoeDamage: 1.8,         // AOE伤害倍数提升
-        aoeRange: 90            // AOE范围扩大
+        category: HeroCategory.RANGED_MAGIC,
+        attackDamage: 28,        // AOE爆炸法师
+        attackRange: 350,
+        attackSpeed: 0.9,
+        cost: 50,
+        skillCooldown: 6,
+        aoeDamage: 1.8,         // AOE伤害倍数
+        aoeRange: 90            // 爆炸范围
     },
 
     [HeroType.MAINE_THUNDER]: {
         type: HeroType.MAINE_THUNDER,
-        name: "缅因猫雷法",
-        category: HeroCategory.MAGE,
-        attackDamage: 32,        // 难度降低：从25提升到32，增强链式伤害
-        attackRange: 220,        // 攻击范围扩大
-        attackSpeed: 0.7,        // 攻速提升
-        cost: 70,               // 成本大幅降低
-        skillCooldown: 8,       // 冷却时间减少
-        chainTargets: 4         // 链式目标数增加
+        name: "缅因猫雷法师",
+        category: HeroCategory.RANGED_MAGIC,
+        attackDamage: 32,        // 链式攻击法师
+        attackRange: 400,
+        attackSpeed: 0.7,
+        cost: 70,
+        skillCooldown: 8,
+        chainTargets: 4         // 链式跳跃4个目标
     },
 
     [HeroType.NORWEGIAN_ICE]: {
         type: HeroType.NORWEGIAN_ICE,
-        name: "挪威森林猫冰法",
-        category: HeroCategory.MAGE,
-        attackDamage: 20,        // 平衡性调整：从35降低到20（降低43%），与其他法师同比例
-        attackRange: 170,
+        name: "挪威森林猫冰法师",
+        category: HeroCategory.RANGED_MAGIC,
+        attackDamage: 20,        // 控制型法师
+        attackRange: 320,
         attackSpeed: 1.0,
         cost: 75,
         skillCooldown: 7,
-        slowEffect: 0.5,
-        aoeDamage: 1.2,
-        aoeRange: 60
+        slowEffect: 0.5,        // 50%减速效果
+        aoeDamage: 1.2,         // AOE伤害倍数
+        aoeRange: 60            // 冻结范围
     },
 
-    // === 近战英雄 ===
+    [HeroType.ABYSSINIAN_ARCHER]: {
+        type: HeroType.ABYSSINIAN_ARCHER,
+        name: "阿比西尼亚猫弓箭手",
+        category: HeroCategory.RANGED_MAGIC,
+        attackDamage: 15,        // 远程多发齐射专家
+        attackRange: 360,
+        attackSpeed: 1.2,
+        cost: 60,
+        bulletSpeed: 300,
+        skillCooldown: 8,
+        multiShot: 5            // 扇形射出5支箭
+    },
+
+    // === 近战英雄 (4种，33%) ===
     [HeroType.BRITISH_KNIGHT]: {
         type: HeroType.BRITISH_KNIGHT,
         name: "英国短毛猫骑士",
         category: HeroCategory.MELEE,
-        attackDamage: 30,        // 平衡性调整：从45降低到30（降低33%），近战英雄保持相对高伤害
+        attackDamage: 30,        // 前排控制专家
         attackRange: 60,
         attackSpeed: 0.8,
-        cost: 65,               // 从80降低到65，修复性价比问题
+        cost: 65,
         skillCooldown: 12
     },
 
@@ -100,66 +124,38 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         type: HeroType.RAGDOLL_GUARDIAN,
         name: "布偶猫守护者",
         category: HeroCategory.MELEE,
-        attackDamage: 25,        // 平衡性调整：从40降低到25（降低38%），防御型近战适度伤害
+        attackDamage: 25,        // 防御型近战
         attackRange: 70,
         attackSpeed: 1.0,
         cost: 60,
         skillCooldown: 8
     },
 
-    // === 辅助英雄 ===
-    [HeroType.SCOTTISH_ENGINEER]: {
-        type: HeroType.SCOTTISH_ENGINEER,
-        name: "苏格兰折耳猫工程师",
-        category: HeroCategory.SUPPORT,
-        attackDamage: 15,        // 平衡性调整：从20降低到15（降低25%），辅助英雄适度减少
-        attackRange: 120,
-        attackSpeed: 1.0,
-        cost: 50,
-        skillCooldown: 15,
-        buffRange: 120,
-        attackSpeedBuff: 1.5
-    },
-
-    [HeroType.ABYSSINIAN_SCOUT]: {
-        type: HeroType.ABYSSINIAN_SCOUT,
-        name: "阿比西尼亚猫侦察兵",
-        category: HeroCategory.SUPPORT,
-        attackDamage: 12,        // 平衡性调整：从15降低到12（降低20%），侦察兵保持较低攻击力
-        attackRange: 140,
-        attackSpeed: 1.2,
-        cost: 45,
-        skillCooldown: 12,
-        buffRange: 100,
-        attackRangeBuff: 30
-    },
-
-    // === 特殊英雄 ===
     [HeroType.RUSSIAN_BLUE]: {
         type: HeroType.RUSSIAN_BLUE,
-        name: "俄罗斯蓝猫精英",
-        category: HeroCategory.SPECIAL,
-        attackDamage: 22,        // 平衡性调整：从35进一步降低到22（降低37%），穿透攻击需要适度伤害
-        attackRange: 140,
+        name: "俄罗斯蓝猫刺客",
+        category: HeroCategory.MELEE,
+        attackDamage: 45,        // 隐身突袭者，高爆发输出
+        attackRange: 90,
         attackSpeed: 1.8,
         cost: 85,
         skillCooldown: 12,
         critChance: 0.3,
         critMultiplier: 2.0,
-        penetration: 2
+        penetration: 2          // 穿透2个目标
     },
 
     [HeroType.AMERICAN_BOMBER]: {
         type: HeroType.AMERICAN_BOMBER,
-        name: "美国短毛猫爆破兵",
-        category: HeroCategory.SPECIAL,
-        attackDamage: 42,        // 平衡性调整：从70降低到42（降低40%），AOE爆炸伤害适度控制
+        name: "美国短毛猫爆破手",
+        category: HeroCategory.MELEE,
+        attackDamage: 42,        // 近程爆炸专家
         attackRange: 120,
         attackSpeed: 0.5,
-        cost: 75,               // 成本降低
-        skillCooldown: 12,      // 冷却时间减少
-        aoeDamage: 2.5,         // AOE伤害倍数提升
-        aoeRange: 120           // AOE范围扩大
+        cost: 75,
+        skillCooldown: 12,
+        aoeDamage: 2.5,         // AOE伤害倍数
+        aoeRange: 120           // 爆炸范围
     }
 };
 

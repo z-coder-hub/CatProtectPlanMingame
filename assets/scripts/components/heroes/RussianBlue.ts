@@ -41,18 +41,19 @@ export class RussianBlue extends BaseHero {
     }
     
     private drawRussianBlueAppearance(): void {
-        if (!this._graphics) return;
+        const graphics = this.getGraphics();
+        if (!graphics) return;
         
-        this._graphics.clear();
+        graphics.clear();
         
-        // 绘制俄罗斯蓝猫身体（蓝灰色星形）
-        this._graphics.fillColor = new Color(106, 90, 205); // 板岩蓝色
-        // 八角星形
+        // 绘制俄罗斯蓝猫刺客身体（深蓝色星形）
+        graphics.fillColor = new Color(25, 25, 112); // 午夜蓝色
+        // 八角星形，更锋利的造型
         const points = 8;
         const outerRadius = 18;
-        const innerRadius = 10;
+        const innerRadius = 8;
         
-        this._graphics.moveTo(outerRadius, 0);
+        graphics.moveTo(outerRadius, 0);
         for (let i = 0; i < points; i++) {
             const outerAngle = (i * 2 * Math.PI) / points;
             const innerAngle = ((i + 0.5) * 2 * Math.PI) / points;
@@ -62,27 +63,35 @@ export class RussianBlue extends BaseHero {
             const innerX = innerRadius * Math.cos(innerAngle);
             const innerY = innerRadius * Math.sin(innerAngle);
             
-            this._graphics.lineTo(outerX, outerY);
-            this._graphics.lineTo(innerX, innerY);
+            graphics.lineTo(outerX, outerY);
+            graphics.lineTo(innerX, innerY);
         }
-        this._graphics.close();
-        this._graphics.fill();
+        graphics.close();
+        graphics.fill();
         
-        // 精英标识（银色）
-        this._graphics.strokeColor = new Color(192, 192, 192);
-        this._graphics.lineWidth = 2;
-        this._graphics.circle(0, 0, 5);
-        this._graphics.stroke();
+        // 刺客面具（黑色）
+        graphics.fillColor = new Color(0, 0, 0);
+        graphics.rect(-8, -12, 16, 6);
+        graphics.fill();
         
-        // 穿透箭头
-        this._graphics.strokeColor = new Color(255, 255, 255);
-        this._graphics.lineWidth = 3;
-        this._graphics.moveTo(-15, 0);
-        this._graphics.lineTo(15, 0);
-        this._graphics.moveTo(10, -5);
-        this._graphics.lineTo(15, 0);
-        this._graphics.lineTo(10, 5);
-        this._graphics.stroke();
+        // 暗影刃（紫色双刃）
+        graphics.strokeColor = new Color(75, 0, 130);
+        graphics.lineWidth = 3;
+        // 左刃
+        graphics.moveTo(-20, -3);
+        graphics.lineTo(-12, 0);
+        graphics.lineTo(-20, 3);
+        // 右刃
+        graphics.moveTo(20, -3);
+        graphics.lineTo(12, 0);
+        graphics.lineTo(20, 3);
+        graphics.stroke();
+        
+        // 暗影气场（半透明紫色）
+        graphics.strokeColor = new Color(75, 0, 130, 100);
+        graphics.lineWidth = 1;
+        graphics.circle(0, 0, 30);
+        graphics.stroke();
     }
     
     // 目标分配由 BattleManager 统一处理
@@ -90,36 +99,83 @@ export class RussianBlue extends BaseHero {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
         
-        // 穿透攻击 - 攻击直线上的所有敌人
-        this.performPenetratingAttack(target);
+        // 近战暗影刃攻击 - 发射短程暗影投射物
+        this.performShadowBladeAttack(target);
         this.createAttackEffect();
     }
     
     // 已移除多余的performAttack包装方法，直接使用onAttack实现
     
-    private performPenetratingAttack(target: Node): void {
+    private performShadowBladeAttack(target: Node): void {
+        // 发射暗影刃投射物
+        this.fireShadowBlade(target);
+    }
+    
+    private fireShadowBlade(target: Node): void {
+        if (!target || !target.isValid) return;
+        
+        const shadowBlade = new Node("ShadowBlade");
+        shadowBlade.parent = this.node.parent;
+        shadowBlade.setPosition(this.node.position);
+        
+        const graphics = shadowBlade.addComponent(Graphics);
+        graphics.fillColor = new Color(75, 0, 130, 200); // 暗紫色
+        graphics.strokeColor = new Color(138, 43, 226, 255); // 蓝紫色边框
+        graphics.lineWidth = 2;
+        
+        // 绘制暗影刃形状
+        graphics.moveTo(0, -2);
+        graphics.lineTo(15, -4);
+        graphics.lineTo(20, 0);
+        graphics.lineTo(15, 4);
+        graphics.lineTo(0, 2);
+        graphics.closePath();
+        graphics.fill();
+        graphics.stroke();
+        
+        // 计算飞行轨迹
+        const startPos = this.node.position.clone();
+        const targetPos = target.position.clone();
+        const distance = Vec3.distance(startPos, targetPos);
+        const duration = distance / (this.bulletSpeed || 350);
+        
+        // 暗影刃飞行动画
+        tween(shadowBlade)
+            .to(duration, { position: targetPos })
+            .call(() => {
+                // 穿透攻击逻辑 - 在目标位置寻找线性穿透的敌人
+                this.performPenetratingDamage(startPos, targetPos);
+                
+                if (shadowBlade && shadowBlade.isValid) {
+                    shadowBlade.destroy();
+                }
+            })
+            .start();
+    }
+    
+    private performPenetratingDamage(startPos: Vec3, endPos: Vec3): void {
         const battleManager = BattleManager.instance;
         if (!battleManager) return;
         
-        const direction = Vec3.subtract(new Vec3(), target.position, this.node.position);
+        const direction = Vec3.subtract(new Vec3(), endPos, startPos);
         direction.normalize();
         
         const allEnemies = battleManager.GetAllEnemies();
         const hitTargets: Node[] = [];
         
-        // 找到直线上的所有敌人
+        // 找到直线上的所有敌人（近战范围内）
         for (const enemy of allEnemies) {
             if (!enemy || !enemy.isValid) continue;
             
-            const toEnemy = Vec3.subtract(new Vec3(), enemy.position, this.node.position);
+            const toEnemy = Vec3.subtract(new Vec3(), enemy.position, startPos);
             const distance = toEnemy.length();
             
             if (distance <= this.attackRange) {
                 toEnemy.normalize();
                 const dot = Vec3.dot(direction, toEnemy);
                 
-                // 如果敌人在攻击方向上（容忍一些角度差）
-                if (dot > 0.8) {
+                // 如果敌人在攻击方向上（近战范围，容忍较小角度差）
+                if (dot > 0.9) {
                     hitTargets.push(enemy);
                 }
             }
@@ -127,21 +183,32 @@ export class RussianBlue extends BaseHero {
         
         // 按距离排序，近的先命中
         hitTargets.sort((a, b) => {
-            const distA = Vec3.distance(this.node.position, a.position);
-            const distB = Vec3.distance(this.node.position, b.position);
+            const distA = Vec3.distance(startPos, a.position);
+            const distB = Vec3.distance(startPos, b.position);
             return distA - distB;
         });
         
+        const config = HERO_CONFIGS[HeroType.RUSSIAN_BLUE];
+        const maxTargets = config.penetration || 2;
+        
         // 攻击每个目标，穿透伤害递减
-        for (let i = 0; i < hitTargets.length && i < 3; i++) { // 最多穿透3个目标
+        for (let i = 0; i < hitTargets.length && i < maxTargets; i++) {
             const enemy = hitTargets[i];
             const enemyUnit = enemy.getComponent(BaseMouse);
             if (enemyUnit && enemyUnit.isAlive) {
-                const damageMultiplier = Math.max(0.3, 1 - i * 0.2); // 每穿透一个目标伤害减少20%
-                const damage = this.attackDamage * damageMultiplier;
-                enemyUnit.takeDamage(damage);
+                // 暴击判断
+                const isCritical = Math.random() < (config.critChance || 0.3);
+                const critMultiplier = config.critMultiplier || 2.0;
                 
-                this.createPenetrationEffect(enemy.position, i);
+                const damageMultiplier = Math.max(0.5, 1 - i * 0.25); // 每穿透一个目标伤害减少25%
+                let damage = this.attackDamage * damageMultiplier;
+                
+                if (isCritical) {
+                    damage *= critMultiplier;
+                }
+                
+                enemyUnit.takeDamage(damage);
+                this.createShadowHitEffect(enemy.position, i, isCritical);
             }
         }
     }
@@ -152,9 +219,14 @@ export class RussianBlue extends BaseHero {
         effectNode.setPosition(this.node.position);
         
         const effectGraphics = effectNode.addComponent(Graphics);
-        effectGraphics.strokeColor = new Color(106, 90, 205, 200);
+        effectGraphics.strokeColor = new Color(75, 0, 130, 200); // 暗紫色
         effectGraphics.lineWidth = 3;
-        effectGraphics.circle(0, 0, 25);
+        
+        // 暗影波纹效果
+        for (let i = 0; i < 3; i++) {
+            const radius = 20 + i * 8;
+            effectGraphics.circle(0, 0, radius);
+        }
         effectGraphics.stroke();
         
         this.scheduleOnce(() => {
@@ -164,25 +236,46 @@ export class RussianBlue extends BaseHero {
         }, 0.4);
     }
     
-    private createPenetrationEffect(position: Vec3, index: number): void {
-        const effectNode = new Node(`PenetrationEffect_${index}`);
+    private createShadowHitEffect(position: Vec3, index: number, isCritical: boolean): void {
+        const effectNode = new Node(`ShadowHitEffect_${index}`);
         effectNode.parent = this.node.parent;
         effectNode.setPosition(position);
         
         const effectGraphics = effectNode.addComponent(Graphics);
-        const alpha = Math.max(50, 200 - index * 50); // 穿透效果递减
-        effectGraphics.fillColor = new Color(255, 255, 255, alpha);
-        effectGraphics.circle(0, 0, 15);
-        effectGraphics.fill();
+        const alpha = Math.max(100, 255 - index * 50); // 穿透效果递减
         
-        // 闪光效果 - 使用tween系统
+        if (isCritical) {
+            // 暴击效果 - 金色爆炸
+            effectGraphics.fillColor = new Color(255, 215, 0, alpha);
+            effectGraphics.strokeColor = new Color(255, 140, 0, alpha);
+            effectGraphics.lineWidth = 3;
+            
+            // 暴击星形爆炸
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI * 2) / 8;
+                const x = 12 * Math.cos(angle);
+                const y = 12 * Math.sin(angle);
+                effectGraphics.moveTo(0, 0);
+                effectGraphics.lineTo(x, y);
+            }
+            effectGraphics.stroke();
+            
+            effectGraphics.circle(0, 0, 8);
+            effectGraphics.fill();
+        } else {
+            // 普通命中效果 - 暗影爆炸
+            effectGraphics.fillColor = new Color(75, 0, 130, alpha);
+            effectGraphics.circle(0, 0, 12);
+            effectGraphics.fill();
+        }
+        
+        // 命中动画效果
         const initialScale = 1;
+        const finalScale = isCritical ? 1.8 : 1.3;
         const initialOpacity = alpha;
-        const animationDuration = (initialOpacity / 25) * 0.016; // 根据原始逻辑计算时间
         
-        // 使用tween创建闪光动画
         tween({ scale: initialScale, opacity: initialOpacity })
-            .to(animationDuration, { scale: initialScale + 0.2 * (initialOpacity / 25), opacity: 0 }, {
+            .to(0.4, { scale: finalScale, opacity: 0 }, {
                 onUpdate: (target: any, ratio: number) => {
                     if (!effectGraphics || !effectNode.isValid) return;
                     
@@ -190,10 +283,13 @@ export class RussianBlue extends BaseHero {
                     const currentOpacity = initialOpacity - (initialOpacity * ratio);
                     
                     if (currentOpacity > 0) {
-                        effectGraphics.clear();
-                        effectGraphics.fillColor = new Color(255, 255, 255, Math.max(0, currentOpacity));
-                        effectGraphics.circle(0, 0, 15 * currentScale);
-                        effectGraphics.fill();
+                        effectNode.setScale(currentScale, currentScale, 1);
+                        if (isCritical) {
+                            effectGraphics.fillColor = new Color(255, 215, 0, Math.max(0, currentOpacity));
+                            effectGraphics.strokeColor = new Color(255, 140, 0, Math.max(0, currentOpacity));
+                        } else {
+                            effectGraphics.fillColor = new Color(75, 0, 130, Math.max(0, currentOpacity));
+                        }
                     }
                 },
                 onComplete: () => {
@@ -208,11 +304,11 @@ export class RussianBlue extends BaseHero {
     // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "俄罗斯蓝猫精英",
+            text: this.unitName || "俄罗斯蓝猫刺客",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,
-            size: { width: 130, height: 24 }  // 增加宽度以容纳完整名称
+            size: { width: 140, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
 }

@@ -11,8 +11,8 @@ import { MaineThunder } from '../components/heroes/MaineThunder';
 import { NorwegianIce } from '../components/heroes/NorwegianIce';
 import { BritishKnight } from '../components/heroes/BritishKnight';
 import { RagdollGuardian } from '../components/heroes/RagdollGuardian';
-import { ScottishEngineer } from '../components/heroes/ScottishEngineer';
-import { AbyssinianScout } from '../components/heroes/AbyssinianScout';
+import { ScottishMarksman } from '../components/heroes/ScottishMarksman';
+import { AbyssinianArcher } from '../components/heroes/AbyssinianArcher';
 import { RussianBlue } from '../components/heroes/RussianBlue';
 import { AmericanBomber } from '../components/heroes/AmericanBomber';
 
@@ -31,8 +31,8 @@ export class HeroFactory {
         [HeroType.NORWEGIAN_ICE]: NorwegianIce,
         [HeroType.BRITISH_KNIGHT]: BritishKnight,
         [HeroType.RAGDOLL_GUARDIAN]: RagdollGuardian,
-        [HeroType.SCOTTISH_ENGINEER]: ScottishEngineer,
-        [HeroType.ABYSSINIAN_SCOUT]: AbyssinianScout,
+        [HeroType.SCOTTISH_MARKSMAN]: ScottishMarksman,
+        [HeroType.ABYSSINIAN_ARCHER]: AbyssinianArcher,
         [HeroType.RUSSIAN_BLUE]: RussianBlue,
         [HeroType.AMERICAN_BOMBER]: AmericanBomber,
     };
@@ -202,8 +202,8 @@ export class HeroFactory {
             [HeroType.MAINE_THUNDER]: "雷电法师，链式攻击",
             [HeroType.NORWEGIAN_ICE]: "冰霜法师，减速控制",
             [HeroType.RAGDOLL_GUARDIAN]: "中型坦克，守护技能",
-            [HeroType.SCOTTISH_ENGINEER]: "工程师，提升攻速",
-            [HeroType.ABYSSINIAN_SCOUT]: "侦察兵，扩展射程",
+            [HeroType.SCOTTISH_MARKSMAN]: "多重锁定射手，精确制导",
+            [HeroType.ABYSSINIAN_ARCHER]: "扇形箭雨弓箭手，覆盖攻击",
             [HeroType.RUSSIAN_BLUE]: "精英射手，穿透攻击",
             [HeroType.AMERICAN_BOMBER]: "爆破兵，AOE爆炸"
         };

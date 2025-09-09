@@ -75,7 +75,7 @@ export class MaineThunder extends BaseHero {
     // 目标分配由 BattleManager 统一处理
     
     protected onAttack(target: Node): void {
-        if (!target || !this.isAlive) return;
+        if (!target || !this.isAlive || !target.isValid) return;
         
         // 雷电链式攻击 - 能够弹射到多个敌人
         const targetUnit = target.getComponent(BaseMouse);
@@ -98,7 +98,7 @@ export class MaineThunder extends BaseHero {
         const chainDamage = this.attackDamage * 0.6; // 60%的链式伤害
         
         for (const enemy of nearbyEnemies) {
-            if (enemy !== primaryTarget) {
+            if (enemy !== primaryTarget && enemy.isValid) {
                 const enemyUnit = enemy.getComponent(BaseMouse);
                 if (enemyUnit && enemyUnit.isAlive) {
                     enemyUnit.takeDamage(chainDamage);

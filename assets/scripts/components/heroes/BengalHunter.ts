@@ -67,7 +67,7 @@ export class BengalHunter extends BaseHero {
     // 目标分配由 BattleManager 统一处理
     
     protected onAttack(target: Node): void {
-        if (!target || !this.isAlive) return;
+        if (!target || !this.isAlive || !target.isValid) return;
         
         // 连发攻击 - 快速造成多次伤害
         const targetUnit = target.getComponent(BaseMouse);

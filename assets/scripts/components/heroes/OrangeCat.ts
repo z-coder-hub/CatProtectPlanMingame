@@ -148,7 +148,7 @@ export class OrangeCat extends BaseHero {
     }
     
     // 启动子弹碰撞检测
-    private startBulletCollisionDetection(bulletNode: Node, direction: Vec3): void {
+    private startBulletCollisionDetection(bulletNode: Node, _direction: Vec3): void {
         const collisionCheckInterval = 0.02; // 50fps检测频率
         const hitRadius = 25; // 碰撞检测半径
         
@@ -161,10 +161,17 @@ export class OrangeCat extends BaseHero {
             // 获取所有敌人并检测碰撞
             const gameManager = GameManager.instance;
             if (gameManager && gameManager.activeEnemies) {
-                for (const enemy of gameManager.activeEnemies) {
+                const activeEnemies = gameManager.activeEnemies;
+                
+                for (const enemy of activeEnemies) {
                     if (!enemy || !enemy.isValid) continue;
                     
+                    // 检查敌人是否有BaseMouse组件
+                    const enemyComponent = enemy.getComponent(BaseMouse);
+                    if (!enemyComponent || !enemyComponent.isAlive) continue;
+                    
                     const distance = Vec3.distance(bulletNode.position, enemy.position);
+                    
                     if (distance <= hitRadius) {
                         // 击中敌人
                         this.unschedule(collisionCheckFunction);
@@ -173,11 +180,17 @@ export class OrangeCat extends BaseHero {
                         return;
                     }
                 }
+            } else {
+                // 只在GameManager不存在时记录错误
+                console.error(`[OrangeCat] GameManager实例不存在或activeEnemies为空`);
             }
         };
         
-        // 启动碰撞检测调度
+        // 启动碰撞检测调度，使用特定的调度键
         this.schedule(collisionCheckFunction, collisionCheckInterval);
+        
+        // 将调度函数与子弹关联，便于后续清理
+        (bulletNode as any)._collisionCheckFunction = collisionCheckFunction;
     }
     
     // 子弹击中敌人
@@ -186,6 +199,8 @@ export class OrangeCat extends BaseHero {
         const enemyUnit = enemy.getComponent(BaseMouse);
         if (enemyUnit) {
             enemyUnit.takeDamage(this.attackDamage);
+        } else {
+            console.error(`[OrangeCat] 击中目标缺少BaseMouse组件: ${enemy.name}`);
         }
         
         // 创建击中特效
@@ -209,8 +224,12 @@ export class OrangeCat extends BaseHero {
             // 停止所有与此子弹相关的tween动画
             Tween.stopAllByTarget(bulletNode);
             
-            // 取消该子弹的所有调度任务
-            this.unscheduleAllCallbacks();
+            // 取消该子弹特定的碰撞检测调度
+            const collisionCheckFunction = (bulletNode as any)._collisionCheckFunction;
+            if (collisionCheckFunction) {
+                this.unschedule(collisionCheckFunction);
+                delete (bulletNode as any)._collisionCheckFunction;
+            }
             
             // 只有在对象仍然有效时才尝试从集合中移除
             if (this && this._activeBullets) {
@@ -252,8 +271,6 @@ export class OrangeCat extends BaseHero {
                 
                 // 创建技能特效
                 this.createSkillEffect();
-                
-                console.log(`橘猫使用精准射击！造成 ${skillDamage} 点伤害`);
             }
         }
     }
@@ -274,10 +291,8 @@ export class OrangeCat extends BaseHero {
         // 尝试释放技能
         if (this.canUseSkill) {
             this.useSkill();
-            console.log("橘猫释放精准射击技能！");
             this.createClickFeedback();
         } else {
-            console.log(`橘猫技能冷却中，剩余时间: ${this._skillTimer.toFixed(1)}秒`);
             this.createCooldownFeedback();
         }
     }

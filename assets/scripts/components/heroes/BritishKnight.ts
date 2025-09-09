@@ -96,6 +96,8 @@ export class BritishKnight extends BaseHero {
     // 已移除多余的performAttack包装方法，直接使用onAttack实现
     
     private meleeAttack(target: Node): void {
+        if (!target || !target.isValid) return;
+        
         const targetUnit = target.getComponent(BaseMouse);
         if (targetUnit) {
             let damage = this.attackDamage;

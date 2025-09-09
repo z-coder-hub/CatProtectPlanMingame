@@ -247,7 +247,7 @@ export class SkillSystem extends Component {
         
         switch (skill.config.targetType) {
             case SkillTargetType.ENEMY:
-                if (target) {
+                if (target && target.isValid) {
                     const targetUnit = target.getComponent('BaseMouse');
                     if (targetUnit) {
                         targetUnit.takeDamage(actualDamage);

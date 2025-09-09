@@ -19,38 +19,32 @@ export enum EnemyState {
     DEAD = 2       // 死亡
 }
 
-// 英雄分类枚举
+// 英雄分类枚举 - 按照新设计文档统一分类
 export enum HeroCategory {
-    RANGED = "ranged",     // 远程
-    MAGE = "mage",         // 法师
-    MELEE = "melee",       // 近战
-    SUPPORT = "support",   // 辅助
-    SPECIAL = "special"    // 特殊
+    RANGED_PHYSICAL = "ranged_physical",  // 射击英雄-物理射击子类
+    RANGED_MAGIC = "ranged_magic",        // 射击英雄-魔法射击子类  
+    MELEE = "melee"                       // 近战英雄
 }
 
-// 英雄类型枚举
+// 英雄类型枚举 - 按照新设计文档重新分类
 export enum HeroType {
-    // 远程英雄
+    // 射击英雄 - 物理射击子类 (4种)
     ORANGE_CAT = "OrangeCat",              // 橘猫射手
     PERSIAN_SNIPER = "PersianSniper",      // 波斯猫狙击手
-    BENGAL_HUNTER = "BengalHunter",        // 孟加拉猫猎手
+    BENGAL_HUNTER = "BengalHunter",        // 孟加拉猎手
+    SCOTTISH_MARKSMAN = "ScottishMarksman", // 苏格兰折耳猫射手
 
-    // 法师英雄
+    // 射击英雄 - 魔法射击子类 (4种)
     SIAMESE_MAGE = "SiameseMage",          // 暹罗猫法师
-    MAINE_THUNDER = "MaineThunder",        // 缅因猫雷法
-    NORWEGIAN_ICE = "NorwegianIce",        // 挪威森林猫冰法
+    MAINE_THUNDER = "MaineThunder",        // 缅因猫雷法师
+    NORWEGIAN_ICE = "NorwegianIce",        // 挪威森林猫冰法师
+    ABYSSINIAN_ARCHER = "AbyssinianArcher", // 阿比西尼亚猫弓箭手
 
-    // 近战英雄
+    // 近战英雄 (4种)
     BRITISH_KNIGHT = "BritishKnight",      // 英国短毛猫骑士
     RAGDOLL_GUARDIAN = "RagdollGuardian",  // 布偶猫守护者
-
-    // 辅助英雄
-    SCOTTISH_ENGINEER = "ScottishEngineer",     // 苏格兰折耳猫工程师
-    ABYSSINIAN_SCOUT = "AbyssinianScout",       // 阿比西尼亚猫侦察兵
-
-    // 特殊英雄
-    RUSSIAN_BLUE = "RussianBlue",          // 俄罗斯蓝猫精英
-    AMERICAN_BOMBER = "AmericanBomber"     // 美国短毛猫爆破兵
+    RUSSIAN_BLUE = "RussianBlue",          // 俄罗斯蓝猫刺客
+    AMERICAN_BOMBER = "AmericanBomber"     // 美国短毛猫爆破手
 }
 
 // 敌人分类枚举
@@ -138,10 +132,11 @@ export interface HeroConfig extends UnitStats {
     critMultiplier?: number;       // 暴击倍率
     slowEffect?: number;           // 减速效果(0-1)
     chainTargets?: number;         // 链式攻击目标数
-    buffRange?: number;            // 增益光环范围
-    attackSpeedBuff?: number;      // 攻击速度增益倍率
-    attackRangeBuff?: number;      // 攻击范围增益值
     penetration?: number;          // 穿透攻击目标数
+    
+    // 新射击英雄专用属性
+    multiTargets?: number;         // 多重锁定目标数(苏格兰射手)
+    multiShot?: number;            // 多发齐射数量(阿比西尼亚弓箭手)
 }
 
 // 敌人配置接口

@@ -155,8 +155,8 @@ export abstract class BaseHero extends Component {
             [HeroType.BENGAL_HUNTER]: 'bengal',
             [HeroType.NORWEGIAN_ICE]: 'norwegian',
             [HeroType.RAGDOLL_GUARDIAN]: 'ragdoll',
-            [HeroType.SCOTTISH_ENGINEER]: 'scottish',
-            [HeroType.ABYSSINIAN_SCOUT]: 'abyssinian',
+            [HeroType.SCOTTISH_MARKSMAN]: 'scottish',
+            [HeroType.ABYSSINIAN_ARCHER]: 'abyssinian',
             [HeroType.RUSSIAN_BLUE]: 'russian',
             [HeroType.AMERICAN_BOMBER]: 'american'
         };
