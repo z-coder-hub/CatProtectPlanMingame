@@ -3,9 +3,7 @@ import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType, HeroState } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
-import { BattleManager } from '../../managers/BattleManager';
-import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
-import { GameManager } from '../../managers/GameManager';
+import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 import { EffectHelper } from '../../utils/EffectHelper';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 
@@ -14,8 +12,6 @@ const { ccclass, property } = _decorator;
 @ccclass('BritishKnight')
 export class BritishKnight extends BaseHero {
     
-    @property({ tooltip: "技能冷却时间", override: true })
-    public skillCooldown: number = 12;
     
     // 私有属性
     // _graphics由BaseHero管理
@@ -35,7 +31,6 @@ export class BritishKnight extends BaseHero {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.bulletSpeed = config.bulletSpeed || 350;
-        this.skillCooldown = config.skillCooldown || 12;
         this.cost = config.cost;
     }
     
@@ -89,7 +84,14 @@ export class BritishKnight extends BaseHero {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
         
-        this.meleeAttack(target);
+        // 使用投射物系统发射剑气（考虑冲锋状态）
+        ProjectileSystem.CreateSwordWave(this, target.position, this._isCharged, 1.5);
+        
+        // 重置冲锋状态
+        if (this._isCharged) {
+            this._isCharged = false;
+        }
+        
         this.playAttackAnimation();
     }
     
@@ -152,31 +154,6 @@ export class BritishKnight extends BaseHero {
             .start();
     }
     
-    // 重写基类的技能使用方法
-    protected onUseSkill(): void {
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return;
-        
-        // 寻找范围内的敌人
-        const enemies = battleManager.GetEnemiesInRange(this.node.position, this.attackRange * 1.5);
-        if (enemies.length === 0) return;
-        
-        // 激活冲锋状态
-        this._isCharged = true;
-        this.createChargeEffect();
-        
-        // 暂时提升攻击速度和移动速度
-        const originalAttackSpeed = this.attackSpeed;
-        this.attackSpeed *= 2;
-        
-        // 3秒后恢复正常
-        this.scheduleOnce(() => {
-            this.attackSpeed = originalAttackSpeed;
-            console.log("英短骑士冲锋状态结束");
-        }, 3);
-        
-        console.log("英短骑士激活重装冲锋！");
-    }
     
     private createChargeEffect(): void {
         if (this.node.parent) {
@@ -199,26 +176,13 @@ export class BritishKnight extends BaseHero {
         }
     }
     
-    private createSkillEffect(): void {
-        if (this.node.parent) {
-            EffectHelper.createSkillEffect(this.node.position, this.node.parent);
-        }
-    }
     
-    // 移除重复的技能冷却方法，使用BaseHero的canUseSkill
     
     
     
     // 重写BaseHero的点击处理方法
     protected onHeroClickHandler(): void {
-        if (this.canUseSkill) {
-            this.useSkill();
-            console.log("英短骑士释放重装冲锋技能！");
-            this.createClickFeedback();
-        } else {
-            console.log("英短骑士技能冷却中");
-            this.createCooldownFeedback();
-        }
+        console.log(`${this.unitName} 被点击`);
     }
     
     private createClickFeedback(): void {
@@ -228,10 +192,4 @@ export class BritishKnight extends BaseHero {
         }
     }
     
-    private createCooldownFeedback(): void {
-        if (this.node.parent) {
-            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
-            EffectHelper.createCooldownFeedback(feedbackPos, this.node.parent);
-        }
-    }
 }

@@ -260,44 +260,7 @@ export class BattleManager extends Component {
         return nearestTarget;
     }
     
-    // 移动敌人向城堡
-    private moveEnemyToCastle(enemyUnit: BaseMouse): void {
-        if (!this._gameManager || !this._gameManager.castleNode) return;
-        
-        const castlePos = this._gameManager.castleNode.position;
-        const enemyPos = enemyUnit.node.position;
-        
-        // 计算方向向量
-        const direction = Vec3.subtract(new Vec3(), castlePos, enemyPos);
-        direction.normalize();
-        
-        // 移动敌人
-        const moveSpeed = enemyUnit.moveSpeed;
-        const deltaTime = this.battleUpdateInterval;
-        const moveDistance = moveSpeed * deltaTime;
-        
-        const newPos = Vec3.add(new Vec3(), enemyPos, Vec3.multiplyScalar(new Vec3(), direction, moveDistance));
-        enemyUnit.node.setPosition(newPos);
-        
-        // 检查是否到达城堡
-        const distanceToCastle = Vec3.distance(newPos, castlePos);
-        if (distanceToCastle <= 50) { // 到达城堡范围
-            this.enemyReachCastle(enemyUnit);
-        }
-    }
     
-    // 敌人到达城堡
-    private enemyReachCastle(enemyUnit: BaseMouse): void {
-        if (!this._gameManager) return;
-        
-        // 老鼠到达城堡造成伤害（使用固定伤害值，因为老鼠没有attackDamage属性）
-        const castleDamage = Math.floor(enemyUnit.maxHealth / 10);
-        this._gameManager.CastleTakeDamage(castleDamage);
-        
-        // 移除敌人
-        this._gameManager.RemoveActiveEnemy(enemyUnit.node);
-        enemyUnit.die();
-    }
     
     // 处理单位被摧毁
     private handleUnitDestroyed(unit: BaseHero | BaseMouse): void {

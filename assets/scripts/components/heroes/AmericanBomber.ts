@@ -1,10 +1,8 @@
-import { _decorator, Color, Graphics, Node, Vec3, tween } from 'cc';
+import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
 import { BaseHero } from './BaseHero';
-import { BaseMouse } from '../enemies/BaseMouse';
-import { HeroType, HeroState } from '../../types/GameTypes';
+import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
-import { BattleManager } from '../../managers/BattleManager';
-import { EffectHelper } from '../../utils/EffectHelper';
+import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 
 const { ccclass } = _decorator;
 
@@ -23,7 +21,6 @@ export class AmericanBomber extends BaseHero {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.bulletSpeed = config.bulletSpeed || 350;
-        this.skillCooldown = config.skillCooldown || 5;
         this.cost = config.cost;
     }
     
@@ -113,133 +110,15 @@ export class AmericanBomber extends BaseHero {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
         
-        // 近战爆炸弹攻击 - 发射近程爆炸弹
-        this.fireExplosiveBomb(target);
+        // 使用投射物系统发射爆炸冲击波
+        const config = HERO_CONFIGS[HeroType.AMERICAN_BOMBER];
+        const explosionRadius = config.aoeRange || 120;
+        const knockbackForce = 50;
+        
+        ProjectileSystem.CreateExplosionWave(this, target.position, explosionRadius, knockbackForce);
         this.createAttackEffect();
     }
     
-    // 近战爆炸弹攻击 - 直接向目标发射爆炸弹
-    private fireExplosiveBomb(target: Node): void {
-        if (!target || !target.isValid) return;
-        
-        const explosiveBomb = new Node("ExplosiveBomb");
-        explosiveBomb.parent = this.node.parent;
-        explosiveBomb.setPosition(this.node.position);
-        
-        const graphics = explosiveBomb.addComponent(Graphics);
-        graphics.fillColor = new Color(34, 139, 34, 200); // 绿色炸弹
-        graphics.strokeColor = new Color(255, 69, 0, 255); // 橙色边框
-        graphics.lineWidth = 2;
-        graphics.circle(0, 0, 4);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 引线效果
-        graphics.strokeColor = new Color(255, 255, 0, 255);
-        graphics.lineWidth = 1;
-        graphics.moveTo(0, -4);
-        graphics.lineTo(0, -8);
-        graphics.stroke();
-        
-        // 计算飞行轨迹（近战短程）
-        const startPos = this.node.position.clone();
-        const targetPos = target.position.clone();
-        const distance = Vec3.distance(startPos, targetPos);
-        const duration = distance / (this.bulletSpeed || 250); // 稍慢的爆炸弹速度
-        
-        // 爆炸弹飞行动画（简单直线）
-        tween(explosiveBomb)
-            .to(duration, { position: targetPos })
-            .call(() => {
-                // 接触引爆 - 大范围AOE爆炸
-                this.detonateExplosiveBomb(targetPos);
-                
-                if (explosiveBomb && explosiveBomb.isValid) {
-                    explosiveBomb.destroy();
-                }
-            })
-            .start();
-    }
-    
-    private detonateExplosiveBomb(position: Vec3): void {
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return;
-        
-        const config = HERO_CONFIGS[HeroType.AMERICAN_BOMBER];
-        const explosionRadius = config.aoeRange || 120;
-        const aoeDamageMultiplier = config.aoeDamage || 2.5;
-        
-        // 获取爆炸范围内的所有敌人
-        const enemies = battleManager.GetEnemiesInRange(position, explosionRadius);
-        
-        for (const enemy of enemies) {
-            const enemyUnit = enemy.getComponent(BaseMouse);
-            if (enemyUnit && enemyUnit.isAlive) {
-                const distance = Vec3.distance(enemy.position, position);
-                const damageMultiplier = Math.max(0.4, 1 - distance / explosionRadius);
-                const damage = this.attackDamage * aoeDamageMultiplier * damageMultiplier;
-                enemyUnit.takeDamage(damage);
-            }
-        }
-        
-        this.createMegaExplosionEffect(position);
-    }
-    
-    private createMegaExplosionEffect(position: Vec3): void {
-        const explosionNode = new Node("MegaExplosion");
-        explosionNode.parent = this.node.parent;
-        explosionNode.setPosition(position);
-        
-        const graphics = explosionNode.addComponent(Graphics);
-        const config = HERO_CONFIGS[HeroType.AMERICAN_BOMBER];
-        const explosionRadius = config.aoeRange || 120;
-        
-        // 多层爆炸效果
-        const colors = [
-            new Color(255, 69, 0, 255),    // 橙红色内核
-            new Color(255, 140, 0, 200),   // 橙色中层  
-            new Color(255, 215, 0, 150),   // 金色外层
-            new Color(255, 255, 255, 100)  // 白色冲击波
-        ];
-        
-        for (let i = 0; i < colors.length; i++) {
-            const radius = (explosionRadius * 0.3) + (i * 15);
-            graphics.fillColor = colors[i];
-            graphics.circle(0, 0, radius);
-            graphics.fill();
-        }
-        
-        // 爆炸扩散动画
-        tween({ scale: 0.5, opacity: 255 })
-            .to(0.6, { scale: 2.0, opacity: 0 }, {
-                onUpdate: (target: any, ratio: number) => {
-                    if (!graphics || !explosionNode.isValid) return;
-                    
-                    const currentScale = 0.5 + (target.scale - 0.5) * ratio;
-                    const currentOpacity = 255 - (255 * ratio);
-                    
-                    explosionNode.setScale(currentScale, currentScale, 1);
-                    
-                    // 重新绘制带透明度的爆炸
-                    if (currentOpacity > 0) {
-                        graphics.clear();
-                        for (let i = 0; i < colors.length; i++) {
-                            const radius = (explosionRadius * 0.3) + (i * 15);
-                            const color = colors[i];
-                            graphics.fillColor = new Color(color.r, color.g, color.b, currentOpacity * (color.a / 255));
-                            graphics.circle(0, 0, radius);
-                            graphics.fill();
-                        }
-                    }
-                },
-                onComplete: () => {
-                    if (explosionNode && explosionNode.isValid) {
-                        explosionNode.destroy();
-                    }
-                }
-            })
-            .start();
-    }
     
     private createAttackEffect(): void {
         const effectNode = new Node("AttackEffect");

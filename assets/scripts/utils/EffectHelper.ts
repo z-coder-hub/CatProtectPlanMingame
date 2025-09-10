@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, director, tween } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, Color, tween } from 'cc';
 
 const { ccclass } = _decorator;
 
@@ -368,45 +368,7 @@ export class EffectHelper {
         return this.createEffect(EffectType.COOLDOWN_FEEDBACK, position, parent);
     }
     
-    // 创建魔法爆炸特效的快捷方法
-    public static createMagicExplosion(position: Vec3, parent: Node): Node {
-        return this.createEffect(EffectType.MAGIC_EXPLOSION, position, parent);
-    }
     
-    // 创建冲锋冲击特效的快捷方法
-    public static createChargeImpact(position: Vec3, parent: Node): Node {
-        return this.createEffect(EffectType.CHARGE_IMPACT, position, parent);
-    }
-    
-    // 创建护甲阻挡特效的快捷方法
-    public static createArmorBlock(position: Vec3, parent: Node): Node {
-        return this.createEffect(EffectType.ARMOR_BLOCK, position, parent);
-    }
-    
-    // 创建治疗特效的快捷方法
-    public static createHealEffect(position: Vec3, parent: Node): Node {
-        return this.createEffect(EffectType.HEAL, position, parent);
-    }
-    
-    // 创建闪电特效的快捷方法
-    public static createLightning(position: Vec3, parent: Node): Node {
-        return this.createEffect(EffectType.LIGHTNING, position, parent);
-    }
-    
-    // 创建火焰特效的快捷方法
-    public static createFire(position: Vec3, parent: Node): Node {
-        return this.createEffect(EffectType.FIRE, position, parent);
-    }
-    
-    // 创建冰冻特效的快捷方法
-    public static createIce(position: Vec3, parent: Node): Node {
-        return this.createEffect(EffectType.ICE, position, parent);
-    }
-    
-    // 创建护盾特效的快捷方法
-    public static createShield(position: Vec3, parent: Node): Node {
-        return this.createEffect(EffectType.SHIELD, position, parent);
-    }
     
     // === 新增的特效方法 ===
     
@@ -457,14 +419,6 @@ export class EffectHelper {
         return this.createEffect(EffectType.ARMOR_BLOCK, position, parent);
     }
     
-    // 创建城堡攻击特效
-    public static createCastleAttackEffect(position: Vec3, parent: Node): Node {
-        return this.createEffect(EffectType.FIRE, position, parent, {
-            color: new Color(255, 0, 0, 220),
-            size: 30,
-            duration: 600
-        });
-    }
     
     // 创建敌人死亡特效
     public static createEnemyDeathEffect(position: Vec3, parent: Node): Node {

@@ -3,12 +3,8 @@ import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
-import { BattleManager } from '../../managers/BattleManager';
-import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
-import { GameManager } from '../../managers/GameManager';
+import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 import { EffectHelper } from '../../utils/EffectHelper';
-import { DrawingHelper } from '../../utils/DrawingHelper';
-import { SimpleObjectPool } from '../../utils/SimpleObjectPool';
 
 const { ccclass, property } = _decorator;
 
@@ -18,8 +14,6 @@ export class PersianSniper extends BaseHero {
     @property({ tooltip: "子弹速度", override: true })
     public bulletSpeed: number = 500;
     
-    @property({ tooltip: "技能冷却时间", override: true })
-    public skillCooldown: number = 8;
     
     @property({ tooltip: "暴击几率" })
     public critChance: number = 0.3;
@@ -28,7 +22,6 @@ export class PersianSniper extends BaseHero {
     public critMultiplier: number = 2.5;
     
     // 私有属性
-    private _activeBullets: Set<Node> | null = new Set();
     private _isPlayingAttackAnimation: boolean = false;
     
     // 英雄类型
@@ -43,7 +36,6 @@ export class PersianSniper extends BaseHero {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.bulletSpeed = config.bulletSpeed || 500;
-        this.skillCooldown = config.skillCooldown || 8;
         this.cost = config.cost;
         this.critChance = config.critChance || 0.3;
         this.critMultiplier = config.critMultiplier || 2.5;
@@ -70,7 +62,8 @@ export class PersianSniper extends BaseHero {
     protected onAttack(target: Node): void {
         if (!target) return;
         
-        this.shootBullet(target);
+        // 使用投射物系统发射带暴击的物理子弹
+        ProjectileSystem.CreatePhysicalBullet(this, target.position, this.critChance, this.critMultiplier);
         this.playAttackAnimation();
     }
     
@@ -248,53 +241,11 @@ export class PersianSniper extends BaseHero {
             .start();
     }
     
-    // 重写基类的技能使用方法
-    protected onUseSkill(): void {
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return;
-        
-        // 寻找血量最高的敌人
-        const enemies = battleManager.GetEnemiesInRange(this.node.position, this.attackRange);
-        if (enemies.length === 0) return;
-        
-        let targetEnemy: Node | null = null;
-        let maxHealth = 0;
-        
-        for (const enemy of enemies) {
-            const enemyUnit = enemy.getComponent(BaseMouse);
-            if (enemyUnit && enemyUnit.currentHealth > maxHealth) {
-                maxHealth = enemyUnit.currentHealth;
-                targetEnemy = enemy;
-            }
-        }
-        
-        if (targetEnemy) {
-            const targetUnit = targetEnemy.getComponent(BaseMouse);
-            if (targetUnit) {
-                const skillDamage = this.attackDamage * this.critMultiplier * 1.5; // 超级暴击
-                targetUnit.takeDamage(skillDamage);
-                
-                this.createSkillEffect();
-                
-                console.log(`波斯猫使用穿甲射击！造成 ${skillDamage} 点伤害`);
-            }
-        }
-    }
     
-    private createSkillEffect(): void {
-        if (this.node.parent) {
-            EffectHelper.createSkillEffect(this.node.position, this.node.parent);
-        }
-    }
     
     // 重写基类的英雄点击处理方法
     protected onHeroClickHandler(): void {
-        if (this.canUseSkill) {
-            this.useSkill();
-            console.log("波斯猫释放穿甲射击技能！");
-        } else {
-            console.log(`波斯猫技能冷却中，剩余时间: ${this._skillTimer.toFixed(1)}秒`);
-        }
+        console.log(`${this.unitName} 被点击`);
     }
     
     // 重写标签配置，使用完整英雄名称

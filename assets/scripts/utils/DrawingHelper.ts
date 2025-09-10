@@ -248,49 +248,6 @@ export class DrawingHelper {
         return label;
     }
     
-    // 绘制简单形状的工具方法
-    public static drawCircle(graphics: Graphics, x: number, y: number, radius: number, style: DrawStyle): void {
-        if (style.fillColor) {
-            graphics.fillColor = style.fillColor;
-            graphics.circle(x, y, radius);
-            graphics.fill();
-        }
-        
-        if (style.strokeColor && style.lineWidth) {
-            graphics.strokeColor = style.strokeColor;
-            graphics.lineWidth = style.lineWidth;
-            graphics.circle(x, y, radius);
-            graphics.stroke();
-        }
-    }
-    
-    public static drawRect(graphics: Graphics, x: number, y: number, width: number, height: number, style: DrawStyle): void {
-        // 绘制矩形路径（一次）
-        graphics.rect(x, y, width, height);
-        
-        // 填充
-        if (style.fillColor) {
-            graphics.fillColor = style.fillColor;
-            graphics.fill();
-        }
-        
-        // 描边
-        if (style.strokeColor && style.lineWidth) {
-            graphics.strokeColor = style.strokeColor;
-            graphics.lineWidth = style.lineWidth;
-            graphics.stroke();
-        }
-    }
-    
-    public static drawLine(graphics: Graphics, x1: number, y1: number, x2: number, y2: number, style: DrawStyle): void {
-        if (style.strokeColor && style.lineWidth) {
-            graphics.strokeColor = style.strokeColor;
-            graphics.lineWidth = style.lineWidth;
-            graphics.moveTo(x1, y1);
-            graphics.lineTo(x2, y2);
-            graphics.stroke();
-        }
-    }
     
     // 绘制受伤效果
     public static drawHurtEffect(graphics: Graphics, heroType: 'orange' | 'siamese' | 'maine' | 'basicMouse', scale: number = 1): void {

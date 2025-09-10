@@ -167,37 +167,7 @@ export class UIHelper {
         return buttonNode;
     }
 
-    /**
-     * 创建带位置的按钮（用于需要手动设置位置的场景）
-     */
-    static CreateButtonWithPosition(text: string, xPos: number, yPos: number, width: number, height: number, bgColor: Color, callback: () => void, target?: any): Node {
-        const buttonNode = UIHelper.CreateButton(text, width, height, bgColor, callback, target);
-        buttonNode.setPosition(xPos, yPos);
-        return buttonNode;
-    }
 
-    /**
-     * 根据容器尺寸创建自适应按钮
-     * @param text 按钮文本
-     * @param container 父级容器节点
-     * @param widthRatio 按钮宽度占容器宽度的比例（0-1）
-     * @param heightRatio 按钮高度占容器高度的比例（0-1）
-     * @param bgColor 背景颜色
-     * @param callback 点击回调
-     * @param target 回调目标
-     */
-    static CreateAdaptiveButton(text: string, container: Node, widthRatio: number, heightRatio: number, bgColor: Color, callback: () => void, target?: any): Node {
-        const containerTransform = container.getComponent(UITransform);
-        if (!containerTransform) {
-            console.error("容器节点缺少UITransform组件");
-            return UIHelper.CreateButton(text, 100, 40, bgColor, callback, target);
-        }
-
-        const buttonWidth = containerTransform.width * widthRatio;
-        const buttonHeight = containerTransform.height * heightRatio;
-        
-        return UIHelper.CreateButton(text, buttonWidth, buttonHeight, bgColor, callback, target);
-    }
 
     /**
      * 在容器中创建多个等宽按钮

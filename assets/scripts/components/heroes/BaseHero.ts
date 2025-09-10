@@ -34,8 +34,6 @@ export abstract class BaseHero extends Component {
     @property({ tooltip: "子弹速度" })
     public bulletSpeed: number = 300;
     
-    @property({ tooltip: "技能冷却时间" })
-    public skillCooldown: number = 5;
     
     @property({ tooltip: "英雄成本" })
     public cost: number = 50;
@@ -47,7 +45,6 @@ export abstract class BaseHero extends Component {
     // === 受保护属性，子类可访问 ===
     protected _gameManager: GameManager | null = null;
     protected _attackTimer: number = 0;
-    protected _skillTimer: number = 0;
     // 移除生命条相关属性
     
     // === 统一外观系统属性 ===
@@ -82,10 +79,6 @@ export abstract class BaseHero extends Component {
             this._attackTimer -= dt;
         }
         
-        // 更新技能计时器
-        if (this._skillTimer > 0) {
-            this._skillTimer -= dt;
-        }
         
         // 状态管理现在完全由 BattleManager 处理，移除重复的状态逻辑
         // BattleManager.updateBattle() 负责目标分配和攻击执行
@@ -154,7 +147,6 @@ export abstract class BaseHero extends Component {
             [HeroType.BRITISH_KNIGHT]: 'british',
             [HeroType.BENGAL_HUNTER]: 'bengal',
             [HeroType.NORWEGIAN_ICE]: 'norwegian',
-            [HeroType.RAGDOLL_GUARDIAN]: 'ragdoll',
             [HeroType.SCOTTISH_MARKSMAN]: 'scottish',
             [HeroType.ABYSSINIAN_ARCHER]: 'abyssinian',
             [HeroType.RUSSIAN_BLUE]: 'russian',
@@ -205,10 +197,8 @@ export abstract class BaseHero extends Component {
      * 英雄点击处理方法 - 子类可以重写
      */
     protected onHeroClickHandler(): void {
-        // 默认尝试使用技能
-        if (this.canUseSkill) {
-            this.useSkill();
-        }
+        // 点击处理逻辑，子类可重写
+        console.log(`${this.unitName} 被点击`);
     }
     
     // === 通用属性访问器 ===
@@ -221,9 +211,6 @@ export abstract class BaseHero extends Component {
         return this._attackTimer <= 0;
     }
     
-    public get canUseSkill(): boolean {
-        return this._skillTimer <= 0;
-    }
     
     public get stats(): UnitStats {
         return {
@@ -284,22 +271,6 @@ export abstract class BaseHero extends Component {
      */
     protected abstract onAttack(target: Node): void;
     
-    /**
-     * 使用技能 - 子类可选实现
-     */
-    protected useSkill(): void {
-        if (!this.canUseSkill) return;
-        
-        this._skillTimer = this.skillCooldown;
-        this.onUseSkill();
-    }
-    
-    /**
-     * 技能使用回调 - 子类可重写
-     */
-    protected onUseSkill(): void {
-        // 子类实现具体技能逻辑
-    }
     
     // 移除死亡特效方法，英雄不会死亡
     

@@ -3,7 +3,7 @@ import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
-import { BattleManager } from '../../managers/BattleManager';
+import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 
 const { ccclass } = _decorator;
 
@@ -28,7 +28,6 @@ export class MaineThunder extends BaseHero {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.bulletSpeed = config.bulletSpeed || 400;
-        this.skillCooldown = config.skillCooldown || 10;
         this.cost = config.cost;
     }
     
@@ -77,17 +76,11 @@ export class MaineThunder extends BaseHero {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive || !target.isValid) return;
         
-        // 雷电链式攻击 - 能够弹射到多个敌人
-        const targetUnit = target.getComponent(BaseMouse);
-        if (targetUnit && targetUnit.isAlive) {
-            targetUnit.takeDamage(this.attackDamage);
-        }
+        // 使用投射物系统发射链式雷电弹
+        ProjectileSystem.CreateLightningBolt(this, target.position, 3, 100);
         
-        // 创建闪电特效
+        // 创建攻击动画特效
         this.createLightningEffect();
-        
-        // 链式伤害 - 对附近的敌人造成额外伤害
-        this.chainLightningAttack(target);
     }
     
     private chainLightningAttack(primaryTarget: Node): void {

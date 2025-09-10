@@ -3,6 +3,7 @@ import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
+import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 
 const { ccclass } = _decorator;
 
@@ -20,7 +21,6 @@ export class BengalHunter extends BaseHero {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.bulletSpeed = config.bulletSpeed || 350;
-        this.skillCooldown = config.skillCooldown || 6;
         this.cost = config.cost;
     }
     
@@ -69,26 +69,21 @@ export class BengalHunter extends BaseHero {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive || !target.isValid) return;
         
-        // 连发攻击 - 快速造成多次伤害
-        const targetUnit = target.getComponent(BaseMouse);
-        if (targetUnit && targetUnit.isAlive) {
-            const rapidDamage = this.attackDamage * 0.4; // 每发40%伤害
-            
-            // 连续3发
-            targetUnit.takeDamage(rapidDamage);
-            
-            this.scheduleOnce(() => {
-                if (targetUnit && targetUnit.isAlive) {
-                    targetUnit.takeDamage(rapidDamage);
-                }
-            }, 0.1);
-            
-            this.scheduleOnce(() => {
-                if (targetUnit && targetUnit.isAlive) {
-                    targetUnit.takeDamage(rapidDamage);
-                }
-            }, 0.2);
-        }
+        // 使用投射物系统发射快速物理子弹（模拟连发效果）
+        ProjectileSystem.CreatePhysicalBullet(this, target.position);
+        
+        // 短延迟后发射第二发和第三发子弹
+        this.scheduleOnce(() => {
+            if (target && target.isValid) {
+                ProjectileSystem.CreatePhysicalBullet(this, target.position);
+            }
+        }, 0.1);
+        
+        this.scheduleOnce(() => {
+            if (target && target.isValid) {
+                ProjectileSystem.CreatePhysicalBullet(this, target.position);
+            }
+        }, 0.2);
         
         this.createAttackEffect();
     }

@@ -221,19 +221,6 @@ export class GameManager extends Component {
         this.setGameState(GameState.MENU);
     }
     
-    // 进入下一关
-    public NextLevel(): boolean {
-        const nextIndex = this._currentLevelIndex + 1;
-        const totalLevels = this.totalLevels;
-        
-        if (nextIndex >= totalLevels) {
-            console.log("所有关卡已完成！游戏通关！");
-            return false;
-        }
-        
-        console.log(`进入下一关: 第${nextIndex + 1}关`);
-        return this.LoadLevel(nextIndex);
-    }
     
     // 应用关卡配置
     private applyLevelConfig(config: LevelConfig): void {
@@ -474,42 +461,7 @@ export class GameManager extends Component {
         console.log(`重新开始关卡: ${this.currentLevelName}`);
     }
     
-    // 返回关卡选择
-    public BackToLevelSelection(): void {
-        // 清理游戏状态
-        this.ClearAllHeroes();
-        this.ClearAllEnemies();
-        
-        // 重置波次管理器
-        const waveManager = this.GetWaveManager();
-        if (waveManager) {
-            waveManager.ResetWaves();
-        }
-        
-        this.setGameState(GameState.LEVEL_SELECTION);
-        console.log("返回关卡选择界面");
-    }
     
-    // 返回世界选择
-    public BackToWorldSelection(): void {
-        // 清理游戏状态
-        this.ClearAllHeroes();
-        this.ClearAllEnemies();
-        
-        // 重置波次管理器
-        const waveManager = this.GetWaveManager();
-        if (waveManager) {
-            waveManager.ResetWaves();
-        }
-        
-        this.setGameState(GameState.WORLD_SELECTION);
-        console.log("返回世界选择界面");
-    }
-    
-    // 重新开始游戏（兼容旧代码）
-    public RestartGame(): void {
-        this.RestartLevel();
-    }
     
     // 设置游戏状态
     private setGameState(newState: GameState): void {
@@ -819,9 +771,6 @@ export class GameManager extends Component {
         enemiesCount: number;
         gameState: GameState;
         // 关卡信息
-        worldId: number;
-        worldName: string;
-        levelId: string;
         levelName: string;
         totalWaves: number;
         levelProgress: number; // 关卡进度百分比
@@ -839,9 +788,6 @@ export class GameManager extends Component {
             enemiesCount: this._activeEnemies.length,
             gameState: this._gameState,
             // 关卡信息
-            worldId: this._currentWorldId,
-            worldName: this.currentWorldName,
-            levelId: this._currentLevelId,
             levelName: this.currentLevelName,
             totalWaves: totalWaves,
             levelProgress: Math.min(levelProgress, 100)
@@ -924,12 +870,4 @@ export class GameManager extends Component {
         console.log(`已安排游戏重启, 延迟: ${delay}秒`);
     }
     
-    /**
-     * 取消待定的状态转换
-     */
-    public CancelPendingStateTransition(): void {
-        this._pendingStateTransition = null;
-        this._stateTransitionTimer = 0;
-        console.log("已取消待定的状态转换");
-    }
 }

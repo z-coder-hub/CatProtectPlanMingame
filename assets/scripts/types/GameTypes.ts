@@ -40,9 +40,8 @@ export enum HeroType {
     NORWEGIAN_ICE = "NorwegianIce",        // 挪威森林猫冰法师
     ABYSSINIAN_ARCHER = "AbyssinianArcher", // 阿比西尼亚猫弓箭手
 
-    // 近战英雄 (4种)
+    // 近战英雄 (3种)
     BRITISH_KNIGHT = "BritishKnight",      // 英国短毛猫骑士
-    RAGDOLL_GUARDIAN = "RagdollGuardian",  // 布偶猫守护者
     RUSSIAN_BLUE = "RussianBlue",          // 俄罗斯蓝猫刺客
     AMERICAN_BOMBER = "AmericanBomber"     // 美国短毛猫爆破手
 }
@@ -125,7 +124,6 @@ export interface HeroConfig extends UnitStats {
     cost: number;                  // 部署费用
     category: HeroCategory;        // 英雄分类
     bulletSpeed?: number;          // 子弹速度(射手类英雄)
-    skillCooldown?: number;        // 技能冷却时间
     aoeDamage?: number;            // AOE伤害倍率(法师英雄)
     aoeRange?: number;             // AOE攻击范围
     critChance?: number;           // 暴击几率(0-1)

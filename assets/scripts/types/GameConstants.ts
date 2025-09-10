@@ -13,7 +13,6 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackSpeed: 1.2,
         cost: 40,
         bulletSpeed: 300,
-        skillCooldown: 5
     },
 
     [HeroType.PERSIAN_SNIPER]: {
@@ -25,7 +24,6 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackSpeed: 0.6,
         cost: 70,
         bulletSpeed: 500,
-        skillCooldown: 8,
         critChance: 0.3,
         critMultiplier: 2.5
     },
@@ -39,7 +37,6 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackSpeed: 2.0,
         cost: 55,
         bulletSpeed: 350,
-        skillCooldown: 6
     },
 
     [HeroType.SCOTTISH_MARKSMAN]: {
@@ -51,7 +48,6 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackSpeed: 1.0,
         cost: 65,
         bulletSpeed: 400,
-        skillCooldown: 10,
         multiTargets: 3          // 同时锁定3个目标
     },
 
@@ -77,7 +73,6 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackRange: 400,
         attackSpeed: 0.7,
         cost: 70,
-        skillCooldown: 8,
         chainTargets: 4         // 链式跳跃4个目标
     },
 
@@ -89,7 +84,6 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackRange: 320,
         attackSpeed: 1.0,
         cost: 75,
-        skillCooldown: 7,
         slowEffect: 0.5,        // 50%减速效果
         aoeDamage: 1.2,         // AOE伤害倍数
         aoeRange: 60            // 冻结范围
@@ -104,11 +98,10 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackSpeed: 1.2,
         cost: 60,
         bulletSpeed: 300,
-        skillCooldown: 8,
         multiShot: 5            // 扇形射出5支箭
     },
 
-    // === 近战英雄 (4种，33%) ===
+    // === 近战英雄 (3种，27%) ===
     [HeroType.BRITISH_KNIGHT]: {
         type: HeroType.BRITISH_KNIGHT,
         name: "英国短毛猫骑士",
@@ -117,18 +110,6 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackRange: 60,
         attackSpeed: 0.8,
         cost: 65,
-        skillCooldown: 12
-    },
-
-    [HeroType.RAGDOLL_GUARDIAN]: {
-        type: HeroType.RAGDOLL_GUARDIAN,
-        name: "布偶猫守护者",
-        category: HeroCategory.MELEE,
-        attackDamage: 25,        // 防御型近战
-        attackRange: 70,
-        attackSpeed: 1.0,
-        cost: 60,
-        skillCooldown: 8
     },
 
     [HeroType.RUSSIAN_BLUE]: {
@@ -139,7 +120,6 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackRange: 90,
         attackSpeed: 1.8,
         cost: 85,
-        skillCooldown: 12,
         critChance: 0.3,
         critMultiplier: 2.0,
         penetration: 2          // 穿透2个目标
@@ -153,7 +133,6 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
         attackRange: 120,
         attackSpeed: 0.5,
         cost: 75,
-        skillCooldown: 12,
         aoeDamage: 2.5,         // AOE伤害倍数
         aoeRange: 120           // 爆炸范围
     }

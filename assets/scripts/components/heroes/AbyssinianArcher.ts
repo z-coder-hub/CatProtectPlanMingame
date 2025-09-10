@@ -1,9 +1,9 @@
-import { _decorator, Color, Graphics, Node, tween, Vec3 } from 'cc';
+import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
 import { BaseHero } from './BaseHero';
-import { BaseMouse } from '../enemies/BaseMouse';
-import { HeroType, HeroState } from '../../types/GameTypes';
+import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
+import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 
 const { ccclass } = _decorator;
 
@@ -21,7 +21,6 @@ export class AbyssinianArcher extends BaseHero {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.bulletSpeed = config.bulletSpeed || 300;
-        this.skillCooldown = config.skillCooldown || 8;
         this.cost = config.cost;
     }
     
@@ -105,82 +104,22 @@ export class AbyssinianArcher extends BaseHero {
             return Math.abs(angle) <= fanAngle / 2;
         });
         
-        // 发射5支魔法箭
+        // 使用投射物系统发射多发物理子弹模拟箭雨
         for (let i = 0; i < arrowCount; i++) {
             this.scheduleOnce(() => {
-                this.fireMagicArrow(i, arrowCount, validTargets);
+                if (validTargets.length > 0) {
+                    const targetIndex = i % validTargets.length;
+                    const target = validTargets[targetIndex];
+                    if (target && target.isValid) {
+                        ProjectileSystem.CreatePhysicalBullet(this, target.position);
+                    }
+                }
             }, i * 0.05); // 间隔0.05秒发射
         }
         
         this.createAttackEffect();
     }
     
-    private fireMagicArrow(index: number, total: number, targets: Node[]): void {
-        const arrow = new Node("MagicArrow");
-        arrow.parent = this.node.parent;
-        arrow.setPosition(this.node.position);
-        
-        const graphics = arrow.addComponent(Graphics);
-        graphics.fillColor = new Color(138, 43, 226, 255); // 紫色魔法箭
-        graphics.strokeColor = new Color(255, 215, 0, 200); // 金色边框
-        graphics.lineWidth = 1;
-        
-        // 绘制箭头形状
-        graphics.moveTo(0, 0);
-        graphics.lineTo(12, -2);
-        graphics.lineTo(8, 0);
-        graphics.lineTo(12, 2);
-        graphics.closePath();
-        graphics.fill();
-        graphics.stroke();
-        
-        // 计算箭的飞行方向（扇形分散）
-        const fanAngle = Math.PI / 3; // 60度扇形
-        const angleStep = fanAngle / (total - 1);
-        const arrowAngle = -fanAngle / 2 + (index * angleStep);
-        
-        // 目标位置（优先选择范围内的敌人，否则飞向扇形边缘）
-        let targetPos: Vec3;
-        if (targets.length > 0) {
-            const targetIndex = index % targets.length;
-            targetPos = targets[targetIndex].position.clone();
-        } else {
-            const distance = this.attackRange;
-            targetPos = new Vec3(
-                this.node.position.x + distance * Math.cos(arrowAngle),
-                this.node.position.y + distance * Math.sin(arrowAngle),
-                0
-            );
-        }
-        
-        const distance = Vec3.distance(this.node.position, targetPos);
-        const duration = distance / this.bulletSpeed;
-        
-        // 箭的飞行动画
-        tween(arrow)
-            .to(duration, { position: targetPos })
-            .call(() => {
-                // 检查命中的敌人
-                if (targets.length > 0) {
-                    const hitTarget = targets.find(target => 
-                        Vec3.distance(target.position, targetPos) < 30
-                    );
-                    
-                    if (hitTarget) {
-                        const targetUnit = hitTarget.getComponent(BaseMouse);
-                        if (targetUnit && targetUnit.isAlive) {
-                            targetUnit.takeDamage(this.attackDamage);
-                            this.createHitEffect(targetPos);
-                        }
-                    }
-                }
-                
-                if (arrow && arrow.isValid) {
-                    arrow.destroy();
-                }
-            })
-            .start();
-    }
     
     private createAttackEffect(): void {
         const effectNode = new Node("AttackEffect");
@@ -211,41 +150,6 @@ export class AbyssinianArcher extends BaseHero {
         }, 0.4);
     }
     
-    private createHitEffect(position: Vec3): void {
-        const hitNode = new Node("HitEffect");
-        hitNode.parent = this.node.parent;
-        hitNode.setPosition(position);
-        
-        const hitGraphics = hitNode.addComponent(Graphics);
-        hitGraphics.fillColor = new Color(138, 43, 226, 200);
-        
-        // 魔法爆炸效果
-        for (let i = 0; i < 6; i++) {
-            const angle = (i * Math.PI * 2) / 6;
-            const x = 8 * Math.cos(angle);
-            const y = 8 * Math.sin(angle);
-            hitGraphics.circle(x, y, 3);
-        }
-        hitGraphics.fill();
-        
-        // 闪烁消失效果
-        tween({ scale: 1, opacity: 200 })
-            .to(0.3, { scale: 1.5, opacity: 0 }, {
-                onUpdate: (target: any, ratio: number) => {
-                    if (!hitGraphics || !hitNode.isValid) return;
-                    const currentOpacity = 200 - (200 * ratio);
-                    const currentScale = 1 + (0.5 * ratio);
-                    hitNode.setScale(currentScale, currentScale, 1);
-                    hitGraphics.fillColor = new Color(138, 43, 226, currentOpacity);
-                },
-                onComplete: () => {
-                    if (hitNode && hitNode.isValid) {
-                        hitNode.destroy();
-                    }
-                }
-            })
-            .start();
-    }
     
     // 重写标签配置
     protected getHeroLabelConfig() {

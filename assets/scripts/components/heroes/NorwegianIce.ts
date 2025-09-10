@@ -21,7 +21,6 @@ export class NorwegianIce extends BaseHero {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.bulletSpeed = config.bulletSpeed || 350;
-        this.skillCooldown = config.skillCooldown || 6;
         this.cost = config.cost;
     }
     

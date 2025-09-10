@@ -3,20 +3,14 @@ import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType, HeroState } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
-import { BattleManager } from '../../managers/BattleManager';
-import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
-import { GameManager } from '../../managers/GameManager';
+import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 import { EffectHelper } from '../../utils/EffectHelper';
-import { DrawingHelper } from '../../utils/DrawingHelper';
-import { SimpleObjectPool } from '../../utils/SimpleObjectPool';
 
 const { ccclass, property } = _decorator;
 
 @ccclass('SiameseMage')
 export class SiameseMage extends BaseHero {
     
-    @property({ tooltip: "技能冷却时间", override: true })
-    public skillCooldown: number = 8;
     
     @property({ tooltip: "AOE伤害倍率" })
     public aoeDamage: number = 1.5;
@@ -39,7 +33,6 @@ export class SiameseMage extends BaseHero {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.bulletSpeed = config.bulletSpeed || 350;
-        this.skillCooldown = config.skillCooldown || 8;
         this.cost = config.cost;
         this.aoeDamage = config.aoeDamage || 1.5;
         this.aoeRange = config.aoeRange || 80;
@@ -74,10 +67,6 @@ export class SiameseMage extends BaseHero {
     
     protected update(dt: number): void {
         super.update(dt);
-        
-        if (this._skillTimer > 0) {
-            this._skillTimer -= dt;
-        }
     }
     
     // 目标分配由 BattleManager 统一处理
@@ -85,7 +74,8 @@ export class SiameseMage extends BaseHero {
     protected onAttack(target: Node): void {
         if (!target) return;
         
-        this.castMagicMissile(target);
+        // 使用投射物系统发射带AOE效果的魔法弹
+        ProjectileSystem.CreateMagicMissile(this, target.position, this.aoeDamage, this.aoeRange);
         this.playAttackAnimation();
     }
     
@@ -132,32 +122,6 @@ export class SiameseMage extends BaseHero {
             .start();
     }
     
-    // 重写基类的技能使用方法，保持接口一致
-    protected onUseSkill(): void {
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return;
-        
-        // 寻找范围内的敌人群体
-        const enemies = battleManager.GetEnemiesInRange(this.node.position, this.attackRange);
-        if (enemies.length === 0) return;
-        
-        // 选择敌人最密集的位置作为爆炸中心
-        let bestTarget: Node | null = null;
-        let maxEnemiesInArea = 0;
-        
-        for (const enemy of enemies) {
-            const enemiesInArea = battleManager.GetEnemiesInRange(enemy.position, this.aoeRange);
-            if (enemiesInArea.length > maxEnemiesInArea) {
-                maxEnemiesInArea = enemiesInArea.length;
-                bestTarget = enemy;
-            }
-        }
-        
-        if (bestTarget && maxEnemiesInArea > 0) {
-            this.castElementalExplosion(bestTarget.position);
-            console.log(`暹罗猫使用元素爆炸！影响 ${maxEnemiesInArea} 个敌人`);
-        }
-    }
     
     private castElementalExplosion(centerPosition: Vec3): void {
         const battleManager = BattleManager.instance;
@@ -176,7 +140,6 @@ export class SiameseMage extends BaseHero {
         
         // 创建爆炸特效
         this.createExplosionEffect(centerPosition);
-        this.createSkillEffect();
     }
     
     private createExplosionEffect(position: Vec3): void {
@@ -185,26 +148,11 @@ export class SiameseMage extends BaseHero {
         }
     }
     
-    private createSkillEffect(): void {
-        if (this.node.parent) {
-            EffectHelper.createSkillEffect(this.node.position, this.node.parent);
-        }
-    }
     
-    public getSkillCooldownRemaining(): number {
-        return Math.max(0, this._skillTimer);
-    }
     
     // 重写基类的点击处理方法
     protected onHeroClickHandler(): void {
-        if (this.canUseSkill) {
-            this.useSkill();
-            console.log("暹罗猫释放元素爆炸技能！");
-            this.createClickFeedback();
-        } else {
-            console.log(`暹罗猫技能冷却中，剩余时间: ${this.getSkillCooldownRemaining().toFixed(1)}秒`);
-            this.createCooldownFeedback();
-        }
+        console.log(`${this.unitName} 被点击`);
     }
     
     private createClickFeedback(): void {
@@ -214,10 +162,4 @@ export class SiameseMage extends BaseHero {
         }
     }
     
-    private createCooldownFeedback(): void {
-        if (this.node.parent) {
-            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
-            EffectHelper.createCooldownFeedback(feedbackPos, this.node.parent);
-        }
-    }
 }

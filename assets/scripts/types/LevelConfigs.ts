@@ -87,7 +87,6 @@ const COMPLETE_10_LEVELS: LevelConfig[] = [
             { type: RewardType.GOLD, value: 200, description: "关卡完成奖励" },
             { type: RewardType.HERO_UNLOCK, value: HeroType.BENGAL_HUNTER, description: "解锁孟加拉猎手" },
             { type: RewardType.HERO_UNLOCK, value: HeroType.MAINE_THUNDER, description: "解锁缅因雷法" },
-            { type: RewardType.HERO_UNLOCK, value: HeroType.RAGDOLL_GUARDIAN, description: "解锁布偶守护者" },
             { type: RewardType.HERO_UNLOCK, value: HeroType.ABYSSINIAN_ARCHER, description: "解锁阿比西尼亚弓箭手" }
         ],
         unlockConditions: [

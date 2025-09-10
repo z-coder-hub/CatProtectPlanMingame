@@ -10,7 +10,6 @@ import { SiameseMage } from '../components/heroes/SiameseMage';
 import { MaineThunder } from '../components/heroes/MaineThunder';
 import { NorwegianIce } from '../components/heroes/NorwegianIce';
 import { BritishKnight } from '../components/heroes/BritishKnight';
-import { RagdollGuardian } from '../components/heroes/RagdollGuardian';
 import { ScottishMarksman } from '../components/heroes/ScottishMarksman';
 import { AbyssinianArcher } from '../components/heroes/AbyssinianArcher';
 import { RussianBlue } from '../components/heroes/RussianBlue';
@@ -30,7 +29,6 @@ export class HeroFactory {
         [HeroType.MAINE_THUNDER]: MaineThunder,
         [HeroType.NORWEGIAN_ICE]: NorwegianIce,
         [HeroType.BRITISH_KNIGHT]: BritishKnight,
-        [HeroType.RAGDOLL_GUARDIAN]: RagdollGuardian,
         [HeroType.SCOTTISH_MARKSMAN]: ScottishMarksman,
         [HeroType.ABYSSINIAN_ARCHER]: AbyssinianArcher,
         [HeroType.RUSSIAN_BLUE]: RussianBlue,
@@ -141,118 +139,8 @@ export class HeroFactory {
         return config ? config.cost : 0;
     }
     
-    /**
-     * 根据成本过滤可用英雄
-     * @param maxCost 最大可承受成本
-     * @returns 符合成本要求的英雄类型数组
-     */
-    public static GetAffordableHeroes(maxCost: number): HeroType[] {
-        return this.GetAvailableHeroTypes().filter(heroType => {
-            const cost = this.GetHeroCost(heroType);
-            return cost <= maxCost;
-        });
-    }
     
-    /**
-     * 获取英雄的详细信息（用于UI显示）
-     * @param heroType 英雄类型
-     * @returns 英雄详细信息
-     */
-    public static GetHeroInfo(heroType: HeroType): {
-        type: HeroType;
-        name: string;
-        cost: number;
-        description: string;
-        stats: {
-            attack: number;
-            range: number;
-            speed: number;
-        };
-        available: boolean;
-    } | null {
-        const config = HERO_CONFIGS[heroType];
-        if (!config) return null;
-        
-        return {
-            type: heroType,
-            name: config.name,
-            cost: config.cost,
-            description: this.GetHeroDescription(heroType),
-            stats: {
-                attack: config.attackDamage,
-                range: config.attackRange,
-                speed: config.attackSpeed
-            },
-            available: this.IsHeroAvailable(heroType)
-        };
-    }
     
-    /**
-     * 获取英雄描述
-     * @param heroType 英雄类型
-     * @returns 英雄描述文本
-     */
-    private static GetHeroDescription(heroType: HeroType): string {
-        const descriptions = {
-            [HeroType.ORANGE_CAT]: "基础远程射手，精准射击技能",
-            [HeroType.PERSIAN_SNIPER]: "超远程狙击手，高暴击伤害",
-            [HeroType.SIAMESE_MAGE]: "AOE法师，元素爆炸攻击",
-            [HeroType.BRITISH_KNIGHT]: "重装坦克，冲锋技能",
-            [HeroType.BENGAL_HUNTER]: "连发射手，快速攻击",
-            [HeroType.MAINE_THUNDER]: "雷电法师，链式攻击",
-            [HeroType.NORWEGIAN_ICE]: "冰霜法师，减速控制",
-            [HeroType.RAGDOLL_GUARDIAN]: "中型坦克，守护技能",
-            [HeroType.SCOTTISH_MARKSMAN]: "多重锁定射手，精确制导",
-            [HeroType.ABYSSINIAN_ARCHER]: "扇形箭雨弓箭手，覆盖攻击",
-            [HeroType.RUSSIAN_BLUE]: "精英射手，穿透攻击",
-            [HeroType.AMERICAN_BOMBER]: "爆破兵，AOE爆炸"
-        };
-        
-        return descriptions[heroType] || "未知英雄";
-    }
     
-    /**
-     * 验证英雄节点是否有效
-     * @param heroNode 英雄节点
-     * @returns 是否有效
-     */
-    public static ValidateHeroNode(heroNode: Node): boolean {
-        if (!heroNode || !heroNode.isValid) {
-            return false;
-        }
-        
-        // 检查是否有有效的英雄组件
-        const availableTypes = this.GetAvailableHeroTypes();
-        for (const heroType of availableTypes) {
-            const ComponentClass = this.HERO_COMPONENTS[heroType];
-            if (heroNode.getComponent(ComponentClass)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
     
-    /**
-     * 获取英雄节点的类型
-     * @param heroNode 英雄节点
-     * @returns 英雄类型，如果无法确定返回null
-     */
-    public static GetHeroTypeFromNode(heroNode: Node): HeroType | null {
-        if (!heroNode || !heroNode.isValid) {
-            return null;
-        }
-        
-        // 检查节点上的英雄组件
-        const availableTypes = this.GetAvailableHeroTypes();
-        for (const heroType of availableTypes) {
-            const ComponentClass = this.HERO_COMPONENTS[heroType];
-            const component = heroNode.getComponent(ComponentClass);
-            if (component && (component as any).heroType === heroType) {
-                return heroType;
-            }
-        }
-        
-        return null;
-    }
 }

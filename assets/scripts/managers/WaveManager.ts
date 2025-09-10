@@ -3,15 +3,8 @@ import { WaveConfig, EnemyType, LevelConfig } from '../types/GameTypes';
 import { GAME_CONFIG } from '../types/GameConstants';
 import { GameManager } from './GameManager';
 import { BattleManager } from './BattleManager';
-import { BasicMouse } from '../components/enemies/BasicMouse';
-import { FastMouse } from '../components/enemies/FastMouse';
-import { ArmoredMouse } from '../components/enemies/ArmoredMouse';
-import { GiantMouse } from '../components/enemies/GiantMouse';
-import { SpeedMouse } from '../components/enemies/SpeedMouse';
-import { MouseKing } from '../components/enemies/MouseKing';
-import { MechMouse } from '../components/enemies/MechMouse';
-import { BaseMouse } from '../components/enemies/BaseMouse';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
+import { EnemyFactory } from '../systems/EnemyFactory';
 
 const { ccclass, property } = _decorator;
 
@@ -271,17 +264,19 @@ export class WaveManager extends Component {
         if (!this._gameManager) return;
         
         try {
-            // 动态创建敌人（暂时简化，后续可从预制体加载）
-            const enemyNode = await this.createEnemyNode(enemyType);
+            // 设置生成位置为网格上方的随机位置
+            const spawnPosition = this.getRandomSpawnPosition();
+            
+            // 使用EnemyFactory创建敌人
+            const enemyNode = EnemyFactory.createEnemy(enemyType, this.node.parent, { 
+                x: spawnPosition.x, 
+                y: spawnPosition.y 
+            });
+            
             if (!enemyNode) {
                 console.error(`创建敌人失败: ${enemyType}`);
                 return;
             }
-            
-            // 设置生成位置为网格上方的随机位置
-            const spawnPosition = this.getRandomSpawnPosition();
-            enemyNode.setPosition(spawnPosition);
-            enemyNode.parent = this.node.parent; // 添加到场景
             
             // 添加到活跃敌人列表
             this._gameManager.AddActiveEnemy(enemyNode);
@@ -325,97 +320,6 @@ export class WaveManager extends Component {
         console.log(`敌人生成位置: (${randomX.toFixed(1)}, ${spawnY.toFixed(1)}) - 网格范围: X[${minX.toFixed(1)}, ${maxX.toFixed(1)}], 顶部Y: ${gridBounds.top.toFixed(1)}`);
         
         return new Vec3(randomX, spawnY, 0);
-    }
-    
-    // 创建敌人节点（支持所有敌人类型）
-    private async createEnemyNode(enemyType: EnemyType): Promise<Node | null> {
-        const enemyNode = new Node(`Enemy_${enemyType}_${Date.now()}`);
-        
-        // 根据敌人类型添加对应组件
-        switch (enemyType) {
-            // 基础单位
-            case EnemyType.BASIC_MOUSE:
-                enemyNode.addComponent(BasicMouse);
-                break;
-            case EnemyType.GIANT_MOUSE:
-                enemyNode.addComponent(GiantMouse);
-                break;
-                
-            // 快速单位
-            case EnemyType.FAST_MOUSE:
-                enemyNode.addComponent(FastMouse);
-                break;
-            case EnemyType.SPEED_MOUSE:
-                enemyNode.addComponent(SpeedMouse);
-                break;
-                
-            // 装甲单位
-            case EnemyType.ARMORED_MOUSE:
-                enemyNode.addComponent(ArmoredMouse);
-                break;
-            case EnemyType.TANK_MOUSE:
-                // 坦克老鼠暂时使用装甲老鼠组件，后续可创建专用组件
-                enemyNode.addComponent(ArmoredMouse);
-                break;
-                
-            // 特殊单位
-            case EnemyType.STEALTH_MOUSE:
-                // 潜行老鼠暂时使用基础老鼠组件，后续可创建专用组件
-                enemyNode.addComponent(BasicMouse);
-                break;
-                
-            // BOSS单位
-            case EnemyType.MOUSE_KING:
-                enemyNode.addComponent(MouseKing);
-                break;
-            case EnemyType.MECH_MOUSE:
-                enemyNode.addComponent(MechMouse);
-                break;
-                
-            // 新BOSS单位（关卡4-10专用）
-            case EnemyType.ARMOR_OVERLORD:
-                // 重甲统领使用坦克老鼠作为基础组件
-                enemyNode.addComponent(ArmoredMouse);
-                console.log("生成重甲统领（使用装甲老鼠组件）");
-                break;
-            case EnemyType.SHADOW_ASSASSIN:
-                // 潜影刺客使用基础老鼠作为基础组件
-                enemyNode.addComponent(BasicMouse);
-                console.log("生成潜影刺客（使用基础老鼠组件）");
-                break;
-            case EnemyType.STORM_TYRANT:
-                // 疾风暴君使用疾速老鼠作为基础组件
-                enemyNode.addComponent(SpeedMouse);
-                console.log("生成疾风暴君（使用疾速老鼠组件）");
-                break;
-            case EnemyType.GIANT_BEHEMOTH:
-                // 巨兽霸主使用巨型老鼠作为基础组件
-                enemyNode.addComponent(GiantMouse);
-                console.log("生成巨兽霸主（使用巨型老鼠组件）");
-                break;
-            case EnemyType.THUNDER_MASTER:
-                // 雷电大师使用机械老鼠作为基础组件
-                enemyNode.addComponent(MechMouse);
-                console.log("生成雷电大师（使用机械老鼠组件）");
-                break;
-            case EnemyType.MECH_COMMANDER:
-                // 机械军团长使用机械老鼠作为基础组件
-                enemyNode.addComponent(MechMouse);
-                console.log("生成机械军团长（使用机械老鼠组件）");
-                break;
-            case EnemyType.ULTIMATE_OVERLORD:
-                // 终极霸王使用老鼠王作为基础组件
-                enemyNode.addComponent(MouseKing);
-                console.log("生成终极霸王（使用老鼠王组件）");
-                break;
-                
-            default:
-                console.warn(`未知或未实现的敌人类型: ${enemyType}`);
-                enemyNode.destroy();
-                return null;
-        }
-        
-        return enemyNode;
     }
     
     // 完成当前波次

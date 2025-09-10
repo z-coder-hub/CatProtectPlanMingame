@@ -1,0 +1,159 @@
+import { _decorator, Color, Vec3, Node, Graphics } from 'cc';
+import { BaseProjectile } from '../BaseProjectile';
+import { BaseMouse } from '../../components/enemies/BaseMouse';
+import { EffectHelper } from '../../utils/EffectHelper';
+
+const { ccclass, property } = _decorator;
+
+/**
+ * 物理子弹投射物
+ * 用于：橘猫射手、波斯猫狙击手、孟加拉猎手、苏格兰折耳猫射手
+ * 特性：直线飞行，单体伤害，黄色子弹外观
+ */
+@ccclass('PhysicalBullet')
+export class PhysicalBullet extends BaseProjectile {
+    
+    @property({ tooltip: "暴击几率" })
+    public critChance: number = 0;
+    
+    @property({ tooltip: "暴击倍率" })
+    public critMultiplier: number = 1.5;
+    
+    protected onLoad(): void {
+        super.onLoad();
+    }
+    
+    /**
+     * 初始化物理子弹的视觉外观
+     * 黄色圆形子弹，半径3像素
+     */
+    protected initializeVisuals(): void {
+        if (!this.graphics) return;
+        
+        this.graphics.clear();
+        this.graphics.fillColor = new Color(255, 255, 0, 255); // 亮黄色
+        this.graphics.circle(0, 0, 3);
+        this.graphics.fill();
+        
+        // 添加边框使子弹更清晰
+        this.graphics.strokeColor = new Color(255, 215, 0, 255); // 金黄色边框
+        this.graphics.lineWidth = 1;
+        this.graphics.circle(0, 0, 3);
+        this.graphics.stroke();
+    }
+    
+    /**
+     * 处理击中目标的逻辑
+     * 物理子弹造成单体物理伤害，可能触发暴击
+     */
+    protected onHitTarget(target: BaseMouse): void {
+        if (!target || !target.isAlive) return;
+        
+        // 计算最终伤害（考虑暴击）
+        let finalDamage = this.damage;
+        
+        if (this.critChance > 0 && Math.random() < this.critChance) {
+            finalDamage *= this.critMultiplier;
+            console.log(`[PhysicalBullet] 暴击！伤害: ${finalDamage}`);
+            
+            // 暴击时创建特殊效果
+            this.createCriticalHitEffect(this.node.position);
+        }
+        
+        // 对目标造成伤害
+        target.takeDamage(finalDamage);
+        
+        console.log(`[PhysicalBullet] 击中目标 ${target.unitName}，造成 ${finalDamage} 伤害`);
+    }
+    
+    /**
+     * 创建击中特效
+     * 物理子弹的黄色爆炸特效
+     */
+    protected createHitEffect(position: Vec3): void {
+        if (!this.node.parent) return;
+        
+        const effectNode = new Node("PhysicalBulletHitEffect");
+        effectNode.parent = this.node.parent;
+        effectNode.setPosition(position);
+        
+        const effectGraphics = effectNode.addComponent(Graphics);
+        
+        // 创建黄色爆炸圆圈
+        effectGraphics.fillColor = new Color(255, 255, 0, 150);
+        effectGraphics.circle(0, 0, 15);
+        effectGraphics.fill();
+        
+        // 添加白色中心点
+        effectGraphics.fillColor = new Color(255, 255, 255, 200);
+        effectGraphics.circle(0, 0, 8);
+        effectGraphics.fill();
+        
+        // 特效持续0.2秒后销毁
+        effectNode.getComponent(PhysicalBullet)?.scheduleOnce(() => {
+            if (effectNode && effectNode.isValid) {
+                effectNode.destroy();
+            }
+        }, 0.2);
+    }
+    
+    /**
+     * 创建暴击特效
+     * 更大更亮的黄色爆炸效果
+     */
+    private createCriticalHitEffect(position: Vec3): void {
+        if (!this.node.parent) return;
+        
+        const critEffectNode = new Node("CriticalHitEffect");
+        critEffectNode.parent = this.node.parent;
+        critEffectNode.setPosition(position);
+        
+        const critGraphics = critEffectNode.addComponent(Graphics);
+        
+        // 创建更大的橙红色爆炸圆圈
+        critGraphics.fillColor = new Color(255, 140, 0, 180);
+        critGraphics.circle(0, 0, 25);
+        critGraphics.fill();
+        
+        // 添加亮黄色中心
+        critGraphics.fillColor = new Color(255, 255, 100, 220);
+        critGraphics.circle(0, 0, 15);
+        critGraphics.fill();
+        
+        // 添加白色核心
+        critGraphics.fillColor = new Color(255, 255, 255, 255);
+        critGraphics.circle(0, 0, 8);
+        critGraphics.fill();
+        
+        // 暴击特效持续0.3秒
+        critEffectNode.getComponent(PhysicalBullet)?.scheduleOnce(() => {
+            if (critEffectNode && critEffectNode.isValid) {
+                critEffectNode.destroy();
+            }
+        }, 0.3);
+    }
+    
+    /**
+     * 检查是否可以击中指定目标
+     * 物理子弹可以击中所有敌人，无特殊限制
+     */
+    protected canHitTarget(target: BaseMouse): boolean {
+        return target && target.isAlive;
+    }
+    
+    /**
+     * 设置暴击属性
+     * 波斯猫狙击手等英雄会设置暴击属性
+     */
+    public setCriticalProperties(critChance: number, critMultiplier: number): void {
+        this.critChance = Math.max(0, Math.min(1, critChance)); // 限制在0-1之间
+        this.critMultiplier = Math.max(1, critMultiplier); // 至少1倍伤害
+    }
+    
+    /**
+     * 获取实际伤害（考虑暴击期望）
+     */
+    public get expectedDamage(): number {
+        return this.damage * (1 + this.critChance * (this.critMultiplier - 1));
+    }
+}

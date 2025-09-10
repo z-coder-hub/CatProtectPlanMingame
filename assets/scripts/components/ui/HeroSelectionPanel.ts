@@ -99,28 +99,27 @@ export class HeroSelectionPanel extends Component {
     // ========== 公共接口方法 ==========
 
     /**
-     * 获取所有英雄类型列表（包括已解锁和未解锁的）
+     * 获取所有英雄类型列表（按解锁顺序排序）
      */
     private getAllHeroTypes(): HeroType[] {
-        // 返回所有英雄类型，按分类排序
+        // 返回所有英雄类型，按解锁顺序排序
         return [
-            // 远程英雄
-            HeroType.ORANGE_CAT,
-            HeroType.PERSIAN_SNIPER,
-            HeroType.BENGAL_HUNTER,
-            // 法师英雄
-            HeroType.SIAMESE_MAGE,
-            HeroType.MAINE_THUNDER,
-            HeroType.NORWEGIAN_ICE,
-            // 近战英雄
-            HeroType.BRITISH_KNIGHT,
-            HeroType.RAGDOLL_GUARDIAN,
-            // 射击英雄 - 新增
-            HeroType.SCOTTISH_MARKSMAN,
-            HeroType.ABYSSINIAN_ARCHER,
-            // 特殊英雄
-            HeroType.RUSSIAN_BLUE,
-            HeroType.AMERICAN_BOMBER
+            // 关卡1解锁（新手训练）
+            HeroType.ORANGE_CAT,        // 默认英雄
+            HeroType.PERSIAN_SNIPER,    // 波斯狙击手
+            HeroType.SIAMESE_MAGE,      // 暹罗法师
+            HeroType.BRITISH_KNIGHT,    // 英短骑士
+            HeroType.SCOTTISH_MARKSMAN, // 苏格兰射手
+            
+            // 关卡2解锁（进阶学习）
+            HeroType.BENGAL_HUNTER,     // 孟加拉猎手
+            HeroType.MAINE_THUNDER,     // 缅因雷法
+            HeroType.ABYSSINIAN_ARCHER, // 阿比西尼亚弓箭手
+            
+            // 关卡3解锁（精英训练）
+            HeroType.NORWEGIAN_ICE,     // 挪威冰法
+            HeroType.RUSSIAN_BLUE,      // 俄罗斯蓝猫
+            HeroType.AMERICAN_BOMBER    // 美国爆破兵
         ];
     }
 
@@ -989,20 +988,6 @@ export class HeroSelectionPanel extends Component {
                 iconGraphics.fill();
                 break;
 
-            case HeroType.RAGDOLL_GUARDIAN:
-                // 布偶守护者 - 粉色方形 + 十字
-                iconGraphics.fillColor = new Color(255, 182, 193);
-                iconGraphics.rect(-16 * scale, -16 * scale, 32 * scale, 32 * scale);
-                iconGraphics.fill();
-
-                iconGraphics.strokeColor = new Color(255, 255, 255);
-                iconGraphics.lineWidth = 3 * scale;
-                iconGraphics.moveTo(0, -10 * scale);
-                iconGraphics.lineTo(0, 10 * scale);
-                iconGraphics.moveTo(-10 * scale, 0);
-                iconGraphics.lineTo(10 * scale, 0);
-                iconGraphics.stroke();
-                break;
 
             case HeroType.SCOTTISH_MARKSMAN:
                 // 苏格兰射手 - 橙色圆形 + 弓箭
@@ -1298,11 +1283,6 @@ export class HeroSelectionPanel extends Component {
                 graphics.fill();
                 break;
 
-            case HeroType.RAGDOLL_GUARDIAN:
-                graphics.fillColor = new Color(255, 182, 193, alpha);
-                graphics.rect(-halfSize, -halfSize, size, size);
-                graphics.fill();
-                break;
 
             case HeroType.SCOTTISH_MARKSMAN:
                 graphics.fillColor = new Color(255, 140, 0, alpha);

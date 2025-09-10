@@ -2,7 +2,7 @@ import { _decorator, Component } from 'cc';
 import {
     LevelConfig, WorldConfig, LevelCompletionStatus, LevelCompletionRecord,
     HeroUnlockStatus, HeroUnlockRecord, UnlockCondition, UnlockConditionType,
-    HeroType, SpecialMechanic, SpecialMechanicType, RewardConfig, RewardType
+    HeroType, RewardConfig, RewardType
 } from '../types/GameTypes';
 import { LEVEL_CONFIGS } from '../types/LevelConfigs';
 
@@ -430,57 +430,6 @@ export class LevelManager extends Component {
         });
     }
 
-    // ====================== 特殊机制处理 ======================
-
-    /**
-     * 应用关卡特殊机制
-     */
-    public ApplyLevelMechanics(levelConfig: LevelConfig): void {
-        if (!levelConfig.specialMechanics) {
-            return;
-        }
-
-        levelConfig.specialMechanics.forEach(mechanic => {
-            this.applySpecialMechanic(mechanic);
-        });
-    }
-
-    /**
-     * 应用单个特殊机制
-     */
-    private applySpecialMechanic(mechanic: SpecialMechanic): void {
-        console.log(`应用特殊机制: ${mechanic.type} - ${mechanic.description}`);
-
-        switch (mechanic.type) {
-            case SpecialMechanicType.SPEED_BOOST:
-                // TODO: 实现敌人速度加成
-                console.log(`敌人速度加成: ${mechanic.parameters.speedMultiplier}x`);
-                break;
-
-            case SpecialMechanicType.HEALTH_BOOST:
-                // TODO: 实现敌人血量加成
-                console.log(`敌人血量加成: ${mechanic.parameters.healthMultiplier}x`);
-                break;
-
-            case SpecialMechanicType.GOLD_MULTIPLIER:
-                // TODO: 实现金币奖励倍率
-                console.log(`金币奖励倍率: ${mechanic.parameters.goldMultiplier}x`);
-                break;
-
-            case SpecialMechanicType.FREEZE_HEROES:
-                // TODO: 实现英雄冰冻机制
-                console.log(`英雄冰冻机制: ${JSON.stringify(mechanic.parameters)}`);
-                break;
-
-            case SpecialMechanicType.LIMITED_GRID:
-                // TODO: 实现网格限制
-                console.log(`网格限制: ${JSON.stringify(mechanic.parameters)}`);
-                break;
-
-            default:
-                console.warn(`未实现的特殊机制: ${mechanic.type}`);
-        }
-    }
 
     // ====================== 数据保存和加载 ======================
 
@@ -516,42 +465,6 @@ export class LevelManager extends Component {
 
     // ====================== 调试和工具方法 ======================
 
-    /**
-     * 重置所有数据（调试用）
-     */
-    public ResetAllData(): void {
-        console.warn("重置关卡管理器所有数据");
-        this._levelRecords = {};
-        this._heroRecords = {};
-        this._maxReachedLevelIndex = 0;
-        this.initializeDefaultData();
-    }
-
-    /**
-     * 解锁所有内容（调试用）
-     */
-    public UnlockAllContent(): void {
-        console.warn("解锁所有内容（调试模式）");
-        
-        // 解锁所有关卡
-        const allLevels = LEVEL_CONFIGS.getAllLevels();
-        allLevels.forEach(level => {
-            if (this._levelRecords[level.id]) {
-                this._levelRecords[level.id].status = LevelCompletionStatus.AVAILABLE;
-            }
-        });
-        
-        // 解锁所有英雄
-        Object.values(HeroType).forEach(heroType => {
-            if (this._heroRecords[heroType]) {
-                this._heroRecords[heroType].status = HeroUnlockStatus.UNLOCKED;
-                this._heroRecords[heroType].unlockDate = new Date();
-            }
-        });
-        
-        // 设置最高到达关卡为最后一关
-        this._maxReachedLevelIndex = allLevels.length - 1;
-    }
 
     /**
      * 获取调试信息

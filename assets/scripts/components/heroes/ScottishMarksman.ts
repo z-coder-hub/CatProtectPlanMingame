@@ -1,9 +1,9 @@
-import { _decorator, Color, Graphics, Node, tween, Vec3 } from 'cc';
+import { _decorator, Color, Graphics, Node } from 'cc';
 import { BaseHero } from './BaseHero';
-import { BaseMouse } from '../enemies/BaseMouse';
-import { HeroType, HeroState } from '../../types/GameTypes';
+import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { BattleManager } from '../../managers/BattleManager';
+import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 
 const { ccclass } = _decorator;
 
@@ -22,7 +22,6 @@ export class ScottishMarksman extends BaseHero {
         this.attackRange = config.attackRange;
         this.attackSpeed = config.attackSpeed;
         this.bulletSpeed = config.bulletSpeed || 400;
-        this.skillCooldown = config.skillCooldown || 10;
         this.cost = config.cost;
     }
     
@@ -75,7 +74,7 @@ export class ScottishMarksman extends BaseHero {
     protected onAttack(target: Node): void {
         if (!target || !this.isAlive) return;
         
-        // 获取多个目标进行精确制导攻击
+        // 使用投射物系统进行多重锁定攻击
         this.performMultiTargetAttack();
     }
     
@@ -91,51 +90,16 @@ export class ScottishMarksman extends BaseHero {
         // 选择最多3个目标
         const selectedTargets = enemies.slice(0, maxTargets);
         
-        // 对每个目标发射制导弹
+        // 使用投射物系统对每个目标发射精确物理子弹
         selectedTargets.forEach((target, index) => {
             this.scheduleOnce(() => {
-                this.fireGuidedProjectile(target);
+                if (target && target.isValid) {
+                    ProjectileSystem.CreatePhysicalBullet(this, target.position);
+                }
             }, index * 0.1); // 间隔0.1秒发射
         });
         
         this.createAttackEffect();
-    }
-    
-    private fireGuidedProjectile(target: Node): void {
-        if (!target || !target.isValid) return;
-        
-        const projectile = new Node("GuidedBullet");
-        projectile.parent = this.node.parent;
-        projectile.setPosition(this.node.position);
-        
-        const graphics = projectile.addComponent(Graphics);
-        graphics.fillColor = new Color(255, 215, 0); // 金色制导弹
-        graphics.circle(0, 0, 3);
-        graphics.fill();
-        
-        // 制导弹轨迹动画
-        const startPos = this.node.position.clone();
-        const targetPos = target.position.clone();
-        const distance = Vec3.distance(startPos, targetPos);
-        const duration = distance / this.bulletSpeed;
-        
-        tween(projectile)
-            .to(duration, { position: targetPos })
-            .call(() => {
-                // 命中目标 - 先检查target是否仍然有效
-                if (target && target.isValid) {
-                    const targetUnit = target.getComponent(BaseMouse);
-                    if (targetUnit && targetUnit.isAlive) {
-                        targetUnit.takeDamage(this.attackDamage);
-                        this.createHitEffect(target.position);
-                    }
-                }
-                
-                if (projectile && projectile.isValid) {
-                    projectile.destroy();
-                }
-            })
-            .start();
     }
     
     private createAttackEffect(): void {
@@ -163,36 +127,6 @@ export class ScottishMarksman extends BaseHero {
         }, 0.3);
     }
     
-    private createHitEffect(position: Vec3): void {
-        const hitNode = new Node("HitEffect");
-        hitNode.parent = this.node.parent;
-        hitNode.setPosition(position);
-        
-        const hitGraphics = hitNode.addComponent(Graphics);
-        hitGraphics.strokeColor = new Color(255, 215, 0, 255);
-        hitGraphics.lineWidth = 3;
-        hitGraphics.moveTo(-8, -8);
-        hitGraphics.lineTo(8, 8);
-        hitGraphics.moveTo(8, -8);
-        hitGraphics.lineTo(-8, 8);
-        hitGraphics.stroke();
-        
-        // 命中闪烁效果
-        tween({ opacity: 255 })
-            .to(0.2, { opacity: 0 }, {
-                onUpdate: (target: any, ratio: number) => {
-                    if (!hitGraphics || !hitNode.isValid) return;
-                    const currentOpacity = 255 - (255 * ratio);
-                    hitGraphics.strokeColor = new Color(255, 215, 0, currentOpacity);
-                },
-                onComplete: () => {
-                    if (hitNode && hitNode.isValid) {
-                        hitNode.destroy();
-                    }
-                }
-            })
-            .start();
-    }
     
     // 重写标签配置
     protected getHeroLabelConfig() {
