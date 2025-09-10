@@ -38,6 +38,11 @@ export abstract class BaseMouse extends Component {
     protected _healthBarNode: Node | null = null;
     protected _nameLabel: Label | null = null;
     
+    // === Tween移动系统属性 ===
+    protected _movementTween: any = null;
+    protected _isMoving: boolean = false;
+    protected _movementStarted: boolean = false;
+    
     // 抽象属性，子类必须实现
     public abstract readonly enemyType: EnemyType;
     
@@ -58,21 +63,13 @@ export abstract class BaseMouse extends Component {
         }
     }
     
-    protected update(dt: number): void {
+    protected update(_dt: number): void {
         if (!this.isAlive) return;
         
-        
-        // 根据状态执行对应行为
-        switch (this.enemyState) {
-            case EnemyState.IDLE:
-                this.onIdleState(dt);
-                break;
-            case EnemyState.MOVING:
-                this.onMovingState(dt);
-                break;
-            case EnemyState.DEAD:
-                this.onDeadState(dt);
-                break;
+        // 启动移动（只执行一次）
+        if (!this._movementStarted) {
+            this.startMovementTowardsCastle();
+            this._movementStarted = true;
         }
     }
     
@@ -159,25 +156,48 @@ export abstract class BaseMouse extends Component {
     }
     
     /**
-     * 通用的朝城堡移动方法
-     * 子类可以重写此方法实现特定的移动行为
-     * @param dt 时间增量
+     * 启动基于Tween的移动系统
+     * 子类可以重写此方法实现特定的移动路径
      */
-    protected moveTowardsCastle(dt: number): void {
-        if (!this._gameManager || !this._gameManager.castleNode) return;
+    protected startMovementTowardsCastle(): void {
+        if (!this._gameManager || !this._gameManager.castleNode || this._isMoving) return;
         
         const currentPos = this.node.position;
+        const castlePos = this._gameManager.castleNode.position;
         
-        // 检查是否到达城堡
+        // 检查是否已经在城堡位置
         if (this.isReachedCastle(currentPos)) {
             this.reachCastle();
             return;
         }
         
-        // 简单的向下移动
-        const moveDistance = this.moveSpeed * dt;
-        const newPos = Vec3.add(new Vec3(), currentPos, new Vec3(0, -moveDistance, 0));
-        this.node.setPosition(newPos);
+        // 计算移动时间
+        const distance = Math.abs(currentPos.y - castlePos.y - 50); // 50是城堡缓冲区
+        const moveDuration = distance / this.moveSpeed;
+        
+        // 创建基础直线移动
+        this.createMovementTween(currentPos, new Vec3(currentPos.x, castlePos.y + 50, 0), moveDuration);
+    }
+    
+    /**
+     * 创建移动缓动动画
+     * 子类可以重写此方法实现复杂的移动路径
+     */
+    protected createMovementTween(startPos: Vec3, endPos: Vec3, duration: number): void {
+        this._isMoving = true;
+        this.enemyState = EnemyState.MOVING;
+        
+        // 停止之前的移动
+        this.stopMovement();
+        
+        // 创建新的移动缓动
+        this._movementTween = tween(this.node)
+            .to(duration, { position: endPos }, { easing: 'linear' })
+            .call(() => {
+                this._isMoving = false;
+                this.reachCastle();
+            })
+            .start();
     }
     
     /**
@@ -205,6 +225,9 @@ export abstract class BaseMouse extends Component {
     protected onDie(): void {
         console.log(`${this.unitName}死亡，奖励 ${this.goldReward} 金币`);
         
+        // 停止移动
+        this.stopMovement();
+        
         const battleManager = BattleManager.instance;
         if (battleManager) {
             battleManager.UnregisterEnemy(this.node);
@@ -222,23 +245,36 @@ export abstract class BaseMouse extends Component {
     protected createDeathEffect(): void {
     }
     
-    // === 状态处理方法 (子类可重写) ===
+    // === Tween移动控制方法 ===
     
-    protected onIdleState(dt: number): void {
-        this.moveTowardsCastle(dt);
+    /**
+     * 停止当前移动
+     */
+    public stopMovement(): void {
+        if (this._movementTween) {
+            this._movementTween.stop();
+            this._movementTween = null;
+        }
+        this._isMoving = false;
     }
     
     /**
-     * 移动状态处理
+     * 暂停移动
      */
-    protected onMovingState(dt: number): void {
-        this.moveTowardsCastle(dt);
+    public pauseMovement(): void {
+        if (this._movementTween) {
+            // Cocos Creator 3.8的tween系统可能不直接支持暂停，使用停止代替
+            this.stopMovement();
+        }
     }
     
-    // 移除onAttackState方法 - 老鼠不具备攻击能力
-    
-    protected onDeadState(_dt: number): void {
-        // 死亡状态的默认处理（通常为空）
+    /**
+     * 恢复移动（重新开始移动到城堡）
+     */
+    public resumeMovement(): void {
+        if (!this._isMoving && this.isAlive) {
+            this._movementStarted = false; // 重置标志以允许重新开始
+        }
     }
     
     // === 事件回调方法 (子类可重写) ===
@@ -264,9 +300,9 @@ export abstract class BaseMouse extends Component {
     }
     
     /**
-     * 创建缓动动画
+     * 创建带标签的缓动动画（用于批量管理）
      */
-    protected createTween(_duration: number): any {
+    protected createTween(duration: number): any {
         return tween(this.node).tag(1001);
     }
     
@@ -275,6 +311,20 @@ export abstract class BaseMouse extends Component {
      */
     protected stopAllTweens(): void {
         TweenSystem.instance.ActionManager.removeAllActionsFromTarget(this.node);
+    }
+    
+    /**
+     * 获取移动状态
+     */
+    public get isMoving(): boolean {
+        return this._isMoving;
+    }
+    
+    /**
+     * 获取移动是否已开始
+     */
+    public get movementStarted(): boolean {
+        return this._movementStarted;
     }
     
     protected createMouseNameLabel(): void {

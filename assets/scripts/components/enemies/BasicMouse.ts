@@ -15,16 +15,10 @@ export class BasicMouse extends BaseMouse {
     private _healthBarContainer: Node | null = null;
     private _healthBarForeground: Graphics | null = null;
     
-    // 移动行为相关属性
-    private _movementTimer: number = 0;
-    private _currentDirection: Vec3 = new Vec3(0, -1, 0); // 当前移动方向
+    // Tween移动行为相关属性
     private _zigzagAmplitude: number = 0;                 // 蜿蜒幅度
-    private _zigzagFrequency: number = 0;                 // 蜿蜒频率
-    private _movementPattern: 'zigzag' | 'curves' = 'zigzag'; // 移动模式
-    
-    // 性能优化相关
-    private _movementUpdateInterval: number = 0.1;       // 移动更新间隔(10fps)
-    private _lastMovementUpdate: number = 0;              // 上次移动更新时间
+    private _movementPattern: 'zigzag' | 'curves' | 'spiral' = 'zigzag'; // 移动模式
+    private _segmentCount: number = 6;                    // 移动分段数量
     
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.BASIC_MOUSE;
@@ -54,15 +48,15 @@ export class BasicMouse extends BaseMouse {
     
     // 初始化移动行为
     private initializeMovementBehavior(): void {
-        // 随机选择移动模式（移除冲刺模式）
-        const patterns: ('zigzag' | 'curves')[] = ['zigzag', 'curves'];
+        // 随机选择移动模式，新增螺旋模式
+        const patterns: ('zigzag' | 'curves' | 'spiral')[] = ['zigzag', 'curves', 'spiral'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
         
-        // 设置蜿蜒参数（减小幅度，提高流畅度）
-        this._zigzagAmplitude = 10 + Math.random() * 15; // 10-25像素的摆动幅度（减小）
-        this._zigzagFrequency = 0.5 + Math.random() * 1;   // 0.5-1.5的频率（减小）
+        // 设置蜿蜒参数
+        this._zigzagAmplitude = 20 + Math.random() * 30; // 20-50像素的摆动幅度
+        this._segmentCount = 4 + Math.floor(Math.random() * 4); // 4-7段移动
         
-        console.log(`老鼠移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}`);
+        console.log(`老鼠移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     // 初始化外观
@@ -114,82 +108,127 @@ export class BasicMouse extends BaseMouse {
     
     protected update(dt: number): void {
         super.update(dt);
-        
-        // 性能优化：减少移动更新频率
-        this._lastMovementUpdate += dt;
-        if (this._lastMovementUpdate >= this._movementUpdateInterval) {
-            const movementDt = this._lastMovementUpdate;
-            this._lastMovementUpdate = 0;
-            
-            // 如果没有在战斗中，朝城堡移动
-            if (this.enemyState === EnemyState.IDLE && this.isAlive) { // 待机状态
-                this.moveTowardsCastle(movementDt);
-            }
-        }
+        // Tween系统自动处理移动，无需手动更新
     }
     
-    // 重写朝城堡移动 - 基础老鼠的蜿蜒移动行为
-    protected moveTowardsCastle(dt: number): void {
-        if (!this._gameManager || !this._gameManager.castleNode) return;
+    // 重写基于Tween的移动方法 - 实现蜿蜒移动
+    protected startMovementTowardsCastle(): void {
+        if (!this._gameManager || !this._gameManager.castleNode || this._isMoving) return;
         
         const currentPos = this.node.position;
         const castlePos = this._gameManager.castleNode.position;
         
-        // 检查是否到达城堡Y位置（城堡是横跨整个屏幕的）
-        if (currentPos.y <= castlePos.y + 50) {
+        // 检查是否已经在城堡位置
+        if (this.isReachedCastle(currentPos)) {
             this.reachCastle();
             return;
         }
         
-        // 更新移动计时器
-        this._movementTimer += dt;
-        
-        // 根据移动模式计算移动方向
-        this.updateMovementDirection();
-        
-        // 执行移动
-        const moveDistance = this.moveSpeed * dt;
-        const moveVector = Vec3.multiplyScalar(new Vec3(), this._currentDirection, moveDistance);
-        const newPos = Vec3.add(new Vec3(), currentPos, moveVector);
-        
-        // 限制X坐标不要移动到屏幕外
-        const maxX = 300; // 屏幕边界限制
-        newPos.x = Math.max(-maxX, Math.min(maxX, newPos.x));
-        
-        this.node.setPosition(newPos);
+        // 根据移动模式创建不同的移动路径
+        this.createWeavingMovementPath(currentPos, castlePos);
     }
     
+    // 创建蜿蜒移动路径
+    private createWeavingMovementPath(startPos: Vec3, castlePos: Vec3): void {
+        this._isMoving = true;
+        this.enemyState = EnemyState.MOVING;
+        
+        // 停止之前的移动
+        this.stopMovement();
+        
+        // 计算总距离和每段距离
+        const totalDistance = Math.abs(startPos.y - castlePos.y - 50);
+        const segmentDistance = totalDistance / this._segmentCount;
+        const totalDuration = totalDistance / this.moveSpeed;
+        const segmentDuration = totalDuration / this._segmentCount;
+        
+        // 根据移动模式生成路径点
+        const pathPoints = this.generatePathPoints(startPos, castlePos, totalDistance);
+        
+        // 创建链式缓动动画
+        this.createChainedTweenMovement(pathPoints, segmentDuration);
+    }
     
-    // 更新移动方向
-    private updateMovementDirection(): void {
-        switch (this._movementPattern) {
-            case 'zigzag':
-                this.updateZigzagMovement();
-                break;
-            case 'curves':
-                this.updateCurvedMovement();
-                break;
+    // 根据移动模式生成路径点
+    private generatePathPoints(startPos: Vec3, castlePos: Vec3, totalDistance: number): Vec3[] {
+        const points: Vec3[] = [startPos];
+        const segmentDistance = totalDistance / this._segmentCount;
+        
+        for (let i = 1; i <= this._segmentCount; i++) {
+            const progress = i / this._segmentCount;
+            const yPos = startPos.y - (segmentDistance * i);
+            let xOffset = 0;
+            
+            switch (this._movementPattern) {
+                case 'zigzag':
+                    // Z字形移动：每段改变方向
+                    xOffset = Math.sin(i * Math.PI * 0.6) * this._zigzagAmplitude;
+                    break;
+                case 'curves':
+                    // S形曲线移动：平滑曲线
+                    xOffset = Math.sin(progress * Math.PI * 2) * this._zigzagAmplitude;
+                    break;
+                case 'spiral':
+                    // 螺旋移动：螺旋下降
+                    xOffset = Math.cos(progress * Math.PI * 4) * this._zigzagAmplitude * (1 - progress * 0.5);
+                    break;
+            }
+            
+            // 限制X坐标不要移动到屏幕外
+            const maxX = 300;
+            xOffset = Math.max(-maxX, Math.min(maxX, startPos.x + xOffset)) - startPos.x;
+            
+            points.push(new Vec3(startPos.x + xOffset, yPos, 0));
         }
-    }
-    
-    // 蜿蜒移动（Z字形）- 保持匀速
-    private updateZigzagMovement(): void {
-        const xDirection = Math.sin(this._movementTimer * this._zigzagFrequency) * 0.3; // 横向分量
         
-        // 设置方向向量并归一化，确保匀速移动
-        this._currentDirection.set(xDirection, -1, 0);
-        this._currentDirection.normalize();
-    }
-    
-    // 曲线移动（S形）- 保持匀速
-    private updateCurvedMovement(): void {
-        const curveOffset = Math.sin(this._movementTimer * this._zigzagFrequency * 0.8) * 0.4; // 更明显的曲线
+        // 最后一个点是城堡位置
+        points[points.length - 1] = new Vec3(points[points.length - 1].x, castlePos.y + 50, 0);
         
-        // 设置方向向量并归一化，确保匀速移动
-        this._currentDirection.set(curveOffset, -1, 0);
-        this._currentDirection.normalize();
+        return points;
     }
     
+    // 创建链式缓动移动
+    private createChainedTweenMovement(pathPoints: Vec3[], segmentDuration: number): void {
+        let currentTween = tween(this.node);
+        
+        // 为每个路径点创建缓动
+        for (let i = 1; i < pathPoints.length; i++) {
+            const targetPos = pathPoints[i];
+            const isLastSegment = i === pathPoints.length - 1;
+            
+            // 根据移动模式选择缓动效果
+            let easingType = 'linear';
+            switch (this._movementPattern) {
+                case 'zigzag':
+                    easingType = 'sineInOut'; // 平滑的进出效果
+                    break;
+                case 'curves':
+                    easingType = 'cubicInOut'; // 更平滑的曲线
+                    break;
+                case 'spiral':
+                    easingType = 'quadInOut'; // 螺旋的加速减速
+                    break;
+            }
+            
+            currentTween = currentTween.to(segmentDuration, 
+                { position: targetPos }, 
+                { easing: easingType }
+            );
+            
+            // 如果是最后一段，添加到达城堡的回调
+            if (isLastSegment) {
+                currentTween = currentTween.call(() => {
+                    this._isMoving = false;
+                    this.reachCastle();
+                });
+            }
+        }
+        
+        // 启动缓动链
+        this._movementTween = currentTween.start();
+        
+        console.log(`开始${this._movementPattern}移动，路径点数量: ${pathPoints.length}, 总时长: ${(segmentDuration * (pathPoints.length - 1)).toFixed(2)}秒`);
+    }
     
     // 重写城堡到达特效方法
     protected createCastleReachEffect(): void {

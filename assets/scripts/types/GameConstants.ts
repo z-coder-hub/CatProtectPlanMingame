@@ -147,7 +147,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BASIC,
         health: 25,           // 难度降低：从70降到25，2-3击就能消灭
         maxHealth: 25,
-        moveSpeed: 50,        // 速度略微降低，给玩家更多反应时间
+        moveSpeed: 120,       // 速度提高，游戏更流畅
         goldReward: 3
     },
 
@@ -157,7 +157,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BASIC,
         health: 80,           // 难度降低：从200降到80，更容易击杀
         maxHealth: 80,
-        moveSpeed: 35,        // 移动速度降低
+        moveSpeed: 80,        // 速度提高，游戏更流畅
         goldReward: 8
     },
 
@@ -168,7 +168,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.FAST,
         health: 20,           // 难度降低：从45降到20，容易击杀但速度快
         maxHealth: 20,
-        moveSpeed: 80,        // 速度降低，给玩家更多瞄准时间
+        moveSpeed: 160,       // 速度提高，体现快速特性
         goldReward: 5
     },
 
@@ -178,7 +178,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.FAST,
         health: 15,           // 难度降低：从35降到15，保持脆皮特性
         maxHealth: 15,
-        moveSpeed: 90,        // 速度大幅降低，更容易追踪
+        moveSpeed: 200,       // 速度提高，体现疾速特性
         goldReward: 8
     },
 
@@ -189,7 +189,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.ARMORED,
         health: 60,           // 难度降低：从130降到60，降低坦克属性
         maxHealth: 60,
-        moveSpeed: 40,        // 略微降低速度
+        moveSpeed: 100,       // 速度提高，游戏更流畅
         goldReward: 6
     },
 
@@ -199,7 +199,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.ARMORED,
         health: 120,          // 难度降低：从250降到120，更容易击杀
         maxHealth: 120,
-        moveSpeed: 25,        // 速度进一步降低
+        moveSpeed: 60,        // 保持缓慢但游戏更流畅
         goldReward: 12,
         armorValue: 3         // 护甲值降低，减少伤害减免
     },
@@ -212,7 +212,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.SPECIAL,
         health: 30,           // 难度降低：从55降到30，降低血量
         maxHealth: 30,
-        moveSpeed: 55,        // 速度降低
+        moveSpeed: 130,       // 速度提高，更有威胁性
         goldReward: 10,
         stealthChance: 0.2    // 潜行几率降低
     },
@@ -225,7 +225,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 200,          // 难度降低：从450降到200，更合理的BOSS血量
         maxHealth: 200,
-        moveSpeed: 30,        // 速度降低
+        moveSpeed: 70,        // 速度提高，BOSS但不至于太快
         goldReward: 30,
         summonCount: 2,       // 召唤数量减少
         summonType: EnemyType.BASIC_MOUSE
@@ -237,7 +237,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 180,          // 难度降低：从400降到180
         maxHealth: 180,
-        moveSpeed: 40,        // 速度降低
+        moveSpeed: 90,        // 速度提高，机械BOSS更灵活
         goldReward: 25
     },
 
@@ -248,7 +248,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 400,         // 难度降低：从1800降到400，更合理的重甲BOSS血量
         maxHealth: 400,
-        moveSpeed: 20,       // 速度降低
+        moveSpeed: 50,       // 重甲BOSS，缓慢但稳定前进
         goldReward: 100,
         armorValue: 8        // 护甲值降低，减少过度减伤
     },
@@ -259,7 +259,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 300,         // 难度降低：从1200降到300
         maxHealth: 300,
-        moveSpeed: 45,       // 速度降低，更容易追踪
+        moveSpeed: 120,      // 刺客速度，快速突进
         goldReward: 80,
         stealthChance: 0.6,  // 潜行几率降低，不再永久潜行
         damageReduction: 0.3 // 减伤降低到30%
@@ -271,7 +271,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 250,         // 难度降低：从900降到250
         maxHealth: 250,
-        moveSpeed: 60,       // 速度降低，更容易应对
+        moveSpeed: 140,      // 疾风暴君，展现风的力量
         goldReward: 90,
         summonCount: 3,      // 召唤数量减少
         summonType: EnemyType.SPEED_MOUSE
@@ -283,7 +283,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 500,         // 难度降低：从2700降到500
         maxHealth: 500,
-        moveSpeed: 15,       // 速度进一步降低
+        moveSpeed: 40,       // 巨兽霸主，缓慢但威严
         goldReward: 120,
         aoeAttackRange: 80   // 践踏范围减少
     },
@@ -294,7 +294,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 350,         // 难度降低：从1500降到350
         maxHealth: 350,
-        moveSpeed: 30,       // 速度降低
+        moveSpeed: 80,       // 雷电大师，电光速度
         goldReward: 110,
         chainTargets: 3,     // 链式攻击目标减少
         shieldStrength: 100  // 护盾强度减半
@@ -306,7 +306,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 400,         // 难度降低：从1800降到400
         maxHealth: 400,
-        moveSpeed: 35,       // 速度降低
+        moveSpeed: 85,       // 机械军团长，稳定前进
         goldReward: 150,
         summonCount: 6,      // 限制召唤数量，不再无限召唤
         summonType: EnemyType.MECH_MOUSE,
@@ -319,7 +319,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
         category: EnemyCategory.BOSS,
         health: 800,         // 难度降低：从3750降到800，更合理的最终BOSS血量
         maxHealth: 800,
-        moveSpeed: 25,       // 速度降低
+        moveSpeed: 60,       // 终极霸王，威严但不急躁
         goldReward: 200,
         armorValue: 5,       // 护甲值降低
         stealthChance: 0.15, // 潜行几率大幅降低

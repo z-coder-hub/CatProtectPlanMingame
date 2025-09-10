@@ -1,0 +1,249 @@
+import { _decorator, Component, Color, Graphics } from 'cc';
+import { BaseMouse } from './BaseMouse';
+import { EnemyType, EnemyCategory } from '../../types/GameTypes';
+import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { GameManager } from '../../managers/GameManager';
+
+const { ccclass, property } = _decorator;
+
+/**
+ * 疾风暴君 - 极速移动召唤BOSS
+ * 特点：极高移动速度，可以召唤疾速小兵，风暴特效
+ */
+@ccclass('StormTyrant')
+export class StormTyrant extends BaseMouse {
+
+    /** 召唤数量 */
+    private summonCount: number = 3;
+    
+    /** 召唤类型 */
+    private summonType: EnemyType = EnemyType.SPEED_MOUSE;
+    
+    /** 召唤冷却时间 */
+    private summonCooldown: number = 0;
+    
+    /** 风暴特效计时器 */
+    private stormEffectTimer: number = 0;
+    
+    /**
+     * 初始化疾风暴君属性
+     */
+    protected initializeMouseStats(): void {
+        const config = ENEMY_CONFIGS[EnemyType.STORM_TYRANT];
+        this.mouseType = EnemyType.STORM_TYRANT;
+        this.mouseCategory = EnemyCategory.BOSS;
+        this.mouseName = config.name;
+        this.maxHealth = config.maxHealth;
+        this.currentHealth = config.health;
+        this.moveSpeed = config.moveSpeed;
+        this.goldReward = config.goldReward;
+        this.summonCount = (config as any).summonCount || 3;
+        this.summonType = (config as any).summonType || EnemyType.SPEED_MOUSE;
+    }
+    
+    /**
+     * 初始化疾风暴君外观
+     */
+    protected initializeMouseVisuals(): void {
+        const graphics = this.node.addComponent(Graphics);
+        
+        // 风暴色彩 - 青蓝色主体
+        graphics.fillColor = new Color(70, 150, 200, 255);    // 青蓝色身体
+        graphics.strokeColor = new Color(50, 120, 180, 255);  // 深蓝边框
+        graphics.lineWidth = 2;
+        
+        // 流线型身体 - 体现速度感
+        graphics.ellipse(0, 0, 18, 25);
+        graphics.fill();
+        graphics.stroke();
+        
+        // 风暴眼 - 中央旋涡
+        graphics.fillColor = new Color(100, 180, 220, 255);
+        graphics.circle(0, 0, 8);
+        graphics.fill();
+        
+        // 内部旋涡纹理
+        graphics.strokeColor = new Color(130, 200, 240, 255);
+        graphics.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+            const angle = (i * Math.PI) / 2;
+            const startX = Math.cos(angle) * 3;
+            const startY = Math.sin(angle) * 3;
+            const endX = Math.cos(angle + Math.PI / 4) * 6;
+            const endY = Math.sin(angle + Math.PI / 4) * 6;
+            graphics.moveTo(startX, startY);
+            graphics.lineTo(endX, endY);
+            graphics.stroke();
+        }
+        
+        // 风暴翼 - 体现飞行能力
+        graphics.fillColor = new Color(90, 170, 210, 200);    // 半透明风翼
+        graphics.ellipse(-22, -5, 8, 15);
+        graphics.fill();
+        graphics.ellipse(22, -5, 8, 15);
+        graphics.fill();
+        
+        // 疾风尾迹
+        graphics.strokeColor = new Color(120, 190, 230, 150);
+        graphics.lineWidth = 3;
+        for (let i = 0; i < 3; i++) {
+            graphics.moveTo(-18 - (i * 5), 0);
+            graphics.lineTo(-25 - (i * 5), 0);
+            graphics.stroke();
+        }
+    }
+    
+    /**
+     * 更新风暴特效和召唤逻辑
+     */
+    protected update(dt: number): void {
+        super.update(dt);
+        
+        // 更新风暴特效
+        this.stormEffectTimer += dt;
+        if (this.stormEffectTimer >= 0.5) {
+            this.stormEffectTimer = 0;
+            this.updateStormEffect();
+        }
+        
+        // 召唤冷却
+        this.summonCooldown -= dt;
+        if (this.summonCooldown <= 0) {
+            this.summonSpeedMinions();
+            this.summonCooldown = 8.0; // 8秒召唤一次
+        }
+    }
+    
+    /**
+     * 更新风暴特效
+     */
+    private updateStormEffect(): void {
+        const graphics = this.node.getComponent(Graphics);
+        if (!graphics) return;
+        
+        // 重绘基础外观
+        graphics.clear();
+        this.initializeMouseVisuals();
+        
+        // 添加动态风暴环
+        const time = Date.now() / 1000;
+        graphics.strokeColor = new Color(150, 220, 255, 100);
+        graphics.lineWidth = 2;
+        
+        for (let i = 0; i < 3; i++) {
+            const radius = 25 + (i * 8) + Math.sin(time * 3 + i) * 5;
+            graphics.circle(0, 0, radius);
+            graphics.stroke();
+        }
+    }
+    
+    /**
+     * 召唤疾速小兵
+     */
+    private summonSpeedMinions(): void {
+        const gameManager = GameManager.instance;
+        if (!gameManager) {
+            console.error("GameManager不存在，无法召唤");
+            return;
+        }
+        
+        console.log(`疾风暴君召唤${this.summonCount}只疾速老鼠！`);
+        
+        // 在周围位置召唤疾速老鼠
+        for (let i = 0; i < this.summonCount; i++) {
+            const angle = (i * 2 * Math.PI) / this.summonCount;
+            const distance = 60;
+            const offsetX = Math.cos(angle) * distance;
+            const offsetY = Math.sin(angle) * distance;
+            
+            // 通过GameManager创建新敌人
+            gameManager.spawnEnemyAtPosition(this.summonType, 
+                this.node.position.x + offsetX, 
+                this.node.position.y + offsetY);
+        }
+        
+        // 召唤特效
+        this.showSummonEffect();
+    }
+    
+    /**
+     * 显示召唤特效
+     */
+    private showSummonEffect(): void {
+        const graphics = this.node.getComponent(Graphics);
+        if (!graphics) return;
+        
+        // 添加召唤风暴特效
+        graphics.strokeColor = new Color(200, 255, 200, 200);
+        graphics.lineWidth = 4;
+        graphics.circle(0, 0, 50);
+        graphics.stroke();
+        
+        // 风暴粒子
+        graphics.fillColor = new Color(150, 220, 255, 150);
+        for (let i = 0; i < 12; i++) {
+            const angle = (i * Math.PI) / 6;
+            const x = Math.cos(angle) * 40;
+            const y = Math.sin(angle) * 40;
+            graphics.circle(x, y, 3);
+            graphics.fill();
+        }
+        
+        // 1秒后恢复正常外观
+        this.scheduleOnce(() => {
+            graphics.clear();
+            this.initializeMouseVisuals();
+        }, 1.0);
+    }
+    
+    /**
+     * 疾风暴君受伤效果
+     */
+    protected onTakeDamage(damage: number): void {
+        console.log("疾风暴君在风暴中闪避攻击！");
+        
+        // 风暴闪避特效
+        const graphics = this.node.getComponent(Graphics);
+        if (graphics) {
+            // 添加闪避风暴效果
+            graphics.strokeColor = new Color(255, 255, 255, 200);
+            graphics.lineWidth = 3;
+            graphics.circle(0, 0, 30);
+            graphics.stroke();
+        }
+    }
+    
+    /**
+     * 疾风暴君特殊死亡效果
+     */
+    protected onDie(): void {
+        console.log("疾风暴君化作狂风消散...");
+        
+        // 风暴消散特效
+        const graphics = this.node.getComponent(Graphics);
+        if (graphics) {
+            graphics.clear();
+            
+            // 显示消散的风暴
+            graphics.strokeColor = new Color(120, 190, 230, 180);
+            graphics.lineWidth = 2;
+            for (let i = 0; i < 20; i++) {
+                const angle = (i * Math.PI) / 10;
+                const startRadius = 15;
+                const endRadius = 45;
+                const startX = Math.cos(angle) * startRadius;
+                const startY = Math.sin(angle) * startRadius;
+                const endX = Math.cos(angle) * endRadius;
+                const endY = Math.sin(angle) * endRadius;
+                graphics.moveTo(startX, startY);
+                graphics.lineTo(endX, endY);
+                graphics.stroke();
+            }
+        }
+        
+        // 延迟销毁，展示风暴消散效果
+        this.scheduleOnce(() => {
+            this.node.destroy();
+        }, 1.0);
+    }
+}
