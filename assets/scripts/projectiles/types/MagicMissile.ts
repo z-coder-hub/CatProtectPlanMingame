@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, Component } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { GameManager } from '../../managers/GameManager';
@@ -145,7 +145,8 @@ export class MagicMissile extends BaseProjectile {
         effectGraphics.stroke();
         
         // 火焰特效持续0.4秒
-        effectNode.getComponent(MagicMissile)?.scheduleOnce(() => {
+        const tempComponent = effectNode.addComponent(Component);
+        tempComponent.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
@@ -175,7 +176,8 @@ export class MagicMissile extends BaseProjectile {
         aoeGraphics.fill();
         
         // AOE特效持续0.2秒
-        aoeEffectNode.getComponent(MagicMissile)?.scheduleOnce(() => {
+        const tempComponent2 = aoeEffectNode.addComponent(Component);
+        tempComponent2.scheduleOnce(() => {
             if (aoeEffectNode && aoeEffectNode.isValid) {
                 aoeEffectNode.destroy();
             }

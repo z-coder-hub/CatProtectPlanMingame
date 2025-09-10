@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, Component } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { EffectHelper } from '../../utils/EffectHelper';
@@ -90,7 +90,8 @@ export class PhysicalBullet extends BaseProjectile {
         effectGraphics.fill();
         
         // 特效持续0.2秒后销毁
-        effectNode.getComponent(PhysicalBullet)?.scheduleOnce(() => {
+        const tempComponent = effectNode.addComponent(Component);
+        tempComponent.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
@@ -126,7 +127,8 @@ export class PhysicalBullet extends BaseProjectile {
         critGraphics.fill();
         
         // 暴击特效持续0.3秒
-        critEffectNode.getComponent(PhysicalBullet)?.scheduleOnce(() => {
+        const tempComponent2 = critEffectNode.addComponent(Component);
+        tempComponent2.scheduleOnce(() => {
             if (critEffectNode && critEffectNode.isValid) {
                 critEffectNode.destroy();
             }

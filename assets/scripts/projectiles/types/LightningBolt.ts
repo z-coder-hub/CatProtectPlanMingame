@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, Component } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { GameManager } from '../../managers/GameManager';
@@ -183,7 +183,8 @@ export class LightningBolt extends BaseProjectile {
         effectGraphics.stroke();
         
         // 闪电特效持续0.4秒
-        effectNode.getComponent(LightningBolt)?.scheduleOnce(() => {
+        const tempComponent = effectNode.addComponent(Component);
+        tempComponent.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
@@ -234,7 +235,8 @@ export class LightningBolt extends BaseProjectile {
         chainGraphics.stroke();
         
         // 链式特效持续0.3秒
-        chainEffectNode.getComponent(LightningBolt)?.scheduleOnce(() => {
+        const tempComponent2 = chainEffectNode.addComponent(Component);
+        tempComponent2.scheduleOnce(() => {
             if (chainEffectNode && chainEffectNode.isValid) {
                 chainEffectNode.destroy();
             }
@@ -272,7 +274,8 @@ export class LightningBolt extends BaseProjectile {
         chainHitGraphics.stroke();
         
         // 链式击中特效持续0.2秒
-        chainHitNode.getComponent(LightningBolt)?.scheduleOnce(() => {
+        const tempComponent3 = chainHitNode.addComponent(Component);
+        tempComponent3.scheduleOnce(() => {
             if (chainHitNode && chainHitNode.isValid) {
                 chainHitNode.destroy();
             }

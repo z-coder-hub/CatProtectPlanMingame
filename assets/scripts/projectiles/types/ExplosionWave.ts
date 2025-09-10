@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, Component } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { GameManager } from '../../managers/GameManager';
@@ -252,7 +252,8 @@ export class ExplosionWave extends BaseProjectile {
         effectGraphics.stroke();
         
         // 爆炸特效持续0.6秒
-        effectNode.getComponent(ExplosionWave)?.scheduleOnce(() => {
+        const tempComponent = effectNode.addComponent(Component);
+        tempComponent.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
@@ -300,7 +301,8 @@ export class ExplosionWave extends BaseProjectile {
         individualGraphics.stroke();
         
         // 个体特效持续0.25秒
-        individualEffect.getComponent(ExplosionWave)?.scheduleOnce(() => {
+        const tempComponent = individualEffect.addComponent(Component);
+        tempComponent.scheduleOnce(() => {
             if (individualEffect && individualEffect.isValid) {
                 individualEffect.destroy();
             }
@@ -343,7 +345,8 @@ export class ExplosionWave extends BaseProjectile {
         knockbackGraphics.stroke();
         
         // 推拽指示器持续0.4秒
-        knockbackIndicator.getComponent(ExplosionWave)?.scheduleOnce(() => {
+        const tempComponent = knockbackIndicator.addComponent(Component);
+        tempComponent.scheduleOnce(() => {
             if (knockbackIndicator && knockbackIndicator.isValid) {
                 knockbackIndicator.destroy();
             }

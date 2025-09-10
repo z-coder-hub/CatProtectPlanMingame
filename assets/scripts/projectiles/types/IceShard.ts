@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, Component } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { GameManager } from '../../managers/GameManager';
@@ -220,7 +220,8 @@ export class IceShard extends BaseProjectile {
         effectGraphics.stroke();
         
         // 冰霜特效持续0.5秒
-        effectNode.getComponent(IceShard)?.scheduleOnce(() => {
+        const tempComponent = effectNode.addComponent(Component);
+        tempComponent.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
@@ -258,7 +259,8 @@ export class IceShard extends BaseProjectile {
         frostGraphics.stroke();
         
         // 冰霜击中特效持续0.3秒
-        frostEffectNode.getComponent(IceShard)?.scheduleOnce(() => {
+        const tempComponent2 = frostEffectNode.addComponent(Component);
+        tempComponent2.scheduleOnce(() => {
             if (frostEffectNode && frostEffectNode.isValid) {
                 frostEffectNode.destroy();
             }
@@ -296,7 +298,8 @@ export class IceShard extends BaseProjectile {
         slowGraphics.stroke();
         
         // 减速指示器持续时间与减速效果相同
-        slowIndicator.getComponent(IceShard)?.scheduleOnce(() => {
+        const tempComponent3 = slowIndicator.addComponent(Component);
+        tempComponent3.scheduleOnce(() => {
             if (slowIndicator && slowIndicator.isValid) {
                 slowIndicator.destroy();
             }

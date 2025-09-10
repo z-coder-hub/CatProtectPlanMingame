@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, Component } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { GameManager } from '../../managers/GameManager';
@@ -169,7 +169,8 @@ export class SwordWave extends BaseProjectile {
         effectGraphics.fill();
         
         // 剑气特效持续0.3秒
-        effectNode.getComponent(SwordWave)?.scheduleOnce(() => {
+        const tempComponent = effectNode.addComponent(Component);
+        tempComponent.scheduleOnce(() => {
             if (effectNode && effectNode.isValid) {
                 effectNode.destroy();
             }
@@ -200,7 +201,8 @@ export class SwordWave extends BaseProjectile {
         frontalGraphics.fill();
         
         // 前方特效持续0.15秒
-        frontalEffectNode.getComponent(SwordWave)?.scheduleOnce(() => {
+        const tempComponent2 = frontalEffectNode.addComponent(Component);
+        tempComponent2.scheduleOnce(() => {
             if (frontalEffectNode && frontalEffectNode.isValid) {
                 frontalEffectNode.destroy();
             }
