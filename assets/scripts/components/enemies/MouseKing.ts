@@ -305,6 +305,19 @@ export class MouseKing extends BaseMouse {
             size: { width: 80, height: 32 }     // 更大的标签尺寸
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 100,
+            height: 12,
+            yOffset: 50,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(255, 215, 0), // 金色前景配合王者主题
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 3
+        };
+    }
     
     /**
      * 重写移动方法，老鼠王移动时更威严

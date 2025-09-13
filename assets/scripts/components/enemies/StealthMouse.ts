@@ -221,6 +221,19 @@ export class StealthMouse extends BaseMouse {
             size: { width: 80, height: 28 }      // 稍宽的标签
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 28,
+            height: 3,
+            yOffset: 22,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(200, 150, 255), // 紫色前景配合潜行主题
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 1
+        };
+    }
     
     /**
      * 重写移动方法，添加潜行移动效果

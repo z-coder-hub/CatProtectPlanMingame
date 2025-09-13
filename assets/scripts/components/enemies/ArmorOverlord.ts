@@ -222,4 +222,17 @@ export class ArmorOverlord extends BaseMouse {
             size: { width: 120, height: 30 }
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 120,
+            height: 12,
+            yOffset: 55,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(200, 200, 200), // 银灰色前景配合重甲主题
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 3
+        };
+    }
 }

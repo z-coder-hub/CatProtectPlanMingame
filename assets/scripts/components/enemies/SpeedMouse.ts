@@ -68,9 +68,8 @@ export class SpeedMouse extends BaseMouse {
     
     private initializeVisuals(): void {
         this._graphics = this.getGraphicsComponent();
-        
+
         this.drawSpeedMouseAppearance();
-        this.createHealthBar();
     }
     
     private drawSpeedMouseAppearance(): void {
@@ -135,16 +134,20 @@ export class SpeedMouse extends BaseMouse {
             size: { width: 60, height: 28 }
         };
     }
-    
-    private createHealthBar(): void {
-        DrawingHelper.createHealthBar(this.node, {
-            width: 30,
-            height: 4,
-            position: { x: 0, y: 18, z: 0 },
-            backgroundColor: new Color(100, 100, 100),
-            foregroundColor: new Color(255, 255, 100)
-        });
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 20,
+            height: 2,
+            yOffset: 18,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(255, 255, 100), // 亮黄色前景
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 1
+        };
     }
+    
     
     private createSpeedTrail(): void {
         // 创建残影效果节点

@@ -207,6 +207,19 @@ export class ArmoredMouse extends BaseMouse {
             size: { width: 60, height: 28 }
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 40,
+            height: 5,
+            yOffset: 30,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(255, 215, 0), // 金色前景
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 1
+        };
+    }
     
     protected update(dt: number): void {
         super.update(dt);

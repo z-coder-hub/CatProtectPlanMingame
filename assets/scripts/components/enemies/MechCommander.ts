@@ -434,6 +434,19 @@ export class MechCommander extends BaseMouse {
             size: { width: 120, height: 30 }
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 140,
+            height: 12,
+            yOffset: 55,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(100, 200, 255), // 蓝色科技前景配合机械主题
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 3
+        };
+    }
     
     /**
      * 机械军团长特殊死亡效果

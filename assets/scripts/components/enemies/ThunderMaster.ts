@@ -436,6 +436,19 @@ export class ThunderMaster extends BaseMouse {
             size: { width: 120, height: 30 }
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 130,
+            height: 12,
+            yOffset: 55,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(255, 255, 0), // 黄色前景配合雷电主题
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 2
+        };
+    }
     
     /**
      * 雷电大师特殊死亡效果

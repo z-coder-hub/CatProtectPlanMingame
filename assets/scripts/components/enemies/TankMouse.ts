@@ -123,6 +123,19 @@ export class TankMouse extends BaseMouse {
             size: { width: 70, height: 28 }      // 稍宽的标签
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 60,
+            height: 8,
+            yOffset: 40,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(200, 200, 200), // 灰色前景配合装甲主题
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 2
+        };
+    }
     
     /**
      * 重写受伤回调，显示护甲减伤信息

@@ -197,6 +197,19 @@ export class MechMouse extends BaseMouse {
             size: { width: 80, height: 32 }     // 更大的标签尺寸
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 80,
+            height: 10,
+            yOffset: 45,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(100, 200, 255), // 蓝色科技前景
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 2
+        };
+    }
     
     /**
      * 重写移动方法，机械老鼠移动时有推进器效果

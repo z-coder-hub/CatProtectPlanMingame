@@ -17,8 +17,6 @@ export class FastMouse extends BaseMouse {
     
     // 私有属性（只保留FastMouse特有的属性）
     private _graphics: Graphics | null = null;
-    private _healthBarContainer: Node | null = null;
-    private _healthBarForeground: Graphics | null = null;
     
     // 移动行为相关属性
     private _movementTimer: number = 0;
@@ -54,9 +52,6 @@ export class FastMouse extends BaseMouse {
     protected onLoad(): void {
         // 先调用父类初始化
         super.onLoad();
-        
-        // 初始化血条
-        this.initializeHealthBar();
     }
     
     protected start(): void {
@@ -103,27 +98,6 @@ export class FastMouse extends BaseMouse {
         this.drawFastMouseAppearance();
     }
     
-    // 初始化血条
-    private initializeHealthBar(): void {
-        const healthBarData = DrawingHelper.createHealthBar(this.node, {
-            width: 25,              // 稍小的血条
-            height: 3,              // 更薄的血条
-            position: { x: 0, y: 20, z: 0 }, // 在快速老鼠上方
-            backgroundColor: new Color(60, 60, 60), // 深灰色背景
-            foregroundColor: new Color(255, 165, 0), // 橙色前景（区别于基础老鼠）
-            borderColor: new Color(255, 255, 255), // 白色边框
-            borderWidth: 1
-        });
-        
-        this._healthBarContainer = healthBarData.container;
-        this._healthBarForeground = healthBarData.foreground;
-        
-        // 血条始终显示
-        this._healthBarContainer.active = true;
-        
-        // 初始化血条显示
-        this.updateHealthBarDisplay();
-    }
     
     // 绘制快速老鼠外观
     private drawFastMouseAppearance(): void {
@@ -177,6 +151,19 @@ export class FastMouse extends BaseMouse {
             color: new Color(50, 205, 50), // 绿色文字
             yOffset: 35,
             size: { width: 60, height: 28 }
+        };
+    }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 25,
+            height: 3,
+            yOffset: 20,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(255, 165, 0), // 橙色前景（区别于基础老鼠）
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 1
         };
     }
     
@@ -293,24 +280,11 @@ export class FastMouse extends BaseMouse {
     // 重写受伤方法，添加受伤反馈
     protected onTakeDamage(damage: number): void {
         console.log(`快速老鼠受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
-        
-        // 更新血条显示
-        this.updateHealthBarDisplay();
-        
+
         // 受伤闪烁效果
         this.playHurtEffect();
     }
     
-    // 更新血条显示
-    private updateHealthBarDisplay(): void {
-        if (this._healthBarForeground && this._healthBarContainer) {
-            const healthPercent = this.currentHealth / this.maxHealth;
-            DrawingHelper.updateHealthBar(this._healthBarForeground, healthPercent, 25, 3);
-            
-            // 血条始终显示，只有死亡时才隐藏
-            this._healthBarContainer.active = healthPercent > 0;
-        }
-    }
     
     // 播放受伤效果
     private playHurtEffect(): void {
@@ -333,16 +307,11 @@ export class FastMouse extends BaseMouse {
             .start();
     }
     
-    // 重写死亡方法，只处理特有的血条清理
+    // 重写死亡方法，只处理特有的死亡特效
     protected onDie(): void {
-        // 隐藏血条（快速老鼠特有的血条）
-        if (this._healthBarContainer) {
-            this._healthBarContainer.active = false;
-        }
-        
         // 创建死亡特效
         this.createDeathEffect();
-        
+
         // 调用基类的死亡处理（包含注销、奖励、销毁等通用逻辑）
         super.onDie();
     }

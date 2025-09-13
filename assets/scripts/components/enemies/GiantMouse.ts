@@ -66,9 +66,8 @@ export class GiantMouse extends BaseMouse {
     
     private initializeVisuals(): void {
         this._graphics = this.getGraphicsComponent();
-        
+
         this.drawGiantMouseAppearance();
-        this.createHealthBar();
     }
     
     private drawGiantMouseAppearance(): void {
@@ -126,16 +125,20 @@ export class GiantMouse extends BaseMouse {
             size: { width: 60, height: 28 }
         };
     }
-    
-    private createHealthBar(): void {
-        DrawingHelper.createHealthBar(this.node, {
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
             width: 50,
             height: 6,
-            position: { x: 0, y: 32, z: 0 },
+            yOffset: 32,
             backgroundColor: new Color(100, 100, 100),
-            foregroundColor: new Color(255, 100, 100)
-        });
+            foregroundColor: new Color(255, 100, 100),
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 1
+        };
     }
+    
     
     protected update(dt: number): void {
         super.update(dt);

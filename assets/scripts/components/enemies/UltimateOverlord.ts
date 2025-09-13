@@ -544,6 +544,19 @@ export class UltimateOverlord extends BaseMouse {
             size: { width: 120, height: 30 }
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 200,
+            height: 20,
+            yOffset: 70,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(255, 0, 0), // 红色前景配合终极霸王主题
+            borderColor: new Color(255, 215, 0), // 金色边框
+            borderWidth: 4
+        };
+    }
     
     /**
      * 终极霸王终极死亡效果

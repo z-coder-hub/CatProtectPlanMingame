@@ -240,6 +240,19 @@ export class StormTyrant extends BaseMouse {
             size: { width: 120, height: 30 }
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 110,
+            height: 10,
+            yOffset: 52,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(0, 255, 255), // 青色前景配合疾风主题
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 2
+        };
+    }
     
     protected onDie(): void {
         console.log("疾风暴君化作狂风消散...");

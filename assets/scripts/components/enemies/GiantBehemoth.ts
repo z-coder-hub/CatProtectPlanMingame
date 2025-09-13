@@ -304,6 +304,19 @@ export class GiantBehemoth extends BaseMouse {
             size: { width: 120, height: 30 }
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 150,
+            height: 15,
+            yOffset: 60,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(255, 140, 0), // 橙色前景配合巨兽主题
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 3
+        };
+    }
     
     protected onDie(): void {
         console.log("巨兽霸主轰然倒下，大地震颤！");

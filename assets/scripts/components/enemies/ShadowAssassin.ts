@@ -228,4 +228,17 @@ export class ShadowAssassin extends BaseMouse {
             size: { width: 120, height: 30 }
         };
     }
+
+    // 实现BaseMouse的抽象方法 - 血条配置
+    protected getHealthBarConfig() {
+        return {
+            width: 100,
+            height: 8,
+            yOffset: 50,
+            backgroundColor: new Color(60, 60, 60),
+            foregroundColor: new Color(150, 100, 200), // 紫色前景配合潜影主题
+            borderColor: new Color(255, 255, 255),
+            borderWidth: 2
+        };
+    }
 }

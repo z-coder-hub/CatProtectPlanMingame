@@ -35,7 +35,8 @@ export abstract class BaseMouse extends Component {
     
     // === 受保护属性，子类可以访问 ===
     protected _gameManager: GameManager | null = null;
-    protected _healthBarNode: Node | null = null;
+    protected _healthBarContainer: Node | null = null;
+    protected _healthBarForeground: Graphics | null = null;
     protected _nameLabel: Label | null = null;
     protected _graphics: Graphics | null = null;
     
@@ -51,6 +52,7 @@ export abstract class BaseMouse extends Component {
         this.initializeMouseStats();
         this.initializeMouseVisuals();
         this.createMouseNameLabel();
+        this.createMouseHealthBar();
     }
     
     protected start(): void {
@@ -88,6 +90,17 @@ export abstract class BaseMouse extends Component {
         yOffset: number;
         size: { width: number; height: number };
     };
+
+    // 抽象方法，子类必须实现血条配置
+    protected abstract getHealthBarConfig(): {
+        width: number;
+        height: number;
+        yOffset: number;
+        backgroundColor?: Color;
+        foregroundColor?: Color;
+        borderColor?: Color;
+        borderWidth?: number;
+    };
     
     // === 通用属性访问器 ===
     public get isAlive(): boolean {
@@ -111,10 +124,14 @@ export abstract class BaseMouse extends Component {
      */
     public takeDamage(damage: number): void {
         if (!this.isAlive) return;
-        
+
         this.currentHealth = Math.max(0, this.currentHealth - damage);
+
+        // 统一更新血条显示
+        this.updateMouseHealthBarDisplay();
+
         this.onTakeDamage(damage);
-        
+
         if (this.currentHealth <= 0) {
             this.die();
         }
@@ -225,20 +242,25 @@ export abstract class BaseMouse extends Component {
      */
     protected onDie(): void {
         console.log(`${this.unitName}死亡，奖励 ${this.goldReward} 金币`);
-        
+
+        // 隐藏血条
+        if (this._healthBarContainer) {
+            this._healthBarContainer.active = false;
+        }
+
         // 停止移动
         this.stopMovement();
-        
+
         const battleManager = BattleManager.instance;
         if (battleManager) {
             battleManager.UnregisterEnemy(this.node);
         }
-        
+
         if (this._gameManager) {
             this._gameManager.AddGold(this.goldReward);
             this._gameManager.RemoveActiveEnemy(this.node);
         }
-        
+
         this.createDeathEffect();
         this.node.destroy();
     }
@@ -330,7 +352,7 @@ export abstract class BaseMouse extends Component {
     
     protected createMouseNameLabel(): void {
         const labelConfig = this.getMouseLabelConfig();
-        
+
         this._nameLabel = DrawingHelper.createLabel(this.node, {
             text: labelConfig.text,
             fontSize: labelConfig.fontSize,
@@ -338,6 +360,52 @@ export abstract class BaseMouse extends Component {
             position: { x: 0, y: labelConfig.yOffset, z: 0 },
             size: labelConfig.size
         });
+    }
+
+    /**
+     * 创建老鼠血条 - 统一的血条管理系统
+     */
+    protected createMouseHealthBar(): void {
+        const healthBarConfig = this.getHealthBarConfig();
+
+        const healthBarData = DrawingHelper.createHealthBar(this.node, {
+            width: healthBarConfig.width,
+            height: healthBarConfig.height,
+            position: { x: 0, y: healthBarConfig.yOffset, z: 0 },
+            backgroundColor: healthBarConfig.backgroundColor || new Color(60, 60, 60),
+            foregroundColor: healthBarConfig.foregroundColor || new Color(0, 255, 0),
+            borderColor: healthBarConfig.borderColor || new Color(255, 255, 255),
+            borderWidth: healthBarConfig.borderWidth || 1
+        });
+
+        this._healthBarContainer = healthBarData.container;
+        this._healthBarForeground = healthBarData.foreground;
+
+        // 血条始终显示
+        this._healthBarContainer.active = true;
+
+        // 初始化血条显示
+        this.updateMouseHealthBarDisplay();
+    }
+
+    /**
+     * 更新老鼠血条显示 - 统一的血条更新系统
+     */
+    protected updateMouseHealthBarDisplay(): void {
+        if (this._healthBarForeground && this._healthBarContainer) {
+            const healthPercent = this.currentHealth / this.maxHealth;
+            const config = this.getHealthBarConfig();
+
+            DrawingHelper.updateHealthBar(
+                this._healthBarForeground,
+                healthPercent,
+                config.width,
+                config.height
+            );
+
+            // 血条始终显示，只有死亡时才隐藏
+            this._healthBarContainer.active = healthPercent > 0;
+        }
     }
     
     /**
