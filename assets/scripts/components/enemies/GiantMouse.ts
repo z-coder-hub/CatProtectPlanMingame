@@ -65,7 +65,7 @@ export class GiantMouse extends BaseMouse {
     }
     
     private initializeVisuals(): void {
-        this._graphics = this.node.addComponent(Graphics);
+        this._graphics = this.getGraphicsComponent();
         
         this.drawGiantMouseAppearance();
         this.createHealthBar();

@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
+import { _decorator, Color, Graphics, Node, Vec3, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
@@ -153,11 +153,14 @@ export class AmericanBomber extends BaseHero {
         effectGraphics.circle(0, 0, 8);
         effectGraphics.fill();
         
-        this.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.3);
+        tween(effectNode)
+            .delay(0.3)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     // 重写标签配置，使用完整英雄名称

@@ -21,15 +21,6 @@
         ]
       },
       {
-        "matcher": "mcp__gemini",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash /Users/shiyuanchen/Project/CatProtectPlanMingame/.claude/hooks/gemini-context-injector.sh"
-          }
-        ]
-      },
-      {
         "matcher": "Task",
         "hooks": [
           {

@@ -13,6 +13,15 @@ import { StealthMouse } from '../components/enemies/StealthMouse';
 import { MouseKing } from '../components/enemies/MouseKing';
 import { MechMouse } from '../components/enemies/MechMouse';
 
+// 新BOSS组件导入
+import { ArmorOverlord } from '../components/enemies/ArmorOverlord';
+import { ShadowAssassin } from '../components/enemies/ShadowAssassin';
+import { StormTyrant } from '../components/enemies/StormTyrant';
+import { GiantBehemoth } from '../components/enemies/GiantBehemoth';
+import { ThunderMaster } from '../components/enemies/ThunderMaster';
+import { MechCommander } from '../components/enemies/MechCommander';
+import { UltimateOverlord } from '../components/enemies/UltimateOverlord';
+
 const { ccclass } = _decorator;
 
 @ccclass('EnemyFactory')
@@ -29,6 +38,15 @@ export class EnemyFactory {
         [EnemyType.STEALTH_MOUSE]: StealthMouse,
         [EnemyType.MOUSE_KING]: MouseKing,
         [EnemyType.MECH_MOUSE]: MechMouse,
+        
+        // 新BOSS组件映射
+        [EnemyType.ARMOR_OVERLORD]: ArmorOverlord,
+        [EnemyType.SHADOW_ASSASSIN]: ShadowAssassin,
+        [EnemyType.STORM_TYRANT]: StormTyrant,
+        [EnemyType.GIANT_BEHEMOTH]: GiantBehemoth,
+        [EnemyType.THUNDER_MASTER]: ThunderMaster,
+        [EnemyType.MECH_COMMANDER]: MechCommander,
+        [EnemyType.ULTIMATE_OVERLORD]: UltimateOverlord,
     };
     
     /**
@@ -211,7 +229,16 @@ export class EnemyFactory {
             [EnemyType.TANK_MOUSE]: "坦克老鼠，终极护甲",
             [EnemyType.STEALTH_MOUSE]: "潜行老鼠，闪避攻击",
             [EnemyType.MOUSE_KING]: "老鼠王，召唤BOSS",
-            [EnemyType.MECH_MOUSE]: "机械老鼠，远程火力"
+            [EnemyType.MECH_MOUSE]: "机械老鼠，远程火力",
+            
+            // 新BOSS描述
+            [EnemyType.ARMOR_OVERLORD]: "重甲统领，超高护甲减伤80%",
+            [EnemyType.SHADOW_ASSASSIN]: "潜影刺客，永久潜行免疫50%伤害",
+            [EnemyType.STORM_TYRANT]: "疾风暴君，极速移动召唤疾速小兵",
+            [EnemyType.GIANT_BEHEMOTH]: "巨兽霸主，超大血量践踏范围伤害",
+            [EnemyType.THUNDER_MASTER]: "雷电大师，链式雷电攻击电流场护盾",
+            [EnemyType.MECH_COMMANDER]: "机械军团长，无限召唤机械兵自我修复",
+            [EnemyType.ULTIMATE_OVERLORD]: "终极霸王，融合所有BOSS能力最终挑战"
         };
         
         return descriptions[enemyType] || "未知敌人";
@@ -232,7 +259,16 @@ export class EnemyFactory {
             [EnemyType.TANK_MOUSE]: ["护甲减伤"],
             [EnemyType.STEALTH_MOUSE]: ["闪避攻击"],
             [EnemyType.MOUSE_KING]: ["召唤小老鼠"],
-            [EnemyType.MECH_MOUSE]: ["激光攻击", "远程威胁"]
+            [EnemyType.MECH_MOUSE]: ["激光攻击", "远程威胁"],
+            
+            // 新BOSS特殊能力
+            [EnemyType.ARMOR_OVERLORD]: ["超高护甲", "伤害减免80%", "重装冲锋"],
+            [EnemyType.SHADOW_ASSASSIN]: ["永久潜行", "伤害免疫50%", "暗影闪烁"],
+            [EnemyType.STORM_TYRANT]: ["极速移动", "召唤疾速小兵", "风暴冲击"],
+            [EnemyType.GIANT_BEHEMOTH]: ["超大血量", "践踏范围伤害", "地震冲击"],
+            [EnemyType.THUNDER_MASTER]: ["链式雷电", "电流场护盾", "雷电风暴"],
+            [EnemyType.MECH_COMMANDER]: ["无限召唤机械兵", "自我修复", "激光炮台"],
+            [EnemyType.ULTIMATE_OVERLORD]: ["融合所有能力", "多重形态", "终极毁灭"]
         };
         
         return abilities[enemyType] || [];

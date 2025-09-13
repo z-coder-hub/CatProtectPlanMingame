@@ -278,11 +278,14 @@ export abstract class BaseProjectile extends Component {
         }
         
         // 通知ProjectileSystem回收或销毁
-        this.scheduleOnce(() => {
-            if (this.node && this.node.isValid) {
-                this.node.destroy();
-            }
-        }, 0);
+        tween(this.node)
+            .delay(0.016) // 下一帧执行，避免当前帧销毁问题
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.node.destroy();
+                }
+            })
+            .start();
     }
     
     /**

@@ -1,6 +1,6 @@
-import { _decorator, Component, Color, Graphics } from 'cc';
+import { _decorator, Component, Color, Graphics, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 
 const { ccclass, property } = _decorator;
@@ -14,6 +14,8 @@ export class ShadowAssassin extends BaseMouse {
 
     /** 潜行几率 */
     private stealthChance: number = 0.6;
+    
+    public readonly enemyType: EnemyType = EnemyType.SHADOW_ASSASSIN;
     
     /** 减伤比例 */
     private damageReduction: number = 0.3;
@@ -29,9 +31,7 @@ export class ShadowAssassin extends BaseMouse {
      */
     protected initializeMouseStats(): void {
         const config = ENEMY_CONFIGS[EnemyType.SHADOW_ASSASSIN];
-        this.mouseType = EnemyType.SHADOW_ASSASSIN;
-        this.mouseCategory = EnemyCategory.BOSS;
-        this.mouseName = config.name;
+        this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
@@ -47,7 +47,7 @@ export class ShadowAssassin extends BaseMouse {
      * 初始化潜影刺客外观
      */
     protected initializeMouseVisuals(): void {
-        const graphics = this.node.addComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         
         if (this.isStealthed) {
             // 潜行状态 - 半透明紫黑色
@@ -140,10 +140,12 @@ export class ShadowAssassin extends BaseMouse {
             
             // 如果潜行状态发生变化，更新外观
             if (wasStealthed !== this.isStealthed) {
-                const graphics = this.node.getComponent(Graphics);
-                if (graphics) {
-                    graphics.clear();
-                    this.initializeMouseVisuals();
+                const graphics = this.getGraphicsComponent();
+                graphics.clear();
+                if (this.isStealthed) {
+                    this.drawStealthedForm(graphics);
+                } else {
+                    this.drawVisibleForm(graphics);
                 }
                 
                 console.log(`潜影刺客${this.isStealthed ? '进入' : '脱离'}潜行状态`);
@@ -170,11 +172,9 @@ export class ShadowAssassin extends BaseMouse {
         // 受到攻击后强制脱离潜行
         if (this.isStealthed) {
             this.isStealthed = false;
-            const graphics = this.node.getComponent(Graphics);
-            if (graphics) {
-                graphics.clear();
-                this.initializeMouseVisuals();
-            }
+            const graphics = this.getGraphicsComponent();
+            graphics.clear();
+            this.drawVisibleForm(graphics);
         }
     }
     
@@ -185,25 +185,47 @@ export class ShadowAssassin extends BaseMouse {
         console.log("潜影刺客消失在阴影中...");
         
         // 阴影消散特效
-        const graphics = this.node.getComponent(Graphics);
-        if (graphics) {
-            graphics.clear();
-            
-            // 显示消散的暗影粒子
-            graphics.fillColor = new Color(40, 20, 60, 150);
-            for (let i = 0; i < 10; i++) {
-                const angle = (i * Math.PI) / 5;
-                const distance = 10 + (i * 5);
-                const x = Math.cos(angle) * distance;
-                const y = Math.sin(angle) * distance;
-                graphics.circle(x, y, 2);
-                graphics.fill();
-            }
+        const graphics = this.getGraphicsComponent();
+        graphics.clear();
+        
+        // 显示消散的暗影粒子
+        graphics.fillColor = new Color(40, 20, 60, 150);
+        for (let i = 0; i < 10; i++) {
+            const angle = (i * Math.PI) / 5;
+            const distance = 10 + (i * 5);
+            const x = Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            graphics.circle(x, y, 2);
+            graphics.fill();
         }
         
         // 延迟销毁，展示消散效果
-        this.scheduleOnce(() => {
-            this.node.destroy();
-        }, 0.8);
+        tween(this.node)
+            .delay(0.8)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    super.onDie();
+                }
+            })
+            .start();
+    }
+    
+    /**
+     * 实现标签配置
+     */
+    protected getMouseLabelConfig(): {
+        text: string;
+        fontSize: number;
+        color: Color;
+        yOffset: number;
+        size: { width: number; height: number };
+    } {
+        return {
+            text: this.unitName,
+            fontSize: 22,
+            color: this.isStealthed ? new Color(150, 100, 200, 180) : new Color(200, 200, 200, 255),
+            yOffset: 40,
+            size: { width: 120, height: 30 }
+        };
     }
 }

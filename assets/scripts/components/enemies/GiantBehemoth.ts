@@ -1,6 +1,7 @@
-import { _decorator, Component, Color, Graphics, Vec3 } from 'cc';
+import { _decorator, Component, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyCategory } from '../../types/GameTypes';
+import { BaseHero } from '../heroes/BaseHero';
+import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
 
@@ -12,6 +13,9 @@ const { ccclass, property } = _decorator;
  */
 @ccclass('GiantBehemoth')
 export class GiantBehemoth extends BaseMouse {
+
+    /** 敌人类型 */
+    public readonly enemyType: EnemyType = EnemyType.GIANT_BEHEMOTH;
 
     /** 践踏攻击范围 */
     private aoeAttackRange: number = 80;
@@ -30,9 +34,7 @@ export class GiantBehemoth extends BaseMouse {
      */
     protected initializeMouseStats(): void {
         const config = ENEMY_CONFIGS[EnemyType.GIANT_BEHEMOTH];
-        this.mouseType = EnemyType.GIANT_BEHEMOTH;
-        this.mouseCategory = EnemyCategory.BOSS;
-        this.mouseName = config.name;
+        this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
@@ -47,7 +49,7 @@ export class GiantBehemoth extends BaseMouse {
      * 初始化巨兽霸主外观
      */
     protected initializeMouseVisuals(): void {
-        const graphics = this.node.addComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         
         // 巨兽色彩 - 深棕红色
         graphics.fillColor = new Color(120, 80, 50, 255);     // 深棕色身体
@@ -133,17 +135,20 @@ export class GiantBehemoth extends BaseMouse {
         this.showTrampleChargeEffect();
         
         // 1秒后执行实际践踏
-        this.scheduleOnce(() => {
-            this.executeTrample();
-            this.isTrampling = false;
-        }, 1.0);
+        tween(this.node)
+            .delay(1.0)
+            .call(() => {
+                this.executeTrample();
+                this.isTrampling = false;
+            })
+            .start();
     }
     
     /**
      * 显示践踏蓄力特效
      */
     private showTrampleChargeEffect(): void {
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
         // 添加蓄力光环
@@ -171,14 +176,21 @@ export class GiantBehemoth extends BaseMouse {
         
         // 对范围内的所有英雄造成伤害
         const myPosition = this.node.position;
-        gameManager.heroList.forEach(hero => {
-            if (!hero.node) return;
+        const deployedHeroes = gameManager.deployedHeroes;
+        if (!deployedHeroes) return;
+        
+        deployedHeroes.forEach(heroNode => {
+            if (!heroNode || !heroNode.isValid) return;
             
-            const distance = Vec3.distance(myPosition, hero.node.position);
+            const distance = Vec3.distance(myPosition, heroNode.position);
             if (distance <= this.aoeAttackRange) {
-                // 由于英雄没有生命值，这里只是显示效果
-                console.log(`英雄${hero.heroName}受到巨兽霸主的践踏冲击！`);
-                this.showTrampleHitEffect(hero.node.position);
+                // 获取英雄组件
+                const heroComponent = heroNode.getComponent(BaseHero);
+                if (heroComponent) {
+                    // 由于英雄没有生命值，这里只是显示效果
+                    console.log(`英雄${heroComponent.heroName}受到巨兽霸主的践踏冲击！`);
+                    this.showTrampleHitEffect(heroNode.position);
+                }
             }
         });
         
@@ -190,7 +202,7 @@ export class GiantBehemoth extends BaseMouse {
      * 显示践踏命中特效
      */
     private showTrampleHitEffect(targetPos: Vec3): void {
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
         // 在目标位置显示冲击特效
@@ -204,7 +216,7 @@ export class GiantBehemoth extends BaseMouse {
      * 显示践踏爆炸特效
      */
     private showTrampleExplosion(): void {
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
         // 重绘基础外观
@@ -240,10 +252,18 @@ export class GiantBehemoth extends BaseMouse {
         }
         
         // 2秒后恢复正常外观
-        this.scheduleOnce(() => {
-            graphics.clear();
-            this.initializeMouseVisuals();
-        }, 2.0);
+        tween(this.node)
+            .delay(2.0)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    const graphics = this.getGraphicsComponent();
+                    if (graphics) {
+                        graphics.clear();
+                        this.initializeMouseVisuals();
+                    }
+                }
+            })
+            .start();
     }
     
     /**
@@ -253,7 +273,7 @@ export class GiantBehemoth extends BaseMouse {
         console.log("巨兽霸主发出愤怒的咆哮！");
         
         // 愤怒特效
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (graphics) {
             // 添加愤怒光环
             graphics.strokeColor = new Color(255, 50, 50, 200);
@@ -266,11 +286,30 @@ export class GiantBehemoth extends BaseMouse {
     /**
      * 巨兽霸主特殊死亡效果
      */
+    /**
+     * 获取老鼠标签配置
+     */
+    protected getMouseLabelConfig(): {
+        text: string;
+        fontSize: number;
+        color: Color;
+        yOffset: number;
+        size: { width: number; height: number };
+    } {
+        return {
+            text: "巨兽霸主",
+            fontSize: 22,
+            color: new Color(255, 255, 255, 255),
+            yOffset: 40,
+            size: { width: 120, height: 30 }
+        };
+    }
+    
     protected onDie(): void {
         console.log("巨兽霸主轰然倒下，大地震颤！");
         
         // 倒塌特效
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (graphics) {
             graphics.clear();
             
@@ -292,9 +331,7 @@ export class GiantBehemoth extends BaseMouse {
             }
         }
         
-        // 延迟销毁，展示倒塌效果
-        this.scheduleOnce(() => {
-            this.node.destroy();
-        }, 2.0);
+        // 调用父类死亡处理
+        super.onDie();
     }
 }

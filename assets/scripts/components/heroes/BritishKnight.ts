@@ -167,12 +167,15 @@ export class BritishKnight extends BaseHero {
             this.drawBritishKnightAppearance();
             
             // 3秒后恢复原色
-            this.scheduleOnce(() => {
-                if (this._graphics) {
-                    this._graphics.fillColor = originalColor;
-                    this.drawBritishKnightAppearance();
-                }
-            }, 3);
+            tween(this.node)
+                .delay(3.0)
+                .call(() => {
+                    if (this._graphics) {
+                        this._graphics.fillColor = originalColor;
+                        this.drawBritishKnightAppearance();
+                    }
+                })
+                .start();
         }
     }
     

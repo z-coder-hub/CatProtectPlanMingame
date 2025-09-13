@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Vec3 } from 'cc';
-import { WaveConfig, EnemyType, LevelConfig } from '../types/GameTypes';
+import { WaveConfig, EnemyType, LevelConfig, GameState } from '../types/GameTypes';
 import { GAME_CONFIG } from '../types/GameConstants';
 import { GameManager } from './GameManager';
 import { BattleManager } from './BattleManager';
@@ -135,6 +135,12 @@ export class WaveManager extends Component {
     }
     
     protected update(dt: number): void {
+        // 检查游戏状态，如果游戏已胜利则停止所有更新
+        if (this._gameManager && this._gameManager.gameState === GameState.VICTORY) {
+            // 游戏已通关，停止所有波次管理器更新
+            return;
+        }
+        
         switch (this._waveState) {
             case WaveState.WAITING:
                 this.updateWaitingState(dt);

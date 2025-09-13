@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Node } from 'cc';
+import { _decorator, Color, Graphics, Node, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
@@ -92,11 +92,14 @@ export class ScottishMarksman extends BaseHero {
         
         // 使用投射物系统对每个目标发射精确物理子弹
         selectedTargets.forEach((target, index) => {
-            this.scheduleOnce(() => {
-                if (target && target.isValid) {
-                    ProjectileSystem.CreatePhysicalBullet(this, target.position);
-                }
-            }, index * 0.1); // 间隔0.1秒发射
+            tween(this.node)
+                .delay(index * 0.1) // 间隔0.1秒发射
+                .call(() => {
+                    if (target && target.isValid && this.node && this.node.isValid) {
+                        ProjectileSystem.CreatePhysicalBullet(this, target.position);
+                    }
+                })
+                .start();
         });
         
         this.createAttackEffect();
@@ -120,11 +123,14 @@ export class ScottishMarksman extends BaseHero {
         }
         effectGraphics.stroke();
         
-        this.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.3);
+        tween(effectNode)
+            .delay(0.3)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     

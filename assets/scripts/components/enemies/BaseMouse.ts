@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, tween, TweenSystem, Label, Color } from 'cc';
+import { _decorator, Component, Node, Vec3, tween, TweenSystem, Label, Color, Graphics } from 'cc';
 import { EnemyType, EnemyState, EnemyUnitStats } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
@@ -37,6 +37,7 @@ export abstract class BaseMouse extends Component {
     protected _gameManager: GameManager | null = null;
     protected _healthBarNode: Node | null = null;
     protected _nameLabel: Label | null = null;
+    protected _graphics: Graphics | null = null;
     
     // === Tween移动系统属性 ===
     protected _movementTween: any = null;
@@ -337,5 +338,24 @@ export abstract class BaseMouse extends Component {
             position: { x: 0, y: labelConfig.yOffset, z: 0 },
             size: labelConfig.size
         });
+    }
+    
+    /**
+     * 获取Graphics组件，直接添加模式
+     * 遵循CLAUDE.md禁止条件性组件添加的原则
+     */
+    protected getGraphicsComponent(): Graphics {
+        if (!this._graphics) {
+            // 直接添加Graphics组件，让Cocos Creator处理重复检查
+            this._graphics = this.node.addComponent(Graphics);
+            if (!this._graphics) {
+                // 如果添加失败，尝试获取现有组件
+                this._graphics = this.node.getComponent(Graphics);
+                if (!this._graphics) {
+                    console.error("无法获取Graphics组件:", this.node.name);
+                }
+            }
+        }
+        return this._graphics;
     }
 }

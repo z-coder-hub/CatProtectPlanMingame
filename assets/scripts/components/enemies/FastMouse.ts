@@ -97,8 +97,8 @@ export class FastMouse extends BaseMouse {
     
     // 初始化外观
     private initializeVisuals(): void {
-        // 添加Graphics组件绘制外观
-        this._graphics = this.node.addComponent(Graphics);
+        // 获取Graphics组件绘制外观
+        this._graphics = this.getGraphicsComponent();
         
         this.drawFastMouseAppearance();
     }

@@ -38,7 +38,7 @@ export class TankMouse extends BaseMouse {
     
     protected initializeMouseVisuals(): void {
         // 创建坦克老鼠外观 - 深灰色厚重外观
-        this._graphics = this.node.addComponent(Graphics);
+        this._graphics = this.getGraphicsComponent();
         
         this.drawTankMouseAppearance();
     }

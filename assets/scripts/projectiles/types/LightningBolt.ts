@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics, Component } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { GameManager } from '../../managers/GameManager';
@@ -135,9 +135,14 @@ export class LightningBolt extends BaseProjectile {
                 
                 // 递归继续链式攻击
                 const nextChainDamage = chainDamage * this.chainDamageDecay;
-                this.scheduleOnce(() => {
-                    this.performChainLightning(nearestTarget!, nextChainDamage, remainingChains - 1);
-                }, 0.1); // 短暂延迟创造视觉效果
+                tween(this.node)
+                    .delay(0.1) // 短暂延迟创造视觉效果
+                    .call(() => {
+                        if (this.node && this.node.isValid) {
+                            this.performChainLightning(nearestTarget!, nextChainDamage, remainingChains - 1);
+                        }
+                    })
+                    .start();
             }
         }
     }
@@ -183,12 +188,14 @@ export class LightningBolt extends BaseProjectile {
         effectGraphics.stroke();
         
         // 闪电特效持续0.4秒
-        const tempComponent = effectNode.addComponent(Component);
-        tempComponent.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.4);
+        tween(effectNode)
+            .delay(0.4)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     /**
@@ -235,12 +242,14 @@ export class LightningBolt extends BaseProjectile {
         chainGraphics.stroke();
         
         // 链式特效持续0.3秒
-        const tempComponent2 = chainEffectNode.addComponent(Component);
-        tempComponent2.scheduleOnce(() => {
-            if (chainEffectNode && chainEffectNode.isValid) {
-                chainEffectNode.destroy();
-            }
-        }, 0.3);
+        tween(chainEffectNode)
+            .delay(0.3)
+            .call(() => {
+                if (chainEffectNode && chainEffectNode.isValid) {
+                    chainEffectNode.destroy();
+                }
+            })
+            .start();
     }
     
     /**
@@ -274,12 +283,14 @@ export class LightningBolt extends BaseProjectile {
         chainHitGraphics.stroke();
         
         // 链式击中特效持续0.2秒
-        const tempComponent3 = chainHitNode.addComponent(Component);
-        tempComponent3.scheduleOnce(() => {
-            if (chainHitNode && chainHitNode.isValid) {
-                chainHitNode.destroy();
-            }
-        }, 0.2);
+        tween(chainHitNode)
+            .delay(0.2)
+            .call(() => {
+                if (chainHitNode && chainHitNode.isValid) {
+                    chainHitNode.destroy();
+                }
+            })
+            .start();
     }
     
     /**

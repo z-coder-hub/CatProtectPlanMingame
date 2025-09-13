@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Node } from 'cc';
+import { _decorator, Color, Graphics, Node, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
@@ -73,17 +73,20 @@ export class BengalHunter extends BaseHero {
         ProjectileSystem.CreatePhysicalBullet(this, target.position);
         
         // 短延迟后发射第二发和第三发子弹
-        this.scheduleOnce(() => {
-            if (target && target.isValid) {
-                ProjectileSystem.CreatePhysicalBullet(this, target.position);
-            }
-        }, 0.1);
-        
-        this.scheduleOnce(() => {
-            if (target && target.isValid) {
-                ProjectileSystem.CreatePhysicalBullet(this, target.position);
-            }
-        }, 0.2);
+        tween(this.node)
+            .delay(0.1)
+            .call(() => {
+                if (target && target.isValid) {
+                    ProjectileSystem.CreatePhysicalBullet(this, target.position);
+                }
+            })
+            .delay(0.1)
+            .call(() => {
+                if (target && target.isValid) {
+                    ProjectileSystem.CreatePhysicalBullet(this, target.position);
+                }
+            })
+            .start();
         
         this.createAttackEffect();
     }
@@ -99,11 +102,14 @@ export class BengalHunter extends BaseHero {
         effectGraphics.circle(0, 0, 25);
         effectGraphics.stroke();
         
-        this.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.3);
+        tween(effectNode)
+            .delay(0.3)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     // 重写标签配置，使用完整英雄名称

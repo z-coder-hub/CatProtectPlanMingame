@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics, Component } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { GameManager } from '../../managers/GameManager';
@@ -252,12 +252,14 @@ export class ExplosionWave extends BaseProjectile {
         effectGraphics.stroke();
         
         // 爆炸特效持续0.6秒
-        const tempComponent = effectNode.addComponent(Component);
-        tempComponent.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.6);
+        tween(effectNode)
+            .delay(0.6)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     /**
@@ -301,12 +303,14 @@ export class ExplosionWave extends BaseProjectile {
         individualGraphics.stroke();
         
         // 个体特效持续0.25秒
-        const tempComponent = individualEffect.addComponent(Component);
-        tempComponent.scheduleOnce(() => {
-            if (individualEffect && individualEffect.isValid) {
-                individualEffect.destroy();
-            }
-        }, 0.25);
+        tween(individualEffect)
+            .delay(0.25)
+            .call(() => {
+                if (individualEffect && individualEffect.isValid) {
+                    individualEffect.destroy();
+                }
+            })
+            .start();
     }
     
     /**
@@ -345,12 +349,14 @@ export class ExplosionWave extends BaseProjectile {
         knockbackGraphics.stroke();
         
         // 推拽指示器持续0.4秒
-        const tempComponent = knockbackIndicator.addComponent(Component);
-        tempComponent.scheduleOnce(() => {
-            if (knockbackIndicator && knockbackIndicator.isValid) {
-                knockbackIndicator.destroy();
-            }
-        }, 0.4);
+        tween(knockbackIndicator)
+            .delay(0.4)
+            .call(() => {
+                if (knockbackIndicator && knockbackIndicator.isValid) {
+                    knockbackIndicator.destroy();
+                }
+            })
+            .start();
     }
     
     /**

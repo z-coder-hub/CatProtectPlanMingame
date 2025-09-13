@@ -1,6 +1,6 @@
-import { _decorator, Component, Color, Graphics, Vec3 } from 'cc';
+import { _decorator, Component, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
 
@@ -12,6 +12,9 @@ const { ccclass, property } = _decorator;
  */
 @ccclass('UltimateOverlord')
 export class UltimateOverlord extends BaseMouse {
+
+    /** 敌人类型 */
+    public readonly enemyType: EnemyType = EnemyType.ULTIMATE_OVERLORD;
 
     /** 护甲值 */
     private armorValue: number = 5;
@@ -52,9 +55,7 @@ export class UltimateOverlord extends BaseMouse {
      */
     protected initializeMouseStats(): void {
         const config = ENEMY_CONFIGS[EnemyType.ULTIMATE_OVERLORD];
-        this.mouseType = EnemyType.ULTIMATE_OVERLORD;
-        this.mouseCategory = EnemyCategory.BOSS;
-        this.mouseName = config.name;
+        this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
@@ -77,7 +78,7 @@ export class UltimateOverlord extends BaseMouse {
      * 初始化终极霸王外观
      */
     protected initializeMouseVisuals(): void {
-        const graphics = this.node.addComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         
         if (this.isStealthed) {
             this.drawStealthedForm(graphics);
@@ -320,13 +321,19 @@ export class UltimateOverlord extends BaseMouse {
     }
     
     /**
-     * 更新视觉特效
+     * 更新视觉特效（减少Graphics组件重复访问）
      */
     private updateVisualEffects(): void {
-        const graphics = this.node.getComponent(Graphics);
-        if (graphics) {
-            graphics.clear();
-            this.initializeMouseVisuals();
+        if (!this._graphics) {
+            this._graphics = this.getGraphicsComponent();
+        }
+        if (this._graphics) {
+            this._graphics.clear();
+            if (this.isStealthed) {
+                this.drawStealthedForm(this._graphics);
+            } else {
+                this.drawNormalForm(this._graphics);
+            }
         }
     }
     
@@ -363,18 +370,20 @@ export class UltimateOverlord extends BaseMouse {
             const offsetX = Math.cos(angle) * distance;
             const offsetY = Math.sin(angle) * distance;
             
-            gameManager.spawnEnemyAtPosition(this.summonType,
-                this.node.position.x + offsetX,
-                this.node.position.y + offsetY);
+            gameManager.SpawnEnemyAtPosition(this.summonType,
+                new Vec3(this.node.position.x + offsetX, this.node.position.y + offsetY, 0));
         }
         
         this.updateVisualEffects();
         
         // 2秒后清除能力特效
-        this.scheduleOnce(() => {
-            this.activeAbility = '';
-            this.updateVisualEffects();
-        }, 2.0);
+        tween(this.node)
+            .delay(2.0)
+            .call(() => {
+                this.activeAbility = '';
+                this.updateVisualEffects();
+            })
+            .start();
     }
     
     /**
@@ -382,7 +391,7 @@ export class UltimateOverlord extends BaseMouse {
      */
     private performChainAttack(): void {
         const gameManager = GameManager.instance;
-        if (!gameManager || gameManager.heroList.length === 0) return;
+        if (!gameManager || gameManager.deployedHeroes.length === 0) return;
         
         this.activeAbility = 'chainAttack';
         console.log(`终极霸王发动终极链式攻击！`);
@@ -394,7 +403,7 @@ export class UltimateOverlord extends BaseMouse {
         if (currentTarget) {
             targets.push(currentTarget);
             
-            for (let i = 1; i < this.chainTargets && i < gameManager.heroList.length; i++) {
+            for (let i = 1; i < this.chainTargets && i < gameManager.deployedHeroes.length; i++) {
                 const nextTarget = this.findNextChainTarget(currentTarget, targets);
                 if (nextTarget) {
                     targets.push(nextTarget);
@@ -406,10 +415,13 @@ export class UltimateOverlord extends BaseMouse {
         this.updateVisualEffects();
         
         // 3秒后清除能力特效
-        this.scheduleOnce(() => {
-            this.activeAbility = '';
-            this.updateVisualEffects();
-        }, 3.0);
+        tween(this.node)
+            .delay(3.0)
+            .call(() => {
+                this.activeAbility = '';
+                this.updateVisualEffects();
+            })
+            .start();
     }
     
     /**
@@ -422,9 +434,12 @@ export class UltimateOverlord extends BaseMouse {
         let nearestHero = null;
         let minDistance = Infinity;
         
-        gameManager.heroList.forEach(hero => {
-            if (!hero.node) return;
-            const distance = Vec3.distance(this.node.position, hero.node.position);
+        gameManager.deployedHeroes.forEach(heroNode => {
+            if (!heroNode) return;
+            const hero = heroNode.getComponent(BaseHero);
+            if (!hero) return;
+            
+            const distance = Vec3.distance(this.node.position, heroNode.position);
             if (distance < minDistance) {
                 minDistance = distance;
                 nearestHero = hero;
@@ -444,9 +459,12 @@ export class UltimateOverlord extends BaseMouse {
         let nextTarget = null;
         let minDistance = Infinity;
         
-        gameManager.heroList.forEach(hero => {
-            if (!hero.node || excludeList.includes(hero)) return;
-            const distance = Vec3.distance(currentTarget.node.position, hero.node.position);
+        gameManager.deployedHeroes.forEach(heroNode => {
+            if (!heroNode) return;
+            const hero = heroNode.getComponent(BaseHero);
+            if (!hero || excludeList.includes(hero)) return;
+            
+            const distance = Vec3.distance(currentTarget.node.position, heroNode.position);
             if (distance < minDistance && distance <= 200) {
                 minDistance = distance;
                 nextTarget = hero;
@@ -488,7 +506,7 @@ export class UltimateOverlord extends BaseMouse {
      * 显示受伤特效
      */
     private showDamageEffect(): void {
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
         // 愤怒光环
@@ -509,13 +527,32 @@ export class UltimateOverlord extends BaseMouse {
     }
     
     /**
+     * 获取老鼠标签配置
+     */
+    protected getMouseLabelConfig(): {
+        text: string;
+        fontSize: number;
+        color: Color;
+        yOffset: number;
+        size: { width: number; height: number };
+    } {
+        return {
+            text: "终极霸王",
+            fontSize: 22,
+            color: new Color(255, 255, 255, 255),
+            yOffset: 40,
+            size: { width: 120, height: 30 }
+        };
+    }
+    
+    /**
      * 终极霸王终极死亡效果
      */
     protected onDie(): void {
         console.log("终极霸王的统治时代结束了！世界恢复和平...");
         
         // 终极死亡特效
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (graphics) {
             graphics.clear();
             
@@ -554,9 +591,7 @@ export class UltimateOverlord extends BaseMouse {
             }
         }
         
-        // 延长展示时间，这是最终胜利
-        this.scheduleOnce(() => {
-            this.node.destroy();
-        }, 3.0);
+        // 调用父类死亡处理
+        super.onDie();
     }
 }

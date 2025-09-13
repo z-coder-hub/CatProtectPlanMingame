@@ -1,9 +1,10 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, Color, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
+import { BattleManager } from '../../managers/BattleManager';
 
 const { ccclass } = _decorator;
 
@@ -112,11 +113,14 @@ export class MaineThunder extends BaseHero {
         effectGraphics.circle(0, 0, 35);
         effectGraphics.stroke();
         
-        this.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.4);
+        tween(effectNode)
+            .delay(0.4)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     private createChainLightningEffect(from: Vec3, to: Vec3): void {
@@ -133,11 +137,14 @@ export class MaineThunder extends BaseHero {
         effectGraphics.lineTo(direction.x, direction.y);
         effectGraphics.stroke();
         
-        this.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.2);
+        tween(effectNode)
+            .delay(0.2)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     // 重写标签配置，使用完整英雄名称

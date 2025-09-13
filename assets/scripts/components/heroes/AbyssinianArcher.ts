@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Node, Vec3 } from 'cc';
+import { _decorator, Color, Graphics, Node, Vec3, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
@@ -143,11 +143,14 @@ export class AbyssinianArcher extends BaseHero {
         effectGraphics.lineTo(0, 0);
         effectGraphics.stroke();
         
-        this.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.4);
+        tween(effectNode)
+            .delay(0.4)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     

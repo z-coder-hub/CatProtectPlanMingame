@@ -1,6 +1,6 @@
-import { _decorator, Component, Color, Graphics } from 'cc';
+import { _decorator, Component, Color, Graphics, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
 
@@ -12,6 +12,9 @@ const { ccclass, property } = _decorator;
  */
 @ccclass('MechCommander')
 export class MechCommander extends BaseMouse {
+
+    /** 敌人类型 */
+    public readonly enemyType: EnemyType = EnemyType.MECH_COMMANDER;
 
     /** 召唤数量限制 */
     private summonCount: number = 6;
@@ -39,9 +42,7 @@ export class MechCommander extends BaseMouse {
      */
     protected initializeMouseStats(): void {
         const config = ENEMY_CONFIGS[EnemyType.MECH_COMMANDER];
-        this.mouseType = EnemyType.MECH_COMMANDER;
-        this.mouseCategory = EnemyCategory.BOSS;
-        this.mouseName = config.name;
+        this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
@@ -55,7 +56,7 @@ export class MechCommander extends BaseMouse {
      * 初始化机械军团长外观
      */
     protected initializeMouseVisuals(): void {
-        const graphics = this.node.addComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         
         // 机械色彩 - 银灰色机械风
         graphics.fillColor = new Color(140, 140, 140, 255);   // 银灰色主体
@@ -131,6 +132,71 @@ export class MechCommander extends BaseMouse {
     }
     
     /**
+     * 绘制基础机械外观（不重新获取Graphics组件）
+     */
+    private drawBasicVisuals(graphics: Graphics): void {
+        // 机械色彩 - 银灰色机械风
+        graphics.fillColor = new Color(140, 140, 140, 255);   // 银灰色主体
+        graphics.strokeColor = new Color(100, 100, 100, 255); // 深灰色边框
+        graphics.lineWidth = 3;
+        
+        // 机械身体 - 六角形指挥官形状
+        graphics.moveTo(0, -20);
+        graphics.lineTo(15, -10);
+        graphics.lineTo(15, 10);
+        graphics.lineTo(0, 20);
+        graphics.lineTo(-15, 10);
+        graphics.lineTo(-15, -10);
+        graphics.close();
+        graphics.fill();
+        graphics.stroke();
+        
+        // 指挥头盔
+        graphics.fillColor = new Color(120, 120, 150, 255);   // 蓝灰色头盔
+        graphics.rect(-12, -25, 24, 15);
+        graphics.fill();
+        graphics.stroke();
+        
+        // 机械眼睛 - 红色扫描器
+        graphics.fillColor = new Color(255, 50, 50, 255);
+        graphics.rect(-8, -22, 6, 3);
+        graphics.fill();
+        graphics.rect(2, -22, 6, 3);
+        graphics.fill();
+        
+        // 天线/通讯设备
+        graphics.strokeColor = new Color(200, 200, 200, 255);
+        graphics.lineWidth = 2;
+        graphics.moveTo(-5, -25);
+        graphics.lineTo(-5, -35);
+        graphics.stroke();
+        graphics.moveTo(5, -25);
+        graphics.lineTo(5, -35);
+        graphics.stroke();
+        
+        // 天线顶部
+        graphics.fillColor = new Color(255, 100, 100, 255);
+        graphics.circle(-5, -35, 2);
+        graphics.fill();
+        graphics.circle(5, -35, 2);
+        graphics.fill();
+        
+        // 履带/移动系统
+        graphics.fillColor = new Color(80, 80, 80, 255);
+        graphics.rect(-18, 15, 36, 10);
+        graphics.fill();
+        graphics.stroke();
+        
+        // 履带齿轮
+        for (let i = 0; i < 6; i++) {
+            const x = -15 + (i * 6);
+            graphics.fillColor = new Color(60, 60, 60, 255);
+            graphics.circle(x, 20, 2);
+            graphics.fill();
+        }
+    }
+    
+    /**
      * 绘制机械细节
      */
     private drawMechanicalDetails(graphics: Graphics): void {
@@ -186,32 +252,34 @@ export class MechCommander extends BaseMouse {
     }
     
     /**
-     * 更新机械特效
+     * 更新机械特效（减少Graphics组件重复访问）
      */
     private updateMechanicalEffect(): void {
-        const graphics = this.node.getComponent(Graphics);
-        if (!graphics) return;
+        if (!this._graphics) {
+            this._graphics = this.getGraphicsComponent();
+        }
+        if (!this._graphics) return;
         
         // 重绘基础外观
-        graphics.clear();
-        this.initializeMouseVisuals();
+        this._graphics.clear();
+        this.drawBasicVisuals(this._graphics);
         
         // 添加扫描线特效
         const time = Date.now() / 1000;
-        graphics.strokeColor = new Color(100, 255, 100, 150);
-        graphics.lineWidth = 2;
+        this._graphics.strokeColor = new Color(100, 255, 100, 150);
+        this._graphics.lineWidth = 2;
         
         const scanY = -15 + (Math.sin(time * 4) + 1) * 15;
-        graphics.moveTo(-15, scanY);
-        graphics.lineTo(15, scanY);
-        graphics.stroke();
+        this._graphics.moveTo(-15, scanY);
+        this._graphics.lineTo(15, scanY);
+        this._graphics.stroke();
         
         // 数据传输特效
-        graphics.fillColor = new Color(100, 200, 255, 100);
+        this._graphics.fillColor = new Color(100, 200, 255, 100);
         for (let i = 0; i < 3; i++) {
             const y = -8 + (i * 8) + Math.sin(time * 2 + i) * 2;
-            graphics.rect(-2, y, 4, 2);
-            graphics.fill();
+            this._graphics.rect(-2, y, 4, 2);
+            this._graphics.fill();
         }
     }
     
@@ -236,9 +304,8 @@ export class MechCommander extends BaseMouse {
         const offsetY = Math.sin(angle) * distance;
         
         // 通过GameManager创建新机械敌人
-        gameManager.spawnEnemyAtPosition(this.summonType,
-            this.node.position.x + offsetX,
-            this.node.position.y + offsetY);
+        gameManager.SpawnEnemyAtPosition(this.summonType,
+            new Vec3(this.node.position.x + offsetX, this.node.position.y + offsetY, 0));
         
         this.spawnedCount++;
         
@@ -250,7 +317,7 @@ export class MechCommander extends BaseMouse {
      * 显示召唤特效
      */
     private showSummonEffect(): void {
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
         // 机械召唤光环
@@ -270,10 +337,16 @@ export class MechCommander extends BaseMouse {
         }
         
         // 1.5秒后恢复正常外观
-        this.scheduleOnce(() => {
-            graphics.clear();
-            this.initializeMouseVisuals();
-        }, 1.5);
+        tween(this.node)
+            .delay(1.5)
+            .call(() => {
+                const graphics = this.getGraphicsComponent();
+                if (graphics) {
+                    graphics.clear();
+                    this.initializeMouseVisuals();
+                }
+            })
+            .start();
     }
     
     /**
@@ -295,7 +368,7 @@ export class MechCommander extends BaseMouse {
      * 显示修复特效
      */
     private showRepairEffect(): void {
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
         // 修复光芒
@@ -322,7 +395,7 @@ export class MechCommander extends BaseMouse {
         console.log("机械军团长装甲受损，启动应急修复程序！");
         
         // 应急修复特效
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (graphics) {
             // 添加警告特效
             graphics.strokeColor = new Color(255, 200, 0, 255);
@@ -344,13 +417,32 @@ export class MechCommander extends BaseMouse {
     }
     
     /**
+     * 获取老鼠标签配置
+     */
+    protected getMouseLabelConfig(): {
+        text: string;
+        fontSize: number;
+        color: Color;
+        yOffset: number;
+        size: { width: number; height: number };
+    } {
+        return {
+            text: "机械军团长",
+            fontSize: 22,
+            color: new Color(255, 255, 255, 255),
+            yOffset: 40,
+            size: { width: 120, height: 30 }
+        };
+    }
+    
+    /**
      * 机械军团长特殊死亡效果
      */
     protected onDie(): void {
         console.log("机械军团长系统失控，发生爆炸！");
         
         // 机械爆炸特效
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (graphics) {
             graphics.clear();
             
@@ -385,9 +477,7 @@ export class MechCommander extends BaseMouse {
             }
         }
         
-        // 延迟销毁，展示爆炸效果
-        this.scheduleOnce(() => {
-            this.node.destroy();
-        }, 1.8);
+        // 调用父类死亡处理
+        super.onDie();
     }
 }

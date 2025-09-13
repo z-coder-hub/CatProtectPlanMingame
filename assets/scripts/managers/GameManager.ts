@@ -305,6 +305,12 @@ export class GameManager extends Component {
             return;
         }
         
+        // 防止重复处理关卡完成
+        if (this._gameState === GameState.VICTORY || this._gameState === GameState.GAME_OVER) {
+            console.log("关卡已经完成处理，忽略重复调用");
+            return;
+        }
+        
         if (isVictory) {
             this.handleLevelVictory();
         } else {

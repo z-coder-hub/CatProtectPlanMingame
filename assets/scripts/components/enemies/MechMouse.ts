@@ -39,7 +39,7 @@ export class MechMouse extends BaseMouse {
     
     protected initializeMouseVisuals(): void {
         // 创建机械老鼠外观 - 银灰色科技外观
-        this._graphics = this.node.addComponent(Graphics);
+        this._graphics = this.getGraphicsComponent();
         
         // 绘制机械老鼠身体
         this.drawMechMouseAppearance();

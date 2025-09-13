@@ -49,7 +49,7 @@ export class MouseKing extends BaseMouse {
     
     protected initializeMouseVisuals(): void {
         // 创建老鼠王外观 - 金黄色华贵外观，体型更大
-        const graphics = this.node.addComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         
         // 设置节点缩放，老鼠王比普通老鼠大50%
         this.node.setScale(1.5, 1.5, 1.5);

@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics, Component } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { GameManager } from '../../managers/GameManager';
@@ -123,13 +123,16 @@ export class IceShard extends BaseProjectile {
         this.createSlowEffect(target.node);
         
         // 定时恢复速度
-        target.scheduleOnce(() => {
-            if (target && target.isAlive) {
-                (target as any).currentSpeed = originalSpeed;
-                (target as any).isSlowed = false;
-                console.log(`[IceShard] ${target.unitName} 减速效果结束`);
-            }
-        }, this.freezeDuration);
+        tween(target.node)
+            .delay(this.freezeDuration)
+            .call(() => {
+                if (target && target.isAlive && target.node && target.node.isValid) {
+                    (target as any).currentSpeed = originalSpeed;
+                    (target as any).isSlowed = false;
+                    console.log(`[IceShard] ${target.unitName} 减速效果结束`);
+                }
+            })
+            .start();
     }
     
     /**
@@ -220,12 +223,14 @@ export class IceShard extends BaseProjectile {
         effectGraphics.stroke();
         
         // 冰霜特效持续0.5秒
-        const tempComponent = effectNode.addComponent(Component);
-        tempComponent.scheduleOnce(() => {
-            if (effectNode && effectNode.isValid) {
-                effectNode.destroy();
-            }
-        }, 0.5);
+        tween(effectNode)
+            .delay(0.5)
+            .call(() => {
+                if (effectNode && effectNode.isValid) {
+                    effectNode.destroy();
+                }
+            })
+            .start();
     }
     
     /**
@@ -259,12 +264,14 @@ export class IceShard extends BaseProjectile {
         frostGraphics.stroke();
         
         // 冰霜击中特效持续0.3秒
-        const tempComponent2 = frostEffectNode.addComponent(Component);
-        tempComponent2.scheduleOnce(() => {
-            if (frostEffectNode && frostEffectNode.isValid) {
-                frostEffectNode.destroy();
-            }
-        }, 0.3);
+        tween(frostEffectNode)
+            .delay(0.3)
+            .call(() => {
+                if (frostEffectNode && frostEffectNode.isValid) {
+                    frostEffectNode.destroy();
+                }
+            })
+            .start();
     }
     
     /**
@@ -298,12 +305,14 @@ export class IceShard extends BaseProjectile {
         slowGraphics.stroke();
         
         // 减速指示器持续时间与减速效果相同
-        const tempComponent3 = slowIndicator.addComponent(Component);
-        tempComponent3.scheduleOnce(() => {
-            if (slowIndicator && slowIndicator.isValid) {
-                slowIndicator.destroy();
-            }
-        }, this.freezeDuration);
+        tween(slowIndicator)
+            .delay(this.freezeDuration)
+            .call(() => {
+                if (slowIndicator && slowIndicator.isValid) {
+                    slowIndicator.destroy();
+                }
+            })
+            .start();
     }
     
     /**

@@ -43,7 +43,7 @@ export class StealthMouse extends BaseMouse {
     
     protected initializeMouseVisuals(): void {
         // 创建潜行老鼠外观 - 紫色半透明外观
-        this._graphics = this.node.addComponent(Graphics);
+        this._graphics = this.getGraphicsComponent();
         
         // 绘制潜行老鼠身体（较小且敏捷的外观）
         this.drawStealthMouseAppearance(false);

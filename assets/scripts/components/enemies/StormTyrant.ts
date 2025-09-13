@@ -1,6 +1,6 @@
-import { _decorator, Component, Color, Graphics } from 'cc';
+import { _decorator, Component, Color, Graphics, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType } from '../../types/GameTypes';
 import { ENEMY_CONFIGS } from '../../types/GameConstants';
 import { GameManager } from '../../managers/GameManager';
 
@@ -12,6 +12,9 @@ const { ccclass, property } = _decorator;
  */
 @ccclass('StormTyrant')
 export class StormTyrant extends BaseMouse {
+
+    /** 敌人类型 */
+    public readonly enemyType: EnemyType = EnemyType.STORM_TYRANT;
 
     /** 召唤数量 */
     private summonCount: number = 3;
@@ -30,9 +33,7 @@ export class StormTyrant extends BaseMouse {
      */
     protected initializeMouseStats(): void {
         const config = ENEMY_CONFIGS[EnemyType.STORM_TYRANT];
-        this.mouseType = EnemyType.STORM_TYRANT;
-        this.mouseCategory = EnemyCategory.BOSS;
-        this.mouseName = config.name;
+        this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
@@ -45,7 +46,7 @@ export class StormTyrant extends BaseMouse {
      * 初始化疾风暴君外观
      */
     protected initializeMouseVisuals(): void {
-        const graphics = this.node.addComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         
         // 风暴色彩 - 青蓝色主体
         graphics.fillColor = new Color(70, 150, 200, 255);    // 青蓝色身体
@@ -118,7 +119,7 @@ export class StormTyrant extends BaseMouse {
      * 更新风暴特效
      */
     private updateStormEffect(): void {
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
         // 重绘基础外观
@@ -157,9 +158,8 @@ export class StormTyrant extends BaseMouse {
             const offsetY = Math.sin(angle) * distance;
             
             // 通过GameManager创建新敌人
-            gameManager.spawnEnemyAtPosition(this.summonType, 
-                this.node.position.x + offsetX, 
-                this.node.position.y + offsetY);
+            gameManager.SpawnEnemyAtPosition(this.summonType, 
+                new Vec3(this.node.position.x + offsetX, this.node.position.y + offsetY, 0));
         }
         
         // 召唤特效
@@ -170,7 +170,7 @@ export class StormTyrant extends BaseMouse {
      * 显示召唤特效
      */
     private showSummonEffect(): void {
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
         // 添加召唤风暴特效
@@ -190,10 +190,16 @@ export class StormTyrant extends BaseMouse {
         }
         
         // 1秒后恢复正常外观
-        this.scheduleOnce(() => {
-            graphics.clear();
-            this.initializeMouseVisuals();
-        }, 1.0);
+        tween(this.node)
+            .delay(1.0)
+            .call(() => {
+                const graphics = this.getGraphicsComponent();
+                if (graphics) {
+                    graphics.clear();
+                    this.initializeMouseVisuals();
+                }
+            })
+            .start();
     }
     
     /**
@@ -203,7 +209,7 @@ export class StormTyrant extends BaseMouse {
         console.log("疾风暴君在风暴中闪避攻击！");
         
         // 风暴闪避特效
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (graphics) {
             // 添加闪避风暴效果
             graphics.strokeColor = new Color(255, 255, 255, 200);
@@ -216,11 +222,30 @@ export class StormTyrant extends BaseMouse {
     /**
      * 疾风暴君特殊死亡效果
      */
+    /**
+     * 获取老鼠标签配置
+     */
+    protected getMouseLabelConfig(): {
+        text: string;
+        fontSize: number;
+        color: Color;
+        yOffset: number;
+        size: { width: number; height: number };
+    } {
+        return {
+            text: "疾风暴君",
+            fontSize: 22,
+            color: new Color(255, 255, 255, 255),
+            yOffset: 40,
+            size: { width: 120, height: 30 }
+        };
+    }
+    
     protected onDie(): void {
         console.log("疾风暴君化作狂风消散...");
         
         // 风暴消散特效
-        const graphics = this.node.getComponent(Graphics);
+        const graphics = this.getGraphicsComponent();
         if (graphics) {
             graphics.clear();
             
@@ -241,9 +266,7 @@ export class StormTyrant extends BaseMouse {
             }
         }
         
-        // 延迟销毁，展示风暴消散效果
-        this.scheduleOnce(() => {
-            this.node.destroy();
-        }, 1.0);
+        // 调用父类死亡处理
+        super.onDie();
     }
 }
