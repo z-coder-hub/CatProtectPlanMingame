@@ -1,7 +1,6 @@
 import { _decorator, Component, Color, Graphics, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 
 const { ccclass, property } = _decorator;
@@ -28,11 +27,21 @@ export class StormTyrant extends BaseMouse {
     /** 风暴特效计时器 */
     private stormEffectTimer: number = 0;
     
-    /**
-     * 初始化疾风暴君属性
-     */
+    // 实现BaseMouse的抽象方法 - 疾风暴君配置
     protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.STORM_TYRANT];
+        const config = {
+            type: EnemyType.STORM_TYRANT,
+            name: "疾风暴君",
+            category: EnemyCategory.BOSS,
+            health: 250,
+            maxHealth: 250,
+            moveSpeed: 140,
+            goldReward: 90,
+            summonCount: 3,
+            summonType: EnemyType.SPEED_MOUSE
+        };
+
+        // 基础属性配置
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
@@ -40,6 +49,24 @@ export class StormTyrant extends BaseMouse {
         this.goldReward = config.goldReward;
         this.summonCount = (config as any).summonCount || 3;
         this.summonType = (config as any).summonType || EnemyType.SPEED_MOUSE;
+
+        console.log(`初始化${this.unitName}: 血量${this.maxHealth}, 移速${this.moveSpeed}, 奖励${this.goldReward}金币`);
+    }
+
+    /**
+     * 初始化疾风暴君移动行为 - 大幅旋风式移动
+     * 特点：使用spiral和curves模式，大摆动幅度，体现疾风特性
+     */
+    protected initializeMovementBehavior(): void {
+        // 疾风暴君的移动模式 - 螺旋和曲线混合
+        const patterns: ('spiral' | 'curves')[] = ['spiral', 'curves'];
+        this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // 大幅度的旋风式摆动 - 体现疾风暴君的狂野移动
+        this._zigzagAmplitude = 60 + Math.random() * 40; // 60-100像素的大幅摆动
+        this._segmentCount = 8 + Math.floor(Math.random() * 4); // 8-11段移动，增加旋风效果
+
+        console.log(`疾风暴君移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**

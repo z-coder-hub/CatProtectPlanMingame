@@ -1,9 +1,8 @@
-import { _decorator, Component, Color, Graphics, tween } from 'cc';
+import { _decorator, Color, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 /**
  * 重甲统领 - 超高护甲值BOSS
@@ -17,23 +16,46 @@ export class ArmorOverlord extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.ARMOR_OVERLORD;
     
-    /**
-     * 初始化重甲统领属性
-     */
-    protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.ARMOR_OVERLORD];
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
-        this.armorValue = (config as any).armorValue || 8;
+    // 实现BaseMouse的抽象方法 - 重甲统领配置
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.ARMOR_OVERLORD,
+            name: "重甲统领",
+            category: EnemyCategory.BOSS,
+            health: 400,
+            maxHealth: 400,
+            moveSpeed: 50,
+            goldReward: 100,
+            armorValue: 8
+        };
+    }
+
+    protected onLoad(): void {
+        const config = this.GetConfig();
+        this.armorValue = config.armorValue || 8;
+        super.onLoad();
+    }
+
+    // 重写基类移动行为初始化，使用重甲统领的参数
+    protected initializeMovementBehavior(): void {
+        // 重甲统领的移动参数配置：主要straight，稳定前进
+        this._movementPattern = 'straight';
+
+        // 设置稳重的移动参数
+        this._zigzagAmplitude = 5 + Math.random() * 7; // 5-12像素（极小摆动）
+        this._segmentCount = 2 + Math.floor(Math.random() * 3); // 2-4段移动（少分段，稳重）
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**
      * 初始化重甲统领外观
      */
     protected initializeMouseVisuals(): void {
+        this.initializeArmorOverlordVisuals();
+    }
+
+    private initializeArmorOverlordVisuals(): void {
         const graphics = this.getGraphicsComponent();
         
         // 绘制重型装甲外观 - 深灰色的重型坦克

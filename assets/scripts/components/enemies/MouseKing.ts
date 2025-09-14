@@ -1,7 +1,6 @@
 import { _decorator, Color, Graphics, Vec3, Node, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 
 const { ccclass, property } = _decorator;
@@ -30,21 +29,45 @@ export class MouseKing extends BaseMouse {
     private _summonCount: number = 0;     // 已召唤次数
     private _maxSummons: number = 5;      // 最大召唤次数
     
+    // 实现BaseMouse的抽象方法 - 老鼠王配置
     protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[this.enemyType];
-        
+        const config = {
+            type: EnemyType.MOUSE_KING,
+            name: "老鼠王",
+            category: EnemyCategory.BOSS,
+            health: 200,
+            maxHealth: 200,
+            moveSpeed: 70,
+            goldReward: 30,
+            summonCount: 2,
+            summonType: EnemyType.BASIC_MOUSE
+        };
+
         // 基础属性配置
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
-        
+
         // 特殊属性：召唤属性
         this.summonCount = config.summonCount || 3;
         this.summonType = config.summonType || EnemyType.BASIC_MOUSE;
-        
+
         console.log(`初始化${this.unitName}: 血量${this.maxHealth}, 移速${this.moveSpeed}, 召唤${this.summonCount}只${this.summonType}, 奖励${this.goldReward}金币`);
+    }
+
+    // 重写基类移动行为初始化，使用老鼠王的参数
+    protected initializeMovementBehavior(): void {
+        // 老鼠王的移动参数配置：主要curves和spiral，威严优雅
+        const patterns: ('curves' | 'spiral')[] = ['curves', 'spiral'];
+        this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // 设置威严的移动参数
+        this._zigzagAmplitude = 25 + Math.random() * 15; // 25-40像素（BOSS威严的大幅移动）
+        this._segmentCount = 5 + Math.floor(Math.random() * 4); // 5-8段移动（更多分段，更优雅）
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     protected initializeMouseVisuals(): void {
@@ -319,55 +342,32 @@ export class MouseKing extends BaseMouse {
         };
     }
     
-    /**
-     * 重写移动方法，老鼠王移动时更威严
-     */
-    protected moveTowardsCastle(dt: number): void {
-        if (!this._gameManager || !this._gameManager.castleNode) return;
-        
-        const currentPos = this.node.position;
-        
-        // 检查是否到达城堡
-        if (this.isReachedCastle(currentPos)) {
-            this.reachCastle();
-            return;
-        }
-        
-        // 威严的移动 - 比普通老鼠更稳重
-        const moveDistance = this.moveSpeed * dt;
-        
-        // 添加威严的摇摆效果（比普通老鼠摇摆更小更稳重）
-        const swayAmplitude = 2; // 很小的摇摆
-        const swayOffset = Math.sin(Date.now() * 0.003) * swayAmplitude; // 更慢的摇摆频率
-        
-        const newPos = Vec3.add(new Vec3(), currentPos, new Vec3(swayOffset, -moveDistance, 0));
-        this.node.setPosition(newPos);
-    }
+    // 基类已实现完整的Tween移动系统，老鼠王使用统一的移动逻辑
     
     /**
      * 重写城堡到达方法 - 老鼠王到达城堡造成巨大伤害
      */
     protected reachCastle(): void {
         if (!this._gameManager) return;
-        
+
         // 老鼠王到达城堡造成巨大伤害
-        const castleDamage = Math.floor(this.maxHealth / 5); // 基于血量计算的高伤害 (300/5=60点伤害)
+        const castleDamage = Math.floor(this.maxHealth / 5); // 基于血量计算的高伤害
         this._gameManager.CastleTakeDamage(castleDamage);
-        
+
         console.log(`${this.unitName}到达城堡！造成 ${castleDamage} 点巨大伤害！`);
-        
-        // 创建到达特效
-        this.createBossReachEffect();
-        
-        // 移除自己
+
+        // 创建BOSS到达特效
+        this.createCastleReachEffect();
+
+        // 调用基类处理
         this._gameManager.RemoveActiveEnemy(this.node);
         this.die();
     }
     
     /**
-     * 创建BOSS到达城堡的特殊特效
+     * 重写创建城堡到达特效方法 - BOSS特殊特效
      */
-    private createBossReachEffect(): void {
+    protected createCastleReachEffect(): void {
         // BOSS级别的到达特效 - 强烈震动和闪光
         const originalPos = this.node.position.clone();
         const originalScale = this.node.scale.clone();

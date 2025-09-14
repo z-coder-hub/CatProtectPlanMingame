@@ -1,11 +1,9 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform, tween } from 'cc';
+import { _decorator, Node, Graphics, Color, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { DrawingHelper } from '../../utils/DrawingHelper';
-import { EffectHelper } from '../../utils/EffectHelper';
 
 const { ccclass, property } = _decorator;
 
@@ -18,32 +16,25 @@ export class ArmoredMouse extends BaseMouse {
     @property({ tooltip: "护甲值（减伤）" })
     public armor: number = 3;
     
-    // 私有属性
-    private _graphics: Graphics | null = null;
-    private _gameManager: GameManager | null = null;
-    private _nameLabel: Label | null = null;
-    private _healthBarContainer: Node | null = null;
-    private _healthBarForeground: Graphics | null = null;
+    // 私有属性（基类已提供 _graphics, _gameManager, _nameLabel, _healthBarContainer, _healthBarForeground）
     
-    // 移动行为相关属性
-    private _movementTimer: number = 0;
-    private _currentDirection: Vec3 = new Vec3(0, -1, 0); // 当前移动方向
-    private _baseDirection: Vec3 = new Vec3(0, -1, 0);    // 基础向下方向
-    private _pauseTimer: number = 0;                      // 停顿计时器
-    private _isPaused: boolean = false;                   // 是否处于停顿状态
-    private _nextPauseTime: number = 0;                   // 下次停顿时间
-    private _movementPattern: 'steady' | 'defensive' = 'steady'; // 装甲老鼠移动稳重
-    
-    // 性能优化相关
-    private _movementUpdateInterval: number = 0.15;      // 装甲老鼠更新较慢(6.7fps)
-    private _lastMovementUpdate: number = 0;              // 上次移动更新时间
+    // 装甲老鼠使用BaseMouse统一移动系统，移动相关属性已在基类中管理
     
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.ARMORED_MOUSE;
-    
-    // 实现BaseMouse的抽象方法
-    protected initializeMouseStats(): void {
-        this.initializeArmoredMouseStats();
+
+    // 实现BaseMouse的抽象方法 - 装甲老鼠配置
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.ARMORED_MOUSE,
+            name: "装甲老鼠",
+            category: EnemyCategory.ARMORED,
+            health: 60,
+            maxHealth: 60,
+            moveSpeed: 100,
+            goldReward: 6,
+            armorValue: 3  // 护甲值降低，减少伤害减免
+        };
     }
     
     // 实现BaseMouse的抽象方法
@@ -72,32 +63,17 @@ export class ArmoredMouse extends BaseMouse {
         }
     }
     
-    // 初始化装甲老鼠属性
-    private initializeArmoredMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.ARMORED_MOUSE];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        // 移除攻击相关属性，装甲老鼠不攻击
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
-        
-        // 初始化移动行为参数
-        this.initializeMovementBehavior();
-    }
-    
     // 初始化移动行为
-    private initializeMovementBehavior(): void {
-        // 装甲老鼠移动稳重，很少变化方向
-        const patterns: ('steady' | 'defensive')[] = ['steady', 'defensive'];
+    protected initializeMovementBehavior(): void {
+        // 覆盖基类方法，装甲老鼠移动稳重，很少变化方向
+        const patterns: ('zigzag' | 'curves' | 'spiral' | 'dash' | 'straight' | 'stealth_sway')[] = ['straight', 'zigzag', 'curves'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
-        
-        // 装甲老鼠停顿更频繁（展示坚固防御）
-        this._nextPauseTime = 3 + Math.random() * 5; // 3-8秒后第一次停顿
-        
+
+        // 装甲老鼠使用BaseMouse统一的移动参数，无需自定义停顿逻辑
+
         console.log(`装甲老鼠移动模式: ${this._movementPattern}`);
     }
+    
     
     // 初始化外观
     private initializeVisuals(): void {
@@ -221,107 +197,13 @@ export class ArmoredMouse extends BaseMouse {
         };
     }
     
-    protected update(dt: number): void {
-        super.update(dt);
-        
-        // 性能优化：减少移动更新频率
-        this._lastMovementUpdate += dt;
-        if (this._lastMovementUpdate >= this._movementUpdateInterval) {
-            const movementDt = this._lastMovementUpdate;
-            this._lastMovementUpdate = 0;
-            
-            // 如果没有在战斗中，朝城堡移动
-            if (this.enemyState === EnemyState.IDLE && this.isAlive) { // 待机状态
-                this.moveTowardsCastle(movementDt);
-            }
-        }
-    }
+    // ArmoredMouse使用BaseMouse的统一移动和更新系统
     
-    // 朝城堡移动 - 装甲老鼠稳重移动
-    private moveTowardsCastle(dt: number): void {
-        if (!this._gameManager || !this._gameManager.castleNode) return;
-        
-        const currentPos = this.node.position;
-        const castlePos = this._gameManager.castleNode.position;
-        
-        // 检查是否到达城堡Y位置
-        if (currentPos.y <= castlePos.y + 50) {
-            this.reachCastle();
-            return;
-        }
-        
-        // 更新移动计时器
-        this._movementTimer += dt;
-        
-        // 处理随机停顿（装甲老鼠会停下来观察）
-        if (this.handleRandomPause(dt)) {
-            return;
-        }
-        
-        // 根据移动模式计算移动方向
-        this.updateMovementDirection();
-        
-        // 执行移动（装甲老鼠移动较慢但稳定）
-        const moveDistance = this.moveSpeed * dt;
-        const moveVector = Vec3.multiplyScalar(new Vec3(), this._currentDirection, moveDistance);
-        const newPos = Vec3.add(new Vec3(), currentPos, moveVector);
-        
-        // 限制X坐标不要移动到屏幕外
-        const maxX = 300;
-        newPos.x = Math.max(-maxX, Math.min(maxX, newPos.x));
-        
-        this.node.setPosition(newPos);
-    }
+    // 装甲老鼠使用BaseMouse的统一移动系统
     
-    // 处理随机停顿（装甲老鼠停顿较频繁）
-    private handleRandomPause(dt: number): boolean {
-        if (this._isPaused) {
-            this._pauseTimer -= dt;
-            if (this._pauseTimer <= 0) {
-                this._isPaused = false;
-                // 设置下次停顿时间
-                this._nextPauseTime = this._movementTimer + 5 + Math.random() * 8; // 5-13秒后再次停顿
-            }
-            return true;
-        }
-        
-        // 检查是否该停顿了
-        if (this._movementTimer >= this._nextPauseTime) {
-            this._isPaused = true;
-            this._pauseTimer = 0.5 + Math.random() * 1.0; // 停顿0.5-1.5秒（较长）
-            return true;
-        }
-        
-        return false;
-    }
+    // 随机停顿逻辑已移至BaseMouse统一管理
     
-    // 更新移动方向
-    private updateMovementDirection(): void {
-        switch (this._movementPattern) {
-            case 'steady':
-                this.updateSteadyMovement();
-                break;
-            case 'defensive':
-                this.updateDefensiveMovement();
-                break;
-        }
-    }
-    
-    // 稳重移动
-    private updateSteadyMovement(): void {
-        // 装甲老鼠直线向下移动，偶尔轻微调整
-        const xDirection = Math.sin(this._movementTimer * 0.2) * 0.1; // 非常轻微的摆动
-        
-        this._currentDirection.set(xDirection, -1, 0);
-        this._currentDirection.normalize();
-    }
-    
-    // 防御移动
-    private updateDefensiveMovement(): void {
-        // 完全直线向下，无任何摆动
-        this._currentDirection.set(0, -1, 0);
-        this._currentDirection.normalize();
-    }
+    // ArmoredMouse使用BaseMouse的统一移动系统，无需自定义移动逻辑
     
     // 重写受伤方法，添加护甲减伤机制
     public takeDamage(damage: number): void {
@@ -329,21 +211,20 @@ export class ArmoredMouse extends BaseMouse {
         
         // 护甲减伤计算
         const actualDamage = Math.max(1, damage - this.armor); // 至少造成1点伤害
-        const blockedDamage = damage - actualDamage;
-        
+
         // 调用父类方法但传入减伤后的伤害
         this.currentHealth = Math.max(0, this.currentHealth - actualDamage);
         this.updateHealthBarDisplay();
-        
+
         // 触发受伤回调
         this.onTakeDamage(actualDamage);
-        
+
         // 显示护甲阻挡效果
-        if (blockedDamage > 0) {
-            this.showArmorBlockEffect(blockedDamage);
+        if (damage > actualDamage) {
+            this.showArmorBlockEffect(damage - actualDamage);
         }
         
-        console.log(`装甲老鼠受到 ${damage} 点伤害，护甲阻挡 ${blockedDamage} 点，实际受到 ${actualDamage} 点伤害`);
+        console.log(`装甲老鼠受到 ${damage} 点伤害，护甲阻挡 ${damage - actualDamage} 点，实际受到 ${actualDamage} 点伤害`);
         
         // 检查死亡
         if (this.currentHealth <= 0) {
@@ -359,7 +240,9 @@ export class ArmoredMouse extends BaseMouse {
         
         const effectGraphics = effectNode.addComponent(Graphics);
         effectGraphics.fillColor = new Color(255, 215, 0, 200); // 金色护甲效果
-        effectGraphics.circle(0, 0, 15);
+        // 根据阻挡伤害调整效果大小
+        const effectSize = Math.min(20, 10 + blockedDamage * 2);
+        effectGraphics.circle(0, 0, effectSize);
         effectGraphics.fill();
         
         // 使用Tween系统实现护甲闪光效果，替代requestAnimationFrame
@@ -470,12 +353,10 @@ export class ArmoredMouse extends BaseMouse {
         this.node.destroy();
     }
     
-    // 创建死亡特效
-    private createDeathEffect(): void {
+    // 创建装甲老鼠死亡特效
+    protected createDeathEffect(): void {
         if (this.node.parent) {
-            EffectHelper.createDeathEffect(this.node.position, this.node.parent);
-            
-            // 额外的装甲破碎特效
+            // 创建装甲破碎特效
             this.createArmorBreakEffect();
         }
     }
@@ -510,11 +391,7 @@ export class ArmoredMouse extends BaseMouse {
             .start();
     }
     
-    // 重写待机状态
-    protected onIdleState(dt: number): void {
-        // 装甲老鼠在待机状态下总是移动向城堡
-        this.moveTowardsCastle(dt);
-    }
+    // 装甲老鼠使用BaseMouse的统一待机状态处理
     
     // 移除攻击英雄方法，装甲老鼠不再攻击
 }

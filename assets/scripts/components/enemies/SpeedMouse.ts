@@ -1,7 +1,6 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Label, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { EffectHelper } from '../../utils/EffectHelper';
@@ -15,10 +14,7 @@ export class SpeedMouse extends BaseMouse {
     @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 5;
     
-    // 私有属性
-    private _graphics: Graphics | null = null;
-    private _nameLabel: Label | null = null;
-    private _gameManager: GameManager | null = null;
+    // 私有属性（基类已提供 _graphics, _nameLabel, _gameManager）
     private _movementTimer: number = 0;
     private _currentDirection: Vec3 = new Vec3(0, -1, 0);
     private _zigzagFrequency: number = 3.0; // 更快的摆动频率
@@ -28,9 +24,17 @@ export class SpeedMouse extends BaseMouse {
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.SPEED_MOUSE;
     
-    // 实现BaseMouse的抽象方法
-    protected initializeMouseStats(): void {
-        this.initializeSpeedMouseStats();
+    // 实现BaseMouse的抽象方法 - 疾速老鼠配置
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.SPEED_MOUSE,
+            name: "疾速老鼠",
+            category: EnemyCategory.FAST,
+            health: 15,
+            maxHealth: 15,
+            moveSpeed: 200,
+            goldReward: 8
+        };
     }
     
     // 实现BaseMouse的抽象方法
@@ -55,15 +59,18 @@ export class SpeedMouse extends BaseMouse {
         }
     }
     
-    private initializeSpeedMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.SPEED_MOUSE];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        // 移除攻击相关属性，痾速老鼠不攻击
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
+
+    // 重写基类移动行为初始化，使用疾速老鼠的参数
+    protected initializeMovementBehavior(): void {
+        // 痾速老鼠的移动参数配置：主要dash和straight，极快冲刺
+        const patterns: ('dash' | 'straight')[] = ['dash', 'dash', 'dash', 'straight']; // 3:1比例
+        this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // 设置极快移动参数
+        this._zigzagAmplitude = 10 + Math.random() * 10; // 10-20像素（较小摆动）
+        this._segmentCount = 2 + Math.floor(Math.random() * 3); // 2-4段移动（更少分段，更快）
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     private initializeVisuals(): void {

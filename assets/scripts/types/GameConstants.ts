@@ -1,5 +1,5 @@
 // 游戏常量配置文件
-import { EnemyCategory, EnemyConfig, EnemyType, GameConfig, HeroCategory, HeroConfig, HeroType, WaveConfig } from './GameTypes';
+import { EnemyCategory, EnemyConfig, EnemyType, GameConfig, HeroCategory, HeroConfig, HeroType } from './GameTypes';
 
 // 英雄配置 - 按照新设计文档完全重构的12种英雄配置
 export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
@@ -341,7 +341,6 @@ export const GAME_CONFIG: GameConfig = {
         cols: 6
     },
     heroConfigs: HERO_CONFIGS,
-    enemyConfigs: ENEMY_CONFIGS,
     totalLevels: 10                      // 总关卡数
 };
 

@@ -6,7 +6,13 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(grep:*)",
       "Bash(done)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(git checkout:*)",
+      "Bash(for file in assets/scripts/components/enemies/SpeedMouse.ts assets/scripts/components/enemies/TankMouse.ts assets/scripts/components/enemies/MechMouse.ts)",
+      "Bash(for:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ]
   },
   "hooks": {

@@ -1,7 +1,6 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Label, UITransform, tween } from 'cc';
+import { _decorator, Graphics, Color, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { DrawingHelper } from '../../utils/DrawingHelper';
@@ -15,30 +14,22 @@ export class FastMouse extends BaseMouse {
     @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 4;
     
-    // 私有属性（只保留FastMouse特有的属性）
-    private _graphics: Graphics | null = null;
-    
-    // 移动行为相关属性
-    private _movementTimer: number = 0;
-    private _currentDirection: Vec3 = new Vec3(0, -1, 0); // 当前移动方向
-    private _baseDirection: Vec3 = new Vec3(0, -1, 0);    // 基础向下方向
-    private _zigzagAmplitude: number = 0;                 // 蜿蜒幅度
-    private _zigzagFrequency: number = 0;                 // 蜿蜒频率
-    private _pauseTimer: number = 0;                      // 停顿计时器
-    private _isPaused: boolean = false;                   // 是否处于停顿状态
-    private _nextPauseTime: number = 0;                   // 下次停顿时间
-    private _movementPattern: 'zigzag' | 'dash' = 'dash'; // 移动模式（快速老鼠偏爱冲刺）
-    
-    // 性能优化相关
-    private _movementUpdateInterval: number = 0.08;      // 快速老鼠更新更频繁(12.5fps)
-    private _lastMovementUpdate: number = 0;              // 上次移动更新时间
+    // 私有属性（基类已提供 _graphics 和移动系统）
     
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.FAST_MOUSE;
-    
-    // 实现BaseMouse的抽象方法
-    protected initializeMouseStats(): void {
-        this.initializeFastMouseStats();
+
+    // 实现BaseMouse的抽象方法 - 快速老鼠配置
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.FAST_MOUSE,
+            name: "快速老鼠",
+            category: EnemyCategory.FAST,
+            health: 20,
+            maxHealth: 20,
+            moveSpeed: 160,
+            goldReward: 5
+        };
     }
     
     // 实现BaseMouse的抽象方法
@@ -59,35 +50,18 @@ export class FastMouse extends BaseMouse {
         // 基类已经处理GameManager引用和BattleManager注册，无需重复
     }
     
-    // 初始化快速老鼠属性
-    private initializeFastMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.FAST_MOUSE];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        // 移除攻击相关属性，快速老鼠不攻击
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
-        
-        // 初始化随机移动行为参数
-        this.initializeMovementBehavior();
-    }
     
-    // 初始化移动行为
-    private initializeMovementBehavior(): void {
-        // 快速老鼠偏爱直冲或快速之字形
+    // 重写基类移动行为初始化，使用快速老鼠的参数
+    protected initializeMovementBehavior(): void {
+        // 快速老鼠的移动参数配置：偏爱dash和zigzag
         const patterns: ('zigzag' | 'dash')[] = ['zigzag', 'dash', 'dash']; // 2/3概率冲刺
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
-        
+
         // 设置更激进的移动参数
         this._zigzagAmplitude = 15 + Math.random() * 20; // 15-35像素的大幅摆动
-        this._zigzagFrequency = 1.5 + Math.random() * 2;   // 1.5-3.5的高频率
-        
-        // 减少停顿频率（快速老鼠很少停顿）
-        this._nextPauseTime = 15 + Math.random() * 20; // 15-35秒后第一次停顿
-        
-        console.log(`快速老鼠移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}`);
+        this._segmentCount = 3 + Math.floor(Math.random() * 4); // 3-6段移动（更少分段，更快）
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     // 初始化外观
@@ -169,109 +143,10 @@ export class FastMouse extends BaseMouse {
     
     protected update(dt: number): void {
         super.update(dt);
-        
-        // 性能优化：减少移动更新频率
-        this._lastMovementUpdate += dt;
-        if (this._lastMovementUpdate >= this._movementUpdateInterval) {
-            const movementDt = this._lastMovementUpdate;
-            this._lastMovementUpdate = 0;
-            
-            // 如果没有在战斗中，朝城堡移动
-            if (this.enemyState === EnemyState.IDLE && this.isAlive) { // 待机状态
-                this.moveTowardsCastle(movementDt);
-            }
-        }
+        // 基类Tween系统自动处理移动，无需额外处理
     }
     
-    // 朝城堡移动 - 快速老鼠移动行为
-    private moveTowardsCastle(dt: number): void {
-        const currentPos = this.node.position;
-        
-        // 使用基类方法检查是否到达城堡
-        if (this.isReachedCastle(currentPos)) {
-            this.reachCastle();
-            return;
-        }
-        
-        // 更新移动计时器
-        this._movementTimer += dt;
-        
-        // 处理随机停顿（快速老鼠停顿更少）
-        if (this.handleRandomPause(dt)) {
-            return;
-        }
-        
-        // 根据移动模式计算移动方向
-        this.updateMovementDirection();
-        
-        // 执行移动（快速老鼠移动速度更快）
-        const moveDistance = this.moveSpeed * dt;
-        const moveVector = Vec3.multiplyScalar(new Vec3(), this._currentDirection, moveDistance);
-        const newPos = Vec3.add(new Vec3(), currentPos, moveVector);
-        
-        // 限制X坐标不要移动到屏幕外
-        const maxX = 300;
-        newPos.x = Math.max(-maxX, Math.min(maxX, newPos.x));
-        
-        this.node.setPosition(newPos);
-    }
-    
-    // 处理随机停顿（快速老鼠很少停顿）
-    private handleRandomPause(dt: number): boolean {
-        if (this._isPaused) {
-            this._pauseTimer -= dt;
-            if (this._pauseTimer <= 0) {
-                this._isPaused = false;
-                // 设置下次停顿时间（更长间隔）
-                this._nextPauseTime = this._movementTimer + 20 + Math.random() * 25; // 20-45秒后再次停顿
-            }
-            return true;
-        }
-        
-        // 检查是否该停顿了
-        if (this._movementTimer >= this._nextPauseTime) {
-            this._isPaused = true;
-            this._pauseTimer = 0.05 + Math.random() * 0.1; // 停顿0.05-0.15秒（极短）
-            return true;
-        }
-        
-        return false;
-    }
-    
-    // 更新移动方向
-    private updateMovementDirection(): void {
-        switch (this._movementPattern) {
-            case 'zigzag':
-                this.updateZigzagMovement();
-                break;
-            case 'dash':
-                this.updateDashMovement();
-                break;
-        }
-    }
-    
-    // 快速之字形移动
-    private updateZigzagMovement(): void {
-        const xDirection = Math.sin(this._movementTimer * this._zigzagFrequency) * 0.4; // 更大的横向分量
-        
-        // 设置方向向量并归一化，确保匀速移动
-        this._currentDirection.set(xDirection, -1, 0);
-        this._currentDirection.normalize();
-    }
-    
-    // 快速冲刺移动
-    private updateDashMovement(): void {
-        const dashCycle = this._movementTimer % 2; // 2秒一个周期（更短）
-        if (dashCycle < 1.8) {
-            // 直线冲刺 - 直接向下
-            this._currentDirection.set(0, -1, 0);
-        } else {
-            // 短暂调整方向
-            const xOffset = (Math.random() - 0.5) * 0.6; // 随机横向调整
-            this._currentDirection.set(xOffset, -1, 0);
-        }
-        this._currentDirection.normalize();
-    }
+    // 基类已实现完整的Tween移动系统，无需重复实现传统帧更新移动
     
     // 移除攻击城堡方法，使用父类的 reachCastle 方法
     
@@ -307,27 +182,14 @@ export class FastMouse extends BaseMouse {
             .start();
     }
     
-    // 重写死亡方法，只处理特有的死亡特效
-    protected onDie(): void {
-        // 创建死亡特效
-        this.createDeathEffect();
-
-        // 调用基类的死亡处理（包含注销、奖励、销毁等通用逻辑）
-        super.onDie();
-    }
-    
-    // 创建死亡特效
-    private createDeathEffect(): void {
+    // 重写创建死亡特效方法，添加快速老鼠的特殊特效
+    protected createDeathEffect(): void {
         if (this.node.parent) {
             EffectHelper.createDeathEffect(this.node.position, this.node.parent);
         }
     }
     
-    // 重写待机状态
-    protected onIdleState(dt: number): void {
-        // 快速老鼠在待机状态下总是移动向城堡
-        this.moveTowardsCastle(dt);
-    }
+    // 基类已实现完整的移动管理，无需重写状态处理
     
     // 移除攻击英雄方法，快速老鼠不再攻击
 }

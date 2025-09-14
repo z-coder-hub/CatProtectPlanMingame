@@ -1,7 +1,6 @@
 import { _decorator, Component, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 
 const { ccclass, property } = _decorator;
@@ -16,18 +15,15 @@ export class ThunderMaster extends BaseMouse {
     /** 敌人类型 */
     public readonly enemyType: EnemyType = EnemyType.THUNDER_MASTER;
 
-    /** 链式攻击目标数量 */
-    private chainTargets: number = 3;
-    
     /** 护盾强度 */
     private shieldStrength: number = 100;
-    
+
     /** 当前护盾值 */
     private currentShield: number = 100;
-    
-    /** 雷电攻击冷却时间 */
-    private lightningCooldown: number = 0;
-    
+
+    /** 电磁干扰冷却时间 */
+    private interferenceeCooldown: number = 0;
+
     /** 雷电特效计时器 */
     private lightningEffectTimer: number = 0;
     
@@ -35,15 +31,47 @@ export class ThunderMaster extends BaseMouse {
      * 初始化雷电大师属性
      */
     protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.THUNDER_MASTER];
+        const config = this.GetConfig();
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
-        this.chainTargets = (config as any).chainTargets || 3;
-        this.shieldStrength = (config as any).shieldStrength || 100;
+        this.shieldStrength = config.shieldStrength || 100;
         this.currentShield = this.shieldStrength;
+    }
+
+    /**
+     * 获取雷电大师配置
+     */
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.THUNDER_MASTER,
+            name: "雷电大师",
+            category: EnemyCategory.BOSS,
+            health: 350,
+            maxHealth: 350,
+            moveSpeed: 80,
+            goldReward: 110,
+            chainTargets: 3,
+            shieldStrength: 100
+        };
+    }
+
+    /**
+     * 初始化雷电大师移动行为 - 电光高频移动
+     * 特点：使用zigzag和dash模式，体现雷电的高频闪现特性
+     */
+    protected initializeMovementBehavior(): void {
+        // 雷电大师的移动模式 - Z字形和冲刺混合
+        const patterns: ('zigzag' | 'dash')[] = ['zigzag', 'dash'];
+        this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // 中等幅度的电光闪现摆动 - 体现雷电的不可预测性
+        this._zigzagAmplitude = 35 + Math.random() * 25; // 35-60像素的中幅摆动
+        this._segmentCount = 10 + Math.floor(Math.random() * 6); // 10-15段移动，高频闪现效果
+
+        console.log(`雷电大师移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**
@@ -151,31 +179,30 @@ export class ThunderMaster extends BaseMouse {
     }
     
     /**
-     * 更新雷电特效和攻击逻辑
+     * 更新雷电特效和电磁干扰逻辑
      */
     protected update(dt: number): void {
         super.update(dt);
-        
+
         // 更新雷电特效
         this.lightningEffectTimer += dt;
-        if (this.lightningEffectTimer >= 0.3) {
+        if (this.lightningEffectTimer >= 0.4) {
             this.lightningEffectTimer = 0;
             this.updateLightningEffect();
         }
-        
-        // 雷电攻击冷却
-        this.lightningCooldown -= dt;
-        if (this.lightningCooldown <= 0) {
+
+        // 电磁干扰冷却
+        this.interferenceeCooldown -= dt;
+        if (this.interferenceeCooldown <= 0) {
             try {
                 const gameManager = GameManager.instance;
                 if (gameManager && gameManager.deployedHeroes && gameManager.deployedHeroes.length > 0) {
-                    this.performChainLightning();
+                    this.performElectromagneticInterference();
                 }
             } catch (error) {
-                console.error("雷电大师攻击时出错:", error);
-                console.error("错误堆栈:", error.stack);
+                console.error("雷电大师电磁干扰时出错:", error);
             }
-            this.lightningCooldown = 4.0; // 4秒一次雷电攻击
+            this.interferenceeCooldown = 6.0; // 6秒一次电磁干扰
         }
     }
     
@@ -207,159 +234,95 @@ export class ThunderMaster extends BaseMouse {
     }
     
     /**
-     * 执行链式雷电攻击
+     * 执行电磁干扰效果
      */
-    private performChainLightning(): void {
+    private performElectromagneticInterference(): void {
         const gameManager = GameManager.instance;
-        
+
         try {
-            // 详细的调试信息
-            if (!gameManager) {
-                console.warn("雷电大师: GameManager.instance为null");
+            if (!gameManager || !gameManager.deployedHeroes || gameManager.deployedHeroes.length === 0) {
                 return;
             }
-            
-            console.log("雷电大师: GameManager存在，检查deployedHeroes...");
-            console.log("雷电大师: deployedHeroes类型:", typeof gameManager.deployedHeroes);
-            console.log("雷电大师: deployedHeroes值:", gameManager.deployedHeroes);
-            
-            if (!gameManager.deployedHeroes) {
-                console.warn("雷电大师: deployedHeroes为undefined");
-                return;
+
+            console.log("雷电大师释放电磁干扰场！");
+
+            // 选择范围内的英雄展示干扰特效（不造成伤害）
+            const interferenceTargets = this.findInterferenceTargets();
+            if (interferenceTargets.length > 0) {
+                this.showElectromagneticInterferenceEffect(interferenceTargets);
             }
-            
-            if (!Array.isArray(gameManager.deployedHeroes)) {
-                console.warn("雷电大师: deployedHeroes不是数组:", gameManager.deployedHeroes);
-                return;
-            }
-            
-            if (gameManager.deployedHeroes.length === 0) {
-                console.log("雷电大师: 没有已部署的英雄");
-                return;
-            }
-            
-            console.log(`雷电大师释放链式雷电！目标数量：${this.chainTargets}`);
-            
-            // 找到最近的英雄作为起始目标
-            let currentTarget = this.findNearestHero();
-            if (!currentTarget) return;
-            
-            const targets = [currentTarget];
-            
-            // 链式传播到其他英雄
-            for (let i = 1; i < this.chainTargets && i < gameManager.deployedHeroes.length; i++) {
-            const nextTarget = this.findNextChainTarget(currentTarget, targets);
-            if (nextTarget) {
-                targets.push(nextTarget);
-                currentTarget = nextTarget;
-            }
-        }
-        
-        // 显示链式雷电特效
-        this.showChainLightningEffect(targets);
-        
+
         } catch (error) {
-            console.error("雷电大师: performChainLightning执行出错:", error);
-            console.error("错误堆栈:", error.stack);
+            console.error("雷电大师: 电磁干扰执行出错:", error);
         }
     }
     
     /**
-     * 找到最近的英雄
+     * 找到干扰范围内的英雄
      */
-    private findNearestHero(): any {
+    private findInterferenceTargets(): any[] {
         const gameManager = GameManager.instance;
-        if (!gameManager || !gameManager.deployedHeroes) return null;
-        
-        let nearestHero = null;
-        let minDistance = Infinity;
-        
+        if (!gameManager || !gameManager.deployedHeroes) return [];
+
+        const targets: any[] = [];
+        const interferenceRange = 120;
+
         gameManager.deployedHeroes.forEach(heroNode => {
             if (!heroNode) return;
             const distance = Vec3.distance(this.node.position, heroNode.position);
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestHero = heroNode;
+            if (distance <= interferenceRange) {
+                targets.push(heroNode);
             }
         });
-        
-        return nearestHero;
+
+        return targets;
     }
     
     /**
-     * 找到下一个链式目标
+     * 显示电磁干扰特效
      */
-    private findNextChainTarget(currentTarget: any, excludeList: any[]): any {
-        const gameManager = GameManager.instance;
-        if (!gameManager || !gameManager.deployedHeroes || !currentTarget) return null;
-        
-        let nextTarget = null;
-        let minDistance = Infinity;
-        
-        gameManager.deployedHeroes.forEach(heroNode => {
-            if (!heroNode || excludeList.indexOf(heroNode) !== -1) return;
-            const distance = Vec3.distance(currentTarget.position, heroNode.position);
-            if (distance < minDistance && distance <= 150) { // 链式范围限制
-                minDistance = distance;
-                nextTarget = heroNode;
-            }
-        });
-        
-        return nextTarget;
-    }
-    
-    /**
-     * 显示链式雷电特效
-     */
-    private showChainLightningEffect(targets: any[]): void {
+    private showElectromagneticInterferenceEffect(targets: any[]): void {
         if (!this._graphics) {
             this._graphics = this.getGraphicsComponent();
         }
         if (!this._graphics) return;
-        
-        this._graphics.strokeColor = new Color(255, 255, 100, 255);
-        this._graphics.lineWidth = 4;
-        
-        // 从雷电大师到第一个目标的雷电
-        if (targets.length > 0) {
-            const firstTarget = targets[0];
-            if (firstTarget) {
-                const targetPos = firstTarget.position.subtract(this.node.position);
+
+        console.log(`雷电大师对${targets.length}个英雄展示电磁干扰特效`);
+
+        // 电磁干扰场
+        this._graphics.strokeColor = new Color(150, 200, 255, 200);
+        this._graphics.lineWidth = 3;
+        this._graphics.circle(0, 0, 120); // 干扰范围
+        this._graphics.stroke();
+
+        // 对每个目标显示干扰特效
+        targets.forEach(target => {
+            if (target) {
+                const targetPos = target.position.subtract(this.node.position);
+
+                // 电磁波线
+                this._graphics.strokeColor = new Color(180, 220, 255, 150);
+                this._graphics.lineWidth = 2;
                 this._graphics.moveTo(0, 0);
                 this._graphics.lineTo(targetPos.x, targetPos.y);
                 this._graphics.stroke();
-                
-                // 在目标位置显示雷电冲击
-                this._graphics.fillColor = new Color(255, 255, 150, 200);
-                this._graphics.circle(targetPos.x, targetPos.y, 8);
-                this._graphics.fill();
-            }
-        }
-        
-        // 目标间的链式雷电
-        for (let i = 0; i < targets.length - 1; i++) {
-            const current = targets[i];
-            const next = targets[i + 1];
-            if (current && next) {
-                const currentPos = current.position.subtract(this.node.position);
-                const nextPos = next.position.subtract(this.node.position);
-                
-                this._graphics.strokeColor = new Color(200, 200, 255, 200);
-                this._graphics.lineWidth = 3;
-                this._graphics.moveTo(currentPos.x, currentPos.y);
-                this._graphics.lineTo(nextPos.x, nextPos.y);
+
+                // 干扰环效果
+                this._graphics.strokeColor = new Color(120, 180, 255, 120);
+                this._graphics.lineWidth = 2;
+                this._graphics.circle(targetPos.x, targetPos.y, 15);
                 this._graphics.stroke();
-                
-                // 在链式目标位置显示电击
-                this._graphics.fillColor = new Color(200, 200, 255, 150);
-                this._graphics.circle(nextPos.x, nextPos.y, 6);
-                this._graphics.fill();
+
+                const heroComponent = target.getComponent(BaseHero);
+                if (heroComponent) {
+                    console.log(`英雄${heroComponent.unitName}受到电磁干扰效果影响`);
+                }
             }
-        }
-        
-        // 2秒后恢复正常外观
+        });
+
+        // 2.5秒后恢复正常外观
         tween(this.node)
-            .delay(2.0)
+            .delay(2.5)
             .call(() => {
                 if (this.node && this.node.isValid) {
                     if (this._graphics) {

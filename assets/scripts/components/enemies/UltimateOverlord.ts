@@ -1,7 +1,6 @@
 import { _decorator, Component, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 
 const { ccclass, property } = _decorator;
@@ -28,19 +27,16 @@ export class UltimateOverlord extends BaseMouse {
     /** 召唤类型 */
     private summonType: EnemyType = EnemyType.MOUSE_KING;
     
-    /** 链式攻击目标数 */
-    private chainTargets: number = 2;
-    
     /** 减伤比例 */
     private damageReduction: number = 0.1;
-    
+
     /** 是否处于潜行状态 */
     private isStealthed: boolean = false;
-    
+
     /** 能力冷却计时器 */
     private abilityCooldowns: { [key: string]: number } = {
         summon: 0,
-        chainAttack: 0,
+        intimidation: 0,  // 威慑能力替代链式攻击
         stealth: 0
     };
     
@@ -54,24 +50,60 @@ export class UltimateOverlord extends BaseMouse {
      * 初始化终极霸王属性
      */
     protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.ULTIMATE_OVERLORD];
+        const config = this.GetConfig();
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
-        this.armorValue = (config as any).armorValue || 5;
-        this.stealthChance = (config as any).stealthChance || 0.15;
-        this.summonCount = (config as any).summonCount || 2;
-        this.summonType = (config as any).summonType || EnemyType.MOUSE_KING;
-        this.chainTargets = (config as any).chainTargets || 2;
-        this.damageReduction = (config as any).damageReduction || 0.1;
-        
+        this.armorValue = config.armorValue || 5;
+        this.stealthChance = config.stealthChance || 0.15;
+        this.summonCount = config.summonCount || 2;
+        this.summonType = config.summonType || EnemyType.MOUSE_KING;
+        this.damageReduction = config.damageReduction || 0.1;
+
         // 终极霸王体型最大
         this.node.scale = new Vec3(2.2, 2.2, 1);
-        
+
         // 初始潜行判定
         this.checkStealthState();
+    }
+
+    /**
+     * 获取终极霸王配置
+     */
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.ULTIMATE_OVERLORD,
+            name: "终极霸王",
+            category: EnemyCategory.BOSS,
+            health: 800,
+            maxHealth: 800,
+            moveSpeed: 60,
+            goldReward: 200,
+            armorValue: 5,
+            stealthChance: 0.15,
+            summonCount: 2,
+            summonType: EnemyType.MOUSE_KING,
+            chainTargets: 2,
+            damageReduction: 0.1
+        };
+    }
+
+    /**
+     * 初始化终极霸王移动行为 - 综合所有复杂移动
+     * 特点：使用spiral、curves、zigzag模式混合，体现终极BOSS的复杂性
+     */
+    protected initializeMovementBehavior(): void {
+        // 终极霸王的移动模式 - 融合所有复杂移动模式
+        const patterns: ('spiral' | 'curves' | 'zigzag')[] = ['spiral', 'curves', 'zigzag'];
+        this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // 大幅度的复杂摆动 - 体现终极BOSS的不可预测性和威胁
+        this._zigzagAmplitude = 45 + Math.random() * 35; // 45-80像素的大幅摆动
+        this._segmentCount = 12 + Math.floor(Math.random() * 6); // 12-17段移动，最复杂的移动路径
+
+        console.log(`终极霸王移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**
@@ -225,8 +257,8 @@ export class UltimateOverlord extends BaseMouse {
             case 'summon':
                 this.addSummonEffect(graphics);
                 break;
-            case 'chainAttack':
-                this.addChainAttackEffect(graphics);
+            case 'intimidation':
+                this.addIntimidationEffect(graphics);
                 break;
             case 'stealth':
                 this.addStealthEffect(graphics);
@@ -249,7 +281,7 @@ export class UltimateOverlord extends BaseMouse {
     /**
      * 添加链式攻击特效
      */
-    private addChainAttackEffect(graphics: Graphics): void {
+    private addIntimidationEffect(graphics: Graphics): void {
         graphics.strokeColor = new Color(255, 255, 100, 200);
         graphics.lineWidth = 4;
         for (let i = 0; i < 8; i++) {
@@ -347,10 +379,10 @@ export class UltimateOverlord extends BaseMouse {
             this.abilityCooldowns.summon = 10.0;
         }
         
-        // 链式攻击
-        if (this.abilityCooldowns.chainAttack <= 0) {
-            this.performChainAttack();
-            this.abilityCooldowns.chainAttack = 6.0;
+        // 威慑展示
+        if (this.abilityCooldowns.intimidation <= 0) {
+            this.performIntimidationDisplay();
+            this.abilityCooldowns.intimidation = 8.0;
         }
     }
     
@@ -387,30 +419,28 @@ export class UltimateOverlord extends BaseMouse {
     }
     
     /**
-     * 执行链式攻击
+     * 执行威慑展示
      */
-    private performChainAttack(): void {
+    private performIntimidationDisplay(): void {
         const gameManager = GameManager.instance;
         if (!gameManager || gameManager.deployedHeroes.length === 0) return;
         
-        this.activeAbility = 'chainAttack';
-        console.log(`终极霸王发动终极链式攻击！`);
+        this.activeAbility = 'intimidation';
+        console.log(`终极霸王展示终极威慑气场！`);
         
-        // 找到最近的英雄进行链式攻击
-        const targets = [];
-        let currentTarget = this.findNearestHero();
-        
-        if (currentTarget) {
-            targets.push(currentTarget);
-            
-            for (let i = 1; i < this.chainTargets && i < gameManager.deployedHeroes.length; i++) {
-                const nextTarget = this.findNextChainTarget(currentTarget, targets);
-                if (nextTarget) {
-                    targets.push(nextTarget);
-                    currentTarget = nextTarget;
+        // 对范围内的英雄展示威慑特效（不造成伤害）
+        const intimidationRange = 150;
+        gameManager.deployedHeroes.forEach(heroNode => {
+            if (!heroNode || !heroNode.isValid) return;
+
+            const distance = Vec3.distance(this.node.position, heroNode.position);
+            if (distance <= intimidationRange) {
+                const heroComponent = heroNode.getComponent(BaseHero);
+                if (heroComponent) {
+                    console.log(`英雄${heroComponent.unitName}感受到终极霸王的威慑气场！`);
                 }
             }
-        }
+        });
         
         this.updateVisualEffects();
         
@@ -424,55 +454,9 @@ export class UltimateOverlord extends BaseMouse {
             .start();
     }
     
-    /**
-     * 找到最近的英雄
-     */
-    private findNearestHero(): any {
-        const gameManager = GameManager.instance;
-        if (!gameManager) return null;
-        
-        let nearestHero = null;
-        let minDistance = Infinity;
-        
-        gameManager.deployedHeroes.forEach(heroNode => {
-            if (!heroNode) return;
-            const hero = heroNode.getComponent(BaseHero);
-            if (!hero) return;
-            
-            const distance = Vec3.distance(this.node.position, heroNode.position);
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestHero = hero;
-            }
-        });
-        
-        return nearestHero;
-    }
+    // 已移除链式攻击相关方法，符合塔防游戏设计原则
     
-    /**
-     * 找到下一个链式目标
-     */
-    private findNextChainTarget(currentTarget: any, excludeList: any[]): any {
-        const gameManager = GameManager.instance;
-        if (!gameManager || !currentTarget.node) return null;
-        
-        let nextTarget = null;
-        let minDistance = Infinity;
-        
-        gameManager.deployedHeroes.forEach(heroNode => {
-            if (!heroNode) return;
-            const hero = heroNode.getComponent(BaseHero);
-            if (!hero || excludeList.includes(hero)) return;
-            
-            const distance = Vec3.distance(currentTarget.node.position, heroNode.position);
-            if (distance < minDistance && distance <= 200) {
-                minDistance = distance;
-                nextTarget = hero;
-            }
-        });
-        
-        return nextTarget;
-    }
+    // 已移除链式攻击相关方法，符合塔防游戏设计原则
     
     /**
      * 终极霸王复合受伤处理

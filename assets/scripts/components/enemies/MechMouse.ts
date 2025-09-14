@@ -1,7 +1,6 @@
 import { _decorator, Color, Graphics, Vec3, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
 const { ccclass, property } = _decorator;
 
@@ -15,22 +14,27 @@ export class MechMouse extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.MECH_MOUSE;
     
-    // 私有属性
-    private _graphics: Graphics | null = null;
+    // 私有属性（基类已提供 _graphics）
     
     // 科技视觉效果属性
     private _engineGlow: number = 0;          // 引擎发光效果
     
-    protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[this.enemyType];
-        
-        // 基础属性配置
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
-        
+    // 实现BaseMouse的抽象方法 - 机械老鼠配置
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.MECH_MOUSE,
+            name: "机械老鼠",
+            category: EnemyCategory.BOSS,
+            health: 180,
+            maxHealth: 180,
+            moveSpeed: 90,
+            goldReward: 25
+        };
+    }
+
+    protected initializeMouseVisuals(): void {
+        super.initializeMouseVisuals();
+
         // 设置节点缩放，机械老鼠比普通老鼠大30%
         this.node.setScale(1.3, 1.3, 1.3);
         
@@ -255,9 +259,9 @@ export class MechMouse extends BaseMouse {
         console.log(`${this.unitName}对城堡发动科技攻击！造成 ${castleDamage} 点伤害！`);
         
         // 创建科技到达特效
-        this.createTechReachEffect();
-        
-        // 移除自己
+        this.createCastleReachEffect();
+
+        // 调用基类处理
         this._gameManager.RemoveActiveEnemy(this.node);
         this.die();
     }
@@ -265,7 +269,7 @@ export class MechMouse extends BaseMouse {
     /**
      * 创建科技到达城堡的特效
      */
-    private createTechReachEffect(): void {
+    protected createCastleReachEffect(): void {
         // 科技攻击特效 - 电磁脉冲效果
         const originalScale = this.node.scale.clone();
         const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);

@@ -1,6 +1,5 @@
 import { _decorator, Node } from 'cc';
 import { EnemyType } from '../types/GameTypes';
-import { ENEMY_CONFIGS } from '../types/GameConstants';
 
 // 敌人组件导入
 import { BasicMouse } from '../components/enemies/BasicMouse';
@@ -57,12 +56,6 @@ export class EnemyFactory {
      * @returns 创建的敌人节点，如果失败返回null
      */
     public static createEnemy(enemyType: EnemyType, parent?: Node, spawnPosition?: { x: number; y: number }): Node | null {
-        // 检查敌人类型是否有效
-        if (!ENEMY_CONFIGS[enemyType]) {
-            console.error(`未找到敌人类型配置: ${enemyType}`);
-            return null;
-        }
-        
         // 检查是否有对应的组件类
         const ComponentClass = this.ENEMY_COMPONENTS[enemyType];
         if (!ComponentClass) {
@@ -141,21 +134,12 @@ export class EnemyFactory {
     }
     
     /**
-     * 获取敌人配置信息
-     * @param enemyType 敌人类型
-     * @returns 敌人配置，如果不存在返回null
-     */
-    public static getEnemyConfig(enemyType: EnemyType) {
-        return ENEMY_CONFIGS[enemyType] || null;
-    }
-    
-    /**
      * 检查敌人类型是否可用
      * @param enemyType 敌人类型
      * @returns 是否可用
      */
     public static isEnemyAvailable(enemyType: EnemyType): boolean {
-        return !!(ENEMY_CONFIGS[enemyType] && this.ENEMY_COMPONENTS[enemyType]);
+        return !!this.ENEMY_COMPONENTS[enemyType];
     }
     
     /**
@@ -164,54 +148,6 @@ export class EnemyFactory {
      */
     public static getAvailableEnemyTypes(): EnemyType[] {
         return Object.keys(this.ENEMY_COMPONENTS) as EnemyType[];
-    }
-    
-    /**
-     * 获取敌人击败奖励
-     * @param enemyType 敌人类型
-     * @returns 金币奖励，如果敌人不存在返回0
-     */
-    public static getEnemyReward(enemyType: EnemyType): number {
-        const config = ENEMY_CONFIGS[enemyType];
-        return config ? config.goldReward : 0;
-    }
-    
-    /**
-     * 获取敌人的详细信息（用于调试和UI显示）
-     * @param enemyType 敌人类型
-     * @returns 敌人详细信息
-     */
-    public static getEnemyInfo(enemyType: EnemyType): {
-        type: EnemyType;
-        name: string;
-        goldReward: number;
-        description: string;
-        stats: {
-            health: number;
-            attack: number;
-            range: number;
-            speed: number;
-        };
-        specialAbilities: string[];
-        available: boolean;
-    } | null {
-        const config = ENEMY_CONFIGS[enemyType];
-        if (!config) return null;
-        
-        return {
-            type: enemyType,
-            name: config.name,
-            goldReward: config.goldReward,
-            description: this.getEnemyDescription(enemyType),
-            stats: {
-                health: config.maxHealth,
-                attack: 0, // Enemies don't have attack damage anymore
-                range: 0,  // Enemies don't have attack range anymore  
-                speed: config.moveSpeed
-            },
-            specialAbilities: this.getEnemyAbilities(enemyType),
-            available: this.isEnemyAvailable(enemyType)
-        };
     }
     
     /**

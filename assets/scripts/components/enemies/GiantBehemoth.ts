@@ -1,8 +1,7 @@
 import { _decorator, Component, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { BaseHero } from '../heroes/BaseHero';
-import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 
 const { ccclass, property } = _decorator;
@@ -17,32 +16,60 @@ export class GiantBehemoth extends BaseMouse {
     /** 敌人类型 */
     public readonly enemyType: EnemyType = EnemyType.GIANT_BEHEMOTH;
 
-    /** 践踏攻击范围 */
-    private aoeAttackRange: number = 80;
-    
-    /** 践踏伤害 */
-    private trampleDamage: number = 50;
-    
-    /** 践踏冷却时间 */
-    private trampleCooldown: number = 0;
-    
-    /** 是否正在践踏攻击 */
-    private isTrampling: boolean = false;
+    /** 威慑特效范围 */
+    private intimidationRange: number = 80;
+
+    /** 威慑特效冷却时间 */
+    private intimidationCooldown: number = 0;
+
+    /** 是否正在展示威慑 */
+    private isIntimidating: boolean = false;
     
     /**
      * 初始化巨兽霸主属性
      */
     protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.GIANT_BEHEMOTH];
+        const config = this.GetConfig();
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
-        this.aoeAttackRange = (config as any).aoeAttackRange || 80;
-        
+        this.intimidationRange = config.aoeAttackRange || 80; // 威慑特效范围
+
         // 巨兽霸主体型更大
         this.node.scale = new Vec3(1.8, 1.8, 1);
+    }
+
+    /**
+     * 获取巨兽霸主配置
+     */
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.GIANT_BEHEMOTH,
+            name: "巨兽霸主",
+            category: EnemyCategory.BOSS,
+            health: 500,
+            maxHealth: 500,
+            moveSpeed: 40,
+            goldReward: 120,
+            aoeAttackRange: 80
+        };
+    }
+
+    /**
+     * 初始化巨兽霸主移动行为 - 威严稳重移动
+     * 特点：使用straight模式，极小摆动，体现巨兽的威严和稳重
+     */
+    protected initializeMovementBehavior(): void {
+        // 巨兽霸主的移动模式 - 直线为主，体现威严
+        this._movementPattern = 'straight';
+
+        // 极小的摆动幅度 - 体现巨兽的稳重和不可阻挡
+        this._zigzagAmplitude = 3 + Math.random() * 5; // 3-8像素的微小摆动
+        this._segmentCount = 3 + Math.floor(Math.random() * 2); // 3-4段移动，保持简洁威严
+
+        console.log(`巨兽霸主移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**
@@ -109,56 +136,56 @@ export class GiantBehemoth extends BaseMouse {
     }
     
     /**
-     * 更新践踏攻击逻辑
+     * 更新威慑特效逻辑
      */
     protected update(dt: number): void {
         super.update(dt);
-        
-        // 践踏攻击冷却
-        this.trampleCooldown -= dt;
-        if (this.trampleCooldown <= 0 && !this.isTrampling) {
-            this.performTrampleAttack();
-            this.trampleCooldown = 5.0; // 5秒践踏一次
+
+        // 威慑特效冷却
+        this.intimidationCooldown -= dt;
+        if (this.intimidationCooldown <= 0 && !this.isIntimidating) {
+            this.performIntimidationEffect();
+            this.intimidationCooldown = 8.0; // 8秒展示一次威慑
         }
     }
     
     /**
-     * 执行践踏攻击
+     * 执行威慑特效展示
      */
-    private performTrampleAttack(): void {
-        if (this.isTrampling) return;
-        
-        this.isTrampling = true;
-        console.log(`巨兽霸主发动践踏攻击！范围：${this.aoeAttackRange}`);
-        
-        // 践踏前摇特效
-        this.showTrampleChargeEffect();
-        
-        // 1秒后执行实际践踏
+    private performIntimidationEffect(): void {
+        if (this.isIntimidating) return;
+
+        this.isIntimidating = true;
+        console.log(`巨兽霸主展示威慑气场！范围：${this.intimidationRange}`);
+
+        // 威慑前摇特效
+        this.showIntimidationChargeEffect();
+
+        // 1.5秒后展示威慑爆发
         tween(this.node)
-            .delay(1.0)
+            .delay(1.5)
             .call(() => {
-                this.executeTrample();
-                this.isTrampling = false;
+                this.showIntimidationBurst();
+                this.isIntimidating = false;
             })
             .start();
     }
     
     /**
-     * 显示践踏蓄力特效
+     * 显示威慑蓄力特效
      */
-    private showTrampleChargeEffect(): void {
+    private showIntimidationChargeEffect(): void {
         const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
-        // 添加蓄力光环
-        graphics.strokeColor = new Color(255, 200, 100, 200);
+        // 添加威慑光环
+        graphics.strokeColor = new Color(255, 180, 80, 200);
         graphics.lineWidth = 5;
-        graphics.circle(0, 0, this.aoeAttackRange);
+        graphics.circle(0, 0, this.intimidationRange);
         graphics.stroke();
-        
-        // 地面震动效果
-        graphics.strokeColor = new Color(150, 100, 50, 150);
+
+        // 威慑波纹效果
+        graphics.strokeColor = new Color(200, 120, 60, 150);
         graphics.lineWidth = 3;
         for (let i = 0; i < 6; i++) {
             const radius = 30 + (i * 15);
@@ -168,54 +195,60 @@ export class GiantBehemoth extends BaseMouse {
     }
     
     /**
-     * 执行践踏伤害
+     * 展示威慑爆发特效
      */
-    private executeTrample(): void {
+    private showIntimidationBurst(): void {
         const gameManager = GameManager.instance;
         if (!gameManager) return;
-        
-        // 对范围内的所有英雄造成伤害
+
+        // 检测范围内的英雄，展示威慑效果（不造成伤害）
         const myPosition = this.node.position;
         const deployedHeroes = gameManager.deployedHeroes;
         if (!deployedHeroes) return;
-        
+
         deployedHeroes.forEach(heroNode => {
             if (!heroNode || !heroNode.isValid) return;
-            
+
             const distance = Vec3.distance(myPosition, heroNode.position);
-            if (distance <= this.aoeAttackRange) {
+            if (distance <= this.intimidationRange) {
                 // 获取英雄组件
                 const heroComponent = heroNode.getComponent(BaseHero);
                 if (heroComponent) {
-                    // 由于英雄没有生命值，这里只是显示效果
-                    console.log(`英雄${heroComponent.heroName}受到巨兽霸主的践踏冲击！`);
-                    this.showTrampleHitEffect(heroNode.position);
+                    // 纯视觉威慑效果，不造成伤害
+                    console.log(`英雄${heroComponent.heroName}感受到巨兽霸主的威慑气场！`);
+                    this.showIntimidationHitEffect(heroNode.position);
                 }
             }
         });
-        
-        // 践踏爆炸特效
-        this.showTrampleExplosion();
+
+        // 威慑爆发特效
+        this.showIntimidationExplosion();
     }
     
     /**
-     * 显示践踏命中特效
+     * 显示威慑命中特效
      */
-    private showTrampleHitEffect(targetPos: Vec3): void {
+    private showIntimidationHitEffect(targetPos: Vec3): void {
         const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
-        // 在目标位置显示冲击特效
+        // 在目标位置显示威慑特效
         const relativePos = targetPos.subtract(this.node.position);
-        graphics.fillColor = new Color(255, 150, 50, 200);
-        graphics.circle(relativePos.x, relativePos.y, 15);
+        graphics.fillColor = new Color(255, 200, 100, 150);
+        graphics.circle(relativePos.x, relativePos.y, 12);
         graphics.fill();
+
+        // 威慑波纹
+        graphics.strokeColor = new Color(255, 180, 80, 100);
+        graphics.lineWidth = 2;
+        graphics.circle(relativePos.x, relativePos.y, 20);
+        graphics.stroke();
     }
     
     /**
-     * 显示践踏爆炸特效
+     * 显示威慑爆发特效
      */
-    private showTrampleExplosion(): void {
+    private showIntimidationExplosion(): void {
         const graphics = this.getGraphicsComponent();
         if (!graphics) return;
         
@@ -223,29 +256,29 @@ export class GiantBehemoth extends BaseMouse {
         graphics.clear();
         this.initializeMouseVisuals();
         
-        // 添加爆炸特效
-        graphics.strokeColor = new Color(255, 100, 50, 255);
+        // 添加威慑爆发特效
+        graphics.strokeColor = new Color(255, 180, 80, 255);
         graphics.lineWidth = 6;
-        graphics.circle(0, 0, this.aoeAttackRange);
+        graphics.circle(0, 0, this.intimidationRange);
         graphics.stroke();
-        
-        // 冲击波
+
+        // 威慑冲击波
         for (let i = 0; i < 4; i++) {
-            graphics.strokeColor = new Color(200, 150, 100, 150 - (i * 30));
+            graphics.strokeColor = new Color(255, 200, 120, 180 - (i * 40));
             graphics.lineWidth = 4;
-            graphics.circle(0, 0, this.aoeAttackRange + (i * 20));
+            graphics.circle(0, 0, this.intimidationRange + (i * 25));
             graphics.stroke();
         }
-        
-        // 地面裂痕
-        graphics.strokeColor = new Color(100, 60, 30, 200);
-        graphics.lineWidth = 4;
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * Math.PI) / 4;
-            const startX = Math.cos(angle) * 35;
-            const startY = Math.sin(angle) * 35;
-            const endX = Math.cos(angle) * 90;
-            const endY = Math.sin(angle) * 90;
+
+        // 威慑光线
+        graphics.strokeColor = new Color(255, 220, 100, 200);
+        graphics.lineWidth = 3;
+        for (let i = 0; i < 12; i++) {
+            const angle = (i * Math.PI) / 6;
+            const startX = Math.cos(angle) * 40;
+            const startY = Math.sin(angle) * 40;
+            const endX = Math.cos(angle) * (this.intimidationRange + 20);
+            const endY = Math.sin(angle) * (this.intimidationRange + 20);
             graphics.moveTo(startX, startY);
             graphics.lineTo(endX, endY);
             graphics.stroke();
@@ -270,13 +303,13 @@ export class GiantBehemoth extends BaseMouse {
      * 巨兽霸主受伤效果
      */
     protected onTakeDamage(damage: number): void {
-        console.log("巨兽霸主发出愤怒的咆哮！");
-        
-        // 愤怒特效
+        console.log("巨兽霸主发出威慑的咆哮！");
+
+        // 愤怒威慑特效
         const graphics = this.getGraphicsComponent();
         if (graphics) {
-            // 添加愤怒光环
-            graphics.strokeColor = new Color(255, 50, 50, 200);
+            // 添加愤怒威慑光环
+            graphics.strokeColor = new Color(255, 120, 60, 200);
             graphics.lineWidth = 4;
             graphics.circle(0, 0, 40);
             graphics.stroke();

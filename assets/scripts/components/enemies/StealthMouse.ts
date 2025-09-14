@@ -1,7 +1,6 @@
 import { _decorator, Color, Graphics, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
 const { ccclass, property } = _decorator;
 
@@ -14,8 +13,7 @@ export class StealthMouse extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.STEALTH_MOUSE;
     
-    // 私有属性
-    private _graphics: Graphics | null = null;
+    // 私有属性（基类已提供 _graphics）
     
     @property({ tooltip: "闪避几率(0-1)" })
     public dodgeChance: number = 0.3;
@@ -25,19 +23,29 @@ export class StealthMouse extends BaseMouse {
     private _stealthTimer: number = 0;
     private _stealthCooldown: number = 3; // 3秒切换一次潜行状态
     
+    // 实现BaseMouse的抽象方法 - 潜行老鼠配置
     protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[this.enemyType];
-        
+        const config = {
+            type: EnemyType.STEALTH_MOUSE,
+            name: "潜行老鼠",
+            category: EnemyCategory.SPECIAL,
+            health: 30,
+            maxHealth: 30,
+            moveSpeed: 130,
+            goldReward: 10,
+            stealthChance: 0.2
+        };
+
         // 基础属性配置
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
-        
+
         // 特殊属性：闪避几率
-        this.dodgeChance = config.stealthChance || 0.3;
-        
+        this.dodgeChance = (config as any).stealthChance || 0.3;
+
         console.log(`初始化${this.unitName}: 血量${this.maxHealth}, 移速${this.moveSpeed}, 闪避${this.dodgeChance * 100}%, 奖励${this.goldReward}金币`);
     }
     
@@ -235,39 +243,46 @@ export class StealthMouse extends BaseMouse {
         };
     }
     
+    // 重写基类移动行为初始化，使用潜行老鼠特殊参数
+    protected initializeMovementBehavior(): void {
+        // 潜行老鼠的移动参数配置：主要stealth_sway，也可zigzag
+        const patterns: ('zigzag' | 'stealth_sway')[] = ['stealth_sway', 'stealth_sway', 'zigzag']; // 2:1比例
+        this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)] as any;
+
+        // 设置潜行移动参数
+        this._zigzagAmplitude = 12 + Math.random() * 13; // 12-25像素
+        this._segmentCount = 4 + Math.floor(Math.random() * 4); // 4-7段移动
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+    }
+
     /**
-     * 重写移动方法，添加潜行移动效果
+     * 重写路径点生成，添加潜行摇摆效果
      */
-    protected moveTowardsCastle(dt: number): void {
-        if (!this._gameManager || !this._gameManager.castleNode) return;
-        
-        const currentPos = this.node.position;
-        
-        // 检查是否到达城堡
-        if (this.isReachedCastle(currentPos)) {
-            this.reachCastle();
-            return;
+    protected generatePathPoints(startPos: Vec3, castlePos: Vec3, totalDistance: number): Vec3[] {
+        // 先调用基类方法获得基础路径点
+        const basePoints = super.generatePathPoints(startPos, castlePos, totalDistance);
+
+        // 如果是潜行摇摆模式，添加特殊效果
+        if (this._movementPattern === 'stealth_sway') {
+            for (let i = 1; i < basePoints.length; i++) {
+                const point = basePoints[i];
+                // 添加潜行状态的额外摇摆
+                const swayAmplitude = this._isStealthed ? 8 : 4;
+                const swayOffset = Math.sin(i * 1.5) * swayAmplitude;
+                point.x += swayOffset;
+
+                // 限制X坐标不要移动到屏幕外
+                const maxX = 300;
+                point.x = Math.max(-maxX, Math.min(maxX, point.x));
+            }
         }
-        
-        // 潜行移动 - 添加轻微的左右摇摆
-        const baseSpeed = this.moveSpeed * dt;
-        let moveDistance = baseSpeed;
-        
-        // 潜行状态时移动稍快且更难预测
-        if (this._isStealthed) {
-            moveDistance *= 1.1; // 潜行时稍快10%
-        }
-        
-        // 添加随机摇摆（模拟潜行的不规律移动）
-        const swayAmplitude = this._isStealthed ? 8 : 4;
-        const swayOffset = Math.sin(Date.now() * 0.01) * swayAmplitude;
-        
-        const newPos = Vec3.add(new Vec3(), currentPos, new Vec3(swayOffset * dt, -moveDistance, 0));
-        this.node.setPosition(newPos);
+
+        return basePoints;
     }
     
     /**
-     * 创建死亡特效 - 潜行单位的特殊消失效果
+     * 重写创建死亡特效 - 潜行单位的特殊消失效果
      */
     protected createDeathEffect(): void {
         // 潜行单位死亡 - 逐渐透明消失

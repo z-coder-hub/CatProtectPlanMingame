@@ -1,7 +1,6 @@
 import { _decorator, Component, Color, Graphics, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
 const { ccclass, property } = _decorator;
 
@@ -26,11 +25,26 @@ export class ShadowAssassin extends BaseMouse {
     /** 潜行状态切换计时器 */
     private stealthTimer: number = 0;
     
+    // 实现BaseMouse的抽象方法 - 潜影刺客配置
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.SHADOW_ASSASSIN,
+            name: "潜影刺客",
+            category: EnemyCategory.BOSS,
+            health: 300,
+            maxHealth: 300,
+            moveSpeed: 120,
+            goldReward: 80,
+            stealthChance: 0.6,
+            damageReduction: 0.3
+        };
+    }
+
     /**
      * 初始化潜影刺客属性
      */
     protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.SHADOW_ASSASSIN];
+        const config = this.GetConfig();
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
@@ -41,6 +55,19 @@ export class ShadowAssassin extends BaseMouse {
         
         // 初始潜行状态判定
         this.checkStealthState();
+    }
+
+    // 重写基类移动行为初始化，使用潜影刺客的参数
+    protected initializeMovementBehavior(): void {
+        // 潜影刺客的移动参数配置：主要stealth_sway和dash，隐蔽移动
+        const patterns: ('stealth_sway' | 'dash')[] = ['stealth_sway', 'stealth_sway', 'dash']; // 2:1比例
+        this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)] as any;
+
+        // 设置隐蔽移动参数
+        this._zigzagAmplitude = 20 + Math.random() * 15; // 20-35像素（较大摆动）
+        this._segmentCount = 4 + Math.floor(Math.random() * 5); // 4-8段移动（复杂路径）
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**

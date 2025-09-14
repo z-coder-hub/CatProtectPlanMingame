@@ -1,7 +1,6 @@
 import { _decorator, Color, Graphics, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
 const { ccclass, property } = _decorator;
 
@@ -13,27 +12,36 @@ const { ccclass, property } = _decorator;
 export class TankMouse extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.TANK_MOUSE;
-    
-    // 私有属性
-    private _graphics: Graphics | null = null;
-    
+
+    // 私有属性（基类已提供 _graphics）
+
     @property({ tooltip: "护甲值(减少受到的伤害)" })
-    public armorValue: number = 5;
-    
-    protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[this.enemyType];
-        
-        // 基础属性配置
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
-        
-        // 特殊属性：护甲值
-        this.armorValue = config.armorValue || 5;
-        
-        console.log(`初始化${this.unitName}: 血量${this.maxHealth}, 移速${this.moveSpeed}, 护甲${this.armorValue}, 奖励${this.goldReward}金币`);
+    public armorValue: number = 3;
+
+    // 实现BaseMouse的抽象方法 - 坦克老鼠配置
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.TANK_MOUSE,
+            name: "坦克老鼠",
+            category: EnemyCategory.ARMORED,
+            health: 120,
+            maxHealth: 120,
+            moveSpeed: 60,
+            goldReward: 12,
+            armorValue: 3
+        };
+    }
+
+    // 重写基类移动行为初始化，使用坠克老鼠的参数
+    protected initializeMovementBehavior(): void {
+        // 坠克老鼠的移动参数配置：主要straight，极小摆动
+        this._movementPattern = 'straight';
+
+        // 设置极小的移动参数（最笨重的单位）
+        this._zigzagAmplitude = 3 + Math.random() * 4; // 3-7像素（极小摆动）
+        this._segmentCount = 2 + Math.floor(Math.random() * 2); // 2-3段移动（最少分段）
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     protected initializeMouseVisuals(): void {

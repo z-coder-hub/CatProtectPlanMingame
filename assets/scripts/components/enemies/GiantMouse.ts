@@ -1,7 +1,6 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, Label, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { EffectHelper } from '../../utils/EffectHelper';
@@ -15,21 +14,22 @@ export class GiantMouse extends BaseMouse {
     @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 8;
     
-    // 私有属性
-    private _graphics: Graphics | null = null;
-    private _nameLabel: Label | null = null;
-    private _gameManager: GameManager | null = null;
-    private _movementTimer: number = 0;
-    private _currentDirection: Vec3 = new Vec3(0, -1, 0);
-    private _zigzagFrequency: number = 1.5;
-    private _isMovingTowardsCastle: boolean = true;
+    // 私有属性（基类已提供 _graphics 和移动系统）
     
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.GIANT_MOUSE;
     
-    // 实现BaseMouse的抽象方法
-    protected initializeMouseStats(): void {
-        this.initializeGiantMouseStats();
+    // 实现BaseMouse的抽象方法 - 巨型老鼠配置
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.GIANT_MOUSE,
+            name: "巨型老鼠",
+            category: EnemyCategory.BASIC,
+            health: 80,
+            maxHealth: 80,
+            moveSpeed: 80,
+            goldReward: 8
+        };
     }
     
     // 实现BaseMouse的抽象方法
@@ -53,16 +53,6 @@ export class GiantMouse extends BaseMouse {
         }
     }
     
-    private initializeGiantMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.GIANT_MOUSE];
-        
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        // 移除攻击相关属性，巨型老鼠不攻击
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
-    }
     
     private initializeVisuals(): void {
         this._graphics = this.getGraphicsComponent();
@@ -140,42 +130,22 @@ export class GiantMouse extends BaseMouse {
     }
     
     
+    // 重写基类移动行为初始化，使用巨型老鼠的参数
+    protected initializeMovementBehavior(): void {
+        // 巨型老鼠的移动参数配置：主要直线，偶尔zigzag
+        const patterns: ('zigzag' | 'straight')[] = ['zigzag', 'zigzag', 'zigzag', 'straight']; // 3:1比例
+        this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // 设置笨重的移动参数
+        this._zigzagAmplitude = 15 + Math.random() * 10; // 15-25像素（比基础老鼠小）
+        this._segmentCount = 3 + Math.floor(Math.random() * 3); // 3-5段移动（更少分段）
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+    }
+
     protected update(dt: number): void {
         super.update(dt);
-        
-        if (this.enemyState === EnemyState.MOVING) { // MOVING状态
-            this.updateMovement(dt);
-        }
-    }
-    
-    private updateMovement(dt: number): void {
-        if (!this._isMovingTowardsCastle) return;
-        
-        this._movementTimer += dt;
-        
-        // 缓慢的蜿蜒移动（巨型老鼠比较笨重）
-        const xDirection = Math.sin(this._movementTimer * this._zigzagFrequency) * 0.2;
-        this._currentDirection.set(xDirection, -1, 0);
-        this._currentDirection.normalize();
-        
-        // 应用移动
-        const movement = Vec3.multiplyScalar(new Vec3(), this._currentDirection, this.moveSpeed * dt);
-        const newPosition = Vec3.add(new Vec3(), this.node.position, movement);
-        this.node.setPosition(newPosition);
-        
-        // 检查是否到达城堡
-        this.checkCastleCollision();
-    }
-    
-    private checkCastleCollision(): void {
-        if (!this._gameManager || !this._gameManager.castleNode) return;
-        
-        const currentPos = this.node.position;
-        const castlePos = this._gameManager.castleNode.position;
-        
-        if (currentPos.y <= castlePos.y + 50) {
-            this.reachCastle();
-        }
+        // 基类Tween系统自动处理移动，无需额外处理
     }
     
     // 移除攻击城堡方法，使用父类的 reachCastle 方法
@@ -190,7 +160,8 @@ export class GiantMouse extends BaseMouse {
         this.createRoarEffect();
         
         // 受伤时可能进入狂暴状态
-        if (this.currentHealth < this.maxHealth * 0.3 && this.moveSpeed === ENEMY_CONFIGS[EnemyType.GIANT_MOUSE].moveSpeed) {
+        const originalMoveSpeed = this.GetConfig().moveSpeed;
+        if (this.currentHealth < this.maxHealth * 0.3 && this.moveSpeed === originalMoveSpeed) {
             this.enterBerserkMode();
         }
     }
@@ -252,51 +223,38 @@ export class GiantMouse extends BaseMouse {
         }
     }
     
+    // 重写死亡处理，添加巨型老鼠特殊逻辑
     protected onDie(): void {
-        console.log("巨型老鼠被击败");
-        
-        // 给予金币奖励
-        if (this._gameManager) {
-            this._gameManager.AddGold(this.goldReward);
-            console.log(`获得 ${this.goldReward} 金币奖励`);
-        }
-        
-        // 从战斗管理器注销
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.UnregisterEnemy(this.node);
-        }
-        
-        // 创建死亡特效
-        this.createDeathEffect();
-        
+        console.log(`${this.unitName}被击败`);
+
         // 巨型老鼠死亡时有几率掉落额外金币
         if (Math.random() < 0.3) {
             this.dropBonusGold();
         }
-        
-        // 销毁节点，清理尸体
-        this.node.destroy();
+
+        // 调用基类的死亡处理（包含注销、奖励、销毁等通用逻辑）
+        super.onDie();
     }
-    
-    private createDeathEffect(): void {
+
+    // 重写创建死亡特效方法
+    protected createDeathEffect(): void {
         if (this.node.parent) {
             EffectHelper.createEnemyDeathEffect(this.node.position, this.node.parent);
         }
-        
+
         // 变灰色表示死亡
         if (this._graphics) {
             this._graphics.fillColor = new Color(80, 80, 80);
             this.drawGiantMouseAppearance();
         }
     }
-    
+
     private dropBonusGold(): void {
         if (this._gameManager) {
             const bonusGold = 2;
             this._gameManager.AddGold(bonusGold);
-            console.log(`巨型老鼠掉落额外金币: ${bonusGold}`);
-            
+            console.log(`${this.unitName}掉落额外金币: ${bonusGold}`);
+
             // 创建金币掉落特效
             if (this.node.parent) {
                 EffectHelper.createGoldDropEffect(this.node.position, this.node.parent);
@@ -304,12 +262,7 @@ export class GiantMouse extends BaseMouse {
         }
     }
     
-    // 开始移动
-    public startMoving(): void {
-        this.enemyState = EnemyState.MOVING; // MOVING状态
-        this._isMovingTowardsCastle = true;
-        console.log("巨型老鼠开始朝城堡移动");
-    }
+    // 基类已实现完整的移动管理，无需额外的startMoving方法
     
     // 获取敌人类型
     public getEnemyType(): EnemyType {

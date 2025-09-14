@@ -135,6 +135,9 @@ export interface HeroConfig extends UnitStats {
     // 新射击英雄专用属性
     multiTargets?: number;         // 多重锁定目标数(苏格兰射手)
     multiShot?: number;            // 多发齐射数量(阿比西尼亚弓箭手)
+
+    // 技能系统属性
+    skillCooldown?: number;        // 技能冷却时间(秒)
 }
 
 // 敌人配置接口
@@ -175,6 +178,7 @@ export interface GameEvents {
     'unit-destroyed': { unit: Component; position: WorldPosition };
     'wave-completed': { wave: number };
     'game-state-changed': { newState: GameState; oldState: GameState };
+    'hero-unlocked': { heroType: HeroType };
 }
 
 // 波次配置接口
@@ -200,7 +204,6 @@ export interface GameConfig {
     restDuration: number;          // 波次间休息时长(秒)
     gridConfig: GridConfig;        // 网格配置
     heroConfigs: Record<HeroType, HeroConfig>;     // 英雄配置
-    enemyConfigs: Record<EnemyType, EnemyConfig>;  // 敌人配置
     totalLevels: number;          // 总关卡数
 }
 

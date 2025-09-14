@@ -1,7 +1,6 @@
 import { _decorator, Component, Color, Graphics, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 
 const { ccclass, property } = _decorator;
@@ -41,15 +40,49 @@ export class MechCommander extends BaseMouse {
      * 初始化机械军团长属性
      */
     protected initializeMouseStats(): void {
-        const config = ENEMY_CONFIGS[EnemyType.MECH_COMMANDER];
+        const config = this.GetConfig();
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
-        this.summonCount = (config as any).summonCount || 6;
-        this.summonType = (config as any).summonType || EnemyType.MECH_MOUSE;
-        this.healRate = (config as any).healRate || 20;
+        this.summonCount = config.summonCount || 6;
+        this.summonType = config.summonType || EnemyType.MECH_MOUSE;
+        this.healRate = config.healRate || 20;
+    }
+
+    /**
+     * 获取机械军团长配置
+     */
+    protected GetConfig(): EnemyConfig {
+        return {
+            type: EnemyType.MECH_COMMANDER,
+            name: "机械军团长",
+            category: EnemyCategory.BOSS,
+            health: 400,
+            maxHealth: 400,
+            moveSpeed: 85,
+            goldReward: 150,
+            summonCount: 6,
+            summonType: EnemyType.MECH_MOUSE,
+            healRate: 20
+        };
+    }
+
+    /**
+     * 初始化机械军团长移动行为 - 精确稳定移动
+     * 特点：使用straight和zigzag模式，体现机械精度和稳定性
+     */
+    protected initializeMovementBehavior(): void {
+        // 机械军团长的移动模式 - 直线和Z字形混合，体现机械精度
+        const patterns: ('straight' | 'zigzag')[] = ['straight', 'zigzag'];
+        this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // 中小幅度的精确摆动 - 体现机械的精度和可控性
+        this._zigzagAmplitude = 15 + Math.random() * 20; // 15-35像素的精确摆动
+        this._segmentCount = 6 + Math.floor(Math.random() * 3); // 6-8段移动，保持稳定
+
+        console.log(`机械军团长移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**
