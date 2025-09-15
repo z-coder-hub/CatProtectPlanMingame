@@ -1,8 +1,8 @@
-import { _decorator, Color, Graphics, Vec3, tween, UIOpacity } from 'cc';
+import { _decorator, Color, Vec3, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 /**
  * 机械老鼠 - 高科技移动单位，专注突破防线
@@ -20,7 +20,7 @@ export class MechMouse extends BaseMouse {
     private _engineGlow: number = 0;          // 引擎发光效果
     
     // 实现BaseMouse的抽象方法 - 机械老鼠配置
-    protected GetConfig(): EnemyConfig {
+    protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.MECH_MOUSE,
             name: "机械老鼠",
@@ -33,18 +33,12 @@ export class MechMouse extends BaseMouse {
     }
 
     protected initializeMouseVisuals(): void {
-        super.initializeMouseVisuals();
+        // 创建机械老鼠外观 - 银灰色科技外观
+        this._graphics = this.getGraphicsComponent();
 
         // 设置节点缩放，机械老鼠比普通老鼠大30%
         this.node.setScale(1.3, 1.3, 1.3);
-        
-        console.log(`初始化${this.unitName}: 血量${this.maxHealth}, 移速${this.moveSpeed}, 奖励${this.goldReward}金币`);
-    }
-    
-    protected initializeMouseVisuals(): void {
-        // 创建机械老鼠外观 - 银灰色科技外观
-        this._graphics = this.getGraphicsComponent();
-        
+
         // 绘制机械老鼠身体
         this.drawMechMouseAppearance();
         
@@ -61,7 +55,6 @@ export class MechMouse extends BaseMouse {
         
         // 机械外观颜色
         const bodyColor = new Color(120, 120, 140, 255);    // 银灰色机械身体
-        const glowColor = new Color(100, 150, 255, 255);    // 蓝色科技光
         
         // 绘制机械身体主体（矩形科技造型）
         this._graphics.fillColor = bodyColor;
@@ -189,31 +182,6 @@ export class MechMouse extends BaseMouse {
     }
     
     
-    /**
-     * 获取机械老鼠标签配置
-     */
-    protected getMouseLabelConfig() {
-        return {
-            text: "机械老鼠",
-            fontSize: 24,                        // BOSS用更大字体
-            color: new Color(100, 200, 255),     // 蓝色科技字体
-            yOffset: 50,                         // 因为体型更大，标签位置更高
-            size: { width: 80, height: 32 }     // 更大的标签尺寸
-        };
-    }
-
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 80,
-            height: 10,
-            yOffset: 45,
-            backgroundColor: new Color(60, 60, 60),
-            foregroundColor: new Color(100, 200, 255), // 蓝色科技前景
-            borderColor: new Color(255, 255, 255),
-            borderWidth: 2
-        };
-    }
     
     /**
      * 重写移动方法，机械老鼠移动时有推进器效果

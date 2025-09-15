@@ -78,7 +78,7 @@ export class EnemyFactory {
             }
             
             // 添加敌人组件
-            const enemyComponent = enemyNode.addComponent(ComponentClass);
+            const enemyComponent = enemyNode.addComponent(ComponentClass as any);
             
             // 验证组件是否正确创建
             if (!enemyComponent) {
@@ -221,7 +221,7 @@ export class EnemyFactory {
         const availableTypes = this.getAvailableEnemyTypes();
         for (const enemyType of availableTypes) {
             const ComponentClass = this.ENEMY_COMPONENTS[enemyType];
-            const component = enemyNode.getComponent(ComponentClass);
+            const component = enemyNode.getComponent(ComponentClass as any);
             if (component && typeof (component as any).startMoving === 'function') {
                 (component as any).startMoving();
                 break;
@@ -243,7 +243,7 @@ export class EnemyFactory {
         const availableTypes = this.getAvailableEnemyTypes();
         for (const enemyType of availableTypes) {
             const ComponentClass = this.ENEMY_COMPONENTS[enemyType];
-            if (enemyNode.getComponent(ComponentClass)) {
+            if (enemyNode.getComponent(ComponentClass as any)) {
                 return true;
             }
         }
@@ -265,7 +265,7 @@ export class EnemyFactory {
         const availableTypes = this.getAvailableEnemyTypes();
         for (const enemyType of availableTypes) {
             const ComponentClass = this.ENEMY_COMPONENTS[enemyType];
-            const component = enemyNode.getComponent(ComponentClass);
+            const component = enemyNode.getComponent(ComponentClass as any);
             if (component && (component as any).enemyType === enemyType) {
                 return enemyType;
             }

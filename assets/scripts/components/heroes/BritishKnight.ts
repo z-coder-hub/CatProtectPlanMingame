@@ -15,7 +15,7 @@ export class BritishKnight extends BaseHero {
     
     // 私有属性
     // _graphics由BaseHero管理
-    private _animation: Animation | null = null;
+    // _animation由BaseHero管理
     private _isPlayingAttackAnimation: boolean = false;
     private _isCharged: boolean = false; // 冲锋状态
     

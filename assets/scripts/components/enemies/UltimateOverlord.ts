@@ -2,6 +2,7 @@ import { _decorator, Component, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
+import { BaseHero } from '../heroes/BaseHero';
 
 const { ccclass, property } = _decorator;
 
@@ -46,16 +47,11 @@ export class UltimateOverlord extends BaseMouse {
     /** 当前激活的能力 */
     private activeAbility: string = '';
     
-    /**
-     * 初始化终极霸王属性
-     */
-    protected initializeMouseStats(): void {
-        const config = this.GetConfig();
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
+    protected onLoad(): void {
+        super.onLoad();
+
+        // 特殊属性配置
+        const config = this.getConfig();
         this.armorValue = config.armorValue || 5;
         this.stealthChance = config.stealthChance || 0.15;
         this.summonCount = config.summonCount || 2;
@@ -72,7 +68,7 @@ export class UltimateOverlord extends BaseMouse {
     /**
      * 获取终极霸王配置
      */
-    protected GetConfig(): EnemyConfig {
+    protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.ULTIMATE_OVERLORD,
             name: "终极霸王",
@@ -513,34 +509,6 @@ export class UltimateOverlord extends BaseMouse {
     /**
      * 获取老鼠标签配置
      */
-    protected getMouseLabelConfig(): {
-        text: string;
-        fontSize: number;
-        color: Color;
-        yOffset: number;
-        size: { width: number; height: number };
-    } {
-        return {
-            text: "终极霸王",
-            fontSize: 22,
-            color: new Color(255, 255, 255, 255),
-            yOffset: 40,
-            size: { width: 120, height: 30 }
-        };
-    }
-
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 200,
-            height: 20,
-            yOffset: 70,
-            backgroundColor: new Color(60, 60, 60),
-            foregroundColor: new Color(255, 0, 0), // 红色前景配合终极霸王主题
-            borderColor: new Color(255, 215, 0), // 金色边框
-            borderWidth: 4
-        };
-    }
     
     /**
      * 终极霸王终极死亡效果

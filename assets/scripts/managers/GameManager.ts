@@ -815,7 +815,7 @@ export class GameManager extends Component {
      * @param targetState 目标状态
      * @param delay 延迟时间（秒）
      */
-    private scheduleStateTransition(targetState: GameState, delay: number): void {
+    private _scheduleStateTransition(targetState: GameState, delay: number): void {
         this._pendingStateTransition = targetState;
         this._stateTransitionTimer = delay;
         console.log(`已安排状态转换: ${targetState}, 延迟: ${delay}秒`);

@@ -1,8 +1,8 @@
-import { _decorator, Component, Color, Graphics, tween } from 'cc';
+import { _decorator, Color, Graphics, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 /**
  * 潜影刺客 - 高潜行几率BOSS
@@ -26,7 +26,7 @@ export class ShadowAssassin extends BaseMouse {
     private stealthTimer: number = 0;
     
     // 实现BaseMouse的抽象方法 - 潜影刺客配置
-    protected GetConfig(): EnemyConfig {
+    protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.SHADOW_ASSASSIN,
             name: "潜影刺客",
@@ -40,19 +40,14 @@ export class ShadowAssassin extends BaseMouse {
         };
     }
 
-    /**
-     * 初始化潜影刺客属性
-     */
-    protected initializeMouseStats(): void {
-        const config = this.GetConfig();
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
+    protected onLoad(): void {
+        super.onLoad();
+
+        // 初始化潜影刺客特有属性
+        const config = this.getConfig();
         this.stealthChance = (config as any).stealthChance || 0.6;
         this.damageReduction = (config as any).damageReduction || 0.3;
-        
+
         // 初始潜行状态判定
         this.checkStealthState();
     }
@@ -240,32 +235,4 @@ export class ShadowAssassin extends BaseMouse {
     /**
      * 实现标签配置
      */
-    protected getMouseLabelConfig(): {
-        text: string;
-        fontSize: number;
-        color: Color;
-        yOffset: number;
-        size: { width: number; height: number };
-    } {
-        return {
-            text: this.unitName,
-            fontSize: 22,
-            color: this.isStealthed ? new Color(150, 100, 200, 180) : new Color(200, 200, 200, 255),
-            yOffset: 40,
-            size: { width: 120, height: 30 }
-        };
-    }
-
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 100,
-            height: 8,
-            yOffset: 50,
-            backgroundColor: new Color(60, 60, 60),
-            foregroundColor: new Color(150, 100, 200), // 紫色前景配合潜影主题
-            borderColor: new Color(255, 255, 255),
-            borderWidth: 2
-        };
-    }
 }

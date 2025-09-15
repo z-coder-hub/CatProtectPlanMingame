@@ -1,26 +1,23 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Label, tween } from 'cc';
-import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
-import { GameManager } from '../../managers/GameManager';
-import { BattleManager } from '../../managers/BattleManager';
+import { _decorator, Color } from 'cc';
+import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { EffectHelper } from '../../utils/EffectHelper';
-import { DrawingHelper } from '../../utils/DrawingHelper';
+import { BaseMouse } from './BaseMouse';
 
 const { ccclass, property } = _decorator;
 
 @ccclass('GiantMouse')
 export class GiantMouse extends BaseMouse {
-    
+
     @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 8;
-    
+
     // 私有属性（基类已提供 _graphics 和移动系统）
-    
+
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.GIANT_MOUSE;
-    
+
     // 实现BaseMouse的抽象方法 - 巨型老鼠配置
-    protected GetConfig(): EnemyConfig {
+    protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.GIANT_MOUSE,
             name: "巨型老鼠",
@@ -31,72 +28,50 @@ export class GiantMouse extends BaseMouse {
             goldReward: 8
         };
     }
-    
+
     // 实现BaseMouse的抽象方法
     protected initializeMouseVisuals(): void {
-        this.initializeVisuals();
-    }
-    
-    // 巨型老鼠不再有攻击能力，移除 performAttack 方法
-    
-    protected onLoad(): void {
-        super.onLoad();
-        this._gameManager = GameManager.instance;
-    }
-    
-    protected start(): void {
-        super.start();
-        
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.RegisterEnemy(this.node);
-        }
-    }
-    
-    
-    private initializeVisuals(): void {
         this._graphics = this.getGraphicsComponent();
-
         this.drawGiantMouseAppearance();
     }
-    
+
     private drawGiantMouseAppearance(): void {
         if (!this._graphics) return;
-        
+
         this._graphics.clear();
-        
+
         // 巨型老鼠 - 更大更威武的外观
         this._graphics.fillColor = new Color(100, 50, 25); // 深棕色
         this._graphics.circle(0, 0, 25); // 更大的身体
         this._graphics.fill();
-        
+
         // 边框
         this._graphics.strokeColor = new Color(60, 30, 15);
         this._graphics.lineWidth = 2;
         this._graphics.circle(0, 0, 25);
         this._graphics.stroke();
-        
+
         // 耳朵
         this._graphics.fillColor = new Color(80, 40, 20);
         this._graphics.circle(-15, 15, 8);
         this._graphics.fill();
         this._graphics.circle(15, 15, 8);
         this._graphics.fill();
-        
+
         // 眼睛 - 凶恶的红眼
         this._graphics.fillColor = new Color(255, 0, 0);
         this._graphics.circle(-8, 8, 4);
         this._graphics.fill();
         this._graphics.circle(8, 8, 4);
         this._graphics.fill();
-        
+
         // 獠牙
         this._graphics.fillColor = new Color(255, 255, 255);
         this._graphics.rect(-3, -8, 2, 8);
         this._graphics.fill();
         this._graphics.rect(1, -8, 2, 8);
         this._graphics.fill();
-        
+
         // 尾巴
         this._graphics.strokeColor = new Color(100, 50, 25);
         this._graphics.lineWidth = 6;
@@ -104,32 +79,7 @@ export class GiantMouse extends BaseMouse {
         this._graphics.lineTo(35, -20);
         this._graphics.stroke();
     }
-    
-    // 重写标签配置 - 使用统一大字体
-    protected getMouseLabelConfig() {
-        return {
-            text: "巨鼠",
-            fontSize: 22,
-            color: new Color(255, 100, 100), // 红色文字
-            yOffset: 50, // 巨型老鼠更高，需要更大的偏移
-            size: { width: 60, height: 28 }
-        };
-    }
 
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 50,
-            height: 6,
-            yOffset: 32,
-            backgroundColor: new Color(100, 100, 100),
-            foregroundColor: new Color(255, 100, 100),
-            borderColor: new Color(255, 255, 255),
-            borderWidth: 1
-        };
-    }
-    
-    
     // 重写基类移动行为初始化，使用巨型老鼠的参数
     protected initializeMovementBehavior(): void {
         // 巨型老鼠的移动参数配置：主要直线，偶尔zigzag
@@ -147,68 +97,65 @@ export class GiantMouse extends BaseMouse {
         super.update(dt);
         // 基类Tween系统自动处理移动，无需额外处理
     }
-    
-    // 移除攻击城堡方法，使用父类的 reachCastle 方法
-    
-    // 移除攻击特效方法
-    
+
+
     // 重写受伤方法，添加巨型老鼠的特殊反应
     public takeDamage(damage: number): void {
         super.takeDamage(damage);
-        
+
         // 受伤时发出怒吼效果
         this.createRoarEffect();
-        
+
         // 受伤时可能进入狂暴状态
-        const originalMoveSpeed = this.GetConfig().moveSpeed;
+        const originalMoveSpeed = this.getConfig().moveSpeed;
         if (this.currentHealth < this.maxHealth * 0.3 && this.moveSpeed === originalMoveSpeed) {
             this.enterBerserkMode();
         }
     }
-    
+
     private createRoarEffect(): void {
         if (this.node.parent) {
             EffectHelper.createRoarEffect(this.node.position, this.node.parent);
         }
     }
-    
+
     private enterBerserkMode(): void {
         console.log("巨型老鼠进入狂暴状态！");
-        
+
         // 提升移动速度和攻击力
         this.moveSpeed *= 1.5;
         // 移除攻击力提升，巨型老鼠不再攻击
-        
+
         // 变红色表示狂暴
         if (this._graphics) {
             this._graphics.clear();
             this._graphics.fillColor = new Color(150, 50, 50); // 深红色
             this._graphics.circle(0, 0, 25);
             this._graphics.fill();
-            
+
             // 重绘其他部分...
             this.drawBerserkAppearance();
         }
-        
+
         this.createBerserkEffect();
     }
-    
+
     private drawBerserkAppearance(): void {
         if (!this._graphics) return;
-        
+
         // 狂暴状态的外观 - 更加凶恶
         this._graphics.strokeColor = new Color(200, 0, 0);
         this._graphics.lineWidth = 3;
         this._graphics.circle(0, 0, 25);
         this._graphics.stroke();
-        
+
         // 发光的红眼
         this._graphics.fillColor = new Color(255, 50, 50);
         this._graphics.circle(-8, 8, 5);
         this._graphics.fill();
         this._graphics.circle(8, 8, 5);
         this._graphics.fill();
-        
+
         // 更大的獠牙
         this._graphics.fillColor = new Color(255, 255, 255);
         this._graphics.rect(-4, -10, 3, 10);
@@ -216,13 +163,13 @@ export class GiantMouse extends BaseMouse {
         this._graphics.rect(1, -10, 3, 10);
         this._graphics.fill();
     }
-    
+
     private createBerserkEffect(): void {
         if (this.node.parent) {
             EffectHelper.createBerserkEffect(this.node.position, this.node.parent);
         }
     }
-    
+
     // 重写死亡处理，添加巨型老鼠特殊逻辑
     protected onDie(): void {
         console.log(`${this.unitName}被击败`);
@@ -261,9 +208,9 @@ export class GiantMouse extends BaseMouse {
             }
         }
     }
-    
+
     // 基类已实现完整的移动管理，无需额外的startMoving方法
-    
+
     // 获取敌人类型
     public getEnemyType(): EnemyType {
         return this.enemyType;

@@ -2,6 +2,7 @@ import { _decorator, Component, Color, Graphics, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
+import { ENEMY_CONFIGS } from '../../types/GameConstants';
 
 const { ccclass, property } = _decorator;
 
@@ -27,26 +28,16 @@ export class StormTyrant extends BaseMouse {
     /** 风暴特效计时器 */
     private stormEffectTimer: number = 0;
     
-    // 实现BaseMouse的抽象方法 - 疾风暴君配置
-    protected initializeMouseStats(): void {
-        const config = {
-            type: EnemyType.STORM_TYRANT,
-            name: "疾风暴君",
-            category: EnemyCategory.BOSS,
-            health: 250,
-            maxHealth: 250,
-            moveSpeed: 140,
-            goldReward: 90,
-            summonCount: 3,
-            summonType: EnemyType.SPEED_MOUSE
-        };
+    // 实现BaseMouse的抽象方法 - 提供配置
+    protected getConfig(): EnemyConfig {
+        return ENEMY_CONFIGS[EnemyType.STORM_TYRANT];
+    }
 
-        // 基础属性配置
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
+    protected onLoad(): void {
+        super.onLoad();
+
+        // 特殊属性配置
+        const config = this.getConfig();
         this.summonCount = (config as any).summonCount || 3;
         this.summonType = (config as any).summonType || EnemyType.SPEED_MOUSE;
 
@@ -252,34 +243,6 @@ export class StormTyrant extends BaseMouse {
     /**
      * 获取老鼠标签配置
      */
-    protected getMouseLabelConfig(): {
-        text: string;
-        fontSize: number;
-        color: Color;
-        yOffset: number;
-        size: { width: number; height: number };
-    } {
-        return {
-            text: "疾风暴君",
-            fontSize: 22,
-            color: new Color(255, 255, 255, 255),
-            yOffset: 40,
-            size: { width: 120, height: 30 }
-        };
-    }
-
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 110,
-            height: 10,
-            yOffset: 52,
-            backgroundColor: new Color(60, 60, 60),
-            foregroundColor: new Color(0, 255, 255), // 青色前景配合疾风主题
-            borderColor: new Color(255, 255, 255),
-            borderWidth: 2
-        };
-    }
     
     protected onDie(): void {
         console.log("疾风暴君化作狂风消散...");

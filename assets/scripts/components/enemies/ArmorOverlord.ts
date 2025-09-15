@@ -17,7 +17,7 @@ export class ArmorOverlord extends BaseMouse {
     public readonly enemyType: EnemyType = EnemyType.ARMOR_OVERLORD;
     
     // 实现BaseMouse的抽象方法 - 重甲统领配置
-    protected GetConfig(): EnemyConfig {
+    protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.ARMOR_OVERLORD,
             name: "重甲统领",
@@ -31,9 +31,11 @@ export class ArmorOverlord extends BaseMouse {
     }
 
     protected onLoad(): void {
-        const config = this.GetConfig();
-        this.armorValue = config.armorValue || 8;
+        // 先调用父类onLoad，再初始化特殊属性
         super.onLoad();
+
+        const config = this.getConfig();
+        this.armorValue = config.armorValue || 8;
     }
 
     // 重写基类移动行为初始化，使用重甲统领的参数
@@ -226,35 +228,4 @@ export class ArmorOverlord extends BaseMouse {
             .start();
     }
     
-    /**
-     * 实现标签配置
-     */
-    protected getMouseLabelConfig(): {
-        text: string;
-        fontSize: number;
-        color: Color;
-        yOffset: number;
-        size: { width: number; height: number };
-    } {
-        return {
-            text: this.unitName,
-            fontSize: 22,
-            color: new Color(200, 200, 200, 255),
-            yOffset: 40,
-            size: { width: 120, height: 30 }
-        };
-    }
-
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 120,
-            height: 12,
-            yOffset: 55,
-            backgroundColor: new Color(60, 60, 60),
-            foregroundColor: new Color(200, 200, 200), // 银灰色前景配合重甲主题
-            borderColor: new Color(255, 255, 255),
-            borderWidth: 3
-        };
-    }
 }

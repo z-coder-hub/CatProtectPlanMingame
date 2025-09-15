@@ -14,11 +14,8 @@ export class MaineThunder extends BaseHero {
     // 英雄类型
     public readonly heroType: HeroType = HeroType.MAINE_THUNDER;
     
-    protected onLoad(): void {
-        super.onLoad();
-    }
-    
-    // 继承父类start()方法，无需重写
+    // 继承父类的onLoad和start方法，无需重写
+    // 基类已经处理了所有必要的初始化工作
     
     // 实现BaseHero的拽象方法
     protected initializeHeroStats(): void {

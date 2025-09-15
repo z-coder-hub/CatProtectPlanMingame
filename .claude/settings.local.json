@@ -12,7 +12,21 @@
       "Bash(for file in assets/scripts/components/enemies/SpeedMouse.ts assets/scripts/components/enemies/TankMouse.ts assets/scripts/components/enemies/MechMouse.ts)",
       "Bash(for:*)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Bash(do echo \"=== Processing $file ===\" grep -n \"getMouseLabelConfig\\|getHealthBarConfig\" \"assets/scripts/components/enemies/$file\")",
+      "Bash(do echo \"=== Processing $file ===\")",
+      "Bash(while read file)",
+      "Bash(do grep -q \"protected GetConfig\" \"$file\")",
+      "Bash(echo:*)",
+      "Bash(do echo -n \"$enemy: \")",
+      "Bash(do)",
+      "Bash(do echo \"=== 清理 $file ===\")",
+      "Bash(rg:*)",
+      "Bash(sed:*)",
+      "Bash(if grep -q \"protected GetConfig\" \"$file\")",
+      "Bash(then)",
+      "Bash(fi)",
+      "Bash(if grep -q \"this\\.GetConfig\" \"$file\")"
     ]
   },
   "hooks": {

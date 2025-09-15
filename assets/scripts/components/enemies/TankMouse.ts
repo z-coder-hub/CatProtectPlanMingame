@@ -19,7 +19,7 @@ export class TankMouse extends BaseMouse {
     public armorValue: number = 3;
 
     // 实现BaseMouse的抽象方法 - 坦克老鼠配置
-    protected GetConfig(): EnemyConfig {
+    protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.TANK_MOUSE,
             name: "坦克老鼠",
@@ -122,28 +122,6 @@ export class TankMouse extends BaseMouse {
     /**
      * 获取坦克老鼠标签配置
      */
-    protected getMouseLabelConfig() {
-        return {
-            text: "坦克老鼠",
-            fontSize: 22,
-            color: new Color(200, 200, 200),      // 灰色字体配合装甲主题
-            yOffset: 35,
-            size: { width: 70, height: 28 }      // 稍宽的标签
-        };
-    }
-
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 60,
-            height: 8,
-            yOffset: 40,
-            backgroundColor: new Color(60, 60, 60),
-            foregroundColor: new Color(200, 200, 200), // 灰色前景配合装甲主题
-            borderColor: new Color(255, 255, 255),
-            borderWidth: 2
-        };
-    }
     
     /**
      * 重写受伤回调，显示护甲减伤信息

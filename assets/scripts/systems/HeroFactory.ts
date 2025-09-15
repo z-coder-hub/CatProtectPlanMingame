@@ -65,7 +65,7 @@ export class HeroFactory {
             }
             
             // 添加英雄组件
-            const heroComponent = heroNode.addComponent(ComponentClass);
+            const heroComponent = heroNode.addComponent(ComponentClass as any);
             
             // 验证组件是否正确创建
             if (!heroComponent) {

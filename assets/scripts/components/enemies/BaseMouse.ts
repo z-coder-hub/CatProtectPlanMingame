@@ -1,7 +1,7 @@
-import { _decorator, Component, Node, Vec3, tween, TweenSystem, Label, Color, Graphics } from 'cc';
-import { EnemyType, EnemyState, EnemyUnitStats, EnemyConfig } from '../../types/GameTypes';
-import { GameManager } from '../../managers/GameManager';
+import { _decorator, Color, Component, Graphics, Label, Node, tween, Vec3 } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
+import { GameManager } from '../../managers/GameManager';
+import { EnemyConfig, EnemyState, EnemyType, EnemyUnitStats, EnemyCategory } from '../../types/GameTypes';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass, property } = _decorator;
@@ -13,33 +13,33 @@ const { ccclass, property } = _decorator;
  */
 @ccclass('BaseMouse')
 export abstract class BaseMouse extends Component {
-    
+
     // === 基础单位属性 (来自BaseUnit) ===
     @property({ tooltip: "单位名称" })
     public unitName: string = "老鼠单位";
-    
+
     @property({ tooltip: "最大生命值" })
     public maxHealth: number = 40;
-    
-    
+
+
     @property({ tooltip: "移动速度(像素/秒)" })
     public moveSpeed: number = 60;
-    
+
     @property({ tooltip: "金币奖励" })
     public goldReward: number = 3;
-    
+
     // === 状态属性 ===
     public currentHealth: number = 40;
     public enemyState: EnemyState = EnemyState.IDLE;
     public currentTarget: Node | null = null;
-    
+
     // === 受保护属性，子类可以访问 ===
     protected _gameManager: GameManager | null = null;
     protected _healthBarContainer: Node | null = null;
     protected _healthBarForeground: Graphics | null = null;
     protected _nameLabel: Label | null = null;
     protected _graphics: Graphics | null = null;
-    
+
     // === 统一Tween移动系统属性 ===
     protected _movementTween: any = null;
     protected _isMoving: boolean = false;
@@ -49,13 +49,13 @@ export abstract class BaseMouse extends Component {
     protected _zigzagAmplitude: number = 0;                 // 蜿蜒幅度
     protected _movementPattern: 'zigzag' | 'curves' | 'spiral' | 'dash' | 'straight' | 'stealth_sway' = 'zigzag'; // 移动模式
     protected _segmentCount: number = 6;                    // 移动分段数量
-    
+
     // 抽象属性，子类必须实现
     public abstract readonly enemyType: EnemyType;
 
     // 抽象方法，子类必须实现各自的配置
-    protected abstract GetConfig(): EnemyConfig;
-    
+    protected abstract getConfig(): EnemyConfig;
+
     protected onLoad(): void {
         this.initializeMouseStats();
         this.initializeMouseVisuals();
@@ -67,7 +67,7 @@ export abstract class BaseMouse extends Component {
      * 初始化老鼠属性 - 使用子类配置
      */
     private initializeMouseStats(): void {
-        const config = this.GetConfig();
+        const config = this.getConfig();
 
         this.unitName = config.name;
         this.maxHealth = config.maxHealth;
@@ -75,43 +75,102 @@ export abstract class BaseMouse extends Component {
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
     }
-    
+
     protected start(): void {
         // 获取GameManager引用
         this._gameManager = GameManager.instance;
-        
+
         // 注册到BattleManager
         const battleManager = BattleManager.instance;
         if (battleManager) {
             battleManager.RegisterEnemy(this.node);
         }
     }
-    
+
     protected update(_dt: number): void {
         if (!this.isAlive) return;
-        
+
         // 启动移动（只执行一次）
         if (!this._movementStarted) {
             this.startMovementTowardsCastle();
             this._movementStarted = true;
         }
     }
-    
-    
+
+
     // 抽象方法，子类必须实现具体的老鼠外观
     protected abstract initializeMouseVisuals(): void;
-    
-    // 抽象方法，子类必须实现老鼠标签配置
-    protected abstract getMouseLabelConfig(): {
+
+    // 统一的老鼠标签配置 - 基于敌人分类提供默认配置
+    protected getMouseLabelConfig(): {
         text: string;
         fontSize: number;
         color: Color;
         yOffset: number;
         size: { width: number; height: number };
-    };
+    } {
+        const config = this.getConfig();
 
-    // 抽象方法，子类必须实现血条配置
-    protected abstract getHealthBarConfig(): {
+        // 根据敌人分类提供统一配置
+        switch (config.category) {
+            case EnemyCategory.BASIC:
+                return {
+                    text: this.unitName,
+                    fontSize: 22,
+                    color: new Color(255, 255, 255),
+                    yOffset: 35,
+                    size: { width: 60, height: 28 }
+                };
+
+            case EnemyCategory.FAST:
+                return {
+                    text: this.unitName,
+                    fontSize: 22,
+                    color: new Color(255, 255, 100), // 快速单位用亮黄色
+                    yOffset: 35,
+                    size: { width: 70, height: 28 }
+                };
+
+            case EnemyCategory.ARMORED:
+                return {
+                    text: this.unitName,
+                    fontSize: 22,
+                    color: new Color(255, 215, 0), // 装甲单位用金色
+                    yOffset: 40, // 装甲单位通常更高，需要更大偏移
+                    size: { width: 70, height: 28 }
+                };
+
+            case EnemyCategory.SPECIAL:
+                return {
+                    text: this.unitName,
+                    fontSize: 22,
+                    color: new Color(200, 150, 255), // 特殊单位用紫色
+                    yOffset: 35,
+                    size: { width: 80, height: 28 }
+                };
+
+            case EnemyCategory.BOSS:
+                return {
+                    text: this.unitName,
+                    fontSize: 24, // BOSS用更大字体
+                    color: new Color(255, 255, 255),
+                    yOffset: 50, // BOSS体型更大，标签位置更高
+                    size: { width: 120, height: 32 }
+                };
+
+            default:
+                return {
+                    text: this.unitName,
+                    fontSize: 22,
+                    color: new Color(255, 255, 255),
+                    yOffset: 35,
+                    size: { width: 60, height: 28 }
+                };
+        }
+    }
+
+    // 统一的血条配置 - 基于敌人分类提供默认配置
+    protected getHealthBarConfig(): {
         width: number;
         height: number;
         yOffset: number;
@@ -119,14 +178,85 @@ export abstract class BaseMouse extends Component {
         foregroundColor?: Color;
         borderColor?: Color;
         borderWidth?: number;
-    };
-    
+    } {
+        const config = this.getConfig();
+
+        // 根据敌人分类提供统一配置
+        switch (config.category) {
+            case EnemyCategory.BASIC:
+                return {
+                    width: 30,
+                    height: 4,
+                    yOffset: 25,
+                    backgroundColor: new Color(60, 60, 60),
+                    foregroundColor: new Color(0, 255, 0),
+                    borderColor: new Color(255, 255, 255),
+                    borderWidth: 1
+                };
+
+            case EnemyCategory.FAST:
+                return {
+                    width: 25,
+                    height: 3,
+                    yOffset: 20,
+                    backgroundColor: new Color(60, 60, 60),
+                    foregroundColor: new Color(255, 255, 100), // 快速单位用亮黄色
+                    borderColor: new Color(255, 255, 255),
+                    borderWidth: 1
+                };
+
+            case EnemyCategory.ARMORED:
+                return {
+                    width: 50,
+                    height: 6,
+                    yOffset: 30,
+                    backgroundColor: new Color(60, 60, 60),
+                    foregroundColor: new Color(255, 215, 0), // 装甲单位用金色
+                    borderColor: new Color(255, 255, 255),
+                    borderWidth: 2
+                };
+
+            case EnemyCategory.SPECIAL:
+                return {
+                    width: 40,
+                    height: 5,
+                    yOffset: 25,
+                    backgroundColor: new Color(60, 60, 60),
+                    foregroundColor: new Color(200, 150, 255), // 特殊单位用紫色
+                    borderColor: new Color(255, 255, 255),
+                    borderWidth: 1
+                };
+
+            case EnemyCategory.BOSS:
+                return {
+                    width: 120,
+                    height: 12,
+                    yOffset: 55,
+                    backgroundColor: new Color(60, 60, 60),
+                    foregroundColor: new Color(255, 100, 100), // BOSS用红色前景
+                    borderColor: new Color(255, 255, 255),
+                    borderWidth: 3
+                };
+
+            default:
+                return {
+                    width: 30,
+                    height: 4,
+                    yOffset: 25,
+                    backgroundColor: new Color(60, 60, 60),
+                    foregroundColor: new Color(0, 255, 0),
+                    borderColor: new Color(255, 255, 255),
+                    borderWidth: 1
+                };
+        }
+    }
+
     // === 通用属性访问器 ===
     public get isAlive(): boolean {
         return this.currentHealth > 0 && this.enemyState !== EnemyState.DEAD;
     }
-    
-    
+
+
     public get stats(): EnemyUnitStats {
         return {
             name: this.unitName,
@@ -135,9 +265,9 @@ export abstract class BaseMouse extends Component {
             moveSpeed: this.moveSpeed
         };
     }
-    
+
     // === 战斗方法 ===
-    
+
     /**
      * 受到伤害
      */
@@ -155,19 +285,19 @@ export abstract class BaseMouse extends Component {
             this.die();
         }
     }
-    
+
     /**
      * 死亡处理
      */
     public die(): void {
         if (this.enemyState === EnemyState.DEAD) return;
-        
+
         this.enemyState = EnemyState.DEAD;
         this.currentTarget = null;
         this.onDie();
     }
-    
-    
+
+
     /**
      * 通用的城堡位置获取方法
      * @returns 城堡位置，如果城堡不存在则返回null
@@ -178,7 +308,7 @@ export abstract class BaseMouse extends Component {
         }
         return this._gameManager.castleNode.position;
     }
-    
+
     /**
      * 检查是否到达城堡
      * @param currentPos 当前位置
@@ -188,10 +318,10 @@ export abstract class BaseMouse extends Component {
     protected isReachedCastle(currentPos: Vec3, threshold: number = 50): boolean {
         const castlePos = this.getCastlePosition();
         if (!castlePos) return false;
-        
+
         return currentPos.y <= castlePos.y + threshold;
     }
-    
+
     /**
      * 启动基于Tween的统一移动系统（从BasicMouse提取的完整系统）
      * 使用蜿蜒移动路径，支持多种移动模式
@@ -241,9 +371,8 @@ export abstract class BaseMouse extends Component {
         // 停止之前的移动
         this.stopMovement();
 
-        // 计算总距离和每段距离
+        // 计算总距离
         const totalDistance = Math.abs(startPos.y - castlePos.y - 50);
-        const segmentDistance = totalDistance / this._segmentCount;
         const totalDuration = totalDistance / this.moveSpeed;
         const segmentDuration = totalDuration / this._segmentCount;
 
@@ -339,12 +468,12 @@ export abstract class BaseMouse extends Component {
 
         console.log(`开始${this._movementPattern}移动，路径点数量: ${pathPoints.length}, 总时长: ${(segmentDuration * (pathPoints.length - 1)).toFixed(2)}秒`);
     }
-    
+
     /**
      * 创建简单移动缓动动画
      * 保留此方法用于特殊情况下的直线移动
      */
-    protected createMovementTween(startPos: Vec3, endPos: Vec3, duration: number): void {
+    protected createMovementTween(_startPos: Vec3, endPos: Vec3, duration: number): void {
         this._isMoving = true;
         this.enemyState = EnemyState.MOVING;
 
@@ -360,26 +489,26 @@ export abstract class BaseMouse extends Component {
             })
             .start();
     }
-    
+
     /**
      * 通用的到达城堡方法
      */
     protected reachCastle(): void {
         if (!this._gameManager) return;
-        
+
         const castleDamage = Math.floor(this.maxHealth / 10);
         this._gameManager.CastleTakeDamage(castleDamage);
-        
+
         this.createCastleReachEffect();
         this._gameManager.RemoveActiveEnemy(this.node);
         this.die();
-        
+
         console.log(`${this.unitName}到达城堡，造成 ${castleDamage} 点伤害`);
     }
-    
+
     protected createCastleReachEffect(): void {
     }
-    
+
     /**
      * 重写死亡方法，添加通用的金币奖励逻辑
      */
@@ -407,12 +536,12 @@ export abstract class BaseMouse extends Component {
         this.createDeathEffect();
         this.node.destroy();
     }
-    
+
     protected createDeathEffect(): void {
     }
-    
+
     // === Tween移动控制方法 ===
-    
+
     /**
      * 停止当前移动
      */
@@ -423,7 +552,7 @@ export abstract class BaseMouse extends Component {
         }
         this._isMoving = false;
     }
-    
+
     /**
      * 暂停移动
      */
@@ -433,7 +562,7 @@ export abstract class BaseMouse extends Component {
             this.stopMovement();
         }
     }
-    
+
     /**
      * 恢复移动（重新开始移动到城堡）
      */
@@ -442,57 +571,15 @@ export abstract class BaseMouse extends Component {
             this._movementStarted = false; // 重置标志以允许重新开始
         }
     }
-    
+
     // === 事件回调方法 (子类可重写) ===
-    
+
     protected onTakeDamage(damage: number): void {
         console.log(`${this.unitName}受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
     }
-    
-    // === 工具方法 ===
-    
-    /**
-     * 面向目标
-     */
-    protected faceTarget(target: Node): void {
-        if (!target) return;
-        
-        const direction = Vec3.subtract(new Vec3(), target.position, this.node.position);
-        if (direction.x > 0) {
-            this.node.setScale(1, 1, 1); // 面向右
-        } else {
-            this.node.setScale(-1, 1, 1); // 面向左
-        }
-    }
-    
-    /**
-     * 创建带标签的缓动动画（用于批量管理）
-     */
-    protected createTween(duration: number): any {
-        return tween(this.node).tag(1001);
-    }
-    
-    /**
-     * 停止所有缓动
-     */
-    protected stopAllTweens(): void {
-        TweenSystem.instance.ActionManager.removeAllActionsFromTarget(this.node);
-    }
-    
-    /**
-     * 获取移动状态
-     */
-    public get isMoving(): boolean {
-        return this._isMoving;
-    }
-    
-    /**
-     * 获取移动是否已开始
-     */
-    public get movementStarted(): boolean {
-        return this._movementStarted;
-    }
-    
+
+
+
     protected createMouseNameLabel(): void {
         const labelConfig = this.getMouseLabelConfig();
 
@@ -550,7 +637,7 @@ export abstract class BaseMouse extends Component {
             this._healthBarContainer.active = healthPercent > 0;
         }
     }
-    
+
     /**
      * 获取Graphics组件，直接添加模式
      * 遵循CLAUDE.md禁止条件性组件添加的原则

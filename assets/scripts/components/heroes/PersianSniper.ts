@@ -5,6 +5,8 @@ import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 import { EffectHelper } from '../../utils/EffectHelper';
+import { SimpleObjectPool } from '../../utils/SimpleObjectPool';
+import { GameManager } from '../../managers/GameManager';
 
 const { ccclass, property } = _decorator;
 
@@ -76,10 +78,6 @@ export class PersianSniper extends BaseHero {
         const bulletNode = SimpleObjectPool.getBulletNode();
         bulletNode.parent = this.node.parent;
         bulletNode.setPosition(this.node.position);
-        
-        if (this._activeBullets) {
-            this._activeBullets.add(bulletNode);
-        }
         
         // 让子弹直线飞行
         this.launchBulletInDirection(bulletNode, direction);
@@ -217,9 +215,6 @@ export class PersianSniper extends BaseHero {
             // 取消该子弹的所有调度任务
             this.unscheduleAllCallbacks();
             
-            if (this && this._activeBullets) {
-                this._activeBullets.delete(bulletNode);
-            }
             SimpleObjectPool.recycleBulletNode(bulletNode);
         }
     }
@@ -260,15 +255,6 @@ export class PersianSniper extends BaseHero {
     }
     
     protected onDestroy(): void {
-        if (this._activeBullets) {
-            this._activeBullets.forEach(bullet => {
-                if (bullet && bullet.isValid) {
-                    Tween.stopAllByTarget(bullet);
-                    SimpleObjectPool.recycleBulletNode(bullet);
-                }
-            });
-            this._activeBullets.clear();
-            this._activeBullets = null;
-        }
+        // 清理由基类处理
     }
 }

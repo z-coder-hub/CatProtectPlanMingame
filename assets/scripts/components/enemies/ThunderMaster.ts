@@ -1,9 +1,10 @@
-import { _decorator, Component, Color, Graphics, Vec3, tween } from 'cc';
+import { _decorator, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
+import { BaseHero } from '../heroes/BaseHero';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 /**
  * 雷电大师 - 链式雷电攻击BOSS
@@ -30,13 +31,10 @@ export class ThunderMaster extends BaseMouse {
     /**
      * 初始化雷电大师属性
      */
-    protected initializeMouseStats(): void {
-        const config = this.GetConfig();
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
+    protected onLoad(): void {
+        super.onLoad();
+
+        const config = this.getConfig();
         this.shieldStrength = config.shieldStrength || 100;
         this.currentShield = this.shieldStrength;
     }
@@ -44,7 +42,7 @@ export class ThunderMaster extends BaseMouse {
     /**
      * 获取雷电大师配置
      */
-    protected GetConfig(): EnemyConfig {
+    protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.THUNDER_MASTER,
             name: "雷电大师",
@@ -381,37 +379,6 @@ export class ThunderMaster extends BaseMouse {
         }
     }
     
-    /**
-     * 获取老鼠标签配置
-     */
-    protected getMouseLabelConfig(): {
-        text: string;
-        fontSize: number;
-        color: Color;
-        yOffset: number;
-        size: { width: number; height: number };
-    } {
-        return {
-            text: "雷电大师",
-            fontSize: 22,
-            color: new Color(255, 255, 255, 255),
-            yOffset: 40,
-            size: { width: 120, height: 30 }
-        };
-    }
-
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 130,
-            height: 12,
-            yOffset: 55,
-            backgroundColor: new Color(60, 60, 60),
-            foregroundColor: new Color(255, 255, 0), // 黄色前景配合雷电主题
-            borderColor: new Color(255, 255, 255),
-            borderWidth: 2
-        };
-    }
     
     /**
      * 雷电大师特殊死亡效果

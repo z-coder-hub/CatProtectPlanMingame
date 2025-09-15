@@ -1,6 +1,7 @@
-import { _decorator, Color, Graphics, tween, Vec3 } from 'cc';
+import { _decorator, Color, tween, Vec3, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType, EnemyConfig } from '../../types/GameTypes';
+import { ENEMY_CONFIGS } from '../../types/GameConstants';
 
 const { ccclass, property } = _decorator;
 
@@ -23,27 +24,16 @@ export class StealthMouse extends BaseMouse {
     private _stealthTimer: number = 0;
     private _stealthCooldown: number = 3; // 3秒切换一次潜行状态
     
-    // 实现BaseMouse的抽象方法 - 潜行老鼠配置
-    protected initializeMouseStats(): void {
-        const config = {
-            type: EnemyType.STEALTH_MOUSE,
-            name: "潜行老鼠",
-            category: EnemyCategory.SPECIAL,
-            health: 30,
-            maxHealth: 30,
-            moveSpeed: 130,
-            goldReward: 10,
-            stealthChance: 0.2
-        };
+    // 实现BaseMouse的抽象方法 - 提供配置
+    protected getConfig(): EnemyConfig {
+        return ENEMY_CONFIGS[EnemyType.STEALTH_MOUSE];
+    }
 
-        // 基础属性配置
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
+    protected onLoad(): void {
+        super.onLoad();
 
-        // 特殊属性：闪避几率
+        // 初始化特殊属性：闪避几率
+        const config = this.getConfig();
         this.dodgeChance = (config as any).stealthChance || 0.3;
 
         console.log(`初始化${this.unitName}: 血量${this.maxHealth}, 移速${this.moveSpeed}, 闪避${this.dodgeChance * 100}%, 奖励${this.goldReward}金币`);
@@ -160,7 +150,8 @@ export class StealthMouse extends BaseMouse {
         }
         
         // 调整节点透明度
-        this.node.opacity = this._isStealthed ? 160 : 255;
+        const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);
+        uiOpacity.opacity = this._isStealthed ? 160 : 255;
         
         console.log(`${this.unitName}${this._isStealthed ? '进入' : '退出'}潜行状态`);
     }
@@ -220,28 +211,6 @@ export class StealthMouse extends BaseMouse {
     /**
      * 获取潜行老鼠标签配置
      */
-    protected getMouseLabelConfig() {
-        return {
-            text: "潜行老鼠",
-            fontSize: 22,
-            color: new Color(200, 150, 255),      // 紫色字体配合潜行主题
-            yOffset: 35,
-            size: { width: 80, height: 28 }      // 稍宽的标签
-        };
-    }
-
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 28,
-            height: 3,
-            yOffset: 22,
-            backgroundColor: new Color(60, 60, 60),
-            foregroundColor: new Color(200, 150, 255), // 紫色前景配合潜行主题
-            borderColor: new Color(255, 255, 255),
-            borderWidth: 1
-        };
-    }
     
     // 重写基类移动行为初始化，使用潜行老鼠特殊参数
     protected initializeMovementBehavior(): void {
@@ -287,7 +256,8 @@ export class StealthMouse extends BaseMouse {
     protected createDeathEffect(): void {
         // 潜行单位死亡 - 逐渐透明消失
         const fadeOutDuration = 0.5;
-        const originalOpacity = this.node.opacity;
+        const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);
+        const originalOpacity = uiOpacity.opacity;
         
         // 渐隐消失效果
         const fadeSteps = 10;
@@ -299,9 +269,9 @@ export class StealthMouse extends BaseMouse {
             currentTween = currentTween
                 .delay(fadeInterval)
                 .call(() => {
-                    if (this.node && this.node.isValid) {
+                    if (this.node && this.node.isValid && uiOpacity) {
                         const newOpacity = originalOpacity * (1 - i / fadeSteps);
-                        this.node.opacity = newOpacity;
+                        uiOpacity.opacity = newOpacity;
                     }
                 });
         }

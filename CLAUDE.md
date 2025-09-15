@@ -42,6 +42,7 @@ assets/
 │   │   │   ├── BasicMouse.ts  # 基础老鼠
 │   │   │   ├── GiantMouse.ts  # 巨型老鼠
 │   │   │   ├── FastMouse.ts   # 快速老鼠
+│   │   │   ├── ENEMIES_DESIGN_PRINCIPLES.md # ⚠️ 敌人设计原则文档
 │   │   │   └── ... (其他13种老鼠，含7种新BOSS)
 │   │   ├── game/              # 游戏对象
 │   │   │   └── Castle.ts      # 城堡
@@ -74,6 +75,21 @@ assets/
 ```
 
 ## 开发原则
+
+### ⚠️ 重要：敌人文件修改前必读
+
+**在修改 `assets/scripts/components/enemies/` 目录下的任何文件之前，必须先阅读 `ENEMIES_DESIGN_PRINCIPLES.md` 文档。**
+
+该文档包含：
+- 敌人设计的核心原则和约束
+- 纯塔防机制的具体要求
+- 敌人能力的允许范围和禁止行为
+- 代码实现的标准模式和最佳实践
+
+遵循该文档可以确保：
+- 保持游戏的塔防机制纯粹性
+- 避免违反设计原则的错误修改
+- 维护代码架构的一致性和可维护性
 
 ### 1. TypeScript 类型安全
 - 启用严格模式，所有代码必须有明确类型
@@ -544,6 +560,34 @@ node.setPosition(800, 600);
 - console.log输出调试信息（在编辑器控制台查看）
 - Cocos Creator内置调试器和性能分析工具
 
+### TypeScript类型检查
+**重要**: 定期运行TypeScript类型检查确保代码质量和类型安全
+
+```bash
+# 运行TypeScript编译检查（推荐）
+# 注意：由于是Cocos Creator项目，需要使用IDE的诊断功能
+# 或者通过VS Code等编辑器的TypeScript支持进行检查
+
+# 如果安装了TypeScript，可以尝试：
+npx tsc --noEmit --skipLibCheck
+
+# 或者使用VS Code的问题面板查看类型错误
+# Ctrl/Cmd + Shift + M 打开问题面板
+```
+
+#### 类型检查最佳实践：
+- **定期检查**: 每次代码修改后运行类型检查
+- **修复所有错误**: 不要忽略类型错误，即使代码"看起来"正常工作
+- **处理警告**: 清理未使用的变量和导入，保持代码整洁
+- **抽象方法一致性**: 确保子类正确实现抽象方法
+- **接口规范**: 验证组件间接口的正确实现
+
+#### 常见类型错误修复：
+- **继承问题**: 确保子类方法可见性与基类一致
+- **缺少导入**: 添加必要的类型和组件导入
+- **未使用变量**: 删除或使用下划线前缀标记未使用的参数
+- **属性不存在**: 使用正确的组件属性，如`UIOpacity`替代`Node.opacity`
+
 ### 性能考虑
 - 避免在update()中频繁创建对象
 - 使用对象池管理子弹等短生命周期对象
@@ -710,6 +754,109 @@ private ensureRequiredComponents(): void {
     }
 }
 ```
+
+### 🧹 未使用变量和导入清理原则
+**重要原则**: 定期清理代码中的未使用变量、函数参数和导入，保持代码整洁和性能最优。
+
+#### 为什么要清理未使用的代码：
+- **减少编译时间**: 未使用的导入会增加TypeScript编译时间
+- **提高代码可读性**: 避免混淆和误导其他开发者
+- **降低维护成本**: 减少不必要的代码维护负担
+- **优化打包体积**: 避免将未使用的依赖打包到最终产品中
+- **类型检查效率**: 帮助TypeScript编译器更快地进行类型检查
+
+#### 未使用变量处理方法：
+
+```typescript
+// ❌ 错误：保留未使用的变量
+function processData(data: any, unused: string, config: Config) {
+    return data.process(config);
+    // unused 参数从未使用
+}
+
+// ✅ 方案1：删除未使用的参数
+function processData(data: any, config: Config) {
+    return data.process(config);
+}
+
+// ✅ 方案2：使用下划线前缀标记（API兼容性场景）
+function processData(data: any, _unused: string, config: Config) {
+    return data.process(config);
+    // _unused 明确标记为未使用，但保持API兼容性
+}
+
+// ✅ 方案3：添加注释说明保留原因
+function processData(data: any, reserved: string, config: Config) {
+    // reserved 参数为未来功能预留
+    return data.process(config);
+}
+```
+
+#### 导入清理最佳实践：
+
+```typescript
+// ❌ 错误：导入未使用的模块
+import { Color, Graphics, Vec3, Node, UIOpacity, Label, Sprite } from 'cc';
+import { GameManager } from '../managers/GameManager';
+import { EnemyType, EnemyState, EnemyConfig, HeroType } from '../types/GameTypes';
+
+// 实际只使用了部分导入
+
+// ✅ 正确：只导入实际使用的模块
+import { Color, Vec3, UIOpacity } from 'cc';
+import { EnemyType, EnemyConfig } from '../types/GameTypes';
+```
+
+#### 清理检查清单：
+- **定期运行TypeScript检查**: 使用 `npx tsc --noEmit` 或IDE诊断工具
+- **检查未使用导入**: 清理 `import` 语句中未使用的模块
+- **检查未使用变量**: 删除或重命名未使用的局部变量
+- **检查未使用参数**: 为必须保留的未使用参数添加下划线前缀
+- **检查未使用方法**: 删除未被调用的私有方法和函数
+- **检查未使用属性**: 清理类中未被访问的私有属性
+
+#### 自动化工具建议：
+- **VS Code**: 启用TypeScript的未使用代码检测
+- **ESLint**: 配置 `@typescript-eslint/no-unused-vars` 规则
+- **编辑器配置**: 开启"显示未使用代码"的灰色高亮
+
+## Cocos Creator生命周期方法分析
+
+### ✅ onLoad和start方法的实际作用
+
+通过代码分析发现，**onLoad和start方法在项目中仍有重要作用**：
+
+#### BaseHero中的生命周期：
+- **onLoad()**: 初始化英雄属性、外观组件和事件监听器
+- **start()**: 获取GameManager引用，注册到BattleManager
+
+#### BaseMouse中的生命周期：
+- **onLoad()**: 初始化敌人属性、外观、标签和血条
+- **start()**: 获取GameManager引用，注册到BattleManager
+
+#### 子类中的生命周期使用模式：
+```typescript
+// ✅ 标准模式：只调用父类方法（推荐）
+protected onLoad(): void {
+    super.onLoad();
+}
+
+protected start(): void {
+    super.start();
+}
+
+// ❌ 冗余模式：重复获取GameManager（需要清理）
+protected onLoad(): void {
+    super.onLoad();
+    this._gameManager = GameManager.instance; // 冗余，基类已处理
+}
+```
+
+#### 优化建议：
+1. **保留基类中的onLoad和start方法** - 它们有实际作用
+2. **清理子类中的冗余代码** - 移除重复的GameManager获取
+3. **简化子类实现** - 大多数子类只需调用super方法
+4. **统一生命周期模式** - 所有初始化逻辑集中在基类中处理
 
 ## 已知问题和解决方案
 

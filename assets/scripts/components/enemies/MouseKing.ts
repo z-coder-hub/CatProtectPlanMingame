@@ -1,7 +1,8 @@
-import { _decorator, Color, Graphics, Vec3, Node, tween } from 'cc';
+import { _decorator, Color, Graphics, Vec3, Node, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
+import { ENEMY_CONFIGS } from '../../types/GameConstants';
 
 const { ccclass, property } = _decorator;
 
@@ -29,28 +30,16 @@ export class MouseKing extends BaseMouse {
     private _summonCount: number = 0;     // 已召唤次数
     private _maxSummons: number = 5;      // 最大召唤次数
     
-    // 实现BaseMouse的抽象方法 - 老鼠王配置
-    protected initializeMouseStats(): void {
-        const config = {
-            type: EnemyType.MOUSE_KING,
-            name: "老鼠王",
-            category: EnemyCategory.BOSS,
-            health: 200,
-            maxHealth: 200,
-            moveSpeed: 70,
-            goldReward: 30,
-            summonCount: 2,
-            summonType: EnemyType.BASIC_MOUSE
-        };
+    // 实现BaseMouse的抽象方法 - 提供配置
+    protected getConfig(): EnemyConfig {
+        return ENEMY_CONFIGS[EnemyType.MOUSE_KING];
+    }
 
-        // 基础属性配置
-        this.unitName = config.name;
-        this.maxHealth = config.maxHealth;
-        this.currentHealth = config.health;
-        this.moveSpeed = config.moveSpeed;
-        this.goldReward = config.goldReward;
+    protected onLoad(): void {
+        super.onLoad();
 
         // 特殊属性：召唤属性
+        const config = this.getConfig();
         this.summonCount = config.summonCount || 3;
         this.summonType = config.summonType || EnemyType.BASIC_MOUSE;
 
@@ -299,15 +288,16 @@ export class MouseKing extends BaseMouse {
             .start();
         
         // 闪烁效果
-        const originalOpacity = this.node.opacity;
-        this.node.opacity = 255;
-        
+        const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);
+        const originalOpacity = uiOpacity.opacity;
+        uiOpacity.opacity = 255;
+
         for (let i = 1; i <= 3; i++) {
             tween(this.node)
                 .delay(i * 0.1)
                 .call(() => {
-                    if (this.node && this.node.isValid) {
-                        this.node.opacity = i % 2 === 0 ? originalOpacity : 200;
+                    if (this.node && this.node.isValid && uiOpacity) {
+                        uiOpacity.opacity = i % 2 === 0 ? originalOpacity : 200;
                     }
                 })
                 .start();
@@ -319,28 +309,6 @@ export class MouseKing extends BaseMouse {
     /**
      * 获取老鼠王标签配置
      */
-    protected getMouseLabelConfig() {
-        return {
-            text: "老鼠王",
-            fontSize: 24,                        // BOSS用更大字体
-            color: new Color(255, 215, 0),       // 金色字体配合王者主题
-            yOffset: 45,                         // 因为体型更大，标签位置更高
-            size: { width: 80, height: 32 }     // 更大的标签尺寸
-        };
-    }
-
-    // 实现BaseMouse的抽象方法 - 血条配置
-    protected getHealthBarConfig() {
-        return {
-            width: 100,
-            height: 12,
-            yOffset: 50,
-            backgroundColor: new Color(60, 60, 60),
-            foregroundColor: new Color(255, 215, 0), // 金色前景配合王者主题
-            borderColor: new Color(255, 255, 255),
-            borderWidth: 3
-        };
-    }
     
     // 基类已实现完整的Tween移动系统，老鼠王使用统一的移动逻辑
     
@@ -401,12 +369,14 @@ export class MouseKing extends BaseMouse {
         // 膨胀然后收缩消失
         this.node.setScale(originalScale.x * 2, originalScale.y * 2, originalScale.z);
         
+        const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);
+
         tween(this.node)
             .delay(0.5)
             .call(() => {
-                if (this.node && this.node.isValid) {
+                if (this.node && this.node.isValid && uiOpacity) {
                     this.node.setScale(0, 0, 0);
-                    this.node.opacity = 0;
+                    uiOpacity.opacity = 0;
                 }
             })
             .start();

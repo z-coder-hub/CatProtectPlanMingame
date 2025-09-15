@@ -5,6 +5,7 @@ import { HeroType, HeroState } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 import { EffectHelper } from '../../utils/EffectHelper';
+import { BattleManager } from '../../managers/BattleManager';
 
 const { ccclass, property } = _decorator;
 

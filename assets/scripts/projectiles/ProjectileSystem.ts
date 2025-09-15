@@ -502,5 +502,4 @@ export class ProjectileSystem {
     }
 }
 
-// 导出投射物系统供其他模块使用
-export { ProjectileSystem };
+// 投射物系统已在类定义中导出

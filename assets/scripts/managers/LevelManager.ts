@@ -28,7 +28,7 @@ export class LevelManager extends Component {
     private _levelRecords: Record<string, LevelCompletionRecord> = {};
     
     // 英雄解锁记录
-    private _heroRecords: Record<HeroType, HeroUnlockRecord> = {};
+    private _heroRecords: Record<HeroType, HeroUnlockRecord> = {} as Record<HeroType, HeroUnlockRecord>;
     
     // 当前游戏进度（到达的最高关卡索引）
     private _maxReachedLevelIndex: number = 0; // 最高到达的关卡索引
@@ -82,13 +82,14 @@ export class LevelManager extends Component {
         ];
 
         // 初始化所有英雄为锁定状态
-        Object.values(HeroType).forEach(heroTypeValue => {
+        const heroTypeValues = Object.keys(HeroType).map(key => (HeroType as any)[key]);
+        heroTypeValues.forEach(heroTypeValue => {
             this._heroRecords[heroTypeValue as HeroType] = {
                 heroType: heroTypeValue as HeroType,
-                status: defaultUnlockedHeroes.includes(heroTypeValue as HeroType) 
-                    ? HeroUnlockStatus.UNLOCKED 
+                status: defaultUnlockedHeroes.indexOf(heroTypeValue as HeroType) !== -1
+                    ? HeroUnlockStatus.UNLOCKED
                     : HeroUnlockStatus.LOCKED,
-                unlockDate: defaultUnlockedHeroes.includes(heroTypeValue as HeroType) ? new Date() : undefined,
+                unlockDate: defaultUnlockedHeroes.indexOf(heroTypeValue as HeroType) !== -1 ? new Date() : undefined,
                 level: 1,
                 experience: 0,
                 totalUsageCount: 0,
@@ -107,7 +108,8 @@ export class LevelManager extends Component {
      */
     private debugHeroUnlockStatus(context: string): void {
         console.log(`🔍 [${context}] 英雄解锁状态详情:`);
-        Object.entries(this._heroRecords).forEach(([type, record]) => {
+        const heroRecordEntries = Object.keys(this._heroRecords).map(key => [key, this._heroRecords[key as HeroType]]);
+        heroRecordEntries.forEach(([type, record]: [string, HeroUnlockRecord]) => {
             const status = record.status === HeroUnlockStatus.UNLOCKED ? '✅' : '🔒';
             console.log(`  ${status} ${type}: ${record.status}`);
         });
@@ -369,7 +371,8 @@ export class LevelManager extends Component {
      * 获取已解锁的英雄列表
      */
     public GetUnlockedHeroes(): HeroType[] {
-        const unlockedHeroes = Object.values(this._heroRecords)
+        const heroRecordValues = Object.keys(this._heroRecords).map(key => this._heroRecords[key as HeroType]);
+        const unlockedHeroes = heroRecordValues
             .filter(record => record.status !== HeroUnlockStatus.LOCKED)
             .map(record => record.heroType);
         
