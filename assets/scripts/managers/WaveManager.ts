@@ -38,7 +38,7 @@ export class WaveManager extends Component {
 
     // 当前波次状态
     private _currentWaveIndex: number = 0;
-    private _waveState: WaveState = WaveState.STOPPED;
+    private _waveState: WaveState = WaveState.WAITING;
     private _currentWaveConfig: WaveConfig | null = null;
 
     // 敌人生成管理
@@ -239,14 +239,17 @@ export class WaveManager extends Component {
             // 所有敌人都被清理，通过事件通知波次完成
             console.log(`第 ${this.currentWaveNumber} 波所有敌人已清理`);
 
+            // 先设置为STOPPED状态，避免重复进入这个逻辑
+            this._waveState = WaveState.STOPPED;
+
             // 🎯 新架构：通过事件通知波次清理完成，让GameManager决定下一步动作
+            // 注意：这个事件会立即同步执行GameManager的处理逻辑
             this.node.emit('wave-enemies-cleared', {
                 waveNumber: this.currentWaveNumber,
                 levelId: this._currentLevelConfig?.id || "unknown"
             });
 
-            // 设置为停止状态，等待外部指令
-            this._waveState = WaveState.STOPPED;
+            console.log(`第 ${this.currentWaveNumber} 波完成，事件已发送，当前状态: ${this._waveState}`);
         }
     }
 
