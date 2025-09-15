@@ -2,6 +2,7 @@ import { _decorator, Component, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
+import { BattleManager } from '../../managers/BattleManager';
 import { BaseHero } from '../heroes/BaseHero';
 
 const { ccclass, property } = _decorator;
@@ -418,15 +419,18 @@ export class UltimateOverlord extends BaseMouse {
      * 执行威慑展示
      */
     private performIntimidationDisplay(): void {
-        const gameManager = GameManager.instance;
-        if (!gameManager || gameManager.deployedHeroes.length === 0) return;
-        
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return;
+
+        const deployedHeroes = battleManager.getAllDeployedHeroes();
+        if (deployedHeroes.length === 0) return;
+
         this.activeAbility = 'intimidation';
         console.log(`终极霸王展示终极威慑气场！`);
-        
+
         // 对范围内的英雄展示威慑特效（不造成伤害）
         const intimidationRange = 150;
-        gameManager.deployedHeroes.forEach(heroNode => {
+        deployedHeroes.forEach(heroNode => {
             if (!heroNode || !heroNode.isValid) return;
 
             const distance = Vec3.distance(this.node.position, heroNode.position);

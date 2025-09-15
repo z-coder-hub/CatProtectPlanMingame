@@ -1,7 +1,7 @@
 import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
-import { GameManager } from '../../managers/GameManager';
+import { BattleManager } from '../../managers/BattleManager';
 
 const { ccclass, property } = _decorator;
 
@@ -97,14 +97,15 @@ export class LightningBolt extends BaseProjectile {
     private performChainLightning(currentTarget: Node, chainDamage: number, remainingChains: number): void {
         if (remainingChains <= 0 || !currentTarget || !currentTarget.isValid) return;
         
-        const gameManager = GameManager.instance;
-        if (!gameManager || !gameManager.activeEnemies) return;
-        
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return;
+
         // 寻找最近的未击中目标
         let nearestTarget: Node | null = null;
         let nearestDistance = Infinity;
-        
-        for (const enemy of gameManager.activeEnemies) {
+
+        const enemies = battleManager.getAllActiveEnemies();
+        for (const enemy of enemies) {
             if (!enemy || !enemy.isValid) continue;
             if (this.hitTargets.has(enemy)) continue; // 跳过已击中的目标
             

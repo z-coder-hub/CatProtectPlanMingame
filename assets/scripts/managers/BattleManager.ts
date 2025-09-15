@@ -151,9 +151,8 @@ export class BattleManager extends Component {
      * @returns 敌人节点数组
      */
     public findEnemiesInRange(position: Vec3, range: number): Node[] {
-        if (!this._gameManager) return [];
-
-        const enemies = this._gameManager.activeEnemies;
+        // 直接使用本地注册的敌人列表
+        const enemies = this._registeredEnemies;
         const enemiesInRange: Node[] = [];
 
         for (const enemyNode of enemies) {
@@ -178,9 +177,8 @@ export class BattleManager extends Component {
      * @returns 最近的敌人节点，如果没有则返回null
      */
     public findNearestEnemy(position: Vec3, maxRange?: number): Node | null {
-        if (!this._gameManager) return null;
-
-        const enemies = this._gameManager.activeEnemies;
+        // 直接使用本地注册的敌人列表
+        const enemies = this._registeredEnemies;
         let nearestEnemy: Node | null = null;
         let nearestDistance = maxRange || Number.MAX_VALUE;
 
@@ -204,14 +202,22 @@ export class BattleManager extends Component {
      * 获取所有活跃的敌人列表
      */
     public getAllActiveEnemies(): Node[] {
-        return this._gameManager ? this._gameManager.activeEnemies : [];
+        return this._registeredEnemies.filter(enemy => {
+            if (!enemy || !enemy.isValid) return false;
+            const enemyUnit = enemy.getComponent(BaseMouse);
+            return enemyUnit && enemyUnit.isAlive;
+        });
     }
 
     /**
      * 获取所有部署的英雄列表
      */
     public getAllDeployedHeroes(): Node[] {
-        return this._gameManager ? this._gameManager.deployedHeroes : [];
+        return this._registeredHeroes.filter(hero => {
+            if (!hero || !hero.isValid) return false;
+            const heroUnit = hero.getComponent(BaseHero);
+            return heroUnit && heroUnit.isAlive;
+        });
     }
 
 
@@ -226,12 +232,9 @@ export class BattleManager extends Component {
         activeEnemies: number;
         averageEnemyHealth: number;
     } {
-        if (!this._gameManager) {
-            return { activeHeroes: 0, activeEnemies: 0, averageEnemyHealth: 0 };
-        }
-
-        const heroes = this._gameManager.deployedHeroes;
-        const enemies = this._gameManager.activeEnemies;
+        // 直接使用本地注册的数据
+        const heroes = this._registeredHeroes;
+        const enemies = this._registeredEnemies;
 
         const avgEnemyHealth = this.calculateAverageEnemyHealth(enemies);
 
@@ -312,22 +315,9 @@ export class BattleManager extends Component {
         if (index >= 0) {
             this._registeredEnemies.splice(index, 1);
             console.log(`[BattleManager] 敌人取消注册: ${enemyNode.name}, 剩余敌人数: ${this._registeredEnemies.length}`);
-
-            // 检查是否所有敌人都被消灭
-            if (this._registeredEnemies.length === 0) {
-                this.onAllEnemiesDefeated();
-            }
         }
     }
 
-    // 所有敌人被消灭
-    private onAllEnemiesDefeated(): void {
-        console.log("[BattleManager] 所有敌人已被消灭！");
-
-        if (this._gameManager) {
-            this._gameManager.OnWaveComplete();
-        }
-    }
 
     // 移除了远程英雄的特殊处理逻辑，现在所有英雄都使用统一的攻击范围检查
 
@@ -425,12 +415,11 @@ export class BattleManager extends Component {
         const goldReward = this.getKillReward(killedEnemy);
 
         // 给予金币奖励
-        this._gameManager.AddGold(goldReward);
+        if (this._gameManager) {
+            this._gameManager.AddGold(goldReward);
+        }
 
-        // 从游戏中移除敌人
-        this._gameManager.RemoveActiveEnemy(killedEnemy.node);
-
-        // 从注册列表中移除敌人
+        // 从注册列表中移除敌人（会自动处理其他清理）
         this.UnregisterEnemy(killedEnemy.node);
 
         console.log(`${killedEnemy.unitName} 被击杀，获得 ${goldReward} 金币`);

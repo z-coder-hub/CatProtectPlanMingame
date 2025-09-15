@@ -1,7 +1,7 @@
 import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
-import { GameManager } from '../../managers/GameManager';
+import { BattleManager } from '../../managers/BattleManager';
 
 const { ccclass, property } = _decorator;
 
@@ -112,12 +112,12 @@ export class ExplosionWave extends BaseProjectile {
      * 对爆炸范围内的所有敌人造成距离衰减伤害和推拽效果
      */
     private performExplosion(explosionCenter: Vec3): void {
-        const gameManager = GameManager.instance;
-        if (!gameManager || !gameManager.activeEnemies) return;
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return;
         
         let hitCount = 0;
         
-        for (const enemy of gameManager.activeEnemies) {
+        for (const enemy of battleManager.getAllActiveEnemies()) {
             if (!enemy || !enemy.isValid) continue;
             
             const enemyComponent = enemy.getComponent(BaseMouse);

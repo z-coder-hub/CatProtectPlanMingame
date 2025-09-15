@@ -1,5 +1,5 @@
 import { _decorator, Color, tween, Vec3 } from 'cc';
-import { GameManager } from '../../managers/GameManager';
+import { BattleManager } from '../../managers/BattleManager';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { BaseHero } from '../heroes/BaseHero';
 import { BaseMouse } from './BaseMouse';
@@ -194,13 +194,13 @@ export class GiantBehemoth extends BaseMouse {
      * 展示威慑爆发特效
      */
     private showIntimidationBurst(): void {
-        const gameManager = GameManager.instance;
-        if (!gameManager) return;
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return;
 
         // 检测范围内的英雄，展示威慑效果（不造成伤害）
         const myPosition = this.node.position;
-        const deployedHeroes = gameManager.deployedHeroes;
-        if (!deployedHeroes) return;
+        const deployedHeroes = battleManager.getAllDeployedHeroes();
+        if (!deployedHeroes || deployedHeroes.length === 0) return;
 
         deployedHeroes.forEach(heroNode => {
             if (!heroNode || !heroNode.isValid) return;

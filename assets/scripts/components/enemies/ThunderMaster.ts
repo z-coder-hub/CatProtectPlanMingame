@@ -2,6 +2,7 @@ import { _decorator, Color, Graphics, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
+import { BattleManager } from '../../managers/BattleManager';
 import { BaseHero } from '../heroes/BaseHero';
 
 const { ccclass } = _decorator;
@@ -193,9 +194,12 @@ export class ThunderMaster extends BaseMouse {
         this.interferenceeCooldown -= dt;
         if (this.interferenceeCooldown <= 0) {
             try {
-                const gameManager = GameManager.instance;
-                if (gameManager && gameManager.deployedHeroes && gameManager.deployedHeroes.length > 0) {
-                    this.performElectromagneticInterference();
+                const battleManager = BattleManager.instance;
+                if (battleManager) {
+                    const deployedHeroes = battleManager.getAllDeployedHeroes();
+                    if (deployedHeroes && deployedHeroes.length > 0) {
+                        this.performElectromagneticInterference();
+                    }
                 }
             } catch (error) {
                 console.error("雷电大师电磁干扰时出错:", error);
@@ -235,10 +239,15 @@ export class ThunderMaster extends BaseMouse {
      * 执行电磁干扰效果
      */
     private performElectromagneticInterference(): void {
-        const gameManager = GameManager.instance;
+        const battleManager = BattleManager.instance;
 
         try {
-            if (!gameManager || !gameManager.deployedHeroes || gameManager.deployedHeroes.length === 0) {
+            if (!battleManager) {
+                return;
+            }
+
+            const deployedHeroes = battleManager.getAllDeployedHeroes();
+            if (!deployedHeroes || deployedHeroes.length === 0) {
                 return;
             }
 
@@ -259,13 +268,16 @@ export class ThunderMaster extends BaseMouse {
      * 找到干扰范围内的英雄
      */
     private findInterferenceTargets(): any[] {
-        const gameManager = GameManager.instance;
-        if (!gameManager || !gameManager.deployedHeroes) return [];
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return [];
+
+        const deployedHeroes = battleManager.getAllDeployedHeroes();
+        if (!deployedHeroes) return [];
 
         const targets: any[] = [];
         const interferenceRange = 120;
 
-        gameManager.deployedHeroes.forEach(heroNode => {
+        deployedHeroes.forEach(heroNode => {
             if (!heroNode) return;
             const distance = Vec3.distance(this.node.position, heroNode.position);
             if (distance <= interferenceRange) {

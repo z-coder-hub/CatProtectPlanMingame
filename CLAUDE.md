@@ -151,14 +151,16 @@ assets/
 ### 游戏管理器 (GameManager)
 - 游戏状态管理
 - 金币和资源管理
-- 英雄和敌人列表维护
+- 关卡系统和波次管理
 - 游戏事件分发
+- **数据访问委托**: 通过BattleManager获取英雄和敌人数据，避免数据重复存储
 
-### 战斗管理器 (BattleManager)
-- 战斗逻辑处理
-- 目标分配和攻击计算
-- 伤害处理和单位死亡
+### 战斗管理器 (BattleManager) ⭐ **核心战斗数据中心**
+- **单一数据源**: 统一托管所有英雄和敌人的注册数据
+- **战斗逻辑处理**: 目标分配和攻击计算
+- **伤害处理和单位死亡**: 击杀奖励系统和单位清理
 - **全局攻击系统**: 智能识别远程射击英雄类型，提供无范围限制的目标搜索
+- **数据查询服务**: 为投射物、英雄、敌人提供统一的数据查询接口
 
 ### 波次管理器 (WaveManager)
 - 敌人波次生成
@@ -1034,6 +1036,24 @@ if (!manager) {
   - 完整的HeroType和EnemyType枚举列表
   - 分离后的UnitStats和EnemyUnitStats接口定义
   - 新增游戏状态（DEPLOYMENT、RESTING等）
+
+- **v1.5**: 架构数据管理优化，统一战斗数据中心
+- **BattleManager成为核心数据中心**: 重构数据存储架构，消除数据重复存储问题
+  - 移除GameManager中的`_deployedHeroes`和`_activeEnemies`重复存储
+  - BattleManager的`_registeredHeroes`和`_registeredEnemies`成为唯一数据源
+  - GameManager通过BattleManager获取英雄和敌人数据，实现数据访问委托
+  - 更新所有数据访问接口，确保单一数据源原则
+- **投射物系统数据来源统一**: 更新所有投射物类的数据获取方式
+  - BaseProjectile、LightningBolt、MagicMissile、ExplosionWave、IceShard、SwordWave
+  - 从`GameManager.instance.activeEnemies`改为`BattleManager.instance.getAllActiveEnemies()`
+  - 统一使用BattleManager提供的数据查询接口
+- **敌人组件数据引用更新**: 优化敌人特殊能力的英雄数据获取
+  - UltimateOverlord、GiantBehemoth、ThunderMaster等BOSS组件
+  - 从`gameManager.deployedHeroes`改为`battleManager.getAllDeployedHeroes()`
+  - 确保威慑、干扰等特殊能力正确获取英雄数据
+- **WaveManager数据同步优化**: 更新波次管理中的敌人状态检查
+  - 波次完成检测改为使用`BattleManager.instance.registeredEnemies`
+  - 统一战斗统计数据来源，提高数据一致性
 
 ## 当前架构状态
 

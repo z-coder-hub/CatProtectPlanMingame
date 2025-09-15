@@ -1,7 +1,7 @@
-import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
-import { GameManager } from '../../managers/GameManager';
+import { BattleManager } from '../../managers/BattleManager';
 
 const { ccclass, property } = _decorator;
 
@@ -140,13 +140,13 @@ export class IceShard extends BaseProjectile {
      * 对范围内的其他敌人造成冰霜伤害和减速效果
      */
     private performFrostAttack(centerPosition: Vec3): void {
-        const gameManager = GameManager.instance;
-        if (!gameManager || !gameManager.activeEnemies) return;
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return;
         
         const frostDamage = this.damage * this.frostDamageMultiplier;
         let hitCount = 0;
         
-        for (const enemy of gameManager.activeEnemies) {
+        for (const enemy of battleManager.getAllActiveEnemies()) {
             if (!enemy || !enemy.isValid) continue;
             
             const enemyComponent = enemy.getComponent(BaseMouse);

@@ -1,4 +1,5 @@
 import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, ScrollView, UITransform, Vec3, Widget } from 'cc';
+import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
 import { LevelManager } from '../../managers/LevelManager';
 import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
@@ -206,7 +207,11 @@ export class HeroSelectionPanel extends Component {
             this._gameManager.SpendGold(heroCost);
 
             // 添加到已部署列表
-            this._gameManager.AddDeployedHero(heroNode);
+            // 直接注册到BattleManager
+            const battleManager = BattleManager.instance;
+            if (battleManager) {
+                battleManager.RegisterHero(heroNode);
+            }
 
             console.log(`✅ 成功部署 ${heroType}，消耗 ${heroCost} 金币`);
             return true;

@@ -510,7 +510,7 @@ export abstract class BaseMouse extends Component {
         this._gameManager.CastleTakeDamage(castleDamage);
 
         this.createCastleReachEffect();
-        this._gameManager.RemoveActiveEnemy(this.node);
+        // 注意：敌人注销由BattleManager统一处理
         this.die();
 
         console.log(`${this.unitName}到达城堡，造成 ${castleDamage} 点伤害`);
@@ -533,15 +533,8 @@ export abstract class BaseMouse extends Component {
         // 停止移动
         this.stopMovement();
 
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.UnregisterEnemy(this.node);
-        }
-
-        if (this._gameManager) {
-            this._gameManager.AddGold(this.goldReward);
-            this._gameManager.RemoveActiveEnemy(this.node);
-        }
+        // 注意：击杀奖励和注销由BattleManager.HandleEnemyKilled统一处理
+        // 这里不再重复调用UnregisterEnemy
 
         this.createDeathEffect();
         this.node.destroy();

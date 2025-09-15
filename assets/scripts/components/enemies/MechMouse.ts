@@ -230,7 +230,7 @@ export class MechMouse extends BaseMouse {
         this.createCastleReachEffect();
 
         // 调用基类处理
-        this._gameManager.RemoveActiveEnemy(this.node);
+        // 注意：敌人注销由BattleManager.HandleEnemyKilled统一处理
         this.die();
     }
     

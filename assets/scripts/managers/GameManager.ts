@@ -1,9 +1,6 @@
-import { _decorator, Component, Node, Vec3 } from 'cc';
-import { EnemyFactory } from '../systems/EnemyFactory';
-import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
+import { _decorator, Component, Node } from 'cc';
 import { GAME_CONFIG } from '../types/GameConstants';
 import {
-    EnemyType,
     GameEvents,
     GameState,
     HeroType,
@@ -11,7 +8,6 @@ import {
     RewardType
 } from '../types/GameTypes';
 import { LEVEL_CONFIGS } from '../types/LevelConfigs';
-import { SimpleObjectPool } from '../utils/SimpleObjectPool';
 import { BattleManager } from './BattleManager';
 import { LevelManager } from './LevelManager';
 import { WaveManager } from './WaveManager';
@@ -40,13 +36,9 @@ export class GameManager extends Component {
     // 游戏状态
     private _gameState: GameState = GameState.MENU; // 从菜单开始
     private _maxCastleHealth: number = 100;
-    private _poolCleanupTimer: number = 0; // 对象池清理计时器
 
-    // 已部署的英雄列表
-    private _deployedHeroes: Node[] = [];
-
-    // 活跃的敌人列表
-    private _activeEnemies: Node[] = [];
+    // 注意：英雄和敌人数据统一由BattleManager托管
+    // 移除重复的数据存储，通过BattleManager获取数据
 
     // 事件回调
     private _eventCallbacks = new Map<keyof GameEvents, Function[]>();
@@ -98,15 +90,8 @@ export class GameManager extends Component {
         return LEVEL_CONFIGS.getAllLevels().length;
     }
 
-    // 获取已部署英雄列表
-    public get deployedHeroes(): Node[] {
-        return [...this._deployedHeroes];
-    }
-
-    // 获取活跃敌人列表
-    public get activeEnemies(): Node[] {
-        return [...this._activeEnemies];
-    }
+    // 注意：英雄和敌人数据已迁移到BattleManager，请直接使用 BattleManager.instance
+    // 移除代理模式，避免不必要的间接层
 
     // 获取休息计时器
     public get restTimer(): number {
@@ -159,12 +144,7 @@ export class GameManager extends Component {
             }
         }
 
-        // 定期清理对象池（每10秒一次）
-        this._poolCleanupTimer += dt;
-        if (this._poolCleanupTimer >= 10.0) {
-            SimpleObjectPool.cleanupInvalidNodes();
-            this._poolCleanupTimer = 0;
-        }
+
     }
 
     protected onDestroy(): void {
@@ -332,9 +312,7 @@ export class GameManager extends Component {
             this._restTimer = this._restDuration; // 120秒休息时间
             console.log(`关卡胜利！进入关卡间休息阶段，${this._restDuration}秒后自动进入第${nextIndex + 1}关...`);
 
-            // 清空所有英雄，准备重新部署
-            this.ClearAllHeroes();
-            this.ClearAllEnemies();
+            // 注意：单位清理已迁移到BattleManager处理
 
             // 先暂停WaveManager，避免它在休息期间自动开始
             const waveManager = this.GetWaveManager();
@@ -428,11 +406,7 @@ export class GameManager extends Component {
         // 重新应用关卡配置
         this.applyLevelConfig(this._currentLevelConfig);
 
-        // 清理已部署的英雄
-        this.ClearAllHeroes();
-
-        // 清理敌人
-        this.ClearAllEnemies();
+        // 注意：单位清理功能已迁移到BattleManager
 
         // 重置波次管理器
         const waveManager = this.GetWaveManager();
@@ -486,33 +460,6 @@ export class GameManager extends Component {
         }
     }
 
-    // 在指定位置召唤敌人（用于老鼠王召唤等特殊情况）
-    public SpawnEnemyAtPosition(enemyType: EnemyType, position: Vec3): Node | null {
-        try {
-            console.log(`在位置(${position.x.toFixed(1)}, ${position.y.toFixed(1)})召唤敌人: ${enemyType}`);
-
-            // 使用EnemyFactory创建敌人
-            const enemyNode = EnemyFactory.createEnemy(
-                enemyType,
-                this.node,
-                { x: position.x, y: position.y }
-            );
-
-            if (enemyNode) {
-                // 添加到活跃敌人列表
-                this.AddActiveEnemy(enemyNode);
-                console.log(`敌人召唤成功: ${enemyType}`);
-                return enemyNode;
-            } else {
-                console.error(`敌人召唤失败: ${enemyType}`);
-                return null;
-            }
-        } catch (error) {
-            console.error(`召唤敌人时发生错误: ${enemyType}`, error);
-            return null;
-        }
-    }
-
     // 波次完成
     public OnWaveComplete(): void {
         if (!this._currentLevelConfig) {
@@ -532,8 +479,6 @@ export class GameManager extends Component {
             console.log(`关卡 ${this.currentLevelName} 所有波次完成！`);
             this.CompleteLevel(true); // 关卡胜利
         } else {
-            // 波次间准备下一波（保留英雄，只清理敌人）
-            this.ClearAllEnemies(); // 清理所有剩余的敌人尸体
             this.NextWave(); // 准备下一波，WaveManager会自动等待5秒后开始
         }
     }
@@ -620,93 +565,8 @@ export class GameManager extends Component {
         }
     }
 
-    // 添加英雄到已部署列表
-    public AddDeployedHero(heroNode: Node): void {
-        if (this._deployedHeroes.indexOf(heroNode) === -1) {
-            this._deployedHeroes.push(heroNode);
-            console.log(`英雄已部署，当前英雄数: ${this._deployedHeroes.length}`);
-        }
-    }
-
-    // 移除已部署的英雄
-    public RemoveDeployedHero(heroNode: Node): void {
-        const index = this._deployedHeroes.indexOf(heroNode);
-        if (index >= 0) {
-            this._deployedHeroes.splice(index, 1);
-            console.log(`英雄已移除，当前英雄数: ${this._deployedHeroes.length}`);
-        }
-    }
-
-    // 清理所有英雄
-    public ClearAllHeroes(): void {
-        const gridSystem = this.GetGridSystem();
-
-        this.cleanupIndividualHeroes(gridSystem);
-        this.clearHeroArrayAndGrid(gridSystem);
-
-        console.log("所有英雄已清理");
-    }
-
-    // 清理单个英雄
-    private cleanupIndividualHeroes(gridSystem: GridDeploymentSystem | null): void {
-        for (const hero of this._deployedHeroes) {
-            if (hero && hero.isValid) {
-                this.cleanupSingleHero(hero, gridSystem);
-            }
-        }
-    }
-
-    // 清理单个英雄的所有关联
-    private cleanupSingleHero(hero: Node, gridSystem: GridDeploymentSystem | null): void {
-        // 清理网格占用状态
-        if (gridSystem) {
-            gridSystem.ClearHeroFromGrid(hero);
-        }
-
-        // 从BattleManager注销
-        const battleManager = this.GetBattleManager();
-        if (battleManager) {
-            battleManager.UnregisterHero(hero);
-        }
-
-        hero.destroy();
-    }
-
-    // 清理英雄数组和网格系统
-    private clearHeroArrayAndGrid(gridSystem: GridDeploymentSystem | null): void {
-        this._deployedHeroes = [];
-
-        // 双重保险：确保网格系统完全清理
-        if (gridSystem) {
-            gridSystem.ClearAllGridPositions();
-        }
-    }
-
-    // 添加敌人到活跃列表
-    public AddActiveEnemy(enemyNode: Node): void {
-        if (this._activeEnemies.indexOf(enemyNode) === -1) {
-            this._activeEnemies.push(enemyNode);
-        }
-    }
-
-    // 移除活跃敌人
-    public RemoveActiveEnemy(enemyNode: Node): void {
-        const index = this._activeEnemies.indexOf(enemyNode);
-        if (index >= 0) {
-            this._activeEnemies.splice(index, 1);
-        }
-    }
-
-    // 清理所有敌人
-    public ClearAllEnemies(): void {
-        for (const enemy of this._activeEnemies) {
-            if (enemy && enemy.isValid) {
-                enemy.destroy();
-            }
-        }
-        this._activeEnemies = [];
-        console.log("所有敌人已清理");
-    }
+    // 注意：所有英雄和敌人管理功能已迁移到BattleManager
+    // 请直接使用 BattleManager.instance 的相关方法
 
     // 事件系统
     public AddEventListener<K extends keyof GameEvents>(
@@ -752,8 +612,6 @@ export class GameManager extends Component {
         gold: number;
         castleHealth: number;
         castleHealthPercent: number;
-        heroesCount: number;
-        enemiesCount: number;
         gameState: GameState;
         // 关卡信息
         levelName: string;
@@ -769,8 +627,6 @@ export class GameManager extends Component {
             gold: this.currentGold,
             castleHealth: this.castleHealth,
             castleHealthPercent: this.castleHealthPercent,
-            heroesCount: this._deployedHeroes.length,
-            enemiesCount: this._activeEnemies.length,
             gameState: this._gameState,
             // 关卡信息
             levelName: this.currentLevelName,
@@ -792,9 +648,7 @@ export class GameManager extends Component {
         return this.getCachedComponent('_levelManagerCache', LevelManager);
     }
 
-    public GetGridSystem(): GridDeploymentSystem | null {
-        return this.getCachedComponent('_gridSystemCache', GridDeploymentSystem);
-    }
+    // 注意：网格系统访问已迁移，请直接获取 GridDeploymentSystem 组件
 
     // 统一的组件缓存获取方法
     private getCachedComponent<T extends Component>(cacheKey: string, componentClass: new () => T): T | null {

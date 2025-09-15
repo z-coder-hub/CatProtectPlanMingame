@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Vec3, Graphics, Color, tween, Tween, Canvas, director, UITransform } from 'cc';
 import { BaseHero } from '../components/heroes/BaseHero';
 import { BaseMouse } from '../components/enemies/BaseMouse';
-import { GameManager } from '../managers/GameManager';
+import { BattleManager } from '../managers/BattleManager';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 import { PROJECTILE_CONFIG } from '../types/GameConstants';
 
@@ -168,10 +168,11 @@ export abstract class BaseProjectile extends Component {
     protected checkCollisions(): void {
         if (!this.isActive) return;
         
-        const gameManager = GameManager.instance;
-        if (!gameManager || !gameManager.activeEnemies) return;
-        
-        for (const enemy of gameManager.activeEnemies) {
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return;
+
+        const enemies = battleManager.getAllActiveEnemies();
+        for (const enemy of enemies) {
             if (!enemy || !enemy.isValid) continue;
             
             const enemyComponent = enemy.getComponent(BaseMouse);

@@ -1,7 +1,7 @@
 import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
-import { GameManager } from '../../managers/GameManager';
+import { BattleManager } from '../../managers/BattleManager';
 
 const { ccclass, property } = _decorator;
 
@@ -74,13 +74,14 @@ export class MagicMissile extends BaseProjectile {
      * 对范围内的其他敌人造成AOE伤害
      */
     private performAOEDamage(centerPosition: Vec3): void {
-        const gameManager = GameManager.instance;
-        if (!gameManager || !gameManager.activeEnemies) return;
-        
+        const battleManager = BattleManager.instance;
+        if (!battleManager) return;
+
         const aoeDamage = this.damage * this.aoeDamageMultiplier;
         let hitCount = 0;
-        
-        for (const enemy of gameManager.activeEnemies) {
+
+        const enemies = battleManager.getAllActiveEnemies();
+        for (const enemy of enemies) {
             if (!enemy || !enemy.isValid) continue;
             
             const enemyComponent = enemy.getComponent(BaseMouse);
