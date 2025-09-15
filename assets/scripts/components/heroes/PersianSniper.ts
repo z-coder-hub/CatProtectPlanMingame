@@ -1,4 +1,4 @@
-import { _decorator, Node, Color } from 'cc';
+import { _decorator, Node, Color, Animation } from 'cc';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { HeroType } from '../../types/GameTypes';

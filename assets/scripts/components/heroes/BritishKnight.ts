@@ -1,11 +1,11 @@
-import { _decorator, Animation, Color, Node, tween, Vec3 } from 'cc';
+import { _decorator, Animation, Color, Node } from 'cc';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { HeroType } from '../../types/GameTypes';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 import { BaseHero } from './BaseHero';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 @ccclass('BritishKnight')
 export class BritishKnight extends BaseHero {

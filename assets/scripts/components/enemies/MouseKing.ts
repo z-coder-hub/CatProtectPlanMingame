@@ -2,6 +2,7 @@ import { _decorator, Color, Graphics, Vec3, Node, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
+import { EnemyFactory } from '../../systems/EnemyFactory';
 
 const { ccclass, property } = _decorator;
 
@@ -269,9 +270,17 @@ export class MouseKing extends BaseMouse {
         if (!gameManager) return;
         
         try {
-            // 通过GameManager创建敌人
-            gameManager.SpawnEnemyAtPosition(this.summonType, position);
-            console.log(`${this.unitName}召唤了一只${this.summonType}在位置(${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+            // 🎯 新架构：使用EnemyFactory直接创建敌人
+            const summonedEnemy = EnemyFactory.createEnemy(this.summonType, this.node.parent, {
+                x: position.x,
+                y: position.y
+            });
+
+            if (summonedEnemy) {
+                console.log(`${this.unitName}召唤了一只${this.summonType}在位置(${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+            } else {
+                console.error(`${this.unitName}召唤${this.summonType}失败`);
+            }
         } catch (error) {
             console.error(`${this.unitName}召唤敌人失败:`, error);
         }

@@ -168,13 +168,6 @@ export abstract class BaseHero extends Component {
         this.onAttack(target);
     }
 
-    /**
- * 攻击目标 - 向后兼容的方法，现在内部调用performAttackOnTarget
- * @deprecated 推荐让英雄自主攻击，而不是外部调用
- */
-    public AttackTarget(target: Node): void {
-        this.performAttackOnTarget(target);
-    }
 
     // === 抽象方法，子类必须实现具体行为 ===
 

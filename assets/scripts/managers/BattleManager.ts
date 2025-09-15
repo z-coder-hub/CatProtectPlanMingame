@@ -3,7 +3,6 @@ import { BaseMouse } from '../components/enemies/BaseMouse';
 import { BaseHero } from '../components/heroes/BaseHero';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 import { GridPosition } from '../types/GameTypes';
-import { GameManager } from './GameManager';
 
 const { ccclass, property } = _decorator;
 
@@ -18,7 +17,6 @@ export class BattleManager extends Component {
 
     // 私有属性
     private _updateTimer: number = 0;
-    private _gameManager: GameManager | null = null;
 
     // 注册的英雄和敌人列表
     private _registeredHeroes: Node[] = [];
@@ -47,11 +45,8 @@ export class BattleManager extends Component {
     }
 
     protected start(): void {
-        // 获取GameManager引用
-        this._gameManager = GameManager.instance;
-        if (!this._gameManager) {
-            console.error("未找到GameManager实例");
-        }
+        // BattleManager 现在作为纯数据管理层，不依赖GameManager
+        console.log("BattleManager启动完成 - 独立数据管理层");
     }
 
     protected onDestroy(): void {
@@ -72,8 +67,6 @@ export class BattleManager extends Component {
 
     // 更新数据统计 - 处理数据同步和统计
     private updateStatistics(): void {
-        if (!this._gameManager) return;
-
         // 清理无效的注册单位
         this.cleanupInvalidUnits();
 
@@ -140,34 +133,6 @@ export class BattleManager extends Component {
         // 检查目标是否在攻击范围内
         const distance = Vec3.distance(heroPosition, target.position);
         return distance <= attackRange;
-    }
-
-    // === 数据查询方法 - 供英雄和敌人使用 ===
-
-    /**
-     * 获取指定位置周围的敌人列表
-     * @param position 中心位置
-     * @param range 搜索范围
-     * @returns 敌人节点数组
-     */
-    public findEnemiesInRange(position: Vec3, range: number): Node[] {
-        // 直接使用本地注册的敌人列表
-        const enemies = this._registeredEnemies;
-        const enemiesInRange: Node[] = [];
-
-        for (const enemyNode of enemies) {
-            if (!enemyNode || !enemyNode.isValid) continue;
-
-            const distance = Vec3.distance(position, enemyNode.position);
-            if (distance <= range) {
-                const enemyUnit = enemyNode.getComponent(BaseMouse);
-                if (enemyUnit && enemyUnit.isAlive) {
-                    enemiesInRange.push(enemyNode);
-                }
-            }
-        }
-
-        return enemiesInRange;
     }
 
     /**
@@ -266,7 +231,7 @@ export class BattleManager extends Component {
         return validEnemies > 0 ? totalHealthPercent / validEnemies : 0;
     }
 
-    // 注册系统方法（参考老项目）
+    // 注册系统方法
     public RegisterHero(heroNode: Node): void {
         if (this._registeredHeroes.indexOf(heroNode) === -1) {
             this._registeredHeroes.push(heroNode);
@@ -341,14 +306,6 @@ export class BattleManager extends Component {
     public get registeredHeroes(): Node[] { return [...this._registeredHeroes]; }
     public get registeredEnemies(): Node[] { return [...this._registeredEnemies]; }
 
-    // 获取所有活跃敌人（为新英雄技能系统提供支持）
-    public GetAllEnemies(): Node[] {
-        return this._registeredEnemies.filter(enemy => {
-            if (!enemy || !enemy.isValid) return false;
-            const enemyUnit = enemy.getComponent(BaseMouse);
-            return enemyUnit && enemyUnit.isAlive;
-        });
-    }
 
     // 获取指定范围内的敌人（为AOE技能提供支持）
     public GetEnemiesInRange(centerPosition: Vec3, range: number): Node[] {
@@ -362,67 +319,30 @@ export class BattleManager extends Component {
         });
     }
 
-    // 获取指定范围内的英雄（为辅助技能提供支持）
-    public GetHeroesInRange(centerPosition: Vec3, range: number): Node[] {
-        return this._registeredHeroes.filter(hero => {
-            if (!hero || !hero.isValid) return false;
-            const heroUnit = hero.getComponent(BaseHero);
-            if (!heroUnit || !heroUnit.isAlive) return false;
-
-            const distance = Vec3.distance(centerPosition, hero.position);
-            return distance <= range;
-        });
-    }
-
-    // 为链式攻击寻找下一个目标
-    public FindChainTargets(startPosition: Vec3, excludeTarget: Node, maxTargets: number, maxRange: number): Node[] {
-        const targets: Node[] = [];
-        const availableEnemies = this._registeredEnemies.filter(enemy => {
-            if (!enemy || !enemy.isValid || enemy === excludeTarget) return false;
-            const enemyUnit = enemy.getComponent(BaseMouse);
-            if (!enemyUnit || !enemyUnit.isAlive) return false;
-
-            const distance = Vec3.distance(startPosition, enemy.position);
-            return distance <= maxRange;
-        });
-
-        // 按距离排序，选择最近的几个目标
-        availableEnemies.sort((a, b) => {
-            const distA = Vec3.distance(startPosition, a.position);
-            const distB = Vec3.distance(startPosition, b.position);
-            return distA - distB;
-        });
-
-        // 取前maxTargets个目标
-        for (let i = 0; i < Math.min(maxTargets, availableEnemies.length); i++) {
-            targets.push(availableEnemies[i]);
-        }
-
-        return targets;
-    }
 
 
     // === 击杀奖励系统 ===
 
     /**
-     * 处理敌人被击杀，给予全局奖励
+     * 处理敌人被击杀，通过事件通知上层处理奖励
      * @param killedEnemy 被击杀敌人组件
      */
     public HandleEnemyKilled(killedEnemy: BaseMouse): void {
-        if (!this._gameManager || !killedEnemy) return;
+        if (!killedEnemy) return;
 
         // 从敌人配置中获取击杀奖励，如果没有配置则使用默认值
         const goldReward = this.getKillReward(killedEnemy);
 
-        // 给予金币奖励
-        if (this._gameManager) {
-            this._gameManager.AddGold(goldReward);
-        }
+        // 🎯 新架构：通过事件通知GameManager处理奖励
+        this.node.emit('enemy-killed', {
+            enemy: killedEnemy,
+            goldReward: goldReward
+        });
 
         // 从注册列表中移除敌人（会自动处理其他清理）
         this.UnregisterEnemy(killedEnemy.node);
 
-        console.log(`${killedEnemy.unitName} 被击杀，获得 ${goldReward} 金币`);
+        console.log(`${killedEnemy.unitName} 被击杀，通知奖励: ${goldReward} 金币`);
     }
 
     /**

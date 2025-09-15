@@ -173,7 +173,6 @@ export interface WorldPosition {
 
 // 游戏事件接口
 export interface GameEvents {
-    'hero-deployed': { hero: Component; position: GridPosition };
     'enemy-spawned': { enemy: Component; position: WorldPosition };
     'unit-destroyed': { unit: Component; position: WorldPosition };
     'wave-completed': { wave: number };

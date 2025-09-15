@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, tween } from 'cc';
+import { _decorator, Node, Vec3, Graphics, Color, tween } from 'cc';
 import { BaseHero } from './BaseHero';
 import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
@@ -79,24 +79,6 @@ export class MaineThunder extends BaseHero {
         
         // 创建攻击动画特效
         this.createLightningEffect();
-    }
-    
-    private chainLightningAttack(primaryTarget: Node): void {
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return;
-        
-        const nearbyEnemies = battleManager.GetEnemiesInRange(primaryTarget.position, 100);
-        const chainDamage = this.attackDamage * 0.6; // 60%的链式伤害
-        
-        for (const enemy of nearbyEnemies) {
-            if (enemy !== primaryTarget && enemy.isValid) {
-                const enemyUnit = enemy.getComponent(BaseMouse);
-                if (enemyUnit && enemyUnit.isAlive) {
-                    enemyUnit.takeDamage(chainDamage);
-                    this.createChainLightningEffect(primaryTarget.position, enemy.position);
-                }
-            }
-        }
     }
     
     private createLightningEffect(): void {

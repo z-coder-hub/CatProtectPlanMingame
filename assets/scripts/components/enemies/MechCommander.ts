@@ -2,6 +2,7 @@ import { _decorator, Color, Graphics, tween, Vec3 } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { BaseMouse } from './BaseMouse';
+import { EnemyFactory } from '../../systems/EnemyFactory';
 
 const { ccclass } = _decorator;
 
@@ -37,7 +38,7 @@ const { ccclass } = _decorator;
  * **强制抽象方法** - 子类必须实现：
  * ```typescript
  * public abstract readonly enemyType: EnemyType;           // 敌人类型标识
- * protected abstract GetConfig(): EnemyConfig;            // 配置信息
+ * protected abstract getConfig(): EnemyConfig;            // 配置信息
  * protected abstract initializeMouseVisuals(): void;      // 外观初始化
  * ```
  *
@@ -408,9 +409,17 @@ export class MechCommander extends BaseMouse {
         const offsetX = Math.cos(angle) * distance;
         const offsetY = Math.sin(angle) * distance;
 
-        // 通过GameManager创建新机械敌人
-        gameManager.SpawnEnemyAtPosition(this.summonType,
-            new Vec3(this.node.position.x + offsetX, this.node.position.y + offsetY, 0));
+        // 🎯 新架构：使用EnemyFactory直接创建敌人
+        const summonPosition = new Vec3(this.node.position.x + offsetX, this.node.position.y + offsetY, 0);
+        const summonedEnemy = EnemyFactory.createEnemy(this.summonType, this.node.parent, {
+            x: summonPosition.x,
+            y: summonPosition.y
+        });
+
+        if (!summonedEnemy) {
+            console.error(`${this.unitName}召唤${this.summonType}失败`);
+            return;
+        }
 
         this.spawnedCount++;
 

@@ -128,8 +128,6 @@ export class HeroSelectionPanel extends Component {
      * 获取已解锁的英雄类型列表（保留兼容性）
      */
     private getUnlockedHeroTypes(): HeroType[] {
-        const allHeroes = this.getAllHeroTypes();
-        
         // 如果LevelManager还未初始化，使用默认解锁英雄
         if (!this._levelManager) {
             console.warn("LevelManager未初始化，使用默认英雄列表");

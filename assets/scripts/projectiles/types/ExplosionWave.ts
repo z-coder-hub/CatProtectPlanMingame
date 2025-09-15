@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { BattleManager } from '../../managers/BattleManager';

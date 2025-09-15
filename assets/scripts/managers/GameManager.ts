@@ -126,10 +126,13 @@ export class GameManager extends Component {
         this._waveManager = this.node.parent?.getComponentInChildren(WaveManager) || null;
         this._levelManager = this.node.parent?.getComponentInChildren(LevelManager) || null;
 
+        // 🎯 设置事件监听器 - GameManager作为事件中心
+        this.setupEventListeners();
+
         // 初始化游戏配置
         this.initializeGameConfig();
 
-        console.log("GameManager初始化完成");
+        console.log("GameManager初始化完成 - 事件中心模式");
     }
 
     protected start(): void {
@@ -153,9 +156,129 @@ export class GameManager extends Component {
     }
 
     protected onDestroy(): void {
+        // 清理事件监听器
+        this.cleanupEventListeners();
+
         if (GameManager._instance === this) {
             GameManager._instance = null;
         }
+    }
+
+    // ====================== 事件中心系统 ======================
+
+    /**
+     * 设置事件监听器 - GameManager作为事件中心
+     */
+    private setupEventListeners(): void {
+        // 监听BattleManager事件
+        if (this._battleManager) {
+            this._battleManager.node.on('enemy-killed', this.onEnemyKilled, this);
+            console.log("✅ BattleManager事件监听器已设置");
+        }
+
+        // 监听WaveManager事件
+        if (this._waveManager) {
+            this._waveManager.node.on('wave-started', this.onWaveStarted, this);
+            this._waveManager.node.on('wave-enemies-cleared', this.onWaveEnemiesCleared, this);
+            this._waveManager.node.on('level-all-waves-completed', this.onLevelAllWavesCompleted, this);
+            console.log("✅ WaveManager事件监听器已设置");
+        }
+
+        // 监听LevelManager事件 (现有事件系统)
+        if (this._levelManager) {
+            this._levelManager.node.on('hero-unlocked', this.onHeroUnlocked, this);
+            console.log("✅ LevelManager事件监听器已设置");
+        }
+    }
+
+    /**
+     * 清理事件监听器
+     */
+    private cleanupEventListeners(): void {
+        if (this._battleManager) {
+            this._battleManager.node.off('enemy-killed', this.onEnemyKilled, this);
+        }
+
+        if (this._waveManager) {
+            this._waveManager.node.off('wave-started', this.onWaveStarted, this);
+            this._waveManager.node.off('wave-enemies-cleared', this.onWaveEnemiesCleared, this);
+            this._waveManager.node.off('level-all-waves-completed', this.onLevelAllWavesCompleted, this);
+        }
+
+        if (this._levelManager) {
+            this._levelManager.node.off('hero-unlocked', this.onHeroUnlocked, this);
+        }
+
+        console.log("🧹 事件监听器已清理");
+    }
+
+    // ====================== 事件处理方法 ======================
+
+    /**
+     * 处理敌人被击杀事件
+     */
+    private onEnemyKilled(event: { enemy: any, goldReward: number }): void {
+        // 原GameManager业务逻辑：给予金币奖励
+        this.AddGold(event.goldReward);
+        console.log(`🎯 事件处理: 敌人被击杀，获得 ${event.goldReward} 金币`);
+    }
+
+
+    /**
+     * 处理波次开始事件
+     */
+    private onWaveStarted(event: { waveNumber: number, levelId: string }): void {
+        // 同步当前波次到GameManager
+        this.currentWave = event.waveNumber;
+        console.log(`🎯 事件处理: 第 ${event.waveNumber} 波开始`);
+    }
+
+    /**
+     * 处理波次敌人清理完成事件
+     */
+    private onWaveEnemiesCleared(event: { waveNumber: number, levelId: string }): void {
+        console.log(`🎯 事件处理: 第 ${event.waveNumber} 波敌人清理完成`);
+
+        if (!this._currentLevelConfig) {
+            console.error("没有当前关卡配置");
+            return;
+        }
+
+        // 波次完成业务逻辑
+        console.log(`第 ${event.waveNumber} 波完成`);
+
+        // 每波奖励金币
+        this.AddGold(30);
+
+        // 检查是否是最后一波
+        const totalWaves = this._currentLevelConfig.waves.length;
+        if (event.waveNumber >= totalWaves) {
+            // 关卡完成 - 清理英雄准备下一关
+            if (this._battleManager) {
+                this._battleManager.ClearAllDeployedHeroes();
+            }
+
+            console.log(`关卡 ${this.currentLevelName} 所有波次完成！`);
+            this.CompleteLevel(true); // 关卡胜利
+        } else {
+            this.NextWave(); // 准备下一波，WaveManager会自动等待5秒后开始
+        }
+    }
+
+    /**
+     * 处理关卡所有波次完成事件
+     */
+    private onLevelAllWavesCompleted(event: { levelId: string, levelName: string }): void {
+        console.log(`🎯 事件处理: 关卡 ${event.levelName} 所有波次完成！`);
+        this.CompleteLevel(true);
+    }
+
+    /**
+     * 处理英雄解锁事件
+     */
+    private onHeroUnlocked(event: { heroType: any }): void {
+        console.log(`🎯 事件处理: 英雄 ${event.heroType} 已解锁`);
+        // 可以在这里添加UI通知等逻辑
     }
 
     // 初始化游戏配置
@@ -389,10 +512,6 @@ export class GameManager extends Component {
         }
     }
 
-    // 游戏结束（兼容旧代码）
-    public EndGame(isVictory: boolean): void {
-        this.CompleteLevel(isVictory);
-    }
 
     // 重新开始关卡
     public RestartLevel(): void {
@@ -453,34 +572,10 @@ export class GameManager extends Component {
 
         // 检查游戏失败
         if (this.castleHealth <= 0) {
-            this.EndGame(false);
+            this.CompleteLevel(false);
         }
     }
 
-    // 波次完成
-    public OnWaveComplete(): void {
-        if (!this._currentLevelConfig) {
-            console.error("没有当前关卡配置");
-            return;
-        }
-
-        console.log(`第 ${this.currentWave} 波完成`);
-
-        // 每波奖励金币
-        this.AddGold(30); // 减少每波奖励，因为关卡完成会有更多奖励
-
-        // 检查是否是最后一波
-        const totalWaves = this._currentLevelConfig.waves.length;
-        if (this.currentWave >= totalWaves) {
-            // 关卡完成
-            BattleManager.instance.ClearAllDeployedHeroes()
-
-            console.log(`关卡 ${this.currentLevelName} 所有波次完成！`);
-            this.CompleteLevel(true); // 关卡胜利
-        } else {
-            this.NextWave(); // 准备下一波，WaveManager会自动等待5秒后开始
-        }
-    }
 
     // 更新休息阶段（关卡间休息）
     private updateRestPhase(dt: number): void {

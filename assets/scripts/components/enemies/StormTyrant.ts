@@ -2,6 +2,7 @@ import { _decorator, Component, Color, Graphics, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
+import { EnemyFactory } from '../../systems/EnemyFactory';
 
 const { ccclass, property } = _decorator;
 
@@ -184,9 +185,16 @@ export class StormTyrant extends BaseMouse {
             const offsetX = Math.cos(angle) * distance;
             const offsetY = Math.sin(angle) * distance;
             
-            // 通过GameManager创建新敌人
-            gameManager.SpawnEnemyAtPosition(this.summonType, 
-                new Vec3(this.node.position.x + offsetX, this.node.position.y + offsetY, 0));
+            // 🎯 新架构：使用EnemyFactory直接创建敌人
+            const summonPosition = new Vec3(this.node.position.x + offsetX, this.node.position.y + offsetY, 0);
+            const summonedEnemy = EnemyFactory.createEnemy(this.summonType, this.node.parent, {
+                x: summonPosition.x,
+                y: summonPosition.y
+            });
+
+            if (!summonedEnemy) {
+                console.error(`${this.unitName}召唤${this.summonType}失败`);
+            }
         }
         
         // 召唤特效

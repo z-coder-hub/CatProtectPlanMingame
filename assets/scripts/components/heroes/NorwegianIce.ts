@@ -122,7 +122,7 @@ export class NorwegianIce extends BaseHero {
         // 使用tween创建淡入动画
         tween({ opacity: initialOpacity })
             .to(animationDuration, { opacity: 0 }, {
-                onUpdate: (target: any, ratio: number) => {
+                onUpdate: (_target: any, ratio: number) => {
                     if (!effectGraphics || !effectNode.isValid) return;
                     
                     const currentOpacity = initialOpacity - (initialOpacity * ratio);

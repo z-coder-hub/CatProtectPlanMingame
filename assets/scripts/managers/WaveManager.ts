@@ -1,9 +1,8 @@
 import { _decorator, Component, Vec3 } from 'cc';
 import { EnemyFactory } from '../systems/EnemyFactory';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
-import { EnemyType, GameState, LevelConfig, WaveConfig } from '../types/GameTypes';
+import { EnemyType, LevelConfig, WaveConfig } from '../types/GameTypes';
 import { BattleManager } from './BattleManager';
-import { GameManager } from './GameManager';
 
 const { ccclass, property } = _decorator;
 
@@ -48,7 +47,6 @@ export class WaveManager extends Component {
     private _prepareTimer: number = 0;
 
     // 引用其他管理器
-    private _gameManager: GameManager | null = null;
     private _battleManager: BattleManager | null = null;
 
     // 获取当前波次状态
@@ -93,16 +91,14 @@ export class WaveManager extends Component {
     }
 
     protected start(): void {
-        // 获取管理器引用
-        this._gameManager = GameManager.instance;
+        // 获取管理器引用 - WaveManager现在作为纯执行层，不依赖GameManager
         this._battleManager = BattleManager.instance;
 
-        if (!this._gameManager) {
-            console.error("未找到GameManager实例");
-        }
         if (!this._battleManager) {
             console.error("未找到BattleManager实例");
         }
+
+        console.log("WaveManager启动完成 - 独立执行控制层");
     }
 
     // ====================== 关卡配置管理 ======================
@@ -126,12 +122,7 @@ export class WaveManager extends Component {
     }
 
     protected update(dt: number): void {
-        // 检查游戏状态，如果游戏已胜利则停止所有更新
-        if (this._gameManager && this._gameManager.gameState === GameState.VICTORY) {
-            // 游戏已通关，停止所有波次管理器更新
-            return;
-        }
-
+        // WaveManager 现在只管理自己的状态，不需要检查游戏总状态
         switch (this._waveState) {
             case WaveState.WAITING:
                 this.updateWaitingState(dt);
@@ -176,10 +167,11 @@ export class WaveManager extends Component {
 
         console.log(`[WaveManager] 开始关卡 ${this._currentLevelConfig.name} 第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}）`);
 
-        // 通知GameManager同步当前波次
-        if (this._gameManager) {
-            this._gameManager.currentWave = this.currentWaveNumber;
-        }
+        // 🎯 新架构：通过事件通知波次开始
+        this.node.emit('wave-started', {
+            waveNumber: this.currentWaveNumber,
+            levelId: this._currentLevelConfig.id
+        });
     }
 
     // 设置波次生成队列
@@ -240,24 +232,26 @@ export class WaveManager extends Component {
     }
 
     // 更新完成状态
-    private updateCompletedState(dt: number): void {
+    private updateCompletedState(_dt: number): void {
         // 检查是否还有活跃的敌人
         const battleManager = BattleManager.instance;
         if (battleManager && battleManager.registeredEnemies.length === 0) {
-            // 所有敌人都被清理，通知游戏管理器波次完成
+            // 所有敌人都被清理，通过事件通知波次完成
             console.log(`第 ${this.currentWaveNumber} 波所有敌人已清理`);
 
-            // 通知GameManager波次完成，让它决定下一步动作
-            if (this._gameManager) {
-                this._gameManager.OnWaveComplete();
-            }
+            // 🎯 新架构：通过事件通知波次清理完成，让GameManager决定下一步动作
+            this.node.emit('wave-enemies-cleared', {
+                waveNumber: this.currentWaveNumber,
+                levelId: this._currentLevelConfig?.id || "unknown"
+            });
+
+            // 设置为停止状态，等待外部指令
+            this._waveState = WaveState.STOPPED;
         }
     }
 
     // 生成敌人
     private async spawnEnemy(enemyType: EnemyType): Promise<void> {
-        if (!this._gameManager) return;
-
         try {
             // 设置生成位置为网格上方的随机位置
             const spawnPosition = this.getRandomSpawnPosition();
@@ -340,11 +334,13 @@ export class WaveManager extends Component {
 
     // 所有波次完成
     private onAllWavesCompleted(): void {
-        console.log("所有波次已完成，游戏胜利！");
+        console.log("所有波次已完成！");
 
-        if (this._gameManager) {
-            this._gameManager.EndGame(true);
-        }
+        // 🎯 新架构：通过事件通知关卡所有波次完成
+        this.node.emit('level-all-waves-completed', {
+            levelId: this._currentLevelConfig?.id || "unknown",
+            levelName: this._currentLevelConfig?.name || "未知关卡"
+        });
     }
 
     // 停止当前波次（关卡间休息时使用）

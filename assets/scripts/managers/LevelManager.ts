@@ -1,8 +1,8 @@
 import { _decorator, Component } from 'cc';
 import {
-    LevelConfig, WorldConfig, LevelCompletionStatus, LevelCompletionRecord,
+    LevelConfig, LevelCompletionStatus, LevelCompletionRecord,
     HeroUnlockStatus, HeroUnlockRecord, UnlockCondition, UnlockConditionType,
-    HeroType, RewardConfig, RewardType
+    HeroType, RewardType
 } from '../types/GameTypes';
 import { LEVEL_CONFIGS } from '../types/LevelConfigs';
 
@@ -266,7 +266,7 @@ export class LevelManager extends Component {
     /**
      * 检查完美完成条件
      */
-    private checkPerfectCompletion(levelId: string, completionTime: number, score?: number): void {
+    private checkPerfectCompletion(levelId: string, completionTime: number, _score?: number): void {
         const record = this._levelRecords[levelId];
         const levelConfig = LEVEL_CONFIGS.getLevelById(levelId);
         

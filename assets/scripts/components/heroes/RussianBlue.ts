@@ -98,7 +98,6 @@ export class RussianBlue extends BaseHero {
         if (!target || !this.isAlive) return;
         
         // 使用投射物系统发射爆炸冲击波模拟刺客暗影刃爆发攻击
-        const config = HERO_CONFIGS[HeroType.RUSSIAN_BLUE];
         const explosionRadius = 80; // 中等范围爆炸模拟暗影刃穿透
         const knockbackForce = 30; // 轻微击退效果
         
