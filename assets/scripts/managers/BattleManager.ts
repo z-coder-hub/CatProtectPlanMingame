@@ -441,6 +441,45 @@ export class BattleManager extends Component {
         return baseReward + healthBonus;
     }
 
+    // === 英雄清除系统 ===
+
+    /**
+     * 清除所有已部署的英雄
+     * 用于关卡结束后准备下一关卡
+     */
+    public ClearAllDeployedHeroes(): void {
+        if (this._registeredHeroes.length === 0) {
+            console.log("没有已部署的英雄需要清除");
+            return;
+        }
+
+        const heroesToClear = [...this._registeredHeroes]; // 创建副本避免在循环中修改数组
+        let clearedCount = 0;
+
+        for (const heroNode of heroesToClear) {
+            if (heroNode && heroNode.isValid) {
+                // 从BattleManager注册列表中移除
+                this.UnregisterHero(heroNode);
+
+                // 从网格系统中清除
+                const gridSystem = this.getGridSystem();
+                if (gridSystem) {
+                    gridSystem.ClearHeroFromGrid(heroNode);
+                }
+
+                // 销毁英雄节点
+                heroNode.destroy();
+                clearedCount++;
+            }
+        }
+
+        // 清空数组
+        this._registeredHeroes.length = 0;
+
+        console.log(`已清除 ${clearedCount} 个已部署的英雄，准备下一关卡`);
+    }
+
+
     // 获取网格系统引用
     private getGridSystem(): GridDeploymentSystem | null {
         if (this._gridSystemCache && this._gridSystemCache.isValid) {

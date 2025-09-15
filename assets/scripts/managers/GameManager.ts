@@ -37,15 +37,17 @@ export class GameManager extends Component {
     private _gameState: GameState = GameState.MENU; // 从菜单开始
     private _maxCastleHealth: number = 100;
 
-    // 注意：英雄和敌人数据统一由BattleManager托管
-    // 移除重复的数据存储，通过BattleManager获取数据
-
     // 事件回调
     private _eventCallbacks = new Map<keyof GameEvents, Function[]>();
 
     // 休息阶段相关（参考老项目）
     private _restTimer: number = 0;
     private _restDuration: number = GAME_CONFIG.restDuration;
+
+    // 其他管理器的直接引用
+    protected _battleManager: BattleManager | null = null;
+    protected _waveManager: WaveManager | null = null;
+    protected _levelManager: LevelManager | null = null;
 
 
     // 状态转换计时器（符合Cocos Creator生命周期规范）
@@ -119,6 +121,11 @@ export class GameManager extends Component {
 
         GameManager._instance = this;
 
+        // 获取其他管理器的直接引用
+        this._battleManager = this.node.parent?.getComponentInChildren(BattleManager) || null;
+        this._waveManager = this.node.parent?.getComponentInChildren(WaveManager) || null;
+        this._levelManager = this.node.parent?.getComponentInChildren(LevelManager) || null;
+
         // 初始化游戏配置
         this.initializeGameConfig();
 
@@ -143,8 +150,6 @@ export class GameManager extends Component {
                 this.executeStateTransition();
             }
         }
-
-
     }
 
     protected onDestroy(): void {
@@ -212,9 +217,8 @@ export class GameManager extends Component {
         this.currentWave = 1;
 
         // 通知WaveManager更新关卡配置
-        const waveManager = this.GetWaveManager();
-        if (waveManager) {
-            waveManager.SetLevelConfig(config);
+        if (this._waveManager) {
+            this._waveManager.SetLevelConfig(config);
         }
 
         console.log(`应用关卡配置: ${config.name}, 初始金币: ${config.initialGold}`);
@@ -248,10 +252,9 @@ export class GameManager extends Component {
         console.log(`[GameManager] 战斗开始！当前波次: ${this.currentWave}`);
 
         // 启动波次管理器
-        const waveManager = this.GetWaveManager();
-        if (waveManager) {
+        if (this._waveManager) {
             console.log(`[GameManager] 启动第 ${this.currentWave} 波`);
-            waveManager.StartWave(this.currentWave);
+            this._waveManager.StartWave(this.currentWave);
         } else {
             console.error("[GameManager] 未找到WaveManager，无法启动波次");
         }
@@ -291,9 +294,8 @@ export class GameManager extends Component {
         const score = this.calculateLevelScore();
 
         // 记录关卡完成到LevelManager
-        const levelManager = this.GetLevelManager();
-        if (levelManager) {
-            levelManager.RecordLevelCompletion(levelConfig.id, true, completionTime, score);
+        if (this._levelManager) {
+            this._levelManager.RecordLevelCompletion(levelConfig.id, true, completionTime, score);
         } else {
             console.warn("未找到LevelManager，无法记录关卡完成");
         }
@@ -312,12 +314,9 @@ export class GameManager extends Component {
             this._restTimer = this._restDuration; // 120秒休息时间
             console.log(`关卡胜利！进入关卡间休息阶段，${this._restDuration}秒后自动进入第${nextIndex + 1}关...`);
 
-            // 注意：单位清理已迁移到BattleManager处理
-
             // 先暂停WaveManager，避免它在休息期间自动开始
-            const waveManager = this.GetWaveManager();
-            if (waveManager) {
-                waveManager.StopCurrentWave();
+            if (this._waveManager) {
+                this._waveManager.StopCurrentWave();
             }
         }
     }
@@ -362,10 +361,9 @@ export class GameManager extends Component {
                     break;
                 case RewardType.HERO_UNLOCK:
                     // 集成英雄解锁系统
-                    const levelManager = this.GetLevelManager();
                     const heroType = reward.value as HeroType;
                     console.log(`尝试解锁英雄: ${heroType} (type: ${typeof heroType})`);
-                    if (levelManager && levelManager.UnlockHero(heroType)) {
+                    if (this._levelManager && this._levelManager.UnlockHero(heroType)) {
                         console.log(`成功解锁英雄: ${heroType}`);
                         // 触发英雄解锁事件通知UI
                         this.emitEvent('hero-unlocked', { heroType: heroType });
@@ -409,9 +407,8 @@ export class GameManager extends Component {
         // 注意：单位清理功能已迁移到BattleManager
 
         // 重置波次管理器
-        const waveManager = this.GetWaveManager();
-        if (waveManager) {
-            waveManager.ResetWaves();
+        if (this._waveManager) {
+            this._waveManager.ResetWaves();
         }
 
         // 重置游戏状态到部署阶段
@@ -476,6 +473,8 @@ export class GameManager extends Component {
         const totalWaves = this._currentLevelConfig.waves.length;
         if (this.currentWave >= totalWaves) {
             // 关卡完成
+            BattleManager.instance.ClearAllDeployedHeroes()
+
             console.log(`关卡 ${this.currentLevelName} 所有波次完成！`);
             this.CompleteLevel(true); // 关卡胜利
         } else {
@@ -497,9 +496,8 @@ export class GameManager extends Component {
                 console.log(`休息结束，自动开始第${nextIndex + 1}关第${this.currentWave}波`);
 
                 // 启动波次管理器
-                const waveManager = this.GetWaveManager();
-                if (waveManager) {
-                    waveManager.StartWave(this.currentWave);
+                if (this._waveManager) {
+                    this._waveManager.StartWave(this.currentWave);
                 } else {
                     console.error("未找到WaveManager，无法启动波次");
                 }
@@ -523,9 +521,8 @@ export class GameManager extends Component {
                 console.log(`跳过休息，直接开始第${nextIndex + 1}关第${this.currentWave}波`);
 
                 // 启动波次管理器
-                const waveManager = this.GetWaveManager();
-                if (waveManager) {
-                    waveManager.StartWave(this.currentWave);
+                if (this._waveManager) {
+                    this._waveManager.StartWave(this.currentWave);
                 } else {
                     console.error("未找到WaveManager，无法启动波次");
                 }
@@ -545,11 +542,10 @@ export class GameManager extends Component {
         }
 
         // 通知WaveManager准备下一波
-        const waveManager = this.GetWaveManager();
-        if (waveManager) {
-            waveManager.PrepareNextWave();
+        if (this._waveManager) {
+            this._waveManager.PrepareNextWave();
             // 同步当前波次到GameManager
-            this.currentWave = waveManager.currentWaveNumber;
+            this.currentWave = this._waveManager.currentWaveNumber;
         }
 
         const totalWaves = this._currentLevelConfig.waves.length;
@@ -559,7 +555,7 @@ export class GameManager extends Component {
             console.log(`关卡 ${this.currentLevelName} 完成，总共 ${totalWaves} 波`);
             this.CompleteLevel(true);
         } else {
-            console.log(`准备第 ${this.currentWave} 波，${waveManager?.wavePrepareTime || 5}秒后自动开始 (共 ${totalWaves} 波)`);
+            console.log(`准备第 ${this.currentWave} 波，${this._waveManager?.wavePrepareTime || 5}秒后自动开始 (共 ${totalWaves} 波)`);
             // 保持战斗状态，让WaveManager处理等待和自动开始
             this.setGameState(GameState.BATTLE);
         }
@@ -635,45 +631,8 @@ export class GameManager extends Component {
         };
     }
 
-    // 获取组件引用（参考老项目的缓存机制）
-    public GetBattleManager(): BattleManager | null {
-        return this.getCachedComponent('_battleManagerCache', BattleManager);
-    }
-
-    public GetWaveManager(): WaveManager | null {
-        return this.getCachedComponent('_waveManagerCache', WaveManager);
-    }
-
-    public GetLevelManager(): LevelManager | null {
-        return this.getCachedComponent('_levelManagerCache', LevelManager);
-    }
-
-    // 注意：网格系统访问已迁移，请直接获取 GridDeploymentSystem 组件
-
-    // 统一的组件缓存获取方法
-    private getCachedComponent<T extends Component>(cacheKey: string, componentClass: new () => T): T | null {
-        const cache = (this as any)[cacheKey];
-        if (cache && cache.isValid) {
-            return cache;
-        }
-
-        const component = this.node.parent?.getComponentInChildren(componentClass) || null;
-        (this as any)[cacheKey] = component;
-        return component;
-    }
 
     // ====================== 状态转换管理方法（符合Cocos Creator规范）======================
-
-    /**
-     * 安排状态转换（替代setTimeout的规范实现）
-     * @param targetState 目标状态
-     * @param delay 延迟时间（秒）
-     */
-    private _scheduleStateTransition(targetState: GameState, delay: number): void {
-        this._pendingStateTransition = targetState;
-        this._stateTransitionTimer = delay;
-        console.log(`已安排状态转换: ${targetState}, 延迟: ${delay}秒`);
-    }
 
     /**
      * 执行待定的状态转换

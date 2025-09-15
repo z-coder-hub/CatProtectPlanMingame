@@ -39,7 +39,7 @@ export class WaveManager extends Component {
 
     // 当前波次状态
     private _currentWaveIndex: number = 0;
-    private _waveState: WaveState = WaveState.WAITING;
+    private _waveState: WaveState = WaveState.STOPPED;
     private _currentWaveConfig: WaveConfig | null = null;
 
     // 敌人生成管理

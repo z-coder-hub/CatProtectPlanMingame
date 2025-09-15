@@ -76,6 +76,37 @@ assets/
 
 ## 开发原则
 
+### 8. 按需实现原则 (YAGNI - You Aren't Gonna Need It)
+- **避免提前生成**: 如果一个函数方法暂时没有使用的地方，就不用提前生成
+- **按需开发**: 只在实际需要时才创建新的方法、类或系统
+- **延迟决策**: 等到明确需求时再实现具体功能，避免过度设计
+- **渐进式开发**: 优先实现核心功能，然后根据实际需要逐步扩展
+
+#### YAGNI 实践要点：
+- **需求驱动**：所有代码必须有明确的使用场景和需求支撑
+- **最小可行产品**：首先实现最小功能集，确保系统可用
+- **重构优于预设计**：在真正需要时通过重构扩展功能，而不是提前预设复杂架构
+- **删除无用代码**：定期清理没有被调用的方法和类
+
+```typescript
+// ❌ 错误：提前生成可能用不到的方法
+class Hero {
+    // 这些方法目前没有任何地方调用
+    public getExperience(): number { return this.experience; }
+    public levelUp(): void { this.level++; }
+    public getSkillPoints(): number { return this.skillPoints; }
+}
+
+// ✅ 正确：只实现当前需要的方法
+class Hero {
+    public performAttack(): void {
+        // 实际在战斗系统中被调用的方法
+    }
+
+    // 当未来真正需要经验系统时再添加相关方法
+}
+```
+
 ### ⚠️ 重要：敌人文件修改前必读
 
 **在修改 `assets/scripts/components/enemies/` 目录下的任何文件之前，必须先阅读 `ENEMIES_DESIGN_PRINCIPLES.md` 文档。**
