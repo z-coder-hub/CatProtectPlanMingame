@@ -1,7 +1,9 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, tween, Tween } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, Color, tween, Tween, Canvas, director, UITransform } from 'cc';
 import { BaseHero } from '../components/heroes/BaseHero';
 import { BaseMouse } from '../components/enemies/BaseMouse';
 import { GameManager } from '../managers/GameManager';
+import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
+import { PROJECTILE_CONFIG } from '../types/GameConstants';
 
 const { ccclass, property } = _decorator;
 
@@ -24,8 +26,8 @@ export abstract class BaseProjectile extends Component {
     protected hitRadius: number = 25;
     
     @property({ tooltip: "最大飞行距离" })
-    protected maxRange: number = 2000;
-    
+    protected maxRange: number = PROJECTILE_CONFIG.maxRange;
+
     // === 运行时属性 ===
     protected owner: BaseHero | null = null;
     protected startPosition: Vec3 = new Vec3();
@@ -33,17 +35,9 @@ export abstract class BaseProjectile extends Component {
     protected direction: Vec3 = new Vec3();
     protected isActive: boolean = false;
     protected traveledDistance: number = 0;
-    
+
     // === 组件引用 ===
     protected graphics: Graphics | null = null;
-    
-    // === 游戏边界 ===
-    protected readonly gameBounds = {
-        minX: -600,
-        maxX: 600,
-        minY: -400,
-        maxY: 400
-    };
     
     // === 抽象方法，子类必须实现 ===
     
@@ -224,21 +218,62 @@ export abstract class BaseProjectile extends Component {
         
         // 调用子类的击中逻辑
         this.onHitTarget(targetUnit);
-        
+
         // 销毁投射物
         this.destroyProjectile();
     }
     
     /**
+     * 动态获取游戏边界
+     * 优先基于网格系统计算，降级使用屏幕尺寸，最后使用固定值
+     */
+    protected getGameBounds(): { minX: number; maxX: number; minY: number; maxY: number } {
+        // 方案1: 基于网格系统的边界（推荐）
+        if (PROJECTILE_CONFIG.useGridBounds) {
+            const gridSystem = GridDeploymentSystem.instance;
+            if (gridSystem) {
+                const gridBounds = gridSystem.GetGridBounds();
+                const buffer = PROJECTILE_CONFIG.boundaryBuffer;
+                return {
+                    minX: gridBounds.left - buffer,
+                    maxX: gridBounds.right + buffer,
+                    minY: gridBounds.bottom - buffer,
+                    maxY: gridBounds.top + buffer
+                };
+            }
+        }
+
+        // 方案2: 基于屏幕尺寸的边界
+        const canvas = director.getScene()?.getComponentInChildren(Canvas);
+        if (canvas) {
+            const uiTransform = canvas.getComponent(UITransform);
+            if (uiTransform) {
+                const screenSize = uiTransform.contentSize;
+                const margins = PROJECTILE_CONFIG.uiMargins;
+                return {
+                    minX: -screenSize.width / 2 + margins.left,
+                    maxX: screenSize.width / 2 - margins.right,
+                    minY: -screenSize.height / 2 + margins.bottom,
+                    maxY: screenSize.height / 2 - margins.top
+                };
+            }
+        }
+
+        // 方案3: 降级使用固定边界
+        return PROJECTILE_CONFIG.fallbackBounds;
+    }
+
+    /**
      * 计算最大飞行距离（直到飞出边界）
+     * 使用动态边界计算，提供更精确的范围控制
      */
     protected calculateMaxTravelDistance(): number {
         const startPos = this.startPosition;
         const direction = this.direction;
-        const bounds = this.gameBounds;
-        
+        const bounds = this.getGameBounds();
+
         let maxDistance = this.maxRange;
-        
+
         // 计算与各个边界的交点，取最近的
         if (direction.x > 0) {
             const distToRightBound = (bounds.maxX - startPos.x) / direction.x;
@@ -247,7 +282,7 @@ export abstract class BaseProjectile extends Component {
             const distToLeftBound = (bounds.minX - startPos.x) / direction.x;
             maxDistance = Math.min(maxDistance, distToLeftBound);
         }
-        
+
         if (direction.y > 0) {
             const distToTopBound = (bounds.maxY - startPos.y) / direction.y;
             maxDistance = Math.min(maxDistance, distToTopBound);
@@ -255,7 +290,7 @@ export abstract class BaseProjectile extends Component {
             const distToBottomBound = (bounds.minY - startPos.y) / direction.y;
             maxDistance = Math.min(maxDistance, distToBottomBound);
         }
-        
+
         return Math.max(maxDistance, 100); // 确保至少飞行100像素
     }
     
@@ -277,15 +312,10 @@ export abstract class BaseProjectile extends Component {
             delete (this.node as any)._collisionCheckFunction;
         }
         
-        // 通知ProjectileSystem回收或销毁
-        tween(this.node)
-            .delay(0.016) // 下一帧执行，避免当前帧销毁问题
-            .call(() => {
-                if (this.node && this.node.isValid) {
-                    this.node.destroy();
-                }
-            })
-            .start();
+        // 直接销毁节点 - Cocos Creator会在当前帧逻辑结束后统一处理
+        if (this.node && this.node.isValid) {
+            this.node.destroy();
+        }
     }
     
     /**

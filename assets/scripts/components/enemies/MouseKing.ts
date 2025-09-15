@@ -2,7 +2,6 @@ import { _decorator, Color, Graphics, Vec3, Node, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
 
 const { ccclass, property } = _decorator;
 
@@ -30,9 +29,19 @@ export class MouseKing extends BaseMouse {
     private _summonCount: number = 0;     // 已召唤次数
     private _maxSummons: number = 5;      // 最大召唤次数
     
-    // 实现BaseMouse的抽象方法 - 提供配置
+    // 实现BaseMouse的抽象方法 - 老鼠王配置
     protected getConfig(): EnemyConfig {
-        return ENEMY_CONFIGS[EnemyType.MOUSE_KING];
+        return {
+            type: EnemyType.MOUSE_KING,
+            name: "老鼠王",
+            category: EnemyCategory.BOSS,
+            health: 200,
+            maxHealth: 200,
+            moveSpeed: 70,
+            goldReward: 30,
+            summonCount: 2,
+            summonType: EnemyType.BASIC_MOUSE
+        };
     }
 
     protected onLoad(): void {

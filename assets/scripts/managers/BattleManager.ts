@@ -5,26 +5,13 @@ import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
 import { GridPosition } from '../types/GameTypes';
 import { GameManager } from './GameManager';
 
-// 通用单位类型
-type GameUnit = BaseHero | BaseMouse;
-
 const { ccclass, property } = _decorator;
-
-// 战斗目标类型
-export interface BattleTarget {
-    node: Node;
-    unit: BaseHero | BaseMouse;
-    priority: number;
-}
 
 @ccclass('BattleManager')
 export class BattleManager extends Component {
 
-    @property({ tooltip: "战斗更新间隔(秒)" })
-    public battleUpdateInterval: number = 0.2;
-
-    @property({ tooltip: "目标搜索范围" })
-    public targetSearchRange: number = 500;
+    @property({ tooltip: "统计更新间隔(秒)" })
+    public UpdateInterval: number = 0.2;
 
     @property({ tooltip: "是否启用网格定位" })
     public enableGridPositioning: boolean = true;
@@ -33,7 +20,7 @@ export class BattleManager extends Component {
     private _updateTimer: number = 0;
     private _gameManager: GameManager | null = null;
 
-    // 注册的英雄和敌人列表（参考老项目）
+    // 注册的英雄和敌人列表
     private _registeredHeroes: Node[] = [];
     private _registeredEnemies: Node[] = [];
 
@@ -76,213 +63,204 @@ export class BattleManager extends Component {
     protected update(dt: number): void {
         this._updateTimer += dt;
 
-        // 定期更新战斗逻辑
-        if (this._updateTimer >= this.battleUpdateInterval) {
-            this.updateBattle(this._updateTimer);
+        // 定期更新数据统计
+        if (this._updateTimer >= this.UpdateInterval) {
+            this.updateStatistics();
             this._updateTimer = 0;
         }
     }
 
-    // 更新战斗逻辑
-    private updateBattle(dt: number): void {
+    // 更新数据统计 - 处理数据同步和统计
+    private updateStatistics(): void {
         if (!this._gameManager) return;
 
-        // 获取英雄和敌人列表
-        const heroes = this._gameManager.deployedHeroes;
-        const enemies = this._gameManager.activeEnemies;
+        // 清理无效的注册单位
+        this.cleanupInvalidUnits();
 
-        if (heroes.length === 0 || enemies.length === 0) return;
-
-        // 为每个英雄分配攻击目标
-        for (const heroNode of heroes) {
-            this.updateHeroBattle(heroNode, enemies);
-        }
-
-        // 处理敌人AI行为
-        for (const enemyNode of enemies) {
-            this.updateEnemyBattle(enemyNode, heroes);
-        }
+        // 更新战斗统计数据
+        this.updateBattleStatistics();
     }
 
-    // 更新英雄战斗
-    private updateHeroBattle(heroNode: Node, enemies: Node[]): void {
-        if (!heroNode || !heroNode.isValid) return;
+    // 清理无效单位
+    private cleanupInvalidUnits(): void {
+        // 清理无效的注册英雄
+        this._registeredHeroes = this._registeredHeroes.filter(hero =>
+            hero && hero.isValid
+        );
 
-        const heroUnit = heroNode.getComponent(BaseHero);
-        if (!heroUnit || !heroUnit.isAlive) return;
-
-        // 如果英雄有当前目标且目标仍然有效
-        if (heroUnit.currentTarget && heroUnit.currentTarget.isValid) {
-            const targetUnit = heroUnit.currentTarget.getComponent(BaseMouse);
-
-            // 检查目标是否还活着且在范围内
-            const targetInRange = heroUnit.IsTargetInRange(heroUnit.currentTarget);
-
-            if (targetUnit && targetUnit.isAlive && targetInRange) {
-                // 攻击当前目标
-                if (heroUnit.canAttack) {
-                    this.performAttack(heroUnit, targetUnit);
-                }
-                return;
-            } else {
-                // 清除无效目标
-                heroUnit.currentTarget = null;
-            }
-        }
-
-        // 寻找新目标
-        const target = this.findBestTarget(heroNode, enemies);
-        if (target) {
-            heroUnit.currentTarget = target.node;
-            const targetInRange = heroUnit.IsTargetInRange(target.node);
-
-            if (heroUnit.canAttack && targetInRange) {
-                this.performAttack(heroUnit, target.unit as BaseMouse);
-            }
-        }
+        // 清理无效的注册敌人
+        this._registeredEnemies = this._registeredEnemies.filter(enemy =>
+            enemy && enemy.isValid
+        );
     }
 
-    // 更新敌人战斗
-    private updateEnemyBattle(enemyNode: Node, heroes: Node[]): void {
-        if (!enemyNode || !enemyNode.isValid) return;
-
-        const enemyUnit = enemyNode.getComponent(BaseMouse);
-        if (!enemyUnit || !enemyUnit.isAlive) return;
-
-        // 塔防游戏逻辑：敌人只移动向城堡，不攻击英雄
-        // 移动逻辑已经在BaseMouse的update方法中处理
-        // 这里可以添加额外的AI逻辑，如路径寻找等
+    // 更新战斗统计数据
+    private updateBattleStatistics(): void {
+        // 这里可以添加统计数据更新逻辑
+        // 比如总伤害、击杀数等统计
     }
 
-    // 执行攻击 - 塔防游戏中只有英雄攻击敌人
-    private performAttack(attacker: BaseHero, target: BaseMouse): void {
-        if (!attacker || !target || !attacker.isAlive || !target.isAlive) return;
+    // === 目标分配系统 - 供英雄使用 ===
 
-        // 调用BaseHero的attackTarget方法，让英雄执行具体的攻击逻辑
-        // 这样橘猫等射击英雄可以发射子弹，而不是直接造成伤害
-        attacker.AttackTarget(target.node);
+    /**
+     * 为英雄分配最佳攻击目标
+     * @param heroNode 英雄节点
+     * @param attackRange 攻击范围
+     * @returns 分配的目标节点，如果没有合适目标则返回null
+     */
+    public assignTargetForHero(heroNode: Node, attackRange: number): Node | null {
+        if (!heroNode || !heroNode.isValid) return null;
 
-        // 如果目标死亡，给予奖励
-        if (!target.isAlive) {
-            this.handleUnitDestroyed(target);
-        }
-    }
+        // 优先选择最近的敌人
+        const nearestEnemy = this.findNearestEnemy(heroNode.position, attackRange);
 
-    // 寻找最佳攻击目标
-    private findBestTarget(attackerNode: Node, targetNodes: Node[]): BattleTarget | null {
-        const attackerUnit = attackerNode.getComponent(BaseHero);
-        if (!attackerUnit) return null;
-
-        const validTargets: BattleTarget[] = [];
-
-        for (const targetNode of targetNodes) {
-            if (!targetNode || !targetNode.isValid) continue;
-
-            const targetUnit = targetNode.getComponent(BaseMouse);
-            if (!targetUnit || !targetUnit.isAlive) continue;
-
-            // 检查目标是否在攻击范围内
-            const inRange = attackerUnit.IsTargetInRange(targetNode);
-
-            if (inRange) {
-                const distance = attackerUnit.GetDistanceToTarget(targetNode);
-                const priority = this.calculateTargetPriority(targetUnit, distance);
-
-                validTargets.push({
-                    node: targetNode,
-                    unit: targetUnit,
-                    priority: priority
-                });
-            }
-        }
-
-        // 按优先级排序，返回最高优先级的目标
-        if (validTargets.length > 0) {
-            validTargets.sort((a, b) => b.priority - a.priority);
-            return validTargets[0];
+        if (nearestEnemy) {
+            // 可以在这里添加更复杂的目标分配策略
+            // 比如考虑威胁等级、生命值、类型等因素
+            return nearestEnemy;
         }
 
         return null;
     }
 
-    // 计算目标优先级
-    private calculateTargetPriority(target: BaseMouse, distance: number): number {
-        let priority = 100;
+    /**
+     * 验证目标是否仍然有效
+     * @param target 目标节点
+     * @param heroPosition 英雄位置
+     * @param attackRange 攻击范围
+     * @returns 是否为有效目标
+     */
+    public isValidTarget(target: Node | null, heroPosition: Vec3, attackRange: number): boolean {
+        if (!target || !target.isValid) return false;
 
-        // 距离越近优先级越高
-        priority -= distance * 0.1;
+        // 检查目标是否存活
+        const targetUnit = target.getComponent(BaseMouse);
+        if (!targetUnit || !targetUnit.isAlive) return false;
 
-        // 血量越少优先级越高（便于补刀）
-        const healthPercent = target.currentHealth / target.maxHealth;
-        priority += (1 - healthPercent) * 20;
-
-        return priority;
+        // 检查目标是否在攻击范围内
+        const distance = Vec3.distance(heroPosition, target.position);
+        return distance <= attackRange;
     }
 
+    // === 数据查询方法 - 供英雄和敌人使用 ===
 
+    /**
+     * 获取指定位置周围的敌人列表
+     * @param position 中心位置
+     * @param range 搜索范围
+     * @returns 敌人节点数组
+     */
+    public findEnemiesInRange(position: Vec3, range: number): Node[] {
+        if (!this._gameManager) return [];
 
-    // 处理单位被摧毁
-    private handleUnitDestroyed(unit: BaseHero | BaseMouse): void {
-        if (!this._gameManager) return;
+        const enemies = this._gameManager.activeEnemies;
+        const enemiesInRange: Node[] = [];
 
-        // 如果是敌人被摧毁，给予金币奖励
-        const enemyTypes = ['BasicMouse']; // 后续扩展
-        const componentName = unit.constructor.name;
+        for (const enemyNode of enemies) {
+            if (!enemyNode || !enemyNode.isValid) continue;
 
-        if (enemyTypes.indexOf(componentName) !== -1) {
-            // 获取敌人配置中的奖励金币
-            const goldReward = 3; // 暂时硬编码，后续从配置读取
-            this._gameManager.AddGold(goldReward);
-
-            // 从活跃敌人列表移除
-            this._gameManager.RemoveActiveEnemy(unit.node);
-        } else {
-            // 如果是英雄被摧毁
-            this._gameManager.RemoveDeployedHero(unit.node);
+            const distance = Vec3.distance(position, enemyNode.position);
+            if (distance <= range) {
+                const enemyUnit = enemyNode.getComponent(BaseMouse);
+                if (enemyUnit && enemyUnit.isAlive) {
+                    enemiesInRange.push(enemyNode);
+                }
+            }
         }
+
+        return enemiesInRange;
     }
 
-    // 获取战斗统计信息
+    /**
+     * 获取最近的敌人
+     * @param position 搜索起点
+     * @param maxRange 最大搜索范围，不指定则全局搜索
+     * @returns 最近的敌人节点，如果没有则返回null
+     */
+    public findNearestEnemy(position: Vec3, maxRange?: number): Node | null {
+        if (!this._gameManager) return null;
+
+        const enemies = this._gameManager.activeEnemies;
+        let nearestEnemy: Node | null = null;
+        let nearestDistance = maxRange || Number.MAX_VALUE;
+
+        for (const enemyNode of enemies) {
+            if (!enemyNode || !enemyNode.isValid) continue;
+
+            const enemyUnit = enemyNode.getComponent(BaseMouse);
+            if (!enemyUnit || !enemyUnit.isAlive) continue;
+
+            const distance = Vec3.distance(position, enemyNode.position);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestEnemy = enemyNode;
+            }
+        }
+
+        return nearestEnemy;
+    }
+
+    /**
+     * 获取所有活跃的敌人列表
+     */
+    public getAllActiveEnemies(): Node[] {
+        return this._gameManager ? this._gameManager.activeEnemies : [];
+    }
+
+    /**
+     * 获取所有部署的英雄列表
+     */
+    public getAllDeployedHeroes(): Node[] {
+        return this._gameManager ? this._gameManager.deployedHeroes : [];
+    }
+
+
+
+    // === 数据统计方法 ===
+
+    /**
+     * 获取战斗统计信息
+     */
     public GetBattleStats(): {
         activeHeroes: number;
         activeEnemies: number;
-        averageHeroHealth: number;
         averageEnemyHealth: number;
     } {
         if (!this._gameManager) {
-            return { activeHeroes: 0, activeEnemies: 0, averageHeroHealth: 0, averageEnemyHealth: 0 };
+            return { activeHeroes: 0, activeEnemies: 0, averageEnemyHealth: 0 };
         }
 
         const heroes = this._gameManager.deployedHeroes;
         const enemies = this._gameManager.activeEnemies;
 
-        const avgHeroHealth = this.calculateAverageHealth(heroes);
-        const avgEnemyHealth = this.calculateAverageHealth(enemies);
+        const avgEnemyHealth = this.calculateAverageEnemyHealth(enemies);
 
         return {
             activeHeroes: heroes.length,
             activeEnemies: enemies.length,
-            averageHeroHealth: avgHeroHealth,
             averageEnemyHealth: avgEnemyHealth
         };
     }
 
-    // 计算平均生命值
-    private calculateAverageHealth(nodes: Node[]): number {
-        if (nodes.length === 0) return 0;
+    /**
+     * 计算敌人的平均生命值百分比
+     */
+    private calculateAverageEnemyHealth(enemyNodes: Node[]): number {
+        if (enemyNodes.length === 0) return 0;
 
-        let totalHealth = 0;
-        let validUnits = 0;
+        let totalHealthPercent = 0;
+        let validEnemies = 0;
 
-        for (const node of nodes) {
-            const unit = node.getComponent(BaseMouse);
-            if (unit && unit.isAlive) {
-                totalHealth += (unit.currentHealth / unit.maxHealth) * 100;
-                validUnits++;
+        for (const node of enemyNodes) {
+            const enemy = node.getComponent(BaseMouse);
+            if (enemy && enemy.isAlive) {
+                const healthPercent = (enemy.currentHealth / enemy.maxHealth) * 100;
+                totalHealthPercent += healthPercent;
+                validEnemies++;
             }
         }
 
-        return validUnits > 0 ? totalHealth / validUnits : 0;
+        return validEnemies > 0 ? totalHealthPercent / validEnemies : 0;
     }
 
     // 注册系统方法（参考老项目）
@@ -351,27 +329,6 @@ export class BattleManager extends Component {
         }
     }
 
-    // 查找最近的敌人（参考老项目）
-    public FindNearestEnemy(fromPosition: Vec3, maxRange: number = Number.MAX_VALUE): Node | null {
-        let nearestEnemy: Node | null = null;
-        let minDistance = maxRange;
-
-        for (const enemy of this._registeredEnemies) {
-            if (!enemy || !enemy.isValid) continue;
-
-            const enemyUnit = enemy.getComponent(BaseMouse);
-            if (!enemyUnit || !enemyUnit.isAlive) continue;
-
-            const distance = Vec3.distance(fromPosition, enemy.position);
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestEnemy = enemy;
-            }
-        }
-
-        return nearestEnemy;
-    }
-
     // 移除了远程英雄的特殊处理逻辑，现在所有英雄都使用统一的攻击范围检查
 
     // 查找指定网格位置的英雄
@@ -427,36 +384,6 @@ export class BattleManager extends Component {
         });
     }
 
-    // 为英雄应用临时增益效果
-    public ApplyHeroBuff(hero: Node, buffType: 'attackSpeed' | 'attackRange', value: number, duration: number): void {
-        const heroUnit = hero.getComponent(BaseHero);
-        if (!heroUnit) return;
-
-        // 保存原始值
-        const originalValue = buffType === 'attackSpeed' ? heroUnit.attackSpeed : heroUnit.attackRange;
-
-        // 应用增益
-        if (buffType === 'attackSpeed') {
-            heroUnit.attackSpeed *= value;
-        } else {
-            heroUnit.attackRange += value;
-        }
-
-        console.log(`为 ${heroUnit.unitName} 应用 ${buffType} 增益: ${value}, 持续时间: ${duration}秒`);
-
-        // 使用Cocos Creator调度器恢复原值
-        this.scheduleOnce(() => {
-            if (hero && hero.isValid && heroUnit && heroUnit.isAlive) {
-                if (buffType === 'attackSpeed') {
-                    heroUnit.attackSpeed = originalValue;
-                } else {
-                    heroUnit.attackRange = originalValue;
-                }
-                console.log(`${heroUnit.unitName} 的 ${buffType} 增益效果结束`);
-            }
-        }, duration);
-    }
-
     // 为链式攻击寻找下一个目标
     public FindChainTargets(startPosition: Vec3, excludeTarget: Node, maxTargets: number, maxRange: number): Node[] {
         const targets: Node[] = [];
@@ -484,6 +411,46 @@ export class BattleManager extends Component {
         return targets;
     }
 
+
+    // === 击杀奖励系统 ===
+
+    /**
+     * 处理敌人被击杀，给予全局奖励
+     * @param killedEnemy 被击杀敌人组件
+     */
+    public HandleEnemyKilled(killedEnemy: BaseMouse): void {
+        if (!this._gameManager || !killedEnemy) return;
+
+        // 从敌人配置中获取击杀奖励，如果没有配置则使用默认值
+        const goldReward = this.getKillReward(killedEnemy);
+
+        // 给予金币奖励
+        this._gameManager.AddGold(goldReward);
+
+        // 从游戏中移除敌人
+        this._gameManager.RemoveActiveEnemy(killedEnemy.node);
+
+        // 从注册列表中移除敌人
+        this.UnregisterEnemy(killedEnemy.node);
+
+        console.log(`${killedEnemy.unitName} 被击杀，获得 ${goldReward} 金币`);
+    }
+
+    /**
+     * 获取击杀敌人的奖励金币
+     * @param enemy 被击杀的敌人
+     * @returns 奖励金币数量
+     */
+    private getKillReward(enemy: BaseMouse): number {
+        // 这里可以根据敌人类型、难度等因素计算奖励
+        // 暂时使用固定值，后续可以从敌人配置中获取
+        const baseReward = 5;
+
+        // 可以根据敌人最大生命值调整奖励
+        const healthBonus = Math.floor(enemy.maxHealth / 50);
+
+        return baseReward + healthBonus;
+    }
 
     // 获取网格系统引用
     private getGridSystem(): GridDeploymentSystem | null {

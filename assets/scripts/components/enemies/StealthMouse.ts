@@ -1,7 +1,6 @@
 import { _decorator, Color, tween, Vec3, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyConfig } from '../../types/GameTypes';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
 const { ccclass, property } = _decorator;
 
@@ -24,9 +23,18 @@ export class StealthMouse extends BaseMouse {
     private _stealthTimer: number = 0;
     private _stealthCooldown: number = 3; // 3秒切换一次潜行状态
     
-    // 实现BaseMouse的抽象方法 - 提供配置
+    // 实现BaseMouse的抽象方法 - 潜行老鼠配置
     protected getConfig(): EnemyConfig {
-        return ENEMY_CONFIGS[EnemyType.STEALTH_MOUSE];
+        return {
+            type: EnemyType.STEALTH_MOUSE,
+            name: "潜行老鼠",
+            category: EnemyCategory.SPECIAL,
+            health: 30,
+            maxHealth: 30,
+            moveSpeed: 130,
+            goldReward: 10,
+            stealthChance: 0.2
+        };
     }
 
     protected onLoad(): void {

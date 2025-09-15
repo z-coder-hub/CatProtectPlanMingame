@@ -35,6 +35,7 @@ export abstract class BaseMouse extends Component {
 
     // === 受保护属性，子类可以访问 ===
     protected _gameManager: GameManager | null = null;
+    protected _battleManager: BattleManager | null = null;
     protected _healthBarContainer: Node | null = null;
     protected _healthBarForeground: Graphics | null = null;
     protected _nameLabel: Label | null = null;
@@ -80,10 +81,12 @@ export abstract class BaseMouse extends Component {
         // 获取GameManager引用
         this._gameManager = GameManager.instance;
 
+        // 获取BattleManager引用
+        this._battleManager = BattleManager.instance;
+
         // 注册到BattleManager
-        const battleManager = BattleManager.instance;
-        if (battleManager) {
-            battleManager.RegisterEnemy(this.node);
+        if (this._battleManager) {
+            this._battleManager.RegisterEnemy(this.node);
         }
     }
 
@@ -270,6 +273,7 @@ export abstract class BaseMouse extends Component {
 
     /**
      * 受到伤害
+     * @param damage 伤害值
      */
     public takeDamage(damage: number): void {
         if (!this.isAlive) return;
@@ -294,6 +298,12 @@ export abstract class BaseMouse extends Component {
 
         this.enemyState = EnemyState.DEAD;
         this.currentTarget = null;
+
+        // 通知BattleManager处理击杀奖励
+        if (this._battleManager) {
+            this._battleManager.HandleEnemyKilled(this);
+        }
+
         this.onDie();
     }
 

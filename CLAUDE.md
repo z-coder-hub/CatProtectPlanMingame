@@ -594,6 +594,71 @@ npx tsc --noEmit --skipLibCheck
 - 合理使用缓存减少重复计算
 - 避免重复添加Graphics组件（使用直接addComponent或ensureRequiredComponents模式）
 
+### Cocos Creator节点生命周期管理
+
+#### 🎯 **节点销毁机制**
+**重要**: Cocos Creator的`node.destroy()`具有内置延迟机制，无需手动添加延迟。
+
+```typescript
+// ✅ 正确：直接调用destroy()
+if (this.node && this.node.isValid) {
+    this.node.destroy();
+}
+
+// ❌ 错误：不必要的延迟包装
+tween(this.node)
+    .delay(0.016)
+    .call(() => {
+        this.node.destroy(); // 多余的延迟
+    })
+    .start();
+```
+
+#### 📋 **节点销毁最佳实践**
+1. **立即失效标记**: 使用`isActive = false`立即停止逻辑
+2. **清理资源**: 停止动画、调度器、事件监听
+3. **直接销毁**: 调用`node.destroy()`，引擎会在帧结束时处理
+4. **状态检查**: 使用`node.isValid`判断节点是否已销毁
+
+```typescript
+// 推荐的销毁模式
+protected destroyProjectile(): void {
+    if (!this.isActive) return;
+
+    this.isActive = false;                    // 立即标记为无效
+    Tween.stopAllByTarget(this.node);        // 停止动画
+    this.unscheduleAllCallbacks();           // 停止调度
+
+    // 直接销毁 - Cocos Creator会在当前帧逻辑结束后统一处理
+    if (this.node && this.node.isValid) {
+        this.node.destroy();
+    }
+}
+```
+
+#### ⚠️ **常见错误模式**
+- **过度延迟**: 使用`setTimeout`、`scheduleOnce`、`tween.delay`包装`destroy()`
+- **重复销毁**: 没有检查`isValid`状态就调用`destroy()`
+- **资源泄漏**: 销毁前没有清理调度器、事件监听、动画
+
+#### 🔍 **节点状态检查**
+```typescript
+// 检查节点是否有效
+if (node && node.isValid) {
+    // 节点存在且未被销毁
+    node.destroy();
+}
+
+// 在调度回调中安全检查
+const scheduleFunction = () => {
+    if (!this.node || !this.node.isValid) {
+        this.unschedule(scheduleFunction);
+        return;
+    }
+    // 继续执行逻辑
+};
+```
+
 ## 开发原则
 
 ### 🚫 禁止使用延迟等待解决UI组件初始化问题

@@ -2,7 +2,6 @@ import { _decorator, Component, Color, Graphics, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
-import { ENEMY_CONFIGS } from '../../types/GameConstants';
 
 const { ccclass, property } = _decorator;
 
@@ -28,9 +27,19 @@ export class StormTyrant extends BaseMouse {
     /** 风暴特效计时器 */
     private stormEffectTimer: number = 0;
     
-    // 实现BaseMouse的抽象方法 - 提供配置
+    // 实现BaseMouse的抽象方法 - 疾风暴君配置
     protected getConfig(): EnemyConfig {
-        return ENEMY_CONFIGS[EnemyType.STORM_TYRANT];
+        return {
+            type: EnemyType.STORM_TYRANT,
+            name: "疾风暴君",
+            category: EnemyCategory.BOSS,
+            health: 250,
+            maxHealth: 250,
+            moveSpeed: 140,
+            goldReward: 90,
+            summonCount: 3,
+            summonType: EnemyType.SPEED_MOUSE
+        };
     }
 
     protected onLoad(): void {

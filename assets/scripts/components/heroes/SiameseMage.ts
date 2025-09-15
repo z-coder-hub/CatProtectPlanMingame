@@ -20,7 +20,6 @@ export class SiameseMage extends BaseHero {
     public aoeRange: number = 80;
     
     // 私有属性
-    private _isPlayingAttackAnimation: boolean = false;
     
     // 英雄类型
     public readonly heroType: HeroType = HeroType.SIAMESE_MAGE;
@@ -77,9 +76,13 @@ export class SiameseMage extends BaseHero {
         
         // 使用投射物系统发射带AOE效果的魔法弹
         ProjectileSystem.CreateMagicMissile(this, target.position, this.aoeDamage, this.aoeRange);
-        this.playAttackAnimation();
     }
-    
+
+    // 重写攻击动画类型 - 指定为魔法动画
+    protected getAttackAnimationType(): 'ranged' | 'magic' | 'melee' {
+        return 'magic';
+    }
+
     // 已移除多余的performAttack包装方法，直接使用onAttack实现
     
     private castMagicMissile(target: Node): void {
@@ -99,29 +102,6 @@ export class SiameseMage extends BaseHero {
         }
     }
     
-    private playAttackAnimation(): void {
-        if (this._isPlayingAttackAnimation || !this.node) {
-            return;
-        }
-        
-        this._isPlayingAttackAnimation = true;
-        const originalScale = Vec3.clone(this.node.scale);
-        
-        // 魔法施放动画 - 旋转效果
-        tween(this.node)
-            .to(0.1, { 
-                scale: new Vec3(originalScale.x * 1.1, originalScale.y * 1.1, originalScale.z),
-                eulerAngles: new Vec3(0, 0, 15)
-            })
-            .to(0.1, { 
-                scale: originalScale,
-                eulerAngles: new Vec3(0, 0, 0)
-            })
-            .call(() => {
-                this._isPlayingAttackAnimation = false;
-            })
-            .start();
-    }
     
     
     private castElementalExplosion(centerPosition: Vec3): void {

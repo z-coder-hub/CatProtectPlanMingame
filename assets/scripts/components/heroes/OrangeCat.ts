@@ -20,7 +20,6 @@ export class OrangeCat extends BaseHero {
     
     
     // 私有属性 - 大幅简化
-    private _isPlayingAttackAnimation: boolean = false; // 防止攻击动画重叠
     
     // 英雄类型
     public readonly heroType: HeroType = HeroType.ORANGE_CAT;
@@ -48,30 +47,8 @@ export class OrangeCat extends BaseHero {
         
         // 使用统一的投射物系统发射物理子弹
         ProjectileSystem.CreatePhysicalBullet(this, target.position);
-        
-        // 播放攻击动画
-        this.playAttackAnimation();
     }
     
-    // 播放攻击动画 - 保留原有动画效果
-    private playAttackAnimation(): void {
-        // 如果正在播放攻击动画，跳过避免重叠
-        if (this._isPlayingAttackAnimation || !this.node) {
-            return;
-        }
-        
-        this._isPlayingAttackAnimation = true;
-        const originalScale = Vec3.clone(this.node.scale);
-        
-        // 使用Tween系统制作更流畅的攻击动画
-        tween(this.node)
-            .to(0.05, { scale: new Vec3(originalScale.x * 1.15, originalScale.y * 1.15, originalScale.z) }) // 快速放大
-            .to(0.05, { scale: originalScale }) // 快速恢复
-            .call(() => {
-                this._isPlayingAttackAnimation = false; // 动画完成，重置标志
-            })
-            .start();
-    }
     
     
     
@@ -120,9 +97,6 @@ export class OrangeCat extends BaseHero {
     
     // 组件销毁时清理资源 - 大幅简化，不再需要管理子弹
     protected onDestroy(): void {
-        // 投射物由ProjectileSystem统一管理，这里只需要清理动画
-        if (this._isPlayingAttackAnimation && this.node && this.node.isValid) {
-            Tween.stopAllByTarget(this.node);
-        }
+        // 攻击动画由BaseHero统一管理，无需额外清理
     }
 }
