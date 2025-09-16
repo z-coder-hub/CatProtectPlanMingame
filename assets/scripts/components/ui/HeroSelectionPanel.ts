@@ -95,6 +95,413 @@ export class HeroSelectionPanel extends Component {
         this.RefreshHeroPanel();
     }
 
+    // ========== 增量更新核心方法 ==========
+
+    /**
+     * 统一的按钮状态获取方法
+     */
+    private getButtonState(heroType: HeroType): { isUnlocked: boolean; canAfford: boolean; isSelected: boolean } {
+        const isUnlocked = this.IsHeroUnlocked(heroType);
+        const isSelected = heroType === this._selectedHeroType;
+
+        let canAfford = true;
+        if (this._gameManager && isUnlocked) {
+            const currentGold = this._gameManager.GetGameStats().gold;
+            const heroCost = HeroFactory.GetHeroCost(heroType);
+            canAfford = currentGold >= heroCost;
+        }
+
+        return { isUnlocked, canAfford, isSelected };
+    }
+
+    /**
+     * 批量处理解锁状态变化的增量更新
+     */
+    private updateHeroUnlockStates(unlockedHeroes: HeroType[]): void {
+        console.log("🔄 开始增量更新英雄解锁状态");
+
+        const currentUnlockedSet = new Set(unlockedHeroes);
+        const previousUnlockedSet = this._lastUnlockedHeroes;
+
+        let updateCount = 0;
+
+        // 遍历所有按钮，检查状态变化
+        this._heroButtons.forEach(buttonNode => {
+            if (!buttonNode || !buttonNode.isValid) return;
+
+            const heroType = buttonNode.name.replace('HeroButton_', '') as HeroType;
+            const wasUnlocked = previousUnlockedSet.has(heroType);
+            const isNowUnlocked = currentUnlockedSet.has(heroType);
+
+            // 只更新解锁状态发生变化的按钮
+            if (wasUnlocked !== isNowUnlocked) {
+                console.log(`📝 更新英雄 ${heroType}: ${wasUnlocked ? '已解锁' : '锁定'} -> ${isNowUnlocked ? '已解锁' : '锁定'}`);
+                this.updateIndividualHeroButton(buttonNode, heroType);
+                updateCount++;
+            }
+        });
+
+        console.log(`✅ 增量更新完成，共更新 ${updateCount} 个按钮状态`);
+    }
+
+    /**
+     * 单个按钮的完整状态更新
+     */
+    private updateIndividualHeroButton(buttonNode: Node, heroType: HeroType): void {
+        const state = this.getButtonState(heroType);
+
+        // 更新按钮背景
+        const buttonGraphics = buttonNode.getComponent(Graphics);
+        if (buttonGraphics) {
+            const buttonTransform = buttonNode.getComponent(UITransform);
+            const width = buttonTransform ? buttonTransform.contentSize.width : 96;
+            const height = buttonTransform ? buttonTransform.contentSize.height : 120;
+            this.drawHeroButtonBackground(buttonGraphics, width, height, state.isSelected, heroType);
+        }
+
+        // 刷新按钮内容（标签、图标等）
+        this.refreshHeroButtonContent(buttonNode, heroType, state);
+    }
+
+    /**
+     * 按钮内容刷新（标签、图标状态更新）
+     */
+    private refreshHeroButtonContent(buttonNode: Node, heroType: HeroType, state?: { isUnlocked: boolean; canAfford: boolean; isSelected: boolean }): void {
+        if (!state) {
+            state = this.getButtonState(heroType);
+        }
+
+        // 更新价格标签
+        this.updatePriceLabel(buttonNode, heroType, state.isUnlocked);
+
+        // 更新名称标签
+        this.updateNameLabel(buttonNode, heroType, state.isUnlocked);
+
+        // 更新图标状态
+        this.updateHeroIcon(buttonNode, heroType, state.isUnlocked);
+    }
+
+    /**
+     * 更新价格标签状态
+     */
+    private updatePriceLabel(buttonNode: Node, heroType: HeroType, isUnlocked: boolean): void {
+        const priceNode = buttonNode.getChildByName("PriceLabel");
+        const priceBgNode = buttonNode.getChildByName("PriceBackground");
+
+        if (priceNode && priceBgNode) {
+            const priceLabel = priceNode.getComponent(Label);
+            const priceBg = priceBgNode.getComponent(Graphics);
+
+            if (priceLabel && priceBg) {
+                // 更新标签内容和样式
+                const heroCost = HeroFactory.GetHeroCost(heroType);
+                priceLabel.string = isUnlocked ? `${heroCost}` : '🔒';
+                priceLabel.fontSize = isUnlocked ? 14.4 : 16;
+                priceLabel.color = isUnlocked ? new Color(255, 215, 0) : new Color(100, 100, 100);
+
+                // 更新背景色
+                priceBg.clear();
+                priceBg.fillColor = isUnlocked
+                    ? new Color(0, 0, 0, 150)
+                    : new Color(60, 60, 60, 120);
+                priceBg.rect(-24, -9.6, 48, 19.2);
+                priceBg.fill();
+            }
+        }
+    }
+
+    /**
+     * 更新名称标签状态
+     */
+    private updateNameLabel(buttonNode: Node, heroType: HeroType, isUnlocked: boolean): void {
+        const nameNode = buttonNode.getChildByName("NameLabel");
+        const nameBgNode = buttonNode.getChildByName("NameBackground");
+
+        if (nameNode && nameBgNode) {
+            const nameLabel = nameNode.getComponent(Label);
+            const nameBg = nameBgNode.getComponent(Graphics);
+
+            if (nameLabel && nameBg) {
+                // 更新标签颜色
+                nameLabel.color = isUnlocked ? new Color(255, 255, 255) : new Color(120, 120, 120);
+
+                // 更新背景色
+                const heroName = this.getHeroDisplayName(heroType);
+                const bgWidth = Math.max(60, heroName.length * 10);
+
+                nameBg.clear();
+                nameBg.fillColor = isUnlocked
+                    ? new Color(0, 0, 0, 150)
+                    : new Color(60, 60, 60, 120);
+                nameBg.rect(-bgWidth / 2, -9.6, bgWidth, 19.2);
+                nameBg.fill();
+            }
+        }
+    }
+
+    /**
+     * 更新英雄图标状态
+     */
+    private updateHeroIcon(buttonNode: Node, heroType: HeroType, isUnlocked: boolean): void {
+        const iconNode = buttonNode.getChildByName("HeroIcon");
+        if (!iconNode) return;
+
+        // 更新Sprite颜色（如果存在）
+        const sprite = iconNode.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = isUnlocked ? new Color(255, 255, 255) : new Color(120, 120, 120);
+        }
+
+        // 更新Graphics图标（如果存在）
+        const iconGraphics = iconNode.getComponent(Graphics);
+        if (iconGraphics) {
+            // 使用专门的更新方法，避免重复添加Graphics组件
+            this.updateGeometricIcon(iconGraphics, iconNode, heroType, isUnlocked);
+        }
+    }
+
+    /**
+     * 更新几何图标状态（不重新创建Graphics组件）
+     */
+    private updateGeometricIcon(graphics: Graphics, iconNode: Node, heroType: HeroType, isUnlocked: boolean): void {
+        // 清除现有绘制内容
+        graphics.clear();
+
+        // 动态计算缩放因子，适配容器大小
+        const iconTransform = iconNode.getComponent(UITransform);
+        const containerSize = iconTransform ? Math.min(iconTransform.contentSize.width, iconTransform.contentSize.height) : 60;
+        const baseSize = 36; // 基础图标设计尺寸（18 * 2）
+        const scale = Math.max((containerSize - 10) / baseSize, 0.5); // 保留5px边距，最小缩放0.5倍
+
+        console.log(`更新几何图标: ${heroType}, 解锁=${isUnlocked}, 缩放=${scale.toFixed(2)}`);
+
+        // 未解锁英雄的透明度和饱和度调整
+        const alpha = isUnlocked ? 255 : 80;
+
+        // 应用置灰效果的颜色转换函数
+        const applyGrayEffect = (color: Color): Color => {
+            if (isUnlocked) return color;
+
+            const gray = (color.r * 0.299 + color.g * 0.587 + color.b * 0.114);
+            return new Color(
+                Math.round(gray * 0.9 + color.r * 0.1),
+                Math.round(gray * 0.9 + color.g * 0.1),
+                Math.round(gray * 0.9 + color.b * 0.1),
+                alpha
+            );
+        };
+
+        // 根据英雄类型绘制对应的几何图标
+        this.drawHeroGeometry(graphics, heroType, scale, applyGrayEffect);
+    }
+
+    /**
+     * 绘制英雄几何图形（提取的绘制逻辑）
+     */
+    private drawHeroGeometry(graphics: Graphics, heroType: HeroType, scale: number, applyGrayEffect: (color: Color) => Color): void {
+        // 根据英雄类型绘制不同图标
+        switch (heroType) {
+            case HeroType.ORANGE_CAT:
+                // 橘猫 - 橙色圆形 + 弓箭
+                graphics.fillColor = applyGrayEffect(new Color(255, 165, 0));
+                graphics.circle(0, 0, 18 * scale);
+                graphics.fill();
+
+                graphics.strokeColor = applyGrayEffect(new Color(139, 69, 19));
+                graphics.lineWidth = 3 * scale;
+                graphics.moveTo(-10 * scale, 0);
+                graphics.lineTo(10 * scale, 0);
+                graphics.moveTo(8 * scale, -3 * scale);
+                graphics.lineTo(10 * scale, 0);
+                graphics.lineTo(8 * scale, 3 * scale);
+                graphics.stroke();
+                break;
+
+            case HeroType.PERSIAN_SNIPER:
+                // 波斯猫 - 银色圆形 + 准星
+                graphics.fillColor = applyGrayEffect(new Color(192, 192, 192));
+                graphics.circle(0, 0, 18 * scale);
+                graphics.fill();
+
+                graphics.strokeColor = applyGrayEffect(new Color(64, 64, 64));
+                graphics.lineWidth = 2 * scale;
+                graphics.circle(0, 0, 12 * scale);
+                graphics.moveTo(0, -15 * scale);
+                graphics.lineTo(0, 15 * scale);
+                graphics.moveTo(-15 * scale, 0);
+                graphics.lineTo(15 * scale, 0);
+                graphics.stroke();
+                break;
+
+            case HeroType.BENGAL_HUNTER:
+                // 孟加拉猎手 - 金色圆形 + 双弓
+                graphics.fillColor = applyGrayEffect(new Color(255, 215, 0));
+                graphics.circle(0, 0, 18 * scale);
+                graphics.fill();
+
+                graphics.strokeColor = applyGrayEffect(new Color(139, 69, 19));
+                graphics.lineWidth = 2 * scale;
+                graphics.moveTo(-8 * scale, -15 * scale);
+                graphics.lineTo(8 * scale, -15 * scale);
+                graphics.moveTo(-8 * scale, 15 * scale);
+                graphics.lineTo(8 * scale, 15 * scale);
+                graphics.stroke();
+                break;
+
+            case HeroType.MAINE_THUNDER:
+                // 缅因雷猫 - 深蓝色方形 + 闪电
+                graphics.fillColor = applyGrayEffect(new Color(25, 25, 112));
+                graphics.rect(-18 * scale, -18 * scale, 36 * scale, 36 * scale);
+                graphics.fill();
+
+                graphics.strokeColor = applyGrayEffect(new Color(255, 255, 0));
+                graphics.lineWidth = 2 * scale;
+                graphics.moveTo(-8 * scale, -12 * scale);
+                graphics.lineTo(4 * scale, -2 * scale);
+                graphics.lineTo(-4 * scale, 2 * scale);
+                graphics.lineTo(8 * scale, 12 * scale);
+                graphics.stroke();
+                break;
+
+            case HeroType.RUSSIAN_BLUE:
+                // 俄罗斯蓝猫 - 蓝灰色星形 + 穿透箭
+                graphics.fillColor = applyGrayEffect(new Color(106, 90, 205));
+                const points = 8;
+                const outerR = 16 * scale;
+                const innerR = 8 * scale;
+                graphics.moveTo(outerR, 0);
+                for (let i = 0; i < points; i++) {
+                    const outerAngle = (i * 2 * Math.PI) / points;
+                    const innerAngle = ((i + 0.5) * 2 * Math.PI) / points;
+                    const outerX = outerR * Math.cos(outerAngle);
+                    const outerY = outerR * Math.sin(outerAngle);
+                    const innerX = innerR * Math.cos(innerAngle);
+                    const innerY = innerR * Math.sin(innerAngle);
+                    graphics.lineTo(outerX, outerY);
+                    graphics.lineTo(innerX, innerY);
+                }
+                graphics.close();
+                graphics.fill();
+
+                graphics.strokeColor = applyGrayEffect(new Color(255, 255, 255));
+                graphics.lineWidth = 2 * scale;
+                graphics.moveTo(-12 * scale, 0);
+                graphics.lineTo(12 * scale, 0);
+                graphics.moveTo(8 * scale, -3 * scale);
+                graphics.lineTo(12 * scale, 0);
+                graphics.lineTo(8 * scale, 3 * scale);
+                graphics.stroke();
+                break;
+
+            case HeroType.AMERICAN_BOMBER:
+                // 美国爆破兵 - 红白蓝方形 + 炸弹
+                graphics.fillColor = applyGrayEffect(new Color(220, 20, 60));
+                graphics.rect(-16 * scale, -16 * scale, 32 * scale, 10 * scale);
+                graphics.fill();
+                graphics.fillColor = applyGrayEffect(new Color(255, 255, 255));
+                graphics.rect(-16 * scale, -6 * scale, 32 * scale, 12 * scale);
+                graphics.fill();
+                graphics.fillColor = applyGrayEffect(new Color(0, 0, 139));
+                graphics.rect(-16 * scale, 6 * scale, 32 * scale, 10 * scale);
+                graphics.fill();
+
+                graphics.fillColor = applyGrayEffect(new Color(0, 0, 0));
+                graphics.circle(8 * scale, -8 * scale, 4 * scale);
+                graphics.fill();
+                break;
+
+            case HeroType.SIAMESE_MAGE:
+                // 暹罗法师 - 蓝色方形 + 魔法帽
+                graphics.fillColor = applyGrayEffect(new Color(100, 100, 255));
+                graphics.rect(-15 * scale, -15 * scale, 30 * scale, 30 * scale);
+                graphics.fill();
+
+                graphics.fillColor = applyGrayEffect(new Color(128, 0, 128));
+                graphics.moveTo(0, 15 * scale);
+                graphics.lineTo(-8 * scale, -5 * scale);
+                graphics.lineTo(8 * scale, -5 * scale);
+                graphics.close();
+                graphics.fill();
+                break;
+
+            case HeroType.NORWEGIAN_ICE:
+                // 挪威冰猫 - 冰蓝色菱形 + 雪花
+                graphics.fillColor = applyGrayEffect(new Color(173, 216, 230));
+                graphics.moveTo(0, -16 * scale);
+                graphics.lineTo(12 * scale, 0);
+                graphics.lineTo(0, 16 * scale);
+                graphics.lineTo(-12 * scale, 0);
+                graphics.close();
+                graphics.fill();
+
+                graphics.strokeColor = applyGrayEffect(new Color(255, 255, 255));
+                graphics.lineWidth = 2 * scale;
+                graphics.moveTo(0, -8 * scale);
+                graphics.lineTo(0, 8 * scale);
+                graphics.moveTo(-8 * scale, 0);
+                graphics.lineTo(8 * scale, 0);
+                graphics.stroke();
+                break;
+
+            case HeroType.BRITISH_KNIGHT:
+                // 英国骑士 - 蓝色方形 + 盾牌
+                graphics.fillColor = applyGrayEffect(new Color(100, 149, 237));
+                graphics.rect(-16 * scale, -16 * scale, 32 * scale, 32 * scale);
+                graphics.fill();
+
+                graphics.fillColor = applyGrayEffect(new Color(192, 192, 192));
+                graphics.moveTo(0, -12 * scale);
+                graphics.lineTo(-8 * scale, 0);
+                graphics.lineTo(0, 12 * scale);
+                graphics.lineTo(8 * scale, 0);
+                graphics.close();
+                graphics.fill();
+                break;
+
+            case HeroType.SCOTTISH_MARKSMAN:
+                // 苏格兰射手 - 橙色圆形 + 弓箭
+                graphics.fillColor = applyGrayEffect(new Color(255, 140, 0));
+                graphics.circle(0, 0, 14 * scale);
+                graphics.fill();
+
+                graphics.strokeColor = applyGrayEffect(new Color(128, 128, 128));
+                graphics.lineWidth = 3 * scale;
+                graphics.moveTo(10 * scale, -6 * scale);
+                graphics.lineTo(16 * scale, -6 * scale);
+                graphics.moveTo(13 * scale, -9 * scale);
+                graphics.lineTo(13 * scale, -3 * scale);
+                graphics.stroke();
+                break;
+
+            case HeroType.ABYSSINIAN_ARCHER:
+                // 阿比西尼亚弓箭手 - 棕色六边形 + 箭矢
+                graphics.fillColor = applyGrayEffect(new Color(160, 82, 45));
+                const sides = 6;
+                const radius = 14 * scale;
+                graphics.moveTo(radius, 0);
+                for (let i = 1; i <= sides; i++) {
+                    const angle = (i * 2 * Math.PI) / sides;
+                    const x = radius * Math.cos(angle);
+                    const y = radius * Math.sin(angle);
+                    graphics.lineTo(x, y);
+                }
+                graphics.fill();
+
+                graphics.fillColor = applyGrayEffect(new Color(255, 255, 0));
+                graphics.circle(6 * scale, -6 * scale, 4 * scale);
+                graphics.fill();
+                break;
+
+            default:
+                // 默认几何图形
+                graphics.fillColor = applyGrayEffect(new Color(128, 128, 128));
+                graphics.circle(0, 0, 18 * scale);
+                graphics.fill();
+                console.warn(`英雄类型 ${heroType} 没有对应的图标`);
+                break;
+        }
+    }
+
     /**
      * 金币变化事件处理
      */
@@ -237,106 +644,50 @@ export class HeroSelectionPanel extends Component {
     }
 
     /**
-     * 更新英雄按钮状态（通常在金币变化时调用）
+     * 更新英雄按钮状态（金币变化或状态更新时调用 - 优化版本）
      */
     public UpdateHeroButtonStates(): void {
+        console.log("🎨 更新所有英雄按钮状态");
+
         this._heroButtons.forEach(buttonNode => {
+            if (!buttonNode || !buttonNode.isValid) return;
+
             const heroType = buttonNode.name.replace('HeroButton_', '') as HeroType;
-            const isSelected = heroType === this._selectedHeroType;
+            const state = this.getButtonState(heroType);
 
             const buttonGraphics = buttonNode.getComponent(Graphics);
             if (buttonGraphics) {
                 const buttonTransform = buttonNode.getComponent(UITransform);
                 const width = buttonTransform ? buttonTransform.contentSize.width : 96;
                 const height = buttonTransform ? buttonTransform.contentSize.height : 120;
-                this.drawHeroButtonBackground(buttonGraphics, width, height, isSelected, heroType);
+                this.drawHeroButtonBackground(buttonGraphics, width, height, state.isSelected, heroType);
             }
         });
     }
 
     /**
-     * 刷新英雄面板（当有新英雄解锁时调用）
+     * 刷新英雄面板（优化版本 - 使用增量更新替代重建）
      */
     public RefreshHeroPanel(): void {
-        console.log("智能刷新英雄选择面板");
+        console.log("🔄 智能刷新英雄选择面板");
 
-        const currentAllHeroes = this.getAllHeroTypes();
         const currentUnlockedHeroes = this.getUnlockedHeroTypes();
-        console.log(`所有英雄数量: ${currentAllHeroes.length}, 已解锁: ${currentUnlockedHeroes.length}`);
+        console.log(`当前已解锁英雄数量: ${currentUnlockedHeroes.length}`);
 
-        // 检查是否有新英雄需要添加
-        const needsFullRefresh = this.checkIfNeedsFullRefresh(currentAllHeroes);
-
-        if (needsFullRefresh) {
-            console.log("检测到需要重建按钮（英雄数量变化）");
+        // 只在按钮不存在时重建（初始化场景）
+        if (this._heroButtons.length === 0) {
+            console.log("🏗️ 初始化场景，创建所有按钮");
             this.recreateHeroButtons();
         } else {
-            console.log("英雄数量未变，检查解锁状态变化");
-            // 检查是否有解锁状态变化
-            if (this.hasUnlockStatusChanged(currentUnlockedHeroes)) {
-                console.log("检测到解锁状态变化，重新创建按钮");
-                this.recreateHeroButtons();
-            } else {
-                console.log("没有状态变化，只更新按钮外观");
-                this.UpdateHeroButtonStates();
-            }
+            console.log("💡 使用增量更新优化性能");
+            // 使用增量更新替代重建，大幅提升性能
+            this.updateHeroUnlockStates(currentUnlockedHeroes);
         }
+
+        // 更新缓存的解锁状态
+        this._lastUnlockedHeroes = new Set(currentUnlockedHeroes);
     }
 
-    /**
-     * 检查解锁状态是否发生变化
-     */
-    private hasUnlockStatusChanged(currentUnlockedHeroes: HeroType[]): boolean {
-        const currentSet = new Set(currentUnlockedHeroes);
-
-        // 比较新旧解锁状态
-        if (this._lastUnlockedHeroes.size !== currentSet.size) {
-            console.log(`解锁数量变化: ${this._lastUnlockedHeroes.size} → ${currentSet.size}`);
-            this._lastUnlockedHeroes = currentSet;
-            return true;
-        }
-
-        // 检查具体的解锁英雄是否有变化
-        for (const hero of currentSet) {
-            if (!this._lastUnlockedHeroes.has(hero)) {
-                console.log(`新解锁英雄: ${hero}`);
-                this._lastUnlockedHeroes = currentSet;
-                return true;
-            }
-        }
-
-        for (const hero of this._lastUnlockedHeroes) {
-            if (!currentSet.has(hero)) {
-                console.log(`英雄被锁定: ${hero}`);
-                this._lastUnlockedHeroes = currentSet;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * 检查是否需要完全刷新面板
-     */
-    private checkIfNeedsFullRefresh(currentAllHeroes: HeroType[]): boolean {
-        // 如果按钮数量与所有英雄数量不匹配，需要刷新
-        if (this._heroButtons.length !== currentAllHeroes.length) {
-            return true;
-        }
-
-        // 检查每个英雄是否都有对应按钮
-        for (const heroType of currentAllHeroes) {
-            const hasButton = this._heroButtons.some(button =>
-                button && button.isValid && button.name === `HeroButton_${heroType}`
-            );
-            if (!hasButton) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     /**
      * 重新创建英雄按钮（保持面板结构不变）
@@ -620,21 +971,21 @@ export class HeroSelectionPanel extends Component {
         buttonTransform.setContentSize(width, height);
         buttonTransform.setAnchorPoint(0.5, 0.5);
 
+        // 使用统一的状态检查方法
+        const state = this.getButtonState(heroType);
+
         // 按钮背景
         const buttonBg = buttonNode.addComponent(Graphics);
-        this.drawHeroButtonBackground(buttonBg, width, height, false, heroType);
-
-        // 检查英雄解锁状态
-        const isUnlocked = this.IsHeroUnlocked(heroType);
+        this.drawHeroButtonBackground(buttonBg, width, height, state.isSelected, heroType);
 
         // 英雄图标
-        this.createHeroIcon(buttonNode, heroType, isUnlocked);
+        this.createHeroIcon(buttonNode, heroType, state.isUnlocked);
 
         // 名称标签
-        this.createAdaptiveNameLabel(buttonNode, heroType, isUnlocked);
+        this.createAdaptiveNameLabel(buttonNode, heroType, state.isUnlocked);
 
         // 价格标签
-        this.createAdaptivePriceLabel(buttonNode, heroConfig.cost, isUnlocked);
+        this.createAdaptivePriceLabel(buttonNode, heroConfig.cost, state.isUnlocked);
 
         // 添加触摸事件
         this.setupHeroButtonEvents(buttonNode, heroType);
@@ -762,23 +1113,19 @@ export class HeroSelectionPanel extends Component {
     // ========== UI绘制方法 ==========
 
     /**
-     * 绘制英雄按钮背景
+     * 绘制英雄按钮背景（优化版本 - 使用统一状态检查）
      */
     private drawHeroButtonBackground(graphics: Graphics, width: number, height: number, isSelected: boolean, heroType?: HeroType): void {
         graphics.clear();
 
-        // 检查英雄解锁状态
+        // 使用统一的状态检查方法
         let isUnlocked = true;
         let canAfford = true;
 
         if (heroType) {
-            isUnlocked = this.IsHeroUnlocked(heroType);
-
-            if (this._gameManager && isUnlocked) {
-                const currentGold = this._gameManager.GetGameStats().gold;
-                const heroCost = HeroFactory.GetHeroCost(heroType);
-                canAfford = currentGold >= heroCost;
-            }
+            const state = this.getButtonState(heroType);
+            isUnlocked = state.isUnlocked;
+            canAfford = state.canAfford;
         }
 
         // 背景色
@@ -980,329 +1327,8 @@ export class HeroSelectionPanel extends Component {
         // 添加Graphics组件
         const iconGraphics = iconNode.addComponent(Graphics);
 
-        // 动态计算缩放因子，适配容器大小
-        const iconTransform = iconNode.getComponent(UITransform);
-        const containerSize = iconTransform ? Math.min(iconTransform.contentSize.width, iconTransform.contentSize.height) : 60;
-        const baseSize = 36; // 基础图标设计尺寸（18 * 2）
-        const scale = Math.max((containerSize - 10) / baseSize, 0.5); // 保留5px边距，最小缩放0.5倍
-
-        console.log(`几何图标缩放: 容器${containerSize}px, 缩放因子${scale.toFixed(2)}`);
-
-        // 未解锁英雄的透明度和饱和度调整
-        const alpha = isUnlocked ? 255 : 80;
-
-        // 应用置灰效果的颜色转换函数
-        const applyGrayEffect = (color: Color): Color => {
-            if (isUnlocked) return color;
-
-            const gray = (color.r * 0.299 + color.g * 0.587 + color.b * 0.114);
-            return new Color(
-                Math.round(gray * 0.9 + color.r * 0.1),
-                Math.round(gray * 0.9 + color.g * 0.1),
-                Math.round(gray * 0.9 + color.b * 0.1),
-                alpha
-            );
-        };
-
-        // 根据英雄类型绘制不同图标（保持原有几何图形作为回退）
-        switch (heroType) {
-            case HeroType.ORANGE_CAT:
-                // 橘猫 - 橙色圆形 + 弓箭
-                iconGraphics.fillColor = applyGrayEffect(new Color(255, 165, 0));
-                iconGraphics.circle(0, 0, 18 * scale);
-                iconGraphics.fill();
-
-                iconGraphics.strokeColor = applyGrayEffect(new Color(139, 69, 19));
-                iconGraphics.lineWidth = 3 * scale;
-                iconGraphics.moveTo(-10 * scale, 0);
-                iconGraphics.lineTo(10 * scale, 0);
-                iconGraphics.moveTo(8 * scale, -3 * scale);
-                iconGraphics.lineTo(10 * scale, 0);
-                iconGraphics.lineTo(8 * scale, 3 * scale);
-                iconGraphics.stroke();
-                break;
-
-            case HeroType.PERSIAN_SNIPER:
-                // 波斯猫 - 银色圆形 + 准星
-                iconGraphics.fillColor = applyGrayEffect(new Color(192, 192, 192));
-                iconGraphics.circle(0, 0, 18 * scale);
-                iconGraphics.fill();
-
-                iconGraphics.strokeColor = applyGrayEffect(new Color(64, 64, 64));
-                iconGraphics.lineWidth = 2 * scale;
-                iconGraphics.circle(0, 0, 12 * scale);
-                iconGraphics.moveTo(0, -15 * scale);
-                iconGraphics.lineTo(0, 15 * scale);
-                iconGraphics.moveTo(-15 * scale, 0);
-                iconGraphics.lineTo(15 * scale, 0);
-                iconGraphics.stroke();
-                break;
-
-            case HeroType.BENGAL_HUNTER:
-                // 孟加拉猎手 - 金色圆形 + 双弓
-                iconGraphics.fillColor = applyGrayEffect(new Color(255, 215, 0));
-                iconGraphics.circle(0, 0, 18 * scale);
-                iconGraphics.fill();
-
-                iconGraphics.strokeColor = applyGrayEffect(new Color(139, 69, 19));
-                iconGraphics.lineWidth = 2 * scale;
-                iconGraphics.moveTo(-8 * scale, -15 * scale);
-                iconGraphics.lineTo(8 * scale, -15 * scale);
-                iconGraphics.moveTo(-8 * scale, 15 * scale);
-                iconGraphics.lineTo(8 * scale, 15 * scale);
-                iconGraphics.stroke();
-                break;
-
-            case HeroType.MAINE_THUNDER:
-                // 缅因雷猫 - 深蓝色方形 + 闪电
-                iconGraphics.fillColor = applyGrayEffect(new Color(25, 25, 112));
-                iconGraphics.rect(-18 * scale, -18 * scale, 36 * scale, 36 * scale);
-                iconGraphics.fill();
-
-                iconGraphics.strokeColor = applyGrayEffect(new Color(255, 255, 0));
-                iconGraphics.lineWidth = 2 * scale;
-                iconGraphics.moveTo(-8 * scale, -12 * scale);
-                iconGraphics.lineTo(4 * scale, -2 * scale);
-                iconGraphics.lineTo(-4 * scale, 2 * scale);
-                iconGraphics.lineTo(8 * scale, 12 * scale);
-                iconGraphics.stroke();
-                break;
-
-            case HeroType.RUSSIAN_BLUE:
-                // 俄罗斯蓝猫 - 蓝灰色星形 + 穿透箭
-                iconGraphics.fillColor = applyGrayEffect(new Color(106, 90, 205));
-                const points = 8;
-                const outerR = 16 * scale;
-                const innerR = 8 * scale;
-                iconGraphics.moveTo(outerR, 0);
-                for (let i = 0; i < points; i++) {
-                    const outerAngle = (i * 2 * Math.PI) / points;
-                    const innerAngle = ((i + 0.5) * 2 * Math.PI) / points;
-                    const outerX = outerR * Math.cos(outerAngle);
-                    const outerY = outerR * Math.sin(outerAngle);
-                    const innerX = innerR * Math.cos(innerAngle);
-                    const innerY = innerR * Math.sin(innerAngle);
-                    iconGraphics.lineTo(outerX, outerY);
-                    iconGraphics.lineTo(innerX, innerY);
-                }
-                iconGraphics.close();
-                iconGraphics.fill();
-
-                iconGraphics.strokeColor = applyGrayEffect(new Color(255, 255, 255));
-                iconGraphics.lineWidth = 2 * scale;
-                iconGraphics.moveTo(-12 * scale, 0);
-                iconGraphics.lineTo(12 * scale, 0);
-                iconGraphics.moveTo(8 * scale, -3 * scale);
-                iconGraphics.lineTo(12 * scale, 0);
-                iconGraphics.lineTo(8 * scale, 3 * scale);
-                iconGraphics.stroke();
-                break;
-
-            case HeroType.AMERICAN_BOMBER:
-                // 美国爆破兵 - 红白蓝方形 + 炸弹
-                iconGraphics.fillColor = applyGrayEffect(new Color(220, 20, 60));
-                iconGraphics.rect(-16 * scale, -16 * scale, 32 * scale, 10 * scale);
-                iconGraphics.fill();
-                iconGraphics.fillColor = applyGrayEffect(new Color(255, 255, 255));
-                iconGraphics.rect(-16 * scale, -6 * scale, 32 * scale, 12 * scale);
-                iconGraphics.fill();
-                iconGraphics.fillColor = applyGrayEffect(new Color(0, 0, 139));
-                iconGraphics.rect(-16 * scale, 6 * scale, 32 * scale, 10 * scale);
-                iconGraphics.fill();
-
-                iconGraphics.fillColor = applyGrayEffect(new Color(0, 0, 0));
-                iconGraphics.circle(8 * scale, -8 * scale, 4 * scale);
-                iconGraphics.fill();
-                break;
-
-            case HeroType.SIAMESE_MAGE:
-                // 暹罗法师 - 蓝色方形 + 魔法帽
-                iconGraphics.fillColor = applyGrayEffect(new Color(100, 100, 255));
-                iconGraphics.rect(-15 * scale, -15 * scale, 30 * scale, 30 * scale);
-                iconGraphics.fill();
-
-                iconGraphics.fillColor = applyGrayEffect(new Color(128, 0, 128));
-                iconGraphics.moveTo(0, 15 * scale);
-                iconGraphics.lineTo(-8 * scale, -5 * scale);
-                iconGraphics.lineTo(8 * scale, -5 * scale);
-                iconGraphics.close();
-                iconGraphics.fill();
-                break;
-
-            case HeroType.NORWEGIAN_ICE:
-                // 挪威冰猫 - 冰蓝色菱形 + 雪花
-                iconGraphics.fillColor = applyGrayEffect(new Color(173, 216, 230));
-                iconGraphics.moveTo(0, -16 * scale);
-                iconGraphics.lineTo(12 * scale, 0);
-                iconGraphics.lineTo(0, 16 * scale);
-                iconGraphics.lineTo(-12 * scale, 0);
-                iconGraphics.close();
-                iconGraphics.fill();
-
-                iconGraphics.strokeColor = applyGrayEffect(new Color(255, 255, 255));
-                iconGraphics.lineWidth = 2 * scale;
-                iconGraphics.moveTo(0, -8 * scale);
-                iconGraphics.lineTo(0, 8 * scale);
-                iconGraphics.moveTo(-8 * scale, 0);
-                iconGraphics.lineTo(8 * scale, 0);
-                iconGraphics.stroke();
-                break;
-
-            case HeroType.BRITISH_KNIGHT:
-                // 英国骑士 - 蓝色方形 + 盾牌
-                iconGraphics.fillColor = applyGrayEffect(new Color(100, 149, 237));
-                iconGraphics.rect(-16 * scale, -16 * scale, 32 * scale, 32 * scale);
-                iconGraphics.fill();
-
-                iconGraphics.fillColor = applyGrayEffect(new Color(192, 192, 192));
-                iconGraphics.moveTo(0, -12 * scale);
-                iconGraphics.lineTo(-8 * scale, 0);
-                iconGraphics.lineTo(0, 12 * scale);
-                iconGraphics.lineTo(8 * scale, 0);
-                iconGraphics.close();
-                iconGraphics.fill();
-                break;
-
-            case HeroType.SCOTTISH_MARKSMAN:
-                // 苏格兰射手 - 橙色圆形 + 弓箭
-                iconGraphics.fillColor = applyGrayEffect(new Color(255, 140, 0));
-                iconGraphics.circle(0, 0, 14 * scale);
-                iconGraphics.fill();
-
-                iconGraphics.strokeColor = applyGrayEffect(new Color(128, 128, 128));
-                iconGraphics.lineWidth = 3 * scale;
-                iconGraphics.moveTo(10 * scale, -6 * scale);
-                iconGraphics.lineTo(16 * scale, -6 * scale);
-                iconGraphics.moveTo(13 * scale, -9 * scale);
-                iconGraphics.lineTo(13 * scale, -3 * scale);
-                iconGraphics.stroke();
-                break;
-
-            case HeroType.ABYSSINIAN_ARCHER:
-                // 阿比西尼亚弓箭手 - 棕色六边形 + 箭矢
-                iconGraphics.fillColor = applyGrayEffect(new Color(160, 82, 45));
-                const sides = 6;
-                const radius = 14 * scale;
-                iconGraphics.moveTo(radius, 0);
-                for (let i = 1; i <= sides; i++) {
-                    const angle = (i * 2 * Math.PI) / sides;
-                    const x = radius * Math.cos(angle);
-                    const y = radius * Math.sin(angle);
-                    iconGraphics.lineTo(x, y);
-                }
-                iconGraphics.fill();
-
-                iconGraphics.fillColor = applyGrayEffect(new Color(255, 255, 0));
-                iconGraphics.circle(6 * scale, -6 * scale, 4 * scale);
-                iconGraphics.fill();
-                break;
-
-            default:
-                // 默认几何图形
-                iconGraphics.fillColor = applyGrayEffect(new Color(128, 128, 128));
-                iconGraphics.circle(0, 0, 18 * scale);
-                iconGraphics.fill();
-                console.warn(`英雄类型 ${heroType} 没有对应的图标`);
-                break;
-        }
-    }
-
-
-    // ========== 触摸事件处理方法 ==========
-
-    /**
-     * 设置英雄按钮事件
-     */
-    private setupHeroButtonEvents(buttonNode: Node, heroType: HeroType): void {
-        buttonNode.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
-            this.onHeroButtonTouchStart(heroType, buttonNode, event);
-        }, this);
-
-        buttonNode.on(Node.EventType.TOUCH_MOVE, (event: EventTouch) => {
-            this.onHeroButtonTouchMove(event);
-        }, this);
-
-        buttonNode.on(Node.EventType.TOUCH_CANCEL, (event: EventTouch) => {
-            console.log(`🟡 触摸取消: ${heroType}, event: ${event.getLocation()}`);
-            this.onHeroButtonTouchCancelOrEnd(event)
-        }, this);
-
-
-        buttonNode.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
-            console.log(`🟡 触摸结束: ${heroType}, event: ${event.getLocation()}`);
-            this.onHeroButtonTouchCancelOrEnd(event)
-        }, this);
-    }
-
-    /**
-     * 英雄按钮触摸开始
-     */
-    private onHeroButtonTouchStart(heroType: HeroType, buttonNode: Node, event: EventTouch): void {
-        console.log(`🟡 触摸开始: ${heroType}`);
-
-        // 检查英雄是否已解锁
-        if (!this.IsHeroUnlocked(heroType)) {
-            console.log(`❌ 英雄 ${heroType} 尚未解锁`);
-            this.showLockedHeroEffect(buttonNode);
-            return;
-        }
-
-        // 检查金币是否足够
-        const heroCost = HeroFactory.GetHeroCost(heroType);
-        if (this._gameManager && this._gameManager.GetGameStats().gold < heroCost) {
-            console.log(`❌ 金币不足，需要 ${heroCost} 金币，当前: ${this._gameManager.GetGameStats().gold}`);
-            this.showInsufficientFundsEffect(buttonNode);
-            return;
-        }
-
-
-        // 记录触摸开始，但不立即开始拖拽 - 允许ScrollView正常处理
-        this._selectedHeroType = heroType;
-        const startLocation = event.getUIStartLocation();
-        console.log(`✅ 选中英雄: ${heroType}, 位置: (${startLocation.x}, ${startLocation.y})`);
-    }
-
-    /**
-     * 英雄按钮触摸移动
-     */
-    private onHeroButtonTouchMove(event: EventTouch): void {
-        // 如果还没开始拖拽，检查拖动方向来决定是滚动还是拖拽
-        if (!this._isDragging && this._selectedHeroType) {
-            // 使用累积距离来判断拖拽方向
-            const startLocation = event.getUIStartLocation();
-            const currentLocation = event.getUILocation();
-            const deltaX = currentLocation.x - startLocation.x;
-            const deltaY = currentLocation.y - startLocation.y;
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-            const isVerticalMove = Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && Math.abs(deltaY) > 8;
-            // 在垂直方向有移动，并且移动有一定的距离
-            if (isVerticalMove && distance > 40) {
-                // 垂直移动：开始英雄拖拽
-                console.log(`distance, ${distance} ⬇️ 垂直拖拽检测，开始拖拽英雄，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
-                this.startHeroDrag(this._selectedHeroType, event);
-                event.propagationStopped = true;
-                return;
-            }
-        }
-
-        // 如果已经在拖拽中
-        if (this._isDragging) {
-            event.propagationStopped = true;
-            this.updateDragPreview(event);
-        }
-    }
-
-    /**
-     * 英雄按钮触摸结束
-     */
-    private onHeroButtonTouchCancelOrEnd(event: EventTouch): void {
-        console.log(`🔚 英雄按钮触摸结束: 拖拽=${this._isDragging}, 选中=${this._selectedHeroType}`);
-        if (this._isDragging) {
-            // 如果正在拖拽，完成拖拽
-            console.log("🎯 完成拖拽部署");
-            this.finishHeroDrag(event);
-        }
+        // 使用统一的绘制逻辑
+        this.updateGeometricIcon(iconGraphics, iconNode, heroType, isUnlocked);
     }
 
 
@@ -1553,6 +1579,103 @@ export class HeroSelectionPanel extends Component {
 
         // 更新按钮状态
         this.UpdateHeroButtonStates();
+    }
+
+    // ========== 触摸事件处理方法 ==========
+
+    /**
+     * 设置英雄按钮事件
+     */
+    private setupHeroButtonEvents(buttonNode: Node, heroType: HeroType): void {
+        buttonNode.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
+            this.onHeroButtonTouchStart(heroType, buttonNode, event);
+        }, this);
+
+        buttonNode.on(Node.EventType.TOUCH_MOVE, (event: EventTouch) => {
+            this.onHeroButtonTouchMove(event);
+        }, this);
+
+        buttonNode.on(Node.EventType.TOUCH_CANCEL, (event: EventTouch) => {
+            console.log(`🟡 触摸取消: ${heroType}, event: ${event.getLocation()}`);
+            this.onHeroButtonTouchCancelOrEnd(event)
+        }, this);
+
+
+        buttonNode.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            console.log(`🟡 触摸结束: ${heroType}, event: ${event.getLocation()}`);
+            this.onHeroButtonTouchCancelOrEnd(event)
+        }, this);
+    }
+
+    /**
+     * 英雄按钮触摸开始
+     */
+    private onHeroButtonTouchStart(heroType: HeroType, buttonNode: Node, event: EventTouch): void {
+        console.log(`🟡 触摸开始: ${heroType}`);
+
+        // 检查英雄是否已解锁
+        if (!this.IsHeroUnlocked(heroType)) {
+            console.log(`❌ 英雄 ${heroType} 尚未解锁`);
+            this.showLockedHeroEffect(buttonNode);
+            return;
+        }
+
+        // 检查金币是否足够
+        const heroCost = HeroFactory.GetHeroCost(heroType);
+        if (this._gameManager && this._gameManager.GetGameStats().gold < heroCost) {
+            console.log(`❌ 金币不足，需要 ${heroCost} 金币，当前: ${this._gameManager.GetGameStats().gold}`);
+            this.showInsufficientFundsEffect(buttonNode);
+            return;
+        }
+
+
+        // 记录触摸开始，但不立即开始拖拽 - 允许ScrollView正常处理
+        this._selectedHeroType = heroType;
+        const startLocation = event.getUIStartLocation();
+        console.log(`✅ 选中英雄: ${heroType}, 位置: (${startLocation.x}, ${startLocation.y})`);
+    }
+
+    /**
+     * 英雄按钮触摸移动
+     */
+    private onHeroButtonTouchMove(event: EventTouch): void {
+        // 如果还没开始拖拽，检查拖动方向来决定是滚动还是拖拽
+        if (!this._isDragging && this._selectedHeroType) {
+            // 使用累积距离来判断拖拽方向
+            const startLocation = event.getUIStartLocation();
+            const currentLocation = event.getUILocation();
+            const deltaX = currentLocation.x - startLocation.x;
+            const deltaY = currentLocation.y - startLocation.y;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            const isVerticalMove = Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && Math.abs(deltaY) > 8;
+            // 在垂直方向有移动，并且移动有一定的距离
+            if (isVerticalMove && distance > 40) {
+                // 垂直移动：开始英雄拖拽
+                console.log(`distance, ${distance} ⬇️ 垂直拖拽检测，开始拖拽英雄，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
+                this.startHeroDrag(this._selectedHeroType, event);
+                event.propagationStopped = true;
+                return;
+            }
+        }
+
+        // 如果已经在拖拽中
+        if (this._isDragging) {
+            event.propagationStopped = true;
+            this.updateDragPreview(event);
+        }
+    }
+
+    /**
+     * 英雄按钮触摸结束
+     */
+    private onHeroButtonTouchCancelOrEnd(event: EventTouch): void {
+        console.log(`🔚 英雄按钮触摸结束: 拖拽=${this._isDragging}, 选中=${this._selectedHeroType}`);
+        if (this._isDragging) {
+            // 如果正在拖拽，完成拖拽
+            console.log("🎯 完成拖拽部署");
+            this.finishHeroDrag(event);
+        }
     }
 
     // ========== 辅助工具方法 ==========
