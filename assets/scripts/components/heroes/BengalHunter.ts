@@ -123,5 +123,4 @@ export class BengalHunter extends BaseHero {
         };
     }
     
-    // 已移除多余的performAttack包装方法，直接使用onAttack实现
 }

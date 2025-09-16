@@ -410,5 +410,40 @@ export abstract class BaseHero extends Component {
         return 'ranged';
     }
 
+    /**
+     * 统一的动画初始化方法 - 根据英雄类型自动选择动画
+     */
+    protected initializeDefaultAnimation(): void {
+        this._animation = this.node.getComponent(Animation);
+        if (this._animation) {
+            // 根据英雄类型构建动画名称
+            const animationName = this.getIdleAnimationName();
+            if (this._animation.getState(animationName)) {
+                this._animation.play(animationName);
+            }
+        }
+    }
+
+    /**
+     * 获取idle动画名称 - 根据英雄类型自动生成
+     */
+    protected getIdleAnimationName(): string {
+        const heroTypeMap: Record<HeroType, string> = {
+            [HeroType.ORANGE_CAT]: 'orange_cat_idle',
+            [HeroType.SIAMESE_MAGE]: 'siamese_mage_idle',
+            [HeroType.MAINE_THUNDER]: 'maine_thunder_idle',
+            [HeroType.PERSIAN_SNIPER]: 'persian_sniper_idle',
+            [HeroType.BRITISH_KNIGHT]: 'british_knight_idle',
+            [HeroType.BENGAL_HUNTER]: 'bengal_hunter_idle',
+            [HeroType.NORWEGIAN_ICE]: 'norwegian_ice_idle',
+            [HeroType.SCOTTISH_MARKSMAN]: 'scottish_marksman_idle',
+            [HeroType.ABYSSINIAN_ARCHER]: 'abyssinian_archer_idle',
+            [HeroType.RUSSIAN_BLUE]: 'russian_blue_idle',
+            [HeroType.AMERICAN_BOMBER]: 'american_bomber_idle'
+        };
+
+        return heroTypeMap[this.heroType] || 'default_idle';
+    }
+
 
 }

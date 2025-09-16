@@ -93,10 +93,6 @@ export class GiantMouse extends BaseMouse {
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
 
-    protected update(dt: number): void {
-        super.update(dt);
-        // 基类Tween系统自动处理移动，无需额外处理
-    }
 
 
     // 重写受伤方法，添加巨型老鼠的特殊反应

@@ -1,9 +1,8 @@
-import { _decorator, Node, Vec3, Color, Animation } from 'cc';
+import { _decorator, Node, Vec3, Color } from 'cc';
 import { BaseHero } from './BaseHero';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
-import { EffectHelper } from '../../utils/EffectHelper';
 
 const { ccclass, property } = _decorator;
 
@@ -25,20 +24,7 @@ export class OrangeCat extends BaseHero {
     
     // 继承父类的onLoad和start方法
     
-    // 初始化动画
-    private initializeAnimation(): void {
-        this._animation = this.node.getComponent(Animation);
-        if (this._animation) {
-            // 播放idle动画（如果存在）
-            if (this._animation.getState('orange_cat_idle')) {
-                this._animation.play('orange_cat_idle');
-            }
-        }
-    }
     
-    protected update(dt: number): void {
-        super.update(dt);
-    }
     
     // 重写攻击方法 - 使用统一投射物系统（从120+行简化为3行！）
     protected onAttack(target: Node): void {
@@ -56,13 +42,6 @@ export class OrangeCat extends BaseHero {
         console.log(`${this.unitName} 被点击`);
     }
     
-    // 创建点击反馈特效
-    private createClickFeedback(): void {
-        if (this.node.parent) {
-            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
-            EffectHelper.createClickFeedback(feedbackPos, this.node.parent);
-        }
-    }
     
     
     // 实现BaseHero的抽象方法
@@ -79,8 +58,8 @@ export class OrangeCat extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 初始化动画
-        this.initializeAnimation();
+        // 使用基类的统一动画初始化
+        this.initializeDefaultAnimation();
     }
     
     // 实现BaseHero的抽象方法 - 英雄标签配置

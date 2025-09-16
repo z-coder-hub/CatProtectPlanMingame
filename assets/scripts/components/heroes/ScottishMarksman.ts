@@ -30,11 +30,6 @@ export class ScottishMarksman extends BaseHero {
         this.drawScottishMarksmanAppearance();
     }
     
-    protected update(dt: number): void {
-        super.update(dt);
-        
-        // 多重锁定逻辑会在攻击时处理
-    }
     
     private drawScottishMarksmanAppearance(): void {
         const graphics = this.getGraphics();

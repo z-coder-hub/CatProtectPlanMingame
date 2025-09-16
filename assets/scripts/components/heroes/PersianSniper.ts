@@ -1,4 +1,4 @@
-import { _decorator, Node, Color, Animation } from 'cc';
+import { _decorator, Node, Color } from 'cc';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { HeroType } from '../../types/GameTypes';
@@ -40,16 +40,7 @@ export class PersianSniper extends BaseHero {
 
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeAnimation();
-    }
-
-    private initializeAnimation(): void {
-        const animation = this.node.getComponent(Animation);
-        if (animation) {
-            if (animation.getState('persian_sniper_idle')) {
-                animation.play('persian_sniper_idle');
-            }
-        }
+        this.initializeDefaultAnimation();
     }
 
     // 使用基类的update方法
@@ -63,7 +54,6 @@ export class PersianSniper extends BaseHero {
         ProjectileSystem.CreatePhysicalBullet(this, target.position, this.critChance, this.critMultiplier);
     }
 
-    // 已移除重复的射击系统，统一使用ProjectileSystem进行子弹管理
     // ProjectileSystem已包含动态边界计算、碰撞检测、暴击处理等完整功能
 
     // 使用默认的远程攻击动画（无需重写getAttackAnimationType）

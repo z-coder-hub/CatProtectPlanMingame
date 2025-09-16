@@ -1,8 +1,7 @@
-import { _decorator, Animation, Color, Node } from 'cc';
+import { _decorator, Color, Node } from 'cc';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { HeroType } from '../../types/GameTypes';
-import { DrawingHelper } from '../../utils/DrawingHelper';
 import { BaseHero } from './BaseHero';
 
 const { ccclass } = _decorator;
@@ -33,25 +32,7 @@ export class BritishKnight extends BaseHero {
 
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeVisuals();
-        this.initializeAnimation();
-        // 移除setupClickEvents，使用BaseHero的统一系统
-    }
-
-    // 继承父类start()方法，无需重写
-
-
-    private initializeVisuals(): void {
-        // 使用基类BaseHero的_graphics属性
-        // this._graphics由BaseHero管理
-
-        this.drawBritishKnightAppearance();
-        // 移除createNameLabel，使用BaseHero的统一标签系统
-    }
-
-    private drawBritishKnightAppearance(): void {
-        if (!this._graphics) return;
-        DrawingHelper.drawHeroAppearance(this._graphics, 'british');
+        this.initializeDefaultAnimation();
     }
 
     // 重写标签配置，使用完整英雄名称
@@ -65,14 +46,6 @@ export class BritishKnight extends BaseHero {
         };
     }
 
-    private initializeAnimation(): void {
-        this._animation = this.node.getComponent(Animation);
-        if (this._animation) {
-            if (this._animation.getState('british_knight_idle')) {
-                this._animation.play('british_knight_idle');
-            }
-        }
-    }
 
     // 使用BaseHero的统一update方法
 

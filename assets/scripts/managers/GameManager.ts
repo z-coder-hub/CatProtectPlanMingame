@@ -447,7 +447,7 @@ export class GameManager extends Component {
     // 计算关卡完成时间（简化实现）
     private calculateCompletionTime(): number {
         // TODO: 实现准确的时间计算
-        const estimatedTime = (this._currentLevelConfig?.estimatedDuration || 5) * 60;
+        const estimatedTime = 5 * 60; // 固定5分钟预期时长
         return estimatedTime * 0.8; // 假设80%时间内完成
     }
 
@@ -494,20 +494,9 @@ export class GameManager extends Component {
                         console.warn(`英雄解锁失败: ${heroType}`);
                     }
                     break;
-                case RewardType.ACHIEVEMENT:
-                    // TODO: 集成成就系统
-                    console.log(`获得成就: ${reward.value}`);
-                    break;
-                case RewardType.BUFF:
-                    // 处理增益效果
-                    console.log(`获得增益: ${reward.value} - ${reward.description}`);
-                    break;
-                case RewardType.TITLE:
-                    // 处理称号奖励
-                    console.log(`获得称号: ${reward.value} - ${reward.description}`);
-                    break;
                 default:
-                    console.log(`获得未知奖励: ${reward.type} - ${reward.value}`);
+                    // 处理其他类型的奖励（成就、称号等）
+                    console.log(`获得特殊奖励: ${reward.value} - ${reward.description}`);
             }
         }
     }

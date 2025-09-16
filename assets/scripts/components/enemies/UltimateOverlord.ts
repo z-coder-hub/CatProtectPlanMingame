@@ -463,9 +463,7 @@ export class UltimateOverlord extends BaseMouse {
             .start();
     }
     
-    // 已移除链式攻击相关方法，符合塔防游戏设计原则
     
-    // 已移除链式攻击相关方法，符合塔防游戏设计原则
     
     /**
      * 终极霸王复合受伤处理

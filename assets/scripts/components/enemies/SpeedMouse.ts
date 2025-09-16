@@ -110,10 +110,6 @@ export class SpeedMouse extends BaseMouse {
 
 
 
-    protected update(dt: number): void {
-        super.update(dt);
-
-    }
 
     // 城堡碰撞检测由基类统一处理，无需重复实现
 

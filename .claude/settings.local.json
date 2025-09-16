@@ -27,7 +27,8 @@
       "Bash(then)",
       "Bash(fi)",
       "Bash(if grep -q \"this\\.GetConfig\" \"$file\")",
-      "Bash(continue)"
+      "Bash(continue)",
+      "Bash(if grep -q \"protected update.*dt.*:\" \"$file\")"
     ]
   },
   "hooks": {

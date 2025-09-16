@@ -96,10 +96,6 @@ export class FastMouse extends BaseMouse {
     }
 
 
-    protected update(dt: number): void {
-        super.update(dt);
-        // 基类Tween系统自动处理移动，无需额外处理
-    }
 
 
     // 移除攻击特效方法

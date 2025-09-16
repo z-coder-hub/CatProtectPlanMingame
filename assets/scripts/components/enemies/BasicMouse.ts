@@ -45,10 +45,6 @@ export class BasicMouse extends BaseMouse {
     }
 
 
-    protected update(dt: number): void {
-        super.update(dt);
-        // 基类Tween系统自动处理移动，无需额外处理
-    }
 
     // 基类已实现完整的Tween移动系统，无需重复实现
 

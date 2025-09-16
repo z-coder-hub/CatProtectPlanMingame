@@ -83,25 +83,6 @@ export class HeroFactory {
         }
     }
     
-    /**
-     * 批量创建英雄
-     * @param heroTypes 英雄类型数组
-     * @param parent 父节点
-     * @returns 创建成功的英雄节点数组
-     */
-    public static CreateMultipleHeroes(heroTypes: HeroType[], parent?: Node): Node[] {
-        const heroes: Node[] = [];
-        
-        for (const heroType of heroTypes) {
-            const hero = this.CreateHero(heroType, parent);
-            if (hero) {
-                heroes.push(hero);
-            }
-        }
-        
-        console.log(`批量创建英雄完成: ${heroes.length}/${heroTypes.length} 成功`);
-        return heroes;
-    }
     
     /**
      * 获取英雄配置信息
@@ -111,24 +92,7 @@ export class HeroFactory {
     public static GetHeroConfig(heroType: HeroType) {
         return HERO_CONFIGS[heroType] || null;
     }
-    
-    /**
-     * 检查英雄类型是否可用
-     * @param heroType 英雄类型
-     * @returns 是否可用
-     */
-    public static IsHeroAvailable(heroType: HeroType): boolean {
-        return !!(HERO_CONFIGS[heroType] && this.HERO_COMPONENTS[heroType]);
-    }
-    
-    /**
-     * 获取所有可用的英雄类型
-     * @returns 可用英雄类型数组
-     */
-    public static GetAvailableHeroTypes(): HeroType[] {
-        return Object.keys(this.HERO_COMPONENTS) as HeroType[];
-    }
-    
+
     /**
      * 获取英雄部署成本
      * @param heroType 英雄类型
@@ -140,7 +104,5 @@ export class HeroFactory {
     }
     
     
-    
-    
-    
+
 }

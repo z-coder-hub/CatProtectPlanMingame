@@ -28,10 +28,6 @@ export class AmericanBomber extends BaseHero {
         this.initializeVisuals();
     }
 
-    // 继承父类start()方法，无需重写
-    protected update(dt: number): void {
-        super.update(dt);
-    }
 
 
     private initializeVisuals(): void {

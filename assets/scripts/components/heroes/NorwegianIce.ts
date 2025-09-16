@@ -103,7 +103,6 @@ export class NorwegianIce extends BaseHero {
         this.createIceEffect(target.position);
     }
     
-    // 已移除多余的performAttack包装方法，直接使用onAttack实现
     
     private createIceEffect(position: Vec3): void {
         const effectNode = new Node("IceEffect");
