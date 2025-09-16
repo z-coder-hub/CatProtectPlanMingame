@@ -852,17 +852,19 @@ export class HeroSelectionPanel extends Component {
         const iconNode = new Node("HeroIcon");
         iconNode.parent = parent;
 
-        // 设置图标的UITransform
-        const iconTransform = iconNode.addComponent(UITransform);
-        iconTransform.setContentSize(60, 60); // 图标固定尺寸
 
-        // 使用Widget进行居中对齐
+        // 使用Widget实现自适应布局，适配父节点大小
         const iconWidget = iconNode.addComponent(Widget);
-        iconWidget.isAlignHorizontalCenter = true;
-        iconWidget.isAlignVerticalCenter = true;
-        iconWidget.horizontalCenter = 0;
-        iconWidget.verticalCenter = 0;
+        iconWidget.isAlignTop = true;
+        iconWidget.isAlignBottom = true;
+        iconWidget.isAlignLeft = true;
+        iconWidget.isAlignRight = true;
+        iconWidget.top = 3;
+        iconWidget.bottom = 3;
+        iconWidget.left = 3;
+        iconWidget.right = 3;
         iconWidget.updateAlignment();
+
 
         // 获取英雄对应的图片路径
         const imagePath = this.getHeroImagePath(heroType);
@@ -900,6 +902,38 @@ export class HeroSelectionPanel extends Component {
         // 添加Sprite组件
         const sprite = iconNode.addComponent(Sprite);
 
+        // 提前设置Sprite属性和尺寸，避免异步加载导致的布局问题
+        sprite.type = Sprite.Type.SIMPLE;
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+
+        // 预设Sprite尺寸 - 基于容器大小计算
+        const iconTransform = iconNode.getComponent(UITransform);
+        if (iconTransform) {
+            // 获取容器的实际尺寸（由Widget计算得出）
+            const containerWidth = iconTransform.contentSize.width;
+            const containerHeight = iconTransform.contentSize.height;
+
+            // 计算可用空间（留一点边距）
+            const availableWidth = Math.max(containerWidth - 10, 20);
+            const availableHeight = Math.max(containerHeight - 10, 20);
+            const maxSize = Math.min(availableWidth, availableHeight);
+
+            // 预设为最大可用尺寸的正方形，保证布局稳定
+            const spriteTransform = sprite.node.getComponent(UITransform);
+            if (spriteTransform) {
+                spriteTransform.setContentSize(maxSize, maxSize);
+                console.log(`预设Sprite尺寸: ${maxSize}x${maxSize} (容器: ${containerWidth.toFixed(1)}x${containerHeight.toFixed(1)})`);
+            }
+
+            // 确保图片在图标容器中居中显示
+            sprite.node.setPosition(0, 0);
+        }
+
+        // 应用未解锁状态的视觉效果
+        if (!isUnlocked) {
+            sprite.color = new Color(120, 120, 120);
+        }
+
         // 加载SpriteFrame资源（Cocos Creator 3.x需要指定子资源类型）
         resources.load(imagePath + "/spriteFrame", SpriteFrame, (err, spriteFrame) => {
             if (err) {
@@ -918,57 +952,8 @@ export class HeroSelectionPanel extends Component {
                 return;
             }
 
-            // 设置SpriteFrame
+            // 只设置SpriteFrame，其他属性已经预设好了
             sprite.spriteFrame = spriteFrame;
-
-            // 设置图片显示模式为自定义尺寸
-            sprite.type = Sprite.Type.SIMPLE;
-            sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-
-            // 约束图片到适合的尺寸（智能适配到60x60区域）
-            const iconTransform = iconNode.getComponent(UITransform);
-            if (iconTransform) {
-                const maxSize = 55; // 最大尺寸，留一点边距（60px容器-5px边距）
-                const minSize = 40; // 最小尺寸，避免图片太小
-
-                // 获取原始图片尺寸
-                const originalWidth = spriteFrame.originalSize.width;
-                const originalHeight = spriteFrame.originalSize.height;
-
-                // 计算缩放比例，保持宽高比
-                const scaleX = maxSize / originalWidth;
-                const scaleY = maxSize / originalHeight;
-                let scale = Math.min(scaleX, scaleY); // 使用较小的缩放比例
-
-                // 确保缩放后的尺寸不会太小
-                const scaledWidth = originalWidth * scale;
-                const scaledHeight = originalHeight * scale;
-                const maxDimension = Math.max(scaledWidth, scaledHeight);
-
-                if (maxDimension < minSize) {
-                    // 如果缩放后太小，重新计算以达到最小尺寸
-                    scale = minSize / Math.min(originalWidth, originalHeight);
-                }
-
-                const finalWidth = Math.min(originalWidth * scale, maxSize);
-                const finalHeight = Math.min(originalHeight * scale, maxSize);
-
-                // 设置Sprite节点的UITransform尺寸
-                const spriteTransform = sprite.node.getComponent(UITransform);
-                if (spriteTransform) {
-                    spriteTransform.setContentSize(finalWidth, finalHeight);
-                    console.log(`${imagePath}: 原始${originalWidth}x${originalHeight} → 显示${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`);
-                }
-
-                // 确保图片在图标容器中居中显示
-                sprite.node.setPosition(0, 0);
-            }
-
-            // 应用未解锁状态的视觉效果
-            if (!isUnlocked) {
-                // 置灰效果
-                sprite.color = new Color(120, 120, 120);
-            }
 
             console.log(`成功加载英雄图片: ${imagePath}`);
         });
@@ -995,8 +980,13 @@ export class HeroSelectionPanel extends Component {
         // 添加Graphics组件
         const iconGraphics = iconNode.addComponent(Graphics);
 
-        // 1.2倍缩放因子
-        const scale = 1.2;
+        // 动态计算缩放因子，适配容器大小
+        const iconTransform = iconNode.getComponent(UITransform);
+        const containerSize = iconTransform ? Math.min(iconTransform.contentSize.width, iconTransform.contentSize.height) : 60;
+        const baseSize = 36; // 基础图标设计尺寸（18 * 2）
+        const scale = Math.max((containerSize - 10) / baseSize, 0.5); // 保留5px边距，最小缩放0.5倍
+
+        console.log(`几何图标缩放: 容器${containerSize}px, 缩放因子${scale.toFixed(2)}`);
 
         // 未解锁英雄的透明度和饱和度调整
         const alpha = isUnlocked ? 255 : 80;
