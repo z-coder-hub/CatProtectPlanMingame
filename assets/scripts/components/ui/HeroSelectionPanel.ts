@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, ScrollView, Sprite, SpriteFrame, UITransform, Vec3, Widget, resources } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, resources, ScrollView, Sprite, SpriteFrame, UITransform, Vec3, Widget } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
 import { LevelManager } from '../../managers/LevelManager';
@@ -30,7 +30,7 @@ export class HeroSelectionPanel extends Component {
     private _gameManager: GameManager | null = null;
     private _levelManager: LevelManager | null = null;
     private _gridSystem: GridDeploymentSystem | null = null;
-    
+
     // 缓存上次的解锁状态，用于检测变化
     private _lastUnlockedHeroes: Set<HeroType> = new Set();
 
@@ -57,30 +57,28 @@ export class HeroSelectionPanel extends Component {
             console.error("未找到GridDeploymentSystem实例");
         }
 
-        // 监听英雄解锁事件
+        // 监听英雄解锁事件和金币变化事件
         if (this._gameManager) {
             this._gameManager.AddEventListener('hero-unlocked', this.onHeroUnlocked);
+            this._gameManager.AddEventListener('gold-changed', this.onGoldChanged);
         }
 
         // 初始化解锁状态缓存
         const initialUnlockedHeroes = this.getUnlockedHeroTypes();
         this._lastUnlockedHeroes = new Set(initialUnlockedHeroes);
-        
+
         // 初始更新按钮状态
         this.UpdateHeroButtonStates();
     }
 
-    protected update(_dt: number): void {
-        // 实时更新英雄按钮状态（基于当前金币）
-        this.UpdateHeroButtonStates();
-    }
 
     protected onDestroy(): void {
         this.cleanupDrag();
-        
+
         // 清理事件监听
         if (this._gameManager) {
             this._gameManager.RemoveEventListener('hero-unlocked', this.onHeroUnlocked);
+            this._gameManager.RemoveEventListener('gold-changed', this.onGoldChanged);
         }
     }
 
@@ -92,9 +90,19 @@ export class HeroSelectionPanel extends Component {
     private onHeroUnlocked = (data: { heroType: HeroType }): void => {
         const heroType = data.heroType;
         console.log(`🎉 收到英雄解锁事件: ${heroType}`);
-        
+
         // 刷新英雄面板以显示新解锁的英雄
         this.RefreshHeroPanel();
+    }
+
+    /**
+     * 金币变化事件处理
+     */
+    private onGoldChanged = (data: { currentGold: number; previousGold: number; change: number }): void => {
+        console.log(`💰 金币变化: ${data.previousGold} → ${data.currentGold} (${data.change > 0 ? '+' : ''}${data.change})`);
+
+        // 更新英雄按钮状态以反映新的金币状况
+        this.UpdateHeroButtonStates();
     }
 
     // ========== 公共接口方法 ==========
@@ -111,12 +119,12 @@ export class HeroSelectionPanel extends Component {
             HeroType.SIAMESE_MAGE,      // 暹罗法师
             HeroType.BRITISH_KNIGHT,    // 英短骑士
             HeroType.SCOTTISH_MARKSMAN, // 苏格兰射手
-            
+
             // 关卡2解锁（进阶学习）
             HeroType.BENGAL_HUNTER,     // 孟加拉猎手
             HeroType.MAINE_THUNDER,     // 缅因雷法
             HeroType.ABYSSINIAN_ARCHER, // 阿比西尼亚弓箭手
-            
+
             // 关卡3解锁（精英训练）
             HeroType.NORWEGIAN_ICE,     // 挪威冰法
             HeroType.RUSSIAN_BLUE,      // 俄罗斯蓝猫
@@ -136,13 +144,13 @@ export class HeroSelectionPanel extends Component {
 
         const unlockedHeroes = this._levelManager.GetUnlockedHeroes();
         console.log(`获取已解锁英雄: ${unlockedHeroes.length} 个英雄`);
-        
+
         // 确保至少有一个英雄可用
         if (unlockedHeroes.length === 0) {
             console.warn("没有解锁的英雄，使用默认橘猫");
             return [HeroType.ORANGE_CAT];
         }
-        
+
         return unlockedHeroes;
     }
 
@@ -251,14 +259,14 @@ export class HeroSelectionPanel extends Component {
      */
     public RefreshHeroPanel(): void {
         console.log("智能刷新英雄选择面板");
-        
+
         const currentAllHeroes = this.getAllHeroTypes();
         const currentUnlockedHeroes = this.getUnlockedHeroTypes();
         console.log(`所有英雄数量: ${currentAllHeroes.length}, 已解锁: ${currentUnlockedHeroes.length}`);
-        
+
         // 检查是否有新英雄需要添加
         const needsFullRefresh = this.checkIfNeedsFullRefresh(currentAllHeroes);
-        
+
         if (needsFullRefresh) {
             console.log("检测到需要重建按钮（英雄数量变化）");
             this.recreateHeroButtons();
@@ -280,14 +288,14 @@ export class HeroSelectionPanel extends Component {
      */
     private hasUnlockStatusChanged(currentUnlockedHeroes: HeroType[]): boolean {
         const currentSet = new Set(currentUnlockedHeroes);
-        
+
         // 比较新旧解锁状态
         if (this._lastUnlockedHeroes.size !== currentSet.size) {
             console.log(`解锁数量变化: ${this._lastUnlockedHeroes.size} → ${currentSet.size}`);
             this._lastUnlockedHeroes = currentSet;
             return true;
         }
-        
+
         // 检查具体的解锁英雄是否有变化
         for (const hero of currentSet) {
             if (!this._lastUnlockedHeroes.has(hero)) {
@@ -296,7 +304,7 @@ export class HeroSelectionPanel extends Component {
                 return true;
             }
         }
-        
+
         for (const hero of this._lastUnlockedHeroes) {
             if (!currentSet.has(hero)) {
                 console.log(`英雄被锁定: ${hero}`);
@@ -304,7 +312,7 @@ export class HeroSelectionPanel extends Component {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -316,17 +324,17 @@ export class HeroSelectionPanel extends Component {
         if (this._heroButtons.length !== currentAllHeroes.length) {
             return true;
         }
-        
+
         // 检查每个英雄是否都有对应按钮
         for (const heroType of currentAllHeroes) {
-            const hasButton = this._heroButtons.some(button => 
+            const hasButton = this._heroButtons.some(button =>
                 button && button.isValid && button.name === `HeroButton_${heroType}`
             );
             if (!hasButton) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -362,12 +370,12 @@ export class HeroSelectionPanel extends Component {
         const buttonWidth = 110; // 增加宽度以容纳完整英雄名称
         const buttonHeight = 120;
         const buttonSpacing = 24;
-        
+
         this.createHeroButtonsAdaptiveLayout(contentNode, buttonWidth, buttonHeight, buttonSpacing);
-        
+
         // 更新Content尺寸
         this.updateContentSize(contentNode);
-        
+
         console.log(`成功重新创建 ${this._heroButtons.length} 个英雄按钮`);
     }
 
@@ -377,10 +385,10 @@ export class HeroSelectionPanel extends Component {
     private findContentNode(): Node | null {
         const scrollViewNode = this.node.getChildByName("HeroScrollView");
         if (!scrollViewNode) return null;
-        
+
         const viewNode = scrollViewNode.getChildByName("View");
         if (!viewNode) return null;
-        
+
         const contentNode = viewNode.getChildByName("Content");
         return contentNode;
     }
@@ -393,15 +401,15 @@ export class HeroSelectionPanel extends Component {
         const buttonWidth = 110; // 增加宽度以容纳完整英雄名称
         const buttonSpacing = 24;
         const paddingTotal = buttonSpacing * 2;
-        
+
         const contentTransform = contentNode.getComponent(UITransform);
         if (contentTransform) {
             const panelTransform = this.node.getComponent(UITransform);
             const panelWidth = panelTransform ? panelTransform.width : 800;
-            
+
             const minContentWidth = availableHeroes.length * (buttonWidth + buttonSpacing) + paddingTotal;
             const contentWidth = Math.max(minContentWidth, (panelWidth - 36) + 120);
-            
+
             contentTransform.setContentSize(contentWidth, contentTransform.height);
             console.log(`更新Content尺寸: 宽度=${contentWidth}, 英雄数量=${availableHeroes.length}`);
         }
@@ -412,7 +420,7 @@ export class HeroSelectionPanel extends Component {
      */
     private fullPanelRebuild(): void {
         console.warn("执行完整面板重建");
-        
+
         // 清理现有按钮
         this._heroButtons.forEach(button => {
             if (button && button.isValid) {
@@ -435,7 +443,7 @@ export class HeroSelectionPanel extends Component {
         if (existingGraphics) {
             existingGraphics.destroy();
         }
-        
+
         const existingWidget = this.node.getComponent(Widget);
         if (existingWidget) {
             existingWidget.destroy();
@@ -762,10 +770,10 @@ export class HeroSelectionPanel extends Component {
         // 检查英雄解锁状态
         let isUnlocked = true;
         let canAfford = true;
-        
+
         if (heroType) {
             isUnlocked = this.IsHeroUnlocked(heroType);
-            
+
             if (this._gameManager && isUnlocked) {
                 const currentGold = this._gameManager.GetGameStats().gold;
                 const heroCost = HeroFactory.GetHeroCost(heroType);
@@ -800,7 +808,7 @@ export class HeroSelectionPanel extends Component {
         } else {
             borderColor = new Color(150, 150, 150); // 普通：浅灰色边框
         }
-        
+
         graphics.strokeColor = borderColor;
         graphics.lineWidth = isSelected ? 3 : 2;
         graphics.rect(-width / 2, -height / 2, width, height);
@@ -830,7 +838,7 @@ export class HeroSelectionPanel extends Component {
         graphics.lineWidth = lockSize * 0.15;
         graphics.arc(lockX, lockY - lockSize / 6, lockSize * 0.3, Math.PI, 0, false);
         graphics.stroke();
-        
+
         // 添加一个锁孔
         graphics.fillColor = new Color(100, 100, 100);
         graphics.circle(lockX, lockY, lockSize * 0.08);
@@ -1579,16 +1587,16 @@ export class HeroSelectionPanel extends Component {
      */
     private showLockedHeroEffect(buttonNode: Node): void {
         const originalScale = buttonNode.scale;
-        
+
         // 摇摆效果表示锁定
         buttonNode.setScale(originalScale.x * 1.1, originalScale.y * 1.1);
-        
+
         this.scheduleOnce(() => {
             if (buttonNode && buttonNode.isValid) {
                 buttonNode.setScale(originalScale.x * 0.95, originalScale.y * 0.95);
             }
         }, 0.1);
-        
+
         this.scheduleOnce(() => {
             if (buttonNode && buttonNode.isValid) {
                 buttonNode.setScale(originalScale);

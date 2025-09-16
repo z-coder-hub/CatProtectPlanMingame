@@ -538,15 +538,32 @@ export class GameManager extends Component {
 
     // 添加金币
     public AddGold(amount: number): void {
+        const previousGold = this.currentGold;
         this.currentGold += amount;
         console.log(`获得金币: +${amount}, 当前金币: ${this.currentGold}`);
+
+        // 发出金币变化事件
+        this.emitEvent('gold-changed', {
+            currentGold: this.currentGold,
+            previousGold: previousGold,
+            change: amount
+        });
     }
 
     // 消费金币
     public SpendGold(amount: number): boolean {
         if (this.currentGold >= amount) {
+            const previousGold = this.currentGold;
             this.currentGold -= amount;
             console.log(`消费金币: -${amount}, 当前金币: ${this.currentGold}`);
+
+            // 发出金币变化事件
+            this.emitEvent('gold-changed', {
+                currentGold: this.currentGold,
+                previousGold: previousGold,
+                change: -amount
+            });
+
             return true;
         }
 

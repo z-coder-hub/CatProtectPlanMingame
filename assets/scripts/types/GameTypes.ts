@@ -165,6 +165,7 @@ export interface GameEvents {
     'wave-completed': { wave: number };
     'game-state-changed': { newState: GameState; oldState: GameState };
     'hero-unlocked': { heroType: HeroType };
+    'gold-changed': { currentGold: number; previousGold: number; change: number };
 }
 
 // 波次配置接口
