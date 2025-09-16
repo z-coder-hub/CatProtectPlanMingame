@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, resources, ScrollView, Sprite, SpriteFrame, UITransform, Vec3, Widget } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, ImageAsset, Label, Mask, Node, resources, ScrollView, Sprite, SpriteFrame, Texture2D, UIOpacity, UITransform, Vec3, Widget } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
 import { LevelManager } from '../../managers/LevelManager';
@@ -6,6 +6,7 @@ import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
 import { HeroFactory } from '../../systems/HeroFactory';
 import { HeroType } from '../../types/GameTypes';
 import { UIHelper } from '../../utils/UIHelper';
+import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass } = _decorator;
 
@@ -1364,7 +1365,7 @@ export class HeroSelectionPanel extends Component {
     }
 
     /**
-     * 创建拖拽预览
+     * 创建拖拽预览 - 优先使用图片资源，回退到Graphics绘制
      */
     private createDragPreview(heroType: HeroType): void {
         if (this._dragPreviewNode) {
@@ -1378,102 +1379,90 @@ export class HeroSelectionPanel extends Component {
         const previewTransform = this._dragPreviewNode.addComponent(UITransform);
         previewTransform.setContentSize(previewSize, previewSize);
 
-        const previewGraphics = this._dragPreviewNode.addComponent(Graphics);
-        this.drawDragPreview(previewGraphics, heroType, previewSize);
+        // 设置透明度组件
+        const opacity = this._dragPreviewNode.addComponent(UIOpacity);
+        opacity.opacity = 200; // 约78%透明度，提供更好的拖拽反馈
+
+        // 尝试使用图片资源，否则使用Graphics绘制
+        this.createDragPreviewWithSprite(heroType, previewSize) ||
+        this.createDragPreviewWithGraphics(heroType, previewSize);
 
         console.log(`创建拖拽预览: ${heroType}, 节点: ${this._dragPreviewNode.name}`);
     }
 
     /**
-     * 绘制拖拽预览
+     * 使用Sprite组件创建拖拽预览（优先方案）
+     * 复用HeroSelectionPanel中已有的图片资源路径
      */
-    private drawDragPreview(graphics: Graphics, heroType: HeroType, size: number): void {
-        graphics.clear();
-
-        const alpha = 180;
-        const halfSize = size / 2;
-
-        switch (heroType) {
-            case HeroType.ORANGE_CAT:
-                graphics.fillColor = new Color(255, 165, 0, alpha);
-                graphics.circle(0, 0, halfSize);
-                graphics.fill();
-                break;
-
-            case HeroType.PERSIAN_SNIPER:
-                graphics.fillColor = new Color(192, 192, 192, alpha);
-                graphics.circle(0, 0, halfSize);
-                graphics.fill();
-                break;
-
-            case HeroType.BENGAL_HUNTER:
-                graphics.fillColor = new Color(255, 215, 0, alpha);
-                graphics.circle(0, 0, halfSize);
-                graphics.fill();
-                break;
-
-            case HeroType.SIAMESE_MAGE:
-                graphics.fillColor = new Color(100, 100, 255, alpha);
-                graphics.rect(-halfSize, -halfSize, size, size);
-                graphics.fill();
-                break;
-
-            case HeroType.MAINE_THUNDER:
-                graphics.fillColor = new Color(25, 25, 112, alpha);
-                graphics.rect(-halfSize, -halfSize, size, size);
-                graphics.fill();
-                break;
-
-            case HeroType.NORWEGIAN_ICE:
-                graphics.fillColor = new Color(173, 216, 230, alpha);
-                graphics.moveTo(0, -halfSize);
-                graphics.lineTo(halfSize * 0.8, 0);
-                graphics.lineTo(0, halfSize);
-                graphics.lineTo(-halfSize * 0.8, 0);
-                graphics.close();
-                graphics.fill();
-                break;
-
-            case HeroType.BRITISH_KNIGHT:
-                graphics.fillColor = new Color(100, 149, 237, alpha);
-                graphics.rect(-halfSize, -halfSize, size, size);
-                graphics.fill();
-                break;
-
-
-            case HeroType.SCOTTISH_MARKSMAN:
-                graphics.fillColor = new Color(255, 140, 0, alpha);
-                graphics.circle(0, 0, halfSize * 0.8);
-                graphics.fill();
-                break;
-
-            case HeroType.ABYSSINIAN_ARCHER:
-                graphics.fillColor = new Color(160, 82, 45, alpha);
-                graphics.circle(0, 0, halfSize * 0.9);
-                graphics.fill();
-                break;
-
-            case HeroType.RUSSIAN_BLUE:
-                graphics.fillColor = new Color(106, 90, 205, alpha);
-                graphics.circle(0, 0, halfSize);
-                graphics.fill();
-                break;
-
-            case HeroType.AMERICAN_BOMBER:
-                graphics.fillColor = new Color(220, 20, 60, alpha);
-                graphics.rect(-halfSize, -halfSize, size, size);
-                graphics.fill();
-                break;
-
-            default:
-                graphics.fillColor = new Color(128, 128, 128, alpha);
-                graphics.circle(0, 0, halfSize);
-                graphics.fill();
-                console.warn(`未定义的英雄拖拽预览: ${heroType}`);
-                break;
+    private createDragPreviewWithSprite(heroType: HeroType, size: number): boolean {
+        // 直接使用面板中已有的图片路径映射
+        const imagePath = this.getHeroImagePath(heroType);
+        if (!imagePath) {
+            return false; // 没有对应图片，返回false
         }
 
-        console.log(`绘制拖拽预览: ${heroType}, 尺寸: ${size}`);
+        // 加载SpriteFrame资源（复用面板的加载方式）
+        resources.load(imagePath + "/spriteFrame", SpriteFrame, (err, spriteFrame) => {
+            if (err || !this._dragPreviewNode) {
+                console.warn(`加载拖拽预览图片失败: ${imagePath}`, err);
+                // 回退到Graphics绘制
+                this.createDragPreviewWithGraphics(heroType, size);
+                return;
+            }
+
+            // 添加Sprite组件并设置图片
+            const sprite = this._dragPreviewNode.addComponent(Sprite);
+            sprite.spriteFrame = spriteFrame;
+            sprite.type = Sprite.Type.SIMPLE;
+            sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+
+            // 设置拖拽预览的尺寸
+            const spriteTransform = sprite.node.getComponent(UITransform);
+            if (spriteTransform) {
+                spriteTransform.setContentSize(size, size);
+            }
+
+            console.log(`复用面板图片创建拖拽预览: ${heroType}`);
+        });
+
+        return true; // 表示尝试使用图片
+    }
+
+    /**
+     * 使用Graphics创建拖拽预览（回退方案）- 复用DrawingHelper逻辑
+     */
+    private createDragPreviewWithGraphics(heroType: HeroType, size: number): void {
+        const graphics = this._dragPreviewNode.addComponent(Graphics);
+
+        // 复用BaseHero的绘制逻辑，但使用较小的缩放比例
+        const heroTypeMap: Partial<Record<HeroType, string>> = {
+            [HeroType.ORANGE_CAT]: 'orange',
+            [HeroType.SIAMESE_MAGE]: 'siamese',
+            [HeroType.MAINE_THUNDER]: 'maine',
+            [HeroType.PERSIAN_SNIPER]: 'persian',
+            [HeroType.BRITISH_KNIGHT]: 'british',
+            [HeroType.BENGAL_HUNTER]: 'bengal',
+            [HeroType.NORWEGIAN_ICE]: 'norwegian',
+            [HeroType.SCOTTISH_MARKSMAN]: 'scottish',
+            [HeroType.ABYSSINIAN_ARCHER]: 'abyssinian',
+            [HeroType.RUSSIAN_BLUE]: 'russian',
+            [HeroType.AMERICAN_BOMBER]: 'american'
+        };
+
+        const drawType = heroTypeMap[heroType];
+        if (drawType) {
+            // 使用DrawingHelper的绘制方法，缩放比例调整为适合拖拽预览的大小
+            const scale = size / 40; // 基于DrawingHelper中20*scale的基础尺寸调整
+            DrawingHelper.drawHeroAppearance(graphics, drawType as any, scale);
+        } else {
+            // 回退到简单的圆形绘制
+            graphics.fillColor = new Color(128, 128, 128);
+            graphics.circle(0, 0, size / 2);
+            graphics.fill();
+            console.warn(`未定义的英雄拖拽预览: ${heroType}`);
+        }
+
+        console.log(`使用Graphics绘制拖拽预览: ${heroType}, 尺寸: ${size}`);
     }
 
     /**

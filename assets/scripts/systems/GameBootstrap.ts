@@ -1,4 +1,4 @@
-import { _decorator, Component, find, Node } from 'cc';
+import { _decorator, Component, find, Node, Sprite, UITransform, Widget, resources, SpriteFrame } from 'cc';
 import { GameHUD } from '../components/ui/GameHUD';
 import { HeroSelectionPanel } from '../components/ui/HeroSelectionPanel';
 import { GridDeploymentSystem } from './GridDeploymentSystem';
@@ -113,6 +113,8 @@ export class GameBootstrap extends Component {
     private createBasicSystems(): void {
         if (!this._canvasNode) return;
 
+        // 首先创建游戏背景
+        this.createGameBackground();
 
         // 创建GridDeploymentSystem
         const gridNode = new Node("GridDeploymentSystem");
@@ -122,6 +124,64 @@ export class GameBootstrap extends Component {
         // 网格系统已通过默认属性值使用游戏配置
 
         this.log("基础系统创建完成");
+    }
+
+    // 创建游戏背景
+    private createGameBackground(): void {
+        if (!this._canvasNode) return;
+
+        // 创建背景节点
+        const backgroundNode = new Node("GameBackground");
+        backgroundNode.parent = this._canvasNode;
+
+        // 添加UITransform组件并设置为全屏尺寸
+        const transform = backgroundNode.addComponent(UITransform);
+
+        // 添加Sprite组件
+        const sprite = backgroundNode.addComponent(Sprite);
+
+        // 添加Widget组件实现全屏填充
+        const widget = backgroundNode.addComponent(Widget);
+        widget.isAlignTop = true;
+        widget.isAlignBottom = true;
+        widget.isAlignLeft = true;
+        widget.isAlignRight = true;
+        widget.top = 0;
+        widget.bottom = 0;
+        widget.left = 0;
+        widget.right = 0;
+        widget.updateAlignment();
+
+        // 打印Canvas和背景节点尺寸信息用于调试
+        const canvasTransform = this._canvasNode.getComponent(UITransform);
+        if (canvasTransform) {
+            this.log(`Canvas尺寸: ${canvasTransform.contentSize.width} x ${canvasTransform.contentSize.height}`);
+        }
+        this.log(`背景节点尺寸: ${transform.contentSize.width} x ${transform.contentSize.height}`);
+
+        // 加载背景图片（Cocos Creator 3.x需要指定子资源类型）
+        resources.load("images/backgroup/spriteFrame", SpriteFrame, (err, spriteFrame) => {
+            if (err) {
+                this.error("背景图片加载失败:", err);
+                return;
+            }
+
+            if (sprite && sprite.isValid && spriteFrame) {
+                sprite.spriteFrame = spriteFrame;
+                sprite.type = Sprite.Type.SIMPLE;
+                sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+
+                // 强制更新Widget对齐，确保节点尺寸正确
+                widget.updateAlignment();
+
+                // 打印图片和Sprite尺寸信息用于调试
+                this.log(`原图尺寸: ${spriteFrame.originalSize.width} x ${spriteFrame.originalSize.height}`);
+                this.log(`Widget对齐后节点尺寸: ${transform.contentSize.width} x ${transform.contentSize.height}`);
+                this.log("背景图片加载成功");
+            }
+        });
+
+        this.log("游戏背景创建完成");
     }
 
     // 加载游戏资源
