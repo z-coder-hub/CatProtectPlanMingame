@@ -73,4 +73,9 @@ export class BritishKnight extends BaseHero {
         console.log(`${this.unitName} 被点击`);
     }
 
+    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    protected getPlacedImagePath(): string | null {
+        return null; // 暂时没有placed图片资源
+    }
+
 }

@@ -26,42 +26,8 @@ export class BengalHunter extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 父类已创建Graphics组件，直接使用
-        // _graphics由基类管理
-        this.drawBengalHunterAppearance();
-    }
-    
-    // 继承父类start()方法，无需重写
-    
-    private drawBengalHunterAppearance(): void {
-        if (!this._graphics) return;
-        
-        this._graphics.clear();
-        
-        // 绘制孟加拉猫身体（金黄色圆形）
-        this._graphics.fillColor = new Color(255, 215, 0); // 金色
-        this._graphics.circle(0, 0, 18);
-        this._graphics.fill();
-        
-        // 绘制花纹（深色条纹）
-        this._graphics.strokeColor = new Color(139, 69, 19);
-        this._graphics.lineWidth = 2;
-        this._graphics.moveTo(-12, -8);
-        this._graphics.lineTo(12, -8);
-        this._graphics.moveTo(-12, 0);
-        this._graphics.lineTo(12, 0);
-        this._graphics.moveTo(-12, 8);
-        this._graphics.lineTo(12, 8);
-        this._graphics.stroke();
-        
-        // 双弓标识
-        this._graphics.strokeColor = new Color(139, 69, 19);
-        this._graphics.lineWidth = 3;
-        this._graphics.moveTo(-8, -15);
-        this._graphics.lineTo(8, -15);
-        this._graphics.moveTo(-8, 15);
-        this._graphics.lineTo(8, 15);
-        this._graphics.stroke();
+        // 现在使用placed图片显示，无需自定义绘制
+        // 孟加拉猎手使用placed图片：BengalHunter_placed.png
     }
     
     // 目标分配由 BattleManager 统一处理
@@ -122,5 +88,10 @@ export class BengalHunter extends BaseHero {
             size: { width: 120, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
-    
+
+    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    protected getPlacedImagePath(): string | null {
+        return "images/placed/BengalHunter_placed";
+    }
+
 }

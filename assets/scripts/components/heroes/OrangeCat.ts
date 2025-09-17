@@ -72,6 +72,11 @@ export class OrangeCat extends BaseHero {
             size: { width: 100, height: 24 }
         };
     }
+
+    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    protected getPlacedImagePath(): string | null {
+        return "images/placed/OrangeCat_placed";
+    }
     
     // 组件销毁时清理资源 - 大幅简化，不再需要管理子弹
     protected onDestroy(): void {

@@ -6,7 +6,6 @@ import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
 import { HeroFactory } from '../../systems/HeroFactory';
 import { HeroType } from '../../types/GameTypes';
 import { UIHelper } from '../../utils/UIHelper';
-import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass } = _decorator;
 
@@ -1168,7 +1167,7 @@ export class HeroSelectionPanel extends Component {
     }
 
     /**
-     * 创建拖拽预览 - 优先使用图片资源，回退到Graphics绘制
+     * 创建拖拽预览 - 仅使用placed图片或白色圆点
      */
     private createDragPreview(heroType: HeroType): void {
         if (this._dragPreviewNode) {
@@ -1186,30 +1185,43 @@ export class HeroSelectionPanel extends Component {
         const opacity = this._dragPreviewNode.addComponent(UIOpacity);
         opacity.opacity = 200; // 约78%透明度，提供更好的拖拽反馈
 
-        // 尝试使用图片资源，否则使用Graphics绘制
-        this.createDragPreviewWithSprite(heroType, previewSize) ||
-        this.createDragPreviewWithGraphics(heroType, previewSize);
+        // 尝试使用placed图片，否则使用白色圆点
+        const placedPath = this.getHeroPlacedImagePath(heroType);
+        if (placedPath) {
+            this.createDragPreviewWithSprite(placedPath, previewSize);
+        } else {
+            this.createWhiteDotDragPreview(previewSize);
+        }
 
         console.log(`创建拖拽预览: ${heroType}, 节点: ${this._dragPreviewNode.name}`);
     }
 
     /**
-     * 使用Sprite组件创建拖拽预览（优先方案）
-     * 复用HeroSelectionPanel中已有的图片资源路径
+     * 获取英雄的placed图片路径
      */
-    private createDragPreviewWithSprite(heroType: HeroType, size: number): boolean {
-        // 直接使用面板中已有的图片路径映射
-        const imagePath = this.getHeroImagePath(heroType);
-        if (!imagePath) {
-            return false; // 没有对应图片，返回false
-        }
+    private getHeroPlacedImagePath(heroType: HeroType): string | null {
+        const placedMap: Partial<Record<HeroType, string>> = {
+            [HeroType.ORANGE_CAT]: "images/placed/OrangeCat_placed",
+            [HeroType.PERSIAN_SNIPER]: "images/placed/PersianSniper_placed",
+            [HeroType.BENGAL_HUNTER]: "images/placed/BengalHunter_placed",
+            [HeroType.MAINE_THUNDER]: "images/placed/MaineThunder_placed",
+            [HeroType.RUSSIAN_BLUE]: "images/placed/RussianBlue_placed",
+            [HeroType.AMERICAN_BOMBER]: "images/placed/AmericanBomber_placed"
+        };
 
-        // 加载SpriteFrame资源（复用面板的加载方式）
+        return placedMap[heroType] || null;
+    }
+
+    /**
+     * 使用placed Sprite组件创建拖拽预览
+     */
+    private createDragPreviewWithSprite(imagePath: string, size: number): void {
+        // 加载SpriteFrame资源
         resources.load(imagePath + "/spriteFrame", SpriteFrame, (err, spriteFrame) => {
             if (err || !this._dragPreviewNode) {
-                console.warn(`加载拖拽预览图片失败: ${imagePath}`, err);
-                // 回退到Graphics绘制
-                this.createDragPreviewWithGraphics(heroType, size);
+                console.warn(`加载拖拽预览placed图片失败: ${imagePath}`, err);
+                // 回退到白色圆点
+                this.createWhiteDotDragPreview(size);
                 return;
             }
 
@@ -1225,48 +1237,30 @@ export class HeroSelectionPanel extends Component {
                 spriteTransform.setContentSize(size, size);
             }
 
-            console.log(`复用面板图片创建拖拽预览: ${heroType}`);
+            console.log(`使用placed图片创建拖拽预览: ${imagePath}`);
         });
-
-        return true; // 表示尝试使用图片
     }
 
     /**
-     * 使用Graphics创建拖拽预览（回退方案）- 复用DrawingHelper逻辑
+     * 创建白色圆点拖拽预览
      */
-    private createDragPreviewWithGraphics(heroType: HeroType, size: number): void {
+    private createWhiteDotDragPreview(size: number): void {
         const graphics = this._dragPreviewNode.addComponent(Graphics);
 
-        // 复用BaseHero的绘制逻辑，但使用较小的缩放比例
-        const heroTypeMap: Partial<Record<HeroType, string>> = {
-            [HeroType.ORANGE_CAT]: 'orange',
-            [HeroType.SIAMESE_MAGE]: 'siamese',
-            [HeroType.MAINE_THUNDER]: 'maine',
-            [HeroType.PERSIAN_SNIPER]: 'persian',
-            [HeroType.BRITISH_KNIGHT]: 'british',
-            [HeroType.BENGAL_HUNTER]: 'bengal',
-            [HeroType.NORWEGIAN_ICE]: 'norwegian',
-            [HeroType.SCOTTISH_MARKSMAN]: 'scottish',
-            [HeroType.ABYSSINIAN_ARCHER]: 'abyssinian',
-            [HeroType.RUSSIAN_BLUE]: 'russian',
-            [HeroType.AMERICAN_BOMBER]: 'american'
-        };
+        // 绘制纯白色圆点
+        graphics.fillColor = new Color(255, 255, 255);
+        graphics.circle(0, 0, size / 2);
+        graphics.fill();
 
-        const drawType = heroTypeMap[heroType];
-        if (drawType) {
-            // 使用DrawingHelper的绘制方法，缩放比例调整为适合拖拽预览的大小
-            const scale = size / 40; // 基于DrawingHelper中20*scale的基础尺寸调整
-            DrawingHelper.drawHeroAppearance(graphics, drawType as any, scale);
-        } else {
-            // 回退到简单的圆形绘制
-            graphics.fillColor = new Color(128, 128, 128);
-            graphics.circle(0, 0, size / 2);
-            graphics.fill();
-            console.warn(`未定义的英雄拖拽预览: ${heroType}`);
-        }
+        // 添加简单的边框以提高可见性
+        graphics.strokeColor = new Color(200, 200, 200);
+        graphics.lineWidth = 2;
+        graphics.circle(0, 0, size / 2);
+        graphics.stroke();
 
-        console.log(`使用Graphics绘制拖拽预览: ${heroType}, 尺寸: ${size}`);
+        console.log(`使用白色圆点创建拖拽预览，尺寸: ${size}`);
     }
+
 
     /**
      * 更新拖拽预览位置

@@ -1,8 +1,7 @@
-import { _decorator, Animation, Color, Component, EventTouch, Graphics, Label, Node, Vec3, tween } from 'cc';
+import { _decorator, Animation, Color, Component, EventTouch, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Vec3, tween, resources } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
 import { HeroState, HeroType, UnitStats } from '../../types/GameTypes';
-import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass, property } = _decorator;
 
@@ -51,7 +50,8 @@ export abstract class BaseHero extends Component {
     // 移除生命条相关属性
 
     // === 统一外观系统属性 ===
-    protected _graphics: Graphics | null = null;
+    protected _sprite: Sprite | null = null;
+    protected _fallbackGraphics: Graphics | null = null;
     protected _nameLabel: Label | null = null;
     protected _animation: Animation | null = null;
 
@@ -194,11 +194,8 @@ export abstract class BaseHero extends Component {
      * 初始化基础外观组件 - 所有英雄共同的外观元素
      */
     protected initializeBaseVisuals(): void {
-        // 创建Graphics组件用于绘制英雄外观
-        this._graphics = this.node.addComponent(Graphics);
-
-        // 绘制英雄外观
-        this.drawHeroAppearance();
+        // 尝试加载placed图片，失败则使用白色圆点
+        this.loadPlacedSpriteOrFallback();
 
         // 创建名称标签
         this.createHeroNameLabel();
@@ -208,48 +205,84 @@ export abstract class BaseHero extends Component {
     }
 
     /**
-     * 获取Graphics组件的安全访问方法
-     * 子类应使用此方法而不是直接访问_graphics
+     * 加载placed图片或创建白色圆点回退
      */
-    protected getGraphics(): Graphics | null {
-        return this._graphics;
-    }
-
-    /**
-     * 统一的Graphics清理和重绘方法
-     * 子类可以使用此方法进行安全的重绘操作
-     */
-    protected redrawHeroAppearance(): void {
-        if (this._graphics) {
-            this._graphics.clear();
-            this.drawHeroAppearance();
+    protected loadPlacedSpriteOrFallback(): void {
+        const placedPath = this.getPlacedImagePath();
+        if (placedPath) {
+            this.loadPlacedSprite(placedPath);
+        } else {
+            this.createWhiteDotFallback();
         }
     }
 
     /**
-     * 绘制英雄外观 - 基于英雄类型自动选择绘制方式
+     * 获取英雄的placed图片路径
+     * 由子类实现，返回自己的资源配置
      */
-    protected drawHeroAppearance(): void {
-        if (!this._graphics) return;
+    protected abstract getPlacedImagePath(): string | null;
 
-        const heroTypeMap: Record<HeroType, string> = {
-            [HeroType.ORANGE_CAT]: 'orange',
-            [HeroType.SIAMESE_MAGE]: 'siamese',
-            [HeroType.MAINE_THUNDER]: 'maine',
-            [HeroType.PERSIAN_SNIPER]: 'persian',
-            [HeroType.BRITISH_KNIGHT]: 'british',
-            [HeroType.BENGAL_HUNTER]: 'bengal',
-            [HeroType.NORWEGIAN_ICE]: 'norwegian',
-            [HeroType.SCOTTISH_MARKSMAN]: 'scottish',
-            [HeroType.ABYSSINIAN_ARCHER]: 'abyssinian',
-            [HeroType.RUSSIAN_BLUE]: 'russian',
-            [HeroType.AMERICAN_BOMBER]: 'american'
-        };
+    /**
+     * 加载placed精灵图片
+     */
+    protected loadPlacedSprite(imagePath: string): void {
+        // 添加Sprite组件
+        this._sprite = this.node.addComponent(Sprite);
 
-        const drawType = heroTypeMap[this.heroType];
-        if (drawType) {
-            DrawingHelper.drawHeroAppearance(this._graphics, drawType as any);
+        // 设置Sprite属性
+        this._sprite.type = Sprite.Type.SIMPLE;
+        this._sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+
+        // 设置Sprite尺寸（保持与原Graphics绘制相同的视觉尺寸）
+        const spriteTransform = this._sprite.node.getComponent(UITransform);
+        if (spriteTransform) {
+            // 使用1.5倍缩放保持与原系统一致
+            const spriteSize = 60; // 30 * 2 = 60，匹配原来的Graphics绘制尺寸
+            spriteTransform.setContentSize(spriteSize, spriteSize);
         }
+
+        // 加载SpriteFrame资源
+        resources.load(imagePath + "/spriteFrame", SpriteFrame, (err, spriteFrame) => {
+            if (err) {
+                console.error(`加载英雄placed图片失败: ${imagePath}`, err);
+                // 加载失败时回退到白色圆点
+                if (this._sprite && this._sprite.isValid) {
+                    this._sprite.destroy();
+                    this._sprite = null;
+                }
+                this.createWhiteDotFallback();
+                return;
+            }
+
+            if (!this._sprite || !this._sprite.isValid) {
+                return;
+            }
+
+            // 设置SpriteFrame
+            this._sprite.spriteFrame = spriteFrame;
+            console.log(`成功加载英雄placed图片: ${imagePath}`);
+        });
+    }
+
+    /**
+     * 创建白色圆点回退显示
+     */
+    protected createWhiteDotFallback(): void {
+        // 添加Graphics组件用于绘制白色圆点
+        this._fallbackGraphics = this.node.addComponent(Graphics);
+
+        // 绘制纯白色圆点
+        this._fallbackGraphics.fillColor = new Color(255, 255, 255);
+        this._fallbackGraphics.circle(0, 0, 30); // 固定30像素半径
+        this._fallbackGraphics.fill();
+
+        // 添加简单的边框以提高可见性
+        this._fallbackGraphics.strokeColor = new Color(200, 200, 200);
+        this._fallbackGraphics.lineWidth = 2;
+        this._fallbackGraphics.circle(0, 0, 30);
+        this._fallbackGraphics.stroke();
+
+        console.log(`英雄 ${this.heroType} 使用白色圆点回退显示`);
     }
 
     /**
@@ -258,13 +291,26 @@ export abstract class BaseHero extends Component {
     protected createHeroNameLabel(): void {
         const labelConfig = this.getHeroLabelConfig();
 
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
-            text: labelConfig.text,
-            fontSize: labelConfig.fontSize,
-            color: labelConfig.color,
-            position: { x: 0, y: labelConfig.yOffset, z: 0 },
-            size: labelConfig.size
-        });
+        // 直接创建标签，不依赖DrawingHelper
+        const labelNode = new Node(`Label_${labelConfig.text}`);
+        labelNode.parent = this.node;
+        labelNode.setPosition(0, labelConfig.yOffset, 0);
+
+        // 设置UITransform
+        const uiTransform = labelNode.addComponent(UITransform);
+        if (labelConfig.size) {
+            uiTransform.setContentSize(labelConfig.size.width, labelConfig.size.height);
+        } else {
+            uiTransform.setContentSize(labelConfig.text.length * labelConfig.fontSize, labelConfig.fontSize);
+        }
+
+        // 创建Label组件
+        this._nameLabel = labelNode.addComponent(Label);
+        this._nameLabel.string = labelConfig.text;
+        this._nameLabel.fontSize = labelConfig.fontSize;
+        this._nameLabel.color = labelConfig.color;
+        this._nameLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
+        this._nameLabel.verticalAlign = Label.VerticalAlign.CENTER;
     }
 
 

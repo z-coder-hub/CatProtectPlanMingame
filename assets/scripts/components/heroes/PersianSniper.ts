@@ -74,6 +74,11 @@ export class PersianSniper extends BaseHero {
         };
     }
 
+    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    protected getPlacedImagePath(): string | null {
+        return "images/placed/PersianSniper_placed";
+    }
+
     protected onDestroy(): void {
         // 清理由基类处理
     }

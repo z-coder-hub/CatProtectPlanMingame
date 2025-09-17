@@ -29,45 +29,13 @@ export class MaineThunder extends BaseHero {
         this.cost = config.cost;
     }
     
-    // 实现BaseHero的拽象方法
+    // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeVisuals();
+        // 现在使用placed图片显示，无需自定义绘制
+        // 缅因雷法师使用placed图片：MaineThunder_placed.png
     }
     
-    // 初始化外观
-    private initializeVisuals(): void {
-        // 使用基类BaseHero的_graphics属性
-        if (!this._graphics) return;
-        
-        this.drawMaineThunderAppearance(this._graphics);
-    }
-    
-    // 绘制缅因雷猫外观
-    private drawMaineThunderAppearance(graphics: Graphics): void {
-        graphics.clear();
-        
-        // 绘制身体和边框（一条路径）
-        graphics.rect(-22, -22, 44, 44);
-        
-        // 填充身体（深蓝色，代表雷电）
-        graphics.fillColor = new Color(25, 25, 112); // 深蓝色
-        graphics.fill();
-        
-        // 描边雷电边框（亮蓝色）
-        graphics.strokeColor = new Color(0, 191, 255); // 亮蓝色
-        graphics.lineWidth = 3;
-        graphics.stroke();
-        
-        // 绘制雷电标识
-        graphics.strokeColor = new Color(255, 255, 0); // 黄色闪电
-        graphics.lineWidth = 3;
-        // 闪电形状
-        graphics.moveTo(-10, -15);
-        graphics.lineTo(5, -5);
-        graphics.lineTo(-5, 0);
-        graphics.lineTo(10, 10);
-        graphics.stroke();
-    }
+    // 绘制方法已移除 - 现在使用placed图片显示
     
     // 目标分配由 BattleManager 统一处理
     
@@ -136,5 +104,10 @@ export class MaineThunder extends BaseHero {
             size: { width: 110, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
-    
+
+    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    protected getPlacedImagePath(): string | null {
+        return "images/placed/MaineThunder_placed";
+    }
+
 }

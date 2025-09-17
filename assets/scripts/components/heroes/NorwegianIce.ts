@@ -26,49 +26,8 @@ export class NorwegianIce extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 父类已创建Graphics组件，直接使用基类的_graphics
-        // this._graphics已由BaseHero管理
-        this.drawNorwegianIceAppearance();
-    }
-    
-    // 继承父类start()方法，无需重写
-    
-    private drawNorwegianIceAppearance(): void {
-        if (!this._graphics) return;
-        
-        this._graphics.clear();
-        
-        // 绘制挪威森林猫身体（冰蓝色菱形）
-        this._graphics.fillColor = new Color(173, 216, 230); // 浅蓝色
-        this._graphics.moveTo(0, -20);
-        this._graphics.lineTo(15, 0);
-        this._graphics.lineTo(0, 20);
-        this._graphics.lineTo(-15, 0);
-        this._graphics.close();
-        this._graphics.fill();
-        
-        // 冰霜边框
-        this._graphics.strokeColor = new Color(70, 130, 180);
-        this._graphics.lineWidth = 2;
-        this._graphics.moveTo(0, -20);
-        this._graphics.lineTo(15, 0);
-        this._graphics.lineTo(0, 20);
-        this._graphics.lineTo(-15, 0);
-        this._graphics.close();
-        this._graphics.stroke();
-        
-        // 雪花标识
-        this._graphics.strokeColor = new Color(255, 255, 255);
-        this._graphics.lineWidth = 2;
-        this._graphics.moveTo(0, -10);
-        this._graphics.lineTo(0, 10);
-        this._graphics.moveTo(-8, 0);
-        this._graphics.lineTo(8, 0);
-        this._graphics.moveTo(-6, -6);
-        this._graphics.lineTo(6, 6);
-        this._graphics.moveTo(-6, 6);
-        this._graphics.lineTo(6, -6);
-        this._graphics.stroke();
+        // 现在使用白色圆点显示，无需自定义绘制
+        // 挪威森林猫使用白色圆点（无placed资源）
     }
     
     // 目标分配由 BattleManager 统一处理
@@ -151,5 +110,10 @@ export class NorwegianIce extends BaseHero {
             yOffset: 35,
             size: { width: 140, height: 24 }  // 增加宽度以容纳完整名称
         };
+    }
+
+    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    protected getPlacedImagePath(): string | null {
+        return null; // 暂时没有placed图片资源
     }
 }
