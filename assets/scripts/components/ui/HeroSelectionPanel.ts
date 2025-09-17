@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, EventTouch, Graphics, ImageAsset, Label, Mask, Node, resources, ScrollView, Sprite, SpriteFrame, Texture2D, UIOpacity, UITransform, Vec3, Widget } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, resources, ScrollView, Sprite, SpriteFrame, UIOpacity, UITransform, Vec3, Widget } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
 import { LevelManager } from '../../managers/LevelManager';
@@ -256,251 +256,41 @@ export class HeroSelectionPanel extends Component {
         // 更新Graphics图标（如果存在）
         const iconGraphics = iconNode.getComponent(Graphics);
         if (iconGraphics) {
-            // 使用专门的更新方法，避免重复添加Graphics组件
-            this.updateGeometricIcon(iconGraphics, iconNode, heroType, isUnlocked);
+            // 简单的回退图标更新
+            this.updateSimpleFallbackIcon(iconGraphics, heroType, isUnlocked);
         }
     }
 
     /**
-     * 更新几何图标状态（不重新创建Graphics组件）
+     * 更新简单回退图标状态
      */
-    private updateGeometricIcon(graphics: Graphics, iconNode: Node, heroType: HeroType, isUnlocked: boolean): void {
+    private updateSimpleFallbackIcon(graphics: Graphics, heroType: HeroType, isUnlocked: boolean): void {
         // 清除现有绘制内容
         graphics.clear();
 
-        // 动态计算缩放因子，适配容器大小
-        const iconTransform = iconNode.getComponent(UITransform);
-        const containerSize = iconTransform ? Math.min(iconTransform.contentSize.width, iconTransform.contentSize.height) : 60;
-        const baseSize = 36; // 基础图标设计尺寸（18 * 2）
-        const scale = Math.max((containerSize - 10) / baseSize, 0.5); // 保留5px边距，最小缩放0.5倍
+        // 简单的灰色圆形作为基本回退图标
+        const color = isUnlocked ? new Color(128, 128, 128) : new Color(80, 80, 80);
+        graphics.fillColor = color;
+        graphics.circle(0, 0, 20);
+        graphics.fill();
 
-        console.log(`更新几何图标: ${heroType}, 解锁=${isUnlocked}, 缩放=${scale.toFixed(2)}`);
-
-        // 未解锁英雄的透明度和饱和度调整
-        const alpha = isUnlocked ? 255 : 80;
-
-        // 应用置灰效果的颜色转换函数
-        const applyGrayEffect = (color: Color): Color => {
-            if (isUnlocked) return color;
-
-            const gray = (color.r * 0.299 + color.g * 0.587 + color.b * 0.114);
-            return new Color(
-                Math.round(gray * 0.9 + color.r * 0.1),
-                Math.round(gray * 0.9 + color.g * 0.1),
-                Math.round(gray * 0.9 + color.b * 0.1),
-                alpha
-            );
-        };
-
-        // 根据英雄类型绘制对应的几何图标
-        this.drawHeroGeometry(graphics, heroType, scale, applyGrayEffect);
+        console.log(`更新基本回退图标: ${heroType}, 解锁=${isUnlocked}`);
     }
 
     /**
-     * 绘制英雄几何图形（提取的绘制逻辑）
+     * 创建简单的回退图标（用于图片资源缺失时）
      */
-    private drawHeroGeometry(graphics: Graphics, heroType: HeroType, scale: number, applyGrayEffect: (color: Color) => Color): void {
-        // 根据英雄类型绘制不同图标
-        switch (heroType) {
-            case HeroType.ORANGE_CAT:
-                // 橘猫 - 橙色圆形 + 弓箭
-                graphics.fillColor = applyGrayEffect(new Color(255, 165, 0));
-                graphics.circle(0, 0, 18 * scale);
-                graphics.fill();
+    private createSimpleFallbackIcon(iconNode: Node, heroType: HeroType, isUnlocked: boolean): void {
+        // 添加Graphics组件
+        const graphics = iconNode.addComponent(Graphics);
 
-                graphics.strokeColor = applyGrayEffect(new Color(139, 69, 19));
-                graphics.lineWidth = 3 * scale;
-                graphics.moveTo(-10 * scale, 0);
-                graphics.lineTo(10 * scale, 0);
-                graphics.moveTo(8 * scale, -3 * scale);
-                graphics.lineTo(10 * scale, 0);
-                graphics.lineTo(8 * scale, 3 * scale);
-                graphics.stroke();
-                break;
+        // 简单的灰色圆形作为基本回退图标
+        const color = isUnlocked ? new Color(128, 128, 128) : new Color(80, 80, 80);
+        graphics.fillColor = color;
+        graphics.circle(0, 0, 20);
+        graphics.fill();
 
-            case HeroType.PERSIAN_SNIPER:
-                // 波斯猫 - 银色圆形 + 准星
-                graphics.fillColor = applyGrayEffect(new Color(192, 192, 192));
-                graphics.circle(0, 0, 18 * scale);
-                graphics.fill();
-
-                graphics.strokeColor = applyGrayEffect(new Color(64, 64, 64));
-                graphics.lineWidth = 2 * scale;
-                graphics.circle(0, 0, 12 * scale);
-                graphics.moveTo(0, -15 * scale);
-                graphics.lineTo(0, 15 * scale);
-                graphics.moveTo(-15 * scale, 0);
-                graphics.lineTo(15 * scale, 0);
-                graphics.stroke();
-                break;
-
-            case HeroType.BENGAL_HUNTER:
-                // 孟加拉猎手 - 金色圆形 + 双弓
-                graphics.fillColor = applyGrayEffect(new Color(255, 215, 0));
-                graphics.circle(0, 0, 18 * scale);
-                graphics.fill();
-
-                graphics.strokeColor = applyGrayEffect(new Color(139, 69, 19));
-                graphics.lineWidth = 2 * scale;
-                graphics.moveTo(-8 * scale, -15 * scale);
-                graphics.lineTo(8 * scale, -15 * scale);
-                graphics.moveTo(-8 * scale, 15 * scale);
-                graphics.lineTo(8 * scale, 15 * scale);
-                graphics.stroke();
-                break;
-
-            case HeroType.MAINE_THUNDER:
-                // 缅因雷猫 - 深蓝色方形 + 闪电
-                graphics.fillColor = applyGrayEffect(new Color(25, 25, 112));
-                graphics.rect(-18 * scale, -18 * scale, 36 * scale, 36 * scale);
-                graphics.fill();
-
-                graphics.strokeColor = applyGrayEffect(new Color(255, 255, 0));
-                graphics.lineWidth = 2 * scale;
-                graphics.moveTo(-8 * scale, -12 * scale);
-                graphics.lineTo(4 * scale, -2 * scale);
-                graphics.lineTo(-4 * scale, 2 * scale);
-                graphics.lineTo(8 * scale, 12 * scale);
-                graphics.stroke();
-                break;
-
-            case HeroType.RUSSIAN_BLUE:
-                // 俄罗斯蓝猫 - 蓝灰色星形 + 穿透箭
-                graphics.fillColor = applyGrayEffect(new Color(106, 90, 205));
-                const points = 8;
-                const outerR = 16 * scale;
-                const innerR = 8 * scale;
-                graphics.moveTo(outerR, 0);
-                for (let i = 0; i < points; i++) {
-                    const outerAngle = (i * 2 * Math.PI) / points;
-                    const innerAngle = ((i + 0.5) * 2 * Math.PI) / points;
-                    const outerX = outerR * Math.cos(outerAngle);
-                    const outerY = outerR * Math.sin(outerAngle);
-                    const innerX = innerR * Math.cos(innerAngle);
-                    const innerY = innerR * Math.sin(innerAngle);
-                    graphics.lineTo(outerX, outerY);
-                    graphics.lineTo(innerX, innerY);
-                }
-                graphics.close();
-                graphics.fill();
-
-                graphics.strokeColor = applyGrayEffect(new Color(255, 255, 255));
-                graphics.lineWidth = 2 * scale;
-                graphics.moveTo(-12 * scale, 0);
-                graphics.lineTo(12 * scale, 0);
-                graphics.moveTo(8 * scale, -3 * scale);
-                graphics.lineTo(12 * scale, 0);
-                graphics.lineTo(8 * scale, 3 * scale);
-                graphics.stroke();
-                break;
-
-            case HeroType.AMERICAN_BOMBER:
-                // 美国爆破兵 - 红白蓝方形 + 炸弹
-                graphics.fillColor = applyGrayEffect(new Color(220, 20, 60));
-                graphics.rect(-16 * scale, -16 * scale, 32 * scale, 10 * scale);
-                graphics.fill();
-                graphics.fillColor = applyGrayEffect(new Color(255, 255, 255));
-                graphics.rect(-16 * scale, -6 * scale, 32 * scale, 12 * scale);
-                graphics.fill();
-                graphics.fillColor = applyGrayEffect(new Color(0, 0, 139));
-                graphics.rect(-16 * scale, 6 * scale, 32 * scale, 10 * scale);
-                graphics.fill();
-
-                graphics.fillColor = applyGrayEffect(new Color(0, 0, 0));
-                graphics.circle(8 * scale, -8 * scale, 4 * scale);
-                graphics.fill();
-                break;
-
-            case HeroType.SIAMESE_MAGE:
-                // 暹罗法师 - 蓝色方形 + 魔法帽
-                graphics.fillColor = applyGrayEffect(new Color(100, 100, 255));
-                graphics.rect(-15 * scale, -15 * scale, 30 * scale, 30 * scale);
-                graphics.fill();
-
-                graphics.fillColor = applyGrayEffect(new Color(128, 0, 128));
-                graphics.moveTo(0, 15 * scale);
-                graphics.lineTo(-8 * scale, -5 * scale);
-                graphics.lineTo(8 * scale, -5 * scale);
-                graphics.close();
-                graphics.fill();
-                break;
-
-            case HeroType.NORWEGIAN_ICE:
-                // 挪威冰猫 - 冰蓝色菱形 + 雪花
-                graphics.fillColor = applyGrayEffect(new Color(173, 216, 230));
-                graphics.moveTo(0, -16 * scale);
-                graphics.lineTo(12 * scale, 0);
-                graphics.lineTo(0, 16 * scale);
-                graphics.lineTo(-12 * scale, 0);
-                graphics.close();
-                graphics.fill();
-
-                graphics.strokeColor = applyGrayEffect(new Color(255, 255, 255));
-                graphics.lineWidth = 2 * scale;
-                graphics.moveTo(0, -8 * scale);
-                graphics.lineTo(0, 8 * scale);
-                graphics.moveTo(-8 * scale, 0);
-                graphics.lineTo(8 * scale, 0);
-                graphics.stroke();
-                break;
-
-            case HeroType.BRITISH_KNIGHT:
-                // 英国骑士 - 蓝色方形 + 盾牌
-                graphics.fillColor = applyGrayEffect(new Color(100, 149, 237));
-                graphics.rect(-16 * scale, -16 * scale, 32 * scale, 32 * scale);
-                graphics.fill();
-
-                graphics.fillColor = applyGrayEffect(new Color(192, 192, 192));
-                graphics.moveTo(0, -12 * scale);
-                graphics.lineTo(-8 * scale, 0);
-                graphics.lineTo(0, 12 * scale);
-                graphics.lineTo(8 * scale, 0);
-                graphics.close();
-                graphics.fill();
-                break;
-
-            case HeroType.SCOTTISH_MARKSMAN:
-                // 苏格兰射手 - 橙色圆形 + 弓箭
-                graphics.fillColor = applyGrayEffect(new Color(255, 140, 0));
-                graphics.circle(0, 0, 14 * scale);
-                graphics.fill();
-
-                graphics.strokeColor = applyGrayEffect(new Color(128, 128, 128));
-                graphics.lineWidth = 3 * scale;
-                graphics.moveTo(10 * scale, -6 * scale);
-                graphics.lineTo(16 * scale, -6 * scale);
-                graphics.moveTo(13 * scale, -9 * scale);
-                graphics.lineTo(13 * scale, -3 * scale);
-                graphics.stroke();
-                break;
-
-            case HeroType.ABYSSINIAN_ARCHER:
-                // 阿比西尼亚弓箭手 - 棕色六边形 + 箭矢
-                graphics.fillColor = applyGrayEffect(new Color(160, 82, 45));
-                const sides = 6;
-                const radius = 14 * scale;
-                graphics.moveTo(radius, 0);
-                for (let i = 1; i <= sides; i++) {
-                    const angle = (i * 2 * Math.PI) / sides;
-                    const x = radius * Math.cos(angle);
-                    const y = radius * Math.sin(angle);
-                    graphics.lineTo(x, y);
-                }
-                graphics.fill();
-
-                graphics.fillColor = applyGrayEffect(new Color(255, 255, 0));
-                graphics.circle(6 * scale, -6 * scale, 4 * scale);
-                graphics.fill();
-                break;
-
-            default:
-                // 默认几何图形
-                graphics.fillColor = applyGrayEffect(new Color(128, 128, 128));
-                graphics.circle(0, 0, 18 * scale);
-                graphics.fill();
-                console.warn(`英雄类型 ${heroType} 没有对应的图标`);
-                break;
-        }
+        console.log(`创建基本回退图标: ${heroType}, 解锁=${isUnlocked}`);
     }
 
     /**
@@ -1221,8 +1011,9 @@ export class HeroSelectionPanel extends Component {
             // 使用真实图片
             this.loadHeroImage(iconNode, imagePath, isUnlocked);
         } else {
-            // 回退到几何图形（用于没有图片的英雄）
-            this.createGeometricIcon(iconNode, heroType, isUnlocked);
+            // 图片资源缺失，提供基本回退方案
+            console.warn(`英雄 ${heroType} 缺少图标资源，使用基本回退图标`);
+            this.createSimpleFallbackIcon(iconNode, heroType, isUnlocked);
         }
     }
 
@@ -1231,12 +1022,22 @@ export class HeroSelectionPanel extends Component {
      */
     private getHeroImagePath(heroType: HeroType): string | null {
         const imageMap: { [key in HeroType]?: string } = {
-            [HeroType.ORANGE_CAT]: "images/OrangeCat",
-            [HeroType.PERSIAN_SNIPER]: "images/PersianSniper",
-            [HeroType.BENGAL_HUNTER]: "images/BengalHunter",
-            [HeroType.MAINE_THUNDER]: "images/MaineThunder",
-            [HeroType.RUSSIAN_BLUE]: "images/RussianBlue",
-            [HeroType.AMERICAN_BOMBER]: "images/AmericanBomber_icon"
+            // 射击英雄 - 物理射击子类
+            [HeroType.ORANGE_CAT]: "images/icon/OrangeCat_icon",
+            [HeroType.PERSIAN_SNIPER]: "images/icon/PersianSniper_icon",
+            [HeroType.BENGAL_HUNTER]: "images/icon/BengalHunter_icon",
+            [HeroType.SCOTTISH_MARKSMAN]: "images/icon/ScottishMarksman_icon",
+
+            // 射击英雄 - 魔法射击子类
+            [HeroType.SIAMESE_MAGE]: "images/icon/SiameseMage_icon",
+            [HeroType.MAINE_THUNDER]: "images/icon/MaineThunder_icon",
+            [HeroType.NORWEGIAN_ICE]: "images/icon/NorwegianIce_icon",
+            [HeroType.ABYSSINIAN_ARCHER]: "images/icon/AbyssinianArcher_icon",
+
+            // 近战英雄
+            [HeroType.BRITISH_KNIGHT]: "images/icon/BritishKnight_icon",
+            [HeroType.RUSSIAN_BLUE]: "images/icon/RussianBlue_icon",
+            [HeroType.AMERICAN_BOMBER]: "images/icon/AmericanBomber_icon"
         };
 
         return imageMap[heroType] || null;
@@ -1287,12 +1088,12 @@ export class HeroSelectionPanel extends Component {
             if (err) {
                 console.error(`加载英雄图片失败: ${imagePath}`, err);
                 console.warn("请确保在Cocos Creator编辑器中正确配置了resources目录");
-                // 加载失败时回退到几何图形
+                // 加载失败时使用基本回退图标
                 if (sprite && sprite.isValid) {
                     sprite.destroy();
                 }
                 const heroType = this.getHeroTypeFromImagePath(imagePath);
-                this.createGeometricIcon(iconNode, heroType, isUnlocked);
+                this.createSimpleFallbackIcon(iconNode, heroType, isUnlocked);
                 return;
             }
 
@@ -1307,30 +1108,32 @@ export class HeroSelectionPanel extends Component {
         });
     }
 
+
     /**
      * 从图片路径反推英雄类型（用于错误回退）
      */
     private getHeroTypeFromImagePath(imagePath: string): HeroType {
+        // 射击英雄 - 物理射击子类
         if (imagePath.includes("OrangeCat")) return HeroType.ORANGE_CAT;
         if (imagePath.includes("PersianSniper")) return HeroType.PERSIAN_SNIPER;
         if (imagePath.includes("BengalHunter")) return HeroType.BENGAL_HUNTER;
+        if (imagePath.includes("ScottishMarksman")) return HeroType.SCOTTISH_MARKSMAN;
+
+        // 射击英雄 - 魔法射击子类
+        if (imagePath.includes("SiameseMage")) return HeroType.SIAMESE_MAGE;
         if (imagePath.includes("MaineThunder")) return HeroType.MAINE_THUNDER;
+        if (imagePath.includes("NorwegianIce")) return HeroType.NORWEGIAN_ICE;
+        if (imagePath.includes("AbyssinianArcher")) return HeroType.ABYSSINIAN_ARCHER;
+
+        // 近战英雄
+        if (imagePath.includes("BritishKnight")) return HeroType.BRITISH_KNIGHT;
         if (imagePath.includes("RussianBlue")) return HeroType.RUSSIAN_BLUE;
         if (imagePath.includes("AmericanBomber")) return HeroType.AMERICAN_BOMBER;
+
         return HeroType.ORANGE_CAT; // 默认值
     }
 
 
-    /**
-     * 创建几何图形图标（回退方案，用于没有图片的英雄）
-     */
-    private createGeometricIcon(iconNode: Node, heroType: HeroType, isUnlocked: boolean): void {
-        // 添加Graphics组件
-        const iconGraphics = iconNode.addComponent(Graphics);
-
-        // 使用统一的绘制逻辑
-        this.updateGeometricIcon(iconGraphics, iconNode, heroType, isUnlocked);
-    }
 
 
     // ========== 拖拽系统方法 ==========

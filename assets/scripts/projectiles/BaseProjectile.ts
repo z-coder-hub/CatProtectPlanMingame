@@ -23,7 +23,7 @@ export abstract class BaseProjectile extends Component {
     protected speed: number = 300;
     
     @property({ tooltip: "碰撞检测半径" })
-    protected hitRadius: number = 25;
+    protected hitRadius: number = 40; // 放大1.6倍以匹配视觉尺寸
     
     @property({ tooltip: "最大飞行距离" })
     protected maxRange: number = PROJECTILE_CONFIG.maxRange;

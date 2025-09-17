@@ -1,5 +1,4 @@
 import { _decorator, Color, Graphics, Node, tween, Vec3 } from 'cc';
-import { BattleManager } from '../../managers/BattleManager';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 import { BaseMouse } from './BaseMouse';

@@ -1,4 +1,4 @@
-import { _decorator, Component, find, Node, Sprite, UITransform, Widget, resources, SpriteFrame } from 'cc';
+import { _decorator, Component, find, Node, Sprite, UITransform, Widget, resources, SpriteFrame, Color, Graphics } from 'cc';
 import { GameHUD } from '../components/ui/GameHUD';
 import { HeroSelectionPanel } from '../components/ui/HeroSelectionPanel';
 import { GridDeploymentSystem } from './GridDeploymentSystem';
@@ -163,6 +163,9 @@ export class GameBootstrap extends Component {
         resources.load("images/backgroup/spriteFrame", SpriteFrame, (err, spriteFrame) => {
             if (err) {
                 this.error("背景图片加载失败:", err);
+                console.warn("使用纯色背景作为回退方案");
+                // 回退到纯色背景
+                this.createFallbackBackground(sprite);
                 return;
             }
 
@@ -171,17 +174,72 @@ export class GameBootstrap extends Component {
                 sprite.type = Sprite.Type.SIMPLE;
                 sprite.sizeMode = Sprite.SizeMode.CUSTOM;
 
+                // 设置背景调暗效果 (RGB值调低，Alpha保持255)
+                sprite.color = new Color(120, 120, 120, 255);
+
                 // 强制更新Widget对齐，确保节点尺寸正确
                 widget.updateAlignment();
 
                 // 打印图片和Sprite尺寸信息用于调试
                 this.log(`原图尺寸: ${spriteFrame.originalSize.width} x ${spriteFrame.originalSize.height}`);
                 this.log(`Widget对齐后节点尺寸: ${transform.contentSize.width} x ${transform.contentSize.height}`);
-                this.log("背景图片加载成功");
+                this.log("背景图片加载成功并已调暗");
             }
         });
 
         this.log("游戏背景创建完成");
+    }
+
+    /**
+     * 创建回退背景（当图片资源加载失败时使用纯色背景）
+     */
+    private createFallbackBackground(sprite: Sprite): void {
+        if (!sprite || !sprite.isValid) return;
+
+        // 移除Sprite组件，改用Graphics绘制纯色背景
+        const node = sprite.node;
+        sprite.destroy();
+
+        // 检查是否已有Graphics组件，避免重复添加
+        let graphics = node.getComponent(Graphics);
+        if (!graphics) {
+            graphics = node.addComponent(Graphics);
+        }
+        const transform = node.getComponent(UITransform);
+
+        if (graphics && transform) {
+            graphics.clear();
+
+            // 使用深绿色作为游戏背景（模拟草地）
+            graphics.fillColor = new Color(34, 82, 34, 255); // 深绿色
+            graphics.rect(-transform.contentSize.width / 2, -transform.contentSize.height / 2,
+                         transform.contentSize.width, transform.contentSize.height);
+            graphics.fill();
+
+            // 添加网格线条来增加视觉效果
+            graphics.strokeColor = new Color(48, 96, 48, 255); // 稍浅的绿色
+            graphics.lineWidth = 1;
+
+            const gridSize = 100;
+            const width = transform.contentSize.width;
+            const height = transform.contentSize.height;
+
+            // 画垂直网格线
+            for (let x = 0; x <= width; x += gridSize) {
+                graphics.moveTo(x - width / 2, -height / 2);
+                graphics.lineTo(x - width / 2, height / 2);
+            }
+
+            // 画水平网格线
+            for (let y = 0; y <= height; y += gridSize) {
+                graphics.moveTo(-width / 2, y - height / 2);
+                graphics.lineTo(width / 2, y - height / 2);
+            }
+
+            graphics.stroke();
+
+            this.log("已创建回退背景：深绿色网格背景");
+        }
     }
 
     // 加载游戏资源
