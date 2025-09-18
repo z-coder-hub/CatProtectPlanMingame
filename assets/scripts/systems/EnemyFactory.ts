@@ -1,5 +1,5 @@
 import { _decorator, Node } from 'cc';
-import { EnemyType } from '../types/GameConstants';
+import { EnemyType } from '../types/GameTypes';
 import { EnemyPoolManager } from './EnemyPoolManager';
 
 const { ccclass } = _decorator;

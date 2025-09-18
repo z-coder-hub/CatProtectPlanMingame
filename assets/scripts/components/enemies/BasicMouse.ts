@@ -17,7 +17,7 @@ export class BasicMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.BASIC_MOUSE,
-            name: "基础鼠",
+            name: "小老鼠",
             category: EnemyCategory.BASIC,
             health: 25,
             maxHealth: 25,
@@ -99,7 +99,7 @@ export class BasicMouse extends BaseMouse {
 
     // 重写受伤方法，添加受伤反馈
     protected onTakeDamage(damage: number): void {
-        console.log(`基础鼠受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
+        console.log(`小老鼠受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
 
         // 受伤闪烁效果
         this.playHurtEffect();

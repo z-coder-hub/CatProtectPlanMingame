@@ -2,7 +2,7 @@ import { _decorator, Color, Component, Graphics, Label, Node, tween, Vec3, direc
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
 import { EnemyConfig, EnemyState, EnemyUnitStats, EnemyCategory } from '../../types/GameTypes';
-import { EnemyType } from '../../types/GameConstants';
+import { EnemyType } from '../../types/GameTypes';
 
 const { ccclass, property } = _decorator;
 

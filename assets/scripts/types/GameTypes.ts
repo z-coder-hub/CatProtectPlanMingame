@@ -50,23 +50,23 @@ export enum EnemyCategory {
 // 敌人类型枚举
 export enum EnemyType {
     // 基础单位
-    BASIC_MOUSE = "BasicMouse",         // 基础老鼠
-    GIANT_MOUSE = "GiantMouse",         // 巨型老鼠
+    BASIC_MOUSE = "BasicMouse",         // 小老鼠
+    GIANT_MOUSE = "GiantMouse",         // 巨鼠
 
     // 快速单位
-    FAST_MOUSE = "FastMouse",           // 快速老鼠
-    SPEED_MOUSE = "SpeedMouse",         // 疾速老鼠
+    FAST_MOUSE = "FastMouse",           // 疾风鼠
+    SPEED_MOUSE = "SpeedMouse",         // 闪电鼠
 
     // 装甲单位
-    ARMORED_MOUSE = "ArmoredMouse",     // 装甲老鼠
-    TANK_MOUSE = "TankMouse",           // 坦克老鼠
+    ARMORED_MOUSE = "ArmoredMouse",     // 钢甲鼠
+    TANK_MOUSE = "TankMouse",           // 铁甲鼠
 
     // 特殊单位
-    STEALTH_MOUSE = "StealthMouse",     // 潜行老鼠
+    STEALTH_MOUSE = "StealthMouse",     // 幻影鼠
 
     // BOSS单位
-    MOUSE_KING = "MouseKing",           // 老鼠王
-    MECH_MOUSE = "MechMouse",           // 机械老鼠
+    MOUSE_KING = "MouseKing",           // 鼠王
+    MECH_MOUSE = "MechMouse",           // 机甲鼠
     
     // 新BOSS单位（关卡4-10专用）
     ARMOR_OVERLORD = "ArmorOverlord",       // 重甲统领

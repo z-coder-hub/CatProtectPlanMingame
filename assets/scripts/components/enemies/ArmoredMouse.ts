@@ -24,7 +24,7 @@ export class ArmoredMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.ARMORED_MOUSE,
-            name: "装甲鼠",
+            name: "钢甲鼠",
             category: EnemyCategory.ARMORED,
             health: 60,
             maxHealth: 60,

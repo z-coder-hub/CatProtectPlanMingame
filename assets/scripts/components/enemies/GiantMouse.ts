@@ -20,7 +20,7 @@ export class GiantMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.GIANT_MOUSE,
-            name: "巨型鼠",
+            name: "巨鼠",
             category: EnemyCategory.BASIC,
             health: 80,
             maxHealth: 80,

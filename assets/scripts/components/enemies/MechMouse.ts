@@ -23,7 +23,7 @@ export class MechMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.MECH_MOUSE,
-            name: "机械老鼠",
+            name: "机甲鼠",
             category: EnemyCategory.BOSS,
             health: 180,
             maxHealth: 180,

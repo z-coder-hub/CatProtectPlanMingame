@@ -27,7 +27,7 @@ export class StealthMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.STEALTH_MOUSE,
-            name: "潜行鼠",
+            name: "幻影鼠",
             category: EnemyCategory.SPECIAL,
             health: 30,
             maxHealth: 30,

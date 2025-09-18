@@ -19,7 +19,7 @@ export class SpeedMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.SPEED_MOUSE,
-            name: "极速鼠",
+            name: "闪电鼠",
             category: EnemyCategory.FAST,
             health: 15,
             maxHealth: 15,

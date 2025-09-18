@@ -22,7 +22,7 @@ export class TankMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.TANK_MOUSE,
-            name: "坦克鼠",
+            name: "铁甲鼠",
             category: EnemyCategory.ARMORED,
             health: 120,
             maxHealth: 120,

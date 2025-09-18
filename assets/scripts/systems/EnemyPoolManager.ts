@@ -1,5 +1,5 @@
 import { _decorator, Node, NodePool, director } from 'cc';
-import { EnemyType } from '../types/GameConstants';
+import { EnemyType } from '../types/GameTypes';
 import { BasicMouse } from '../components/enemies/BasicMouse';
 import { GiantMouse } from '../components/enemies/GiantMouse';
 import { FastMouse } from '../components/enemies/FastMouse';
