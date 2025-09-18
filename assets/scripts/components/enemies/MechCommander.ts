@@ -161,15 +161,23 @@ export class MechCommander extends BaseMouse {
     /**
      * 初始化机械军团长外观
      */
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return null; // 使用Graphics回退绘制
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
 
-        // 机械色彩 - 银灰色机械风
-        graphics.fillColor = new Color(140, 140, 140, 255);   // 银灰色主体
-        graphics.strokeColor = new Color(100, 100, 100, 255); // 深灰色边框
-        graphics.lineWidth = 3;
-
-        // 机械身体 - 六角形指挥官形状
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+        // 机械军团长 - 银灰色机械风
+        graphics.fillColor = new Color(140, 140, 140);
+        // 六角形指挥官形状
         graphics.moveTo(0, -20);
         graphics.lineTo(15, -10);
         graphics.lineTo(15, 10);
@@ -178,63 +186,16 @@ export class MechCommander extends BaseMouse {
         graphics.lineTo(-15, -10);
         graphics.close();
         graphics.fill();
-        graphics.stroke();
-
         // 指挥头盔
-        graphics.fillColor = new Color(120, 120, 150, 255);   // 蓝灰色头盔
+        graphics.fillColor = new Color(120, 120, 150);
         graphics.rect(-12, -25, 24, 15);
         graphics.fill();
-        graphics.stroke();
-
-        // 机械眼睛 - 红色扫描器
-        graphics.fillColor = new Color(255, 50, 50, 255);
+        // 机械眼睛
+        graphics.fillColor = new Color(255, 50, 50);
         graphics.rect(-8, -22, 6, 3);
         graphics.fill();
         graphics.rect(2, -22, 6, 3);
         graphics.fill();
-
-        // 天线/通讯设备
-        graphics.strokeColor = new Color(200, 200, 200, 255);
-        graphics.lineWidth = 2;
-        graphics.moveTo(-5, -25);
-        graphics.lineTo(-5, -35);
-        graphics.stroke();
-        graphics.moveTo(5, -25);
-        graphics.lineTo(5, -35);
-        graphics.stroke();
-
-        // 天线顶部
-        graphics.fillColor = new Color(255, 100, 100, 255);
-        graphics.circle(-5, -35, 2);
-        graphics.fill();
-        graphics.circle(5, -35, 2);
-        graphics.fill();
-
-        // 机械臂/武器系统
-        graphics.fillColor = new Color(110, 110, 110, 255);
-        graphics.rect(-25, -8, 12, 6);
-        graphics.fill();
-        graphics.stroke();
-        graphics.rect(13, -8, 12, 6);
-        graphics.fill();
-        graphics.stroke();
-
-        // 履带/移动系统
-        graphics.fillColor = new Color(80, 80, 80, 255);
-        graphics.rect(-18, 15, 36, 10);
-        graphics.fill();
-        graphics.stroke();
-
-        // 履带齿轮
-        for (let i = 0; i < 6; i++) {
-            const x = -15 + (i * 6);
-            graphics.fillColor = new Color(60, 60, 60, 255);
-            graphics.circle(x, 20, 2);
-            graphics.fill();
-        }
-
-        // 机械装饰线条
-        this.drawMechanicalDetails(graphics);
     }
 
     /**

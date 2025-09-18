@@ -1,6 +1,5 @@
 import { _decorator, Color, Graphics, Node, tween, Vec3 } from 'cc';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
-import { DrawingHelper } from '../../utils/DrawingHelper';
 import { BaseMouse } from './BaseMouse';
 
 const { ccclass, property } = _decorator;
@@ -25,7 +24,7 @@ export class ArmoredMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.ARMORED_MOUSE,
-            name: "装甲老鼠",
+            name: "装甲鼠",
             category: EnemyCategory.ARMORED,
             health: 60,
             maxHealth: 60,
@@ -35,10 +34,63 @@ export class ArmoredMouse extends BaseMouse {
         };
     }
 
-    // 实现BaseMouse的抽象方法 - 合并函数，消除不必要的中间层
-    // 移除错误的initializeHealthBar()调用 - 该方法不存在，基类已统一处理血条
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return "images/emeies/ArmoredMouse";
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        this.drawArmoredMouseAppearance();
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 装甲老鼠 - 金属灰色装甲外观
+        graphics.fillColor = new Color(128, 128, 128); // 金属灰
+        graphics.circle(0, 0, 18);
+        graphics.fill();
+
+        // 装甲边框（更厚）
+        graphics.strokeColor = new Color(64, 64, 64);
+        graphics.lineWidth = 3;
+        graphics.circle(0, 0, 18);
+        graphics.stroke();
+
+        // 装甲板（胸甲）
+        graphics.fillColor = new Color(160, 160, 160);
+        graphics.rect(-12, -10, 24, 15);
+        graphics.fill();
+        graphics.stroke();
+
+        // 头盔
+        graphics.fillColor = new Color(112, 112, 112);
+        graphics.circle(0, 12, 8);
+        graphics.fill();
+        graphics.stroke();
+
+        // 眼缝（盔甲上的眼洞）
+        graphics.fillColor = new Color(255, 0, 0);
+        graphics.rect(-6, 10, 3, 2);
+        graphics.fill();
+        graphics.rect(3, 10, 3, 2);
+        graphics.fill();
+
+        // 装甲刺
+        graphics.fillColor = new Color(192, 192, 192);
+        graphics.moveTo(-8, -15);
+        graphics.lineTo(-6, -20);
+        graphics.lineTo(-4, -15);
+        graphics.close();
+        graphics.fill();
+        graphics.moveTo(4, -15);
+        graphics.lineTo(6, -20);
+        graphics.lineTo(8, -15);
+        graphics.close();
+        graphics.fill();
     }
 
     // 装甲老鼠不再有攻击能力，移除 performAttack 方法
@@ -234,7 +286,15 @@ export class ArmoredMouse extends BaseMouse {
     private updateHealthBarDisplay(): void {
         if (this._healthBarForeground && this._healthBarContainer) {
             const healthPercent = this.currentHealth / this.maxHealth;
-            DrawingHelper.updateHealthBar(this._healthBarForeground, healthPercent, 35, 5);
+
+            // 直接更新血条，移除DrawingHelper依赖
+            this._healthBarForeground.clear();
+            if (healthPercent > 0) {
+                this._healthBarForeground.fillColor = new Color(255, 0, 0);
+                const currentWidth = 35 * healthPercent;
+                this._healthBarForeground.rect(-35 / 2, -5 / 2, currentWidth, 5);
+                this._healthBarForeground.fill();
+            }
 
             // 血条始终显示，只有死亡时才隐藏
             this._healthBarContainer.active = healthPercent > 0;

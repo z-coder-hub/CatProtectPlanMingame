@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, tween, UIOpacity } from 'cc';
+import { _decorator, Color, Graphics, Vec3, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
@@ -32,17 +32,67 @@ export class MechMouse extends BaseMouse {
         };
     }
 
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return null; // 使用Graphics回退绘制
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        // 创建机械老鼠外观 - 银灰色科技外观
-        this._graphics = this.getGraphicsComponent();
-
-        // 设置节点缩放，机械老鼠比普通老鼠大30%
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // BOSS比普通敌人更大
         this.node.setScale(1.3, 1.3, 1.3);
+    }
 
-        // 绘制机械老鼠身体
-        this.drawMechMouseAppearance();
-        
-        console.log(`${this.unitName}外观创建完成`);
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 机械老鼠 - 银灰色科技外观
+        graphics.fillColor = new Color(169, 169, 169); // 银色
+        graphics.roundRect(-15, -12, 30, 24, 4);
+        graphics.fill();
+
+        // 机械边框
+        graphics.strokeColor = new Color(105, 105, 105);
+        graphics.lineWidth = 2;
+        graphics.roundRect(-15, -12, 30, 24, 4);
+        graphics.stroke();
+
+        // 机械眼睛（红色LED）
+        graphics.fillColor = new Color(255, 0, 0);
+        graphics.circle(-6, 6, 3);
+        graphics.fill();
+        graphics.circle(6, 6, 3);
+        graphics.fill();
+
+        // 机械天线
+        graphics.strokeColor = new Color(220, 220, 220);
+        graphics.lineWidth = 2;
+        graphics.moveTo(0, 12);
+        graphics.lineTo(0, 20);
+        graphics.stroke();
+
+        // 天线发光点
+        graphics.fillColor = new Color(0, 255, 255);
+        graphics.circle(0, 20, 2);
+        graphics.fill();
+
+        // 机械履带
+        graphics.fillColor = new Color(128, 128, 128);
+        graphics.rect(-18, -8, 36, 6);
+        graphics.fill();
+        graphics.stroke();
+
+        // 履带纹理
+        for (let i = 0; i < 8; i++) {
+            const x = -16 + (i * 4);
+            graphics.strokeColor = new Color(64, 64, 64);
+            graphics.lineWidth = 1;
+            graphics.moveTo(x, -8);
+            graphics.lineTo(x, -2);
+            graphics.stroke();
+        }
     }
     
     /**

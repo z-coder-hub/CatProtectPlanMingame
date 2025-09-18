@@ -1,4 +1,4 @@
-import { _decorator, Color, tween, Vec3, UIOpacity } from 'cc';
+import { _decorator, Color, Graphics, tween, Vec3, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
@@ -27,7 +27,7 @@ export class StealthMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.STEALTH_MOUSE,
-            name: "潜行老鼠",
+            name: "潜行鼠",
             category: EnemyCategory.SPECIAL,
             health: 30,
             maxHealth: 30,
@@ -47,14 +47,59 @@ export class StealthMouse extends BaseMouse {
         console.log(`初始化${this.unitName}: 血量${this.maxHealth}, 移速${this.moveSpeed}, 闪避${this.dodgeChance * 100}%, 奖励${this.goldReward}金币`);
     }
     
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return "images/emeies/StealthMouse";
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        // 创建潜行老鼠外观 - 紫色半透明外观
-        this._graphics = this.getGraphicsComponent();
-        
-        // 绘制潜行老鼠身体（较小且敏捷的外观）
-        this.drawStealthMouseAppearance(false);
-        
-        console.log(`${this.unitName}外观创建完成`);
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 潜行老鼠 - 紫色半透明外观
+        const alpha = this._isStealthed ? 100 : 255;
+        graphics.fillColor = new Color(128, 0, 128, alpha); // 紫色，可能半透明
+        graphics.circle(0, 0, 14);
+        graphics.fill();
+
+        // 边框
+        graphics.strokeColor = new Color(64, 0, 64, alpha);
+        graphics.lineWidth = 2;
+        graphics.circle(0, 0, 14);
+        graphics.stroke();
+
+        // 忍者面具
+        graphics.fillColor = new Color(32, 32, 32, alpha);
+        graphics.rect(-12, 8, 24, 6);
+        graphics.fill();
+
+        // 眼睛（发光）
+        graphics.fillColor = new Color(255, 255, 0, alpha);
+        graphics.circle(-5, 10, 2);
+        graphics.fill();
+        graphics.circle(5, 10, 2);
+        graphics.fill();
+
+        // 潜行阴影效果
+        if (!this._isStealthed) {
+            graphics.fillColor = new Color(0, 0, 0, 50);
+            graphics.circle(2, -2, 12);
+            graphics.fill();
+        }
+
+        // 潜行波纹
+        graphics.strokeColor = new Color(128, 0, 128, 80);
+        graphics.lineWidth = 1;
+        for (let i = 1; i <= 3; i++) {
+            graphics.circle(0, 0, 14 + i * 4);
+            graphics.stroke();
+        }
     }
     
     /**

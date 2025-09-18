@@ -68,15 +68,55 @@ export class ShadowAssassin extends BaseMouse {
     /**
      * 初始化潜影刺客外观
      */
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return null; // 使用Graphics回退绘制
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
-        
-        if (this.isStealthed) {
-            // 潜行状态 - 半透明紫黑色
-            this.drawStealthedForm(graphics);
-        } else {
-            // 显现状态 - 深色刺客形态
-            this.drawVisibleForm(graphics);
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        const alpha = this.isStealthed ? 80 : 255;
+
+        // 潜影刺客 - 暗黑色刺客形态
+        graphics.fillColor = new Color(64, 0, 128, alpha); // 深紫色
+        graphics.circle(0, 0, 16);
+        graphics.fill();
+
+        // 刺客面具
+        graphics.fillColor = new Color(32, 0, 64, alpha);
+        graphics.rect(-14, 10, 28, 8);
+        graphics.fill();
+
+        // 发光的暗影眼睛
+        graphics.fillColor = new Color(128, 0, 255, alpha);
+        graphics.circle(-6, 12, 2);
+        graphics.fill();
+        graphics.circle(6, 12, 2);
+        graphics.fill();
+
+        // 暗影刺刀
+        graphics.strokeColor = new Color(200, 200, 200, alpha);
+        graphics.lineWidth = 2;
+        graphics.moveTo(-18, -5);
+        graphics.lineTo(-25, -10);
+        graphics.moveTo(18, -5);
+        graphics.lineTo(25, -10);
+        graphics.stroke();
+
+        // 潜影波纹
+        graphics.strokeColor = new Color(128, 0, 255, 60);
+        graphics.lineWidth = 1;
+        for (let i = 1; i <= 3; i++) {
+            graphics.circle(0, 0, 16 + i * 6);
+            graphics.stroke();
         }
     }
     

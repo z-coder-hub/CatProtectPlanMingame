@@ -476,11 +476,12 @@ export class GameHUD extends Component {
                 // 直接进入部署阶段并开始战斗
                 this._gameManager.StartGame();
                 // 立即开始战斗，跳过部署等待
-                setTimeout(() => {
+                // 使用Cocos Creator的调度系统而不是setTimeout
+                this.scheduleOnce(() => {
                     if (this._gameManager && this._gameManager.gameState === GameState.DEPLOYMENT) {
                         this._gameManager.StartBattle();
                     }
-                }, 100); // 短暂延迟确保状态切换完成
+                }, 0.1); // 短暂延迟确保状态切换完成
                 break;
             case GameState.DEPLOYMENT:
                 // 直接开始战斗

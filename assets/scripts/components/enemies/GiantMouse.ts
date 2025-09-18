@@ -1,4 +1,4 @@
-import { _decorator, Color } from 'cc';
+import { _decorator, Color, Graphics } from 'cc';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { EffectHelper } from '../../utils/EffectHelper';
 import { BaseMouse } from './BaseMouse';
@@ -20,7 +20,7 @@ export class GiantMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.GIANT_MOUSE,
-            name: "巨型老鼠",
+            name: "巨型鼠",
             category: EnemyCategory.BASIC,
             health: 80,
             maxHealth: 80,
@@ -29,10 +29,59 @@ export class GiantMouse extends BaseMouse {
         };
     }
 
-    // 实现BaseMouse的抽象方法
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return "images/emeies/GiantMouse";
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        this._graphics = this.getGraphicsComponent();
-        this.drawGiantMouseAppearance();
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 巨型老鼠 - 更大更威武的外观
+        graphics.fillColor = new Color(100, 50, 25); // 深棕色
+        graphics.circle(0, 0, 25); // 更大的身体
+        graphics.fill();
+
+        // 边框
+        graphics.strokeColor = new Color(60, 30, 15);
+        graphics.lineWidth = 2;
+        graphics.circle(0, 0, 25);
+        graphics.stroke();
+
+        // 耳朵
+        graphics.fillColor = new Color(80, 40, 20);
+        graphics.circle(-15, 15, 8);
+        graphics.fill();
+        graphics.circle(15, 15, 8);
+        graphics.fill();
+
+        // 眼睛 - 凶恶的红眼
+        graphics.fillColor = new Color(255, 0, 0);
+        graphics.circle(-8, 8, 4);
+        graphics.fill();
+        graphics.circle(8, 8, 4);
+        graphics.fill();
+
+        // 獠牙
+        graphics.fillColor = new Color(255, 255, 255);
+        graphics.rect(-3, -8, 2, 8);
+        graphics.fill();
+        graphics.rect(1, -8, 2, 8);
+        graphics.fill();
+
+        // 尾巴
+        graphics.strokeColor = new Color(100, 50, 25);
+        graphics.lineWidth = 6;
+        graphics.moveTo(20, -10);
+        graphics.lineTo(35, -20);
+        graphics.stroke();
     }
 
     private drawGiantMouseAppearance(): void {

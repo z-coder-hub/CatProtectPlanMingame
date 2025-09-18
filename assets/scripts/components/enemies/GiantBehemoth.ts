@@ -1,4 +1,4 @@
-import { _decorator, Color, tween, Vec3 } from 'cc';
+import { _decorator, Color, Graphics, tween, Vec3 } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { BaseHero } from '../heroes/BaseHero';
@@ -71,64 +71,37 @@ export class GiantBehemoth extends BaseMouse {
     /**
      * 初始化巨兽霸主外观
      */
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return null; // 使用Graphics回退绘制
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
 
-        // 巨兽色彩 - 深棕红色
-        graphics.fillColor = new Color(120, 80, 50, 255);     // 深棕色身体
-        graphics.strokeColor = new Color(80, 50, 30, 255);    // 深褐色边框
-        graphics.lineWidth = 4;
-
-        // 巨大的身体 - 矩形主体
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+        // 巨兽霸主 - 深棕红色巨兽
+        graphics.fillColor = new Color(120, 80, 50);
         graphics.roundRect(-30, -25, 60, 50, 8);
         graphics.fill();
+        graphics.strokeColor = new Color(80, 50, 30);
+        graphics.lineWidth = 4;
         graphics.stroke();
-
         // 巨兽头部
-        graphics.fillColor = new Color(100, 65, 40, 255);
+        graphics.fillColor = new Color(100, 65, 40);
         graphics.circle(0, -35, 20);
         graphics.fill();
-        graphics.stroke();
-
-        // 威严的眼睛
-        graphics.fillColor = new Color(200, 50, 50, 255);     // 红色眼睛
+        // 红色眼睛
+        graphics.fillColor = new Color(200, 50, 50);
         graphics.circle(-8, -35, 4);
         graphics.fill();
         graphics.circle(8, -35, 4);
         graphics.fill();
-
-        // 巨兽角
-        graphics.fillColor = new Color(150, 120, 90, 255);    // 米色角
-        graphics.moveTo(-6, -45);
-        graphics.lineTo(-12, -55);
-        graphics.lineTo(0, -52);
-        graphics.close();
-        graphics.fill();
-        graphics.moveTo(6, -45);
-        graphics.lineTo(12, -55);
-        graphics.lineTo(0, -52);
-        graphics.close();
-        graphics.fill();
-
-        // 厚重的腿部
-        graphics.fillColor = new Color(90, 55, 35, 255);      // 深色腿部
-        graphics.rect(-25, 25, 15, 20);
-        graphics.fill();
-        graphics.rect(-5, 25, 15, 20);
-        graphics.fill();
-        graphics.rect(10, 25, 15, 20);
-        graphics.fill();
-
-        // 背部装甲刺
-        graphics.fillColor = new Color(70, 45, 25, 255);
-        for (let i = 0; i < 5; i++) {
-            const x = -20 + (i * 10);
-            graphics.moveTo(x, -25);
-            graphics.lineTo(x - 3, -35);
-            graphics.lineTo(x + 3, -35);
-            graphics.close();
-            graphics.fill();
-        }
     }
 
     /**

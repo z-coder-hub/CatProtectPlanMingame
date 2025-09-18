@@ -107,17 +107,48 @@ export class UltimateOverlord extends BaseMouse {
     /**
      * 初始化终极霸王外观
      */
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return null; // 使用Graphics回退绘制
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
-        
-        if (this.isStealthed) {
-            this.drawStealthedForm(graphics);
-        } else {
-            this.drawNormalForm(graphics);
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+        const alpha = this.isStealthed ? 150 : 255;
+        // 终极霸王 - 金紫色，象征至高无上
+        graphics.fillColor = new Color(150, 100, 200, alpha);
+        graphics.strokeColor = new Color(200, 150, 50, alpha);
+        graphics.lineWidth = 4;
+        // 大型皇室身体
+        graphics.roundRect(-30, -25, 60, 50, 10);
+        graphics.fill();
+        graphics.stroke();
+        // 霸王王冠
+        graphics.fillColor = new Color(255, 215, 0, alpha);
+        graphics.rect(-20, 20, 40, 10);
+        graphics.fill();
+        // 王冠尖刺
+        for (let i = 0; i < 7; i++) {
+            const x = -18 + (i * 6);
+            graphics.moveTo(x, 30);
+            graphics.lineTo(x + 2, 40);
+            graphics.lineTo(x + 4, 30);
+            graphics.close();
+            graphics.fill();
         }
-        
-        // 根据激活的能力添加特效
-        this.addAbilityEffects(graphics);
+        // 至高眼睛
+        graphics.fillColor = new Color(255, 0, 255, alpha);
+        graphics.circle(-10, 0, 5);
+        graphics.fill();
+        graphics.circle(10, 0, 5);
+        graphics.fill();
     }
     
     /**

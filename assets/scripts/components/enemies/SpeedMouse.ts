@@ -1,4 +1,4 @@
-import { _decorator, Color, tween } from 'cc';
+import { _decorator, Color, Graphics, tween } from 'cc';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { EffectHelper } from '../../utils/EffectHelper';
 import { BaseMouse } from './BaseMouse';
@@ -19,7 +19,7 @@ export class SpeedMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.SPEED_MOUSE,
-            name: "疾速老鼠",
+            name: "极速鼠",
             category: EnemyCategory.FAST,
             health: 15,
             maxHealth: 15,
@@ -28,9 +28,47 @@ export class SpeedMouse extends BaseMouse {
         };
     }
 
-    // 实现BaseMouse的抽象方法 - 合并函数，消除不必要的中间层
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return "images/emeies/SpeedMouse";
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        this.drawSpeedMouseAppearance();
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 疾速老鼠 - 更小更精致的外观，青色表示极速
+        graphics.fillColor = new Color(0, 255, 255); // 青色
+        graphics.circle(0, 0, 10); // 更小的身体
+        graphics.fill();
+
+        // 边框
+        graphics.strokeColor = new Color(0, 200, 200);
+        graphics.lineWidth = 2;
+        graphics.circle(0, 0, 10);
+        graphics.stroke();
+
+        // 疾速尾迹（多重残影效果）
+        graphics.strokeColor = new Color(100, 255, 255, 150); // 半透明青色
+        graphics.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+            const offset = i * 3;
+            graphics.circle(-offset - 10, 0, 8 - i);
+            graphics.stroke();
+        }
+
+        // 眼睛（白色，表示专注）
+        graphics.fillColor = new Color(255, 255, 255);
+        graphics.circle(-3, 3, 1.5);
+        graphics.fill();
+        graphics.circle(3, 3, 1.5);
+        graphics.fill();
     }
 
     // 痾速老鼠不再有攻击能力，移除 performAttack 方法

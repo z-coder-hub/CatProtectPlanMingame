@@ -1,4 +1,4 @@
-import { _decorator, Color, tween } from 'cc';
+import { _decorator, Color, Graphics, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
@@ -53,8 +53,57 @@ export class ArmorOverlord extends BaseMouse {
     /**
      * 初始化重甲统领外观
      */
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return null; // 使用Graphics回退绘制
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        this.initializeArmorOverlordVisuals();
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 重甲统领 - 深灰色的重型坦克
+        graphics.fillColor = new Color(70, 70, 70);    // 深灰色装甲
+        graphics.strokeColor = new Color(50, 50, 50);  // 边框
+        graphics.lineWidth = 4;
+
+        // 主装甲体
+        graphics.roundRect(-25, -20, 50, 40, 8);
+        graphics.fill();
+        graphics.stroke();
+
+        // 重型头盔
+        graphics.fillColor = new Color(60, 60, 60);
+        graphics.circle(0, 15, 15);
+        graphics.fill();
+        graphics.stroke();
+
+        // 装甲刺
+        const spikes = [
+            { x: -20, y: -15 }, { x: 0, y: -25 }, { x: 20, y: -15 },
+            { x: -15, y: 0 }, { x: 15, y: 0 }
+        ];
+        graphics.fillColor = new Color(90, 90, 90);
+        for (const spike of spikes) {
+            graphics.moveTo(spike.x, spike.y);
+            graphics.lineTo(spike.x - 3, spike.y - 8);
+            graphics.lineTo(spike.x + 3, spike.y - 8);
+            graphics.close();
+            graphics.fill();
+        }
+
+        // 红色威慑眼光
+        graphics.fillColor = new Color(255, 50, 50);
+        graphics.rect(-10, 12, 8, 3);
+        graphics.fill();
+        graphics.rect(2, 12, 8, 3);
+        graphics.fill();
     }
 
     private initializeArmorOverlordVisuals(): void {

@@ -1,9 +1,8 @@
-import { _decorator, Color, Component, Graphics, Label, Node, tween, Vec3, director } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, tween, Vec3, director, Sprite, SpriteFrame, UITransform, resources } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
 import { EnemyConfig, EnemyState, EnemyUnitStats, EnemyCategory } from '../../types/GameTypes';
 import { EnemyType } from '../../types/GameConstants';
-import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass, property } = _decorator;
 
@@ -42,6 +41,10 @@ export abstract class BaseMouse extends Component {
     protected _nameLabel: Label | null = null;
     protected _graphics: Graphics | null = null;
 
+    // === 统一外观系统属性（模仿BaseHero） ===
+    protected _sprite: Sprite | null = null;
+    protected _fallbackGraphics: Graphics | null = null;
+
     // === 统一Tween移动系统属性 ===
     protected _movementTween: any = null;
     protected _isMoving: boolean = false;
@@ -60,8 +63,16 @@ export abstract class BaseMouse extends Component {
     // 抽象方法，子类必须实现各自的配置
     protected abstract getConfig(): EnemyConfig;
 
+    // === 抽象方法：图片资源路径（模仿BaseHero） ===
+    /**
+     * 获取敌人图片资源路径
+     * 子类实现此方法返回对应的图片路径，如果返回null则使用Graphics回退
+     */
+    protected abstract getEnemyImagePath(): string | null;
+
     protected onLoad(): void {
         this.initializeMouseStats();
+        this.initializeBaseVisuals();
         this.initializeMouseVisuals();
         this.createMouseNameLabel();
         this.createMouseHealthBar();
@@ -104,9 +115,114 @@ export abstract class BaseMouse extends Component {
         }
     }
 
+    // === 统一外观系统方法（模仿BaseHero） ===
 
-    // 抽象方法，子类必须实现具体的老鼠外观
-    protected abstract initializeMouseVisuals(): void;
+    /**
+     * 初始化基础外观组件 - 所有敌人共同的外观元素
+     */
+    protected initializeBaseVisuals(): void {
+        // 尝试加载敌人图片，失败则使用Graphics回退
+        this.loadEnemySpriteOrFallback();
+    }
+
+    /**
+     * 加载敌人图片或创建Graphics回退
+     */
+    protected loadEnemySpriteOrFallback(): void {
+        const imagePath = this.getEnemyImagePath();
+        if (imagePath) {
+            this.loadEnemySprite(imagePath);
+        } else {
+            this.createEnemyGraphicsFallback();
+        }
+    }
+
+    /**
+     * 加载敌人精灵图片
+     */
+    protected loadEnemySprite(imagePath: string): void {
+        // 添加Sprite组件
+        this._sprite = this.node.addComponent(Sprite);
+
+        // 设置Sprite属性
+        this._sprite.type = Sprite.Type.SIMPLE;
+        this._sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+
+        // 设置Sprite尺寸（根据敌人类型调整）
+        const spriteTransform = this._sprite.node.getComponent(UITransform);
+        if (spriteTransform) {
+            const config = this.getConfig();
+            let spriteSize = 40; // 默认尺寸
+
+            // 根据敌人分类调整尺寸
+            switch (config.category) {
+                case EnemyCategory.BASIC:
+                    spriteSize = 35;
+                    break;
+                case EnemyCategory.FAST:
+                    spriteSize = 30;
+                    break;
+                case EnemyCategory.ARMORED:
+                    spriteSize = 45;
+                    break;
+                case EnemyCategory.SPECIAL:
+                    spriteSize = 40;
+                    break;
+                case EnemyCategory.BOSS:
+                    spriteSize = 60; // BOSS更大
+                    break;
+            }
+
+            spriteTransform.setContentSize(spriteSize, spriteSize);
+        }
+
+        // 加载SpriteFrame资源
+        resources.load(imagePath + "/spriteFrame", SpriteFrame, (err, spriteFrame) => {
+            if (err) {
+                console.error(`加载敌人图片失败: ${imagePath}`, err);
+                // 加载失败时回退到Graphics绘制
+                if (this._sprite && this._sprite.isValid) {
+                    this._sprite.destroy();
+                    this._sprite = null;
+                }
+                this.createEnemyGraphicsFallback();
+                return;
+            }
+
+            if (!this._sprite || !this._sprite.isValid) {
+                return;
+            }
+
+            // 设置SpriteFrame
+            this._sprite.spriteFrame = spriteFrame;
+            console.log(`成功加载敌人图片: ${imagePath}`);
+        });
+    }
+
+    /**
+     * 创建Graphics回退显示
+     */
+    protected createEnemyGraphicsFallback(): void {
+        // 使用原有的Graphics绘制系统作为回退
+        this._fallbackGraphics = this.getGraphicsComponent();
+
+        // 调用子类的绘制方法
+        if (this._fallbackGraphics) {
+            this.drawEnemyGraphics(this._fallbackGraphics);
+            console.log(`敌人 ${this.enemyType} 使用Graphics回退显示`);
+        }
+    }
+
+    /**
+     * 绘制敌人Graphics外观 - 子类必须实现
+     * 当图片加载失败或没有图片资源时，会调用此方法绘制外观
+     */
+    protected abstract drawEnemyGraphics(graphics: Graphics): void;
+
+    // 子类可选重写：初始化敌人特殊外观（如特效、动画等）
+    protected initializeMouseVisuals(): void {
+        // 默认实现为空，子类可重写添加特殊外观
+    }
 
     // 统一的老鼠标签配置 - 基于敌人分类提供默认配置
     protected getMouseLabelConfig(): {
@@ -681,13 +797,26 @@ export abstract class BaseMouse extends Component {
     protected createMouseNameLabel(): void {
         const labelConfig = this.getMouseLabelConfig();
 
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
-            text: labelConfig.text,
-            fontSize: labelConfig.fontSize,
-            color: labelConfig.color,
-            position: { x: 0, y: labelConfig.yOffset, z: 0 },
-            size: labelConfig.size
-        });
+        // 直接创建标签，不依赖DrawingHelper
+        const labelNode = new Node(`Label_${labelConfig.text}`);
+        labelNode.parent = this.node;
+        labelNode.setPosition(0, labelConfig.yOffset, 0);
+
+        // 设置UITransform
+        const uiTransform = labelNode.addComponent(UITransform);
+        if (labelConfig.size) {
+            uiTransform.setContentSize(labelConfig.size.width, labelConfig.size.height);
+        } else {
+            uiTransform.setContentSize(labelConfig.text.length * labelConfig.fontSize, labelConfig.fontSize);
+        }
+
+        // 创建Label组件
+        this._nameLabel = labelNode.addComponent(Label);
+        this._nameLabel.string = labelConfig.text;
+        this._nameLabel.fontSize = labelConfig.fontSize;
+        this._nameLabel.color = labelConfig.color;
+        this._nameLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
+        this._nameLabel.verticalAlign = Label.VerticalAlign.CENTER;
     }
 
     /**
@@ -696,18 +825,42 @@ export abstract class BaseMouse extends Component {
     protected createMouseHealthBar(): void {
         const healthBarConfig = this.getHealthBarConfig();
 
-        const healthBarData = DrawingHelper.createHealthBar(this.node, {
-            width: healthBarConfig.width,
-            height: healthBarConfig.height,
-            position: { x: 0, y: healthBarConfig.yOffset, z: 0 },
-            backgroundColor: healthBarConfig.backgroundColor || new Color(60, 60, 60),
-            foregroundColor: healthBarConfig.foregroundColor || new Color(0, 255, 0),
-            borderColor: healthBarConfig.borderColor || new Color(255, 255, 255),
-            borderWidth: healthBarConfig.borderWidth || 1
-        });
+        // 直接创建血条，不依赖DrawingHelper
+        // 创建血条容器
+        this._healthBarContainer = new Node(`HealthBar_${this.unitName}`);
+        this._healthBarContainer.parent = this.node;
+        this._healthBarContainer.setPosition(0, healthBarConfig.yOffset, 0);
 
-        this._healthBarContainer = healthBarData.container;
-        this._healthBarForeground = healthBarData.foreground;
+        // 设置血条容器UITransform
+        const containerTransform = this._healthBarContainer.addComponent(UITransform);
+        containerTransform.setContentSize(healthBarConfig.width, healthBarConfig.height);
+
+        // 创建背景
+        const backgroundGraphics = this._healthBarContainer.addComponent(Graphics);
+        const bgColor = healthBarConfig.backgroundColor || new Color(60, 60, 60);
+        backgroundGraphics.fillColor = bgColor;
+        backgroundGraphics.rect(-healthBarConfig.width / 2, -healthBarConfig.height / 2, healthBarConfig.width, healthBarConfig.height);
+        backgroundGraphics.fill();
+
+        // 创建边框
+        const borderColor = healthBarConfig.borderColor || new Color(255, 255, 255);
+        const borderWidth = healthBarConfig.borderWidth || 1;
+        backgroundGraphics.strokeColor = borderColor;
+        backgroundGraphics.lineWidth = borderWidth;
+        backgroundGraphics.rect(-healthBarConfig.width / 2, -healthBarConfig.height / 2, healthBarConfig.width, healthBarConfig.height);
+        backgroundGraphics.stroke();
+
+        // 创建前景血条
+        const foregroundNode = new Node('HealthBarForeground');
+        foregroundNode.parent = this._healthBarContainer;
+        foregroundNode.setPosition(0, 0, 0);
+
+        const foregroundTransform = foregroundNode.addComponent(UITransform);
+        foregroundTransform.setContentSize(healthBarConfig.width, healthBarConfig.height);
+
+        this._healthBarForeground = foregroundNode.addComponent(Graphics);
+        const fgColor = healthBarConfig.foregroundColor || new Color(0, 255, 0);
+        this._healthBarForeground.fillColor = fgColor;
 
         // 血条始终显示
         this._healthBarContainer.active = true;
@@ -724,12 +877,19 @@ export abstract class BaseMouse extends Component {
             const healthPercent = this.currentHealth / this.maxHealth;
             const config = this.getHealthBarConfig();
 
-            DrawingHelper.updateHealthBar(
-                this._healthBarForeground,
-                healthPercent,
-                config.width,
-                config.height
-            );
+            // 直接更新血条，不依赖DrawingHelper
+            this._healthBarForeground.clear();
+
+            if (healthPercent > 0) {
+                const currentWidth = config.width * healthPercent;
+                this._healthBarForeground.rect(
+                    -config.width / 2,
+                    -config.height / 2,
+                    currentWidth,
+                    config.height
+                );
+                this._healthBarForeground.fill();
+            }
 
             // 血条始终显示，只有死亡时才隐藏
             this._healthBarContainer.active = healthPercent > 0;

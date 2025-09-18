@@ -34,7 +34,7 @@ export class MouseKing extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.MOUSE_KING,
-            name: "老鼠王",
+            name: "鼠王",
             category: EnemyCategory.BOSS,
             health: 200,
             maxHealth: 200,
@@ -69,17 +69,81 @@ export class MouseKing extends BaseMouse {
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return "images/emeies/MouseKing";
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        // 创建老鼠王外观 - 金黄色华贵外观，体型更大
-        const graphics = this.getGraphicsComponent();
-        
-        // 设置节点缩放，老鼠王比普通老鼠大50%
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // BOSS比普通敌人更大
         this.node.setScale(1.5, 1.5, 1.5);
-        
-        // 绘制老鼠王身体
-        this.drawMouseKingAppearance(graphics);
-        
-        console.log(`${this.unitName}外观创建完成`);
+    }
+
+    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 老鼠王 - 金黄色华贵外观
+        graphics.fillColor = new Color(255, 215, 0); // 金色
+        graphics.circle(0, 0, 20); // 更大的身体
+        graphics.fill();
+
+        // 华贵边框
+        graphics.strokeColor = new Color(184, 134, 11);
+        graphics.lineWidth = 3;
+        graphics.circle(0, 0, 20);
+        graphics.stroke();
+
+        // 王冠
+        graphics.fillColor = new Color(255, 255, 0);
+        // 王冠底座
+        graphics.rect(-15, 15, 30, 6);
+        graphics.fill();
+        // 王冠尖刺
+        for (let i = 0; i < 5; i++) {
+            const x = -12 + (i * 6);
+            graphics.moveTo(x, 21);
+            graphics.lineTo(x + 2, 30);
+            graphics.lineTo(x + 4, 21);
+            graphics.close();
+            graphics.fill();
+        }
+
+        // 威严的眼睛
+        graphics.fillColor = new Color(255, 0, 0);
+        graphics.circle(-7, 7, 3);
+        graphics.fill();
+        graphics.circle(7, 7, 3);
+        graphics.fill();
+
+        // 王者胡须
+        graphics.strokeColor = new Color(255, 255, 255);
+        graphics.lineWidth = 2;
+        // 左胡须
+        graphics.moveTo(-15, 0);
+        graphics.lineTo(-25, -2);
+        graphics.moveTo(-15, -3);
+        graphics.lineTo(-25, -5);
+        // 右胡须
+        graphics.moveTo(15, 0);
+        graphics.lineTo(25, -2);
+        graphics.moveTo(15, -3);
+        graphics.lineTo(25, -5);
+        graphics.stroke();
+
+        // 权杖（可选装饰）
+        graphics.strokeColor = new Color(139, 69, 19);
+        graphics.lineWidth = 4;
+        graphics.moveTo(22, 5);
+        graphics.lineTo(22, -15);
+        graphics.stroke();
+
+        // 权杖头
+        graphics.fillColor = new Color(255, 215, 0);
+        graphics.circle(22, -15, 5);
+        graphics.fill();
     }
     
     /**

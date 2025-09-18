@@ -1,4 +1,4 @@
-import { _decorator, Color, tween } from 'cc';
+import { _decorator, Color, Graphics, tween } from 'cc';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { EffectHelper } from '../../utils/EffectHelper';
 import { BaseMouse } from './BaseMouse';
@@ -18,7 +18,7 @@ export class FastMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.FAST_MOUSE,
-            name: "快速老鼠",
+            name: "快速鼠",
             category: EnemyCategory.FAST,
             health: 20,
             maxHealth: 20,
@@ -27,9 +27,57 @@ export class FastMouse extends BaseMouse {
         };
     }
 
-    // 实现BaseMouse的抽象方法
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return "images/emeies/FastMouse";
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        this.drawFastMouseAppearance();
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 绘制快速老鼠身体（亮绿色，表示速度）
+        graphics.fillColor = new Color(50, 205, 50); // 亮绿色
+        graphics.circle(0, 0, 12);
+        graphics.fill();
+
+        // 绘制轮廓
+        graphics.strokeColor = new Color(34, 139, 34); // 深绿色轮廓
+        graphics.lineWidth = 2;
+        graphics.circle(0, 0, 12);
+        graphics.stroke();
+
+        // 绘制速度线条（表示快速移动）
+        graphics.strokeColor = new Color(255, 255, 0); // 黄色速度线
+        graphics.lineWidth = 2;
+        // 左侧速度线
+        graphics.moveTo(-8, -8);
+        graphics.lineTo(-12, -12);
+        graphics.moveTo(-8, 0);
+        graphics.lineTo(-12, 0);
+        graphics.moveTo(-8, 8);
+        graphics.lineTo(-12, 12);
+        // 右侧速度线
+        graphics.moveTo(8, -8);
+        graphics.lineTo(12, -12);
+        graphics.moveTo(8, 0);
+        graphics.lineTo(12, 0);
+        graphics.moveTo(8, 8);
+        graphics.lineTo(12, 12);
+        graphics.stroke();
+
+        // 绘制眼睛（红色，表示警觉）
+        graphics.fillColor = new Color(255, 0, 0); // 红色眼睛
+        graphics.circle(-4, -4, 2);
+        graphics.fill();
+        graphics.circle(4, -4, 2);
+        graphics.fill();
     }
 
     // 继承父类的onLoad和start方法，无需重写
@@ -113,7 +161,7 @@ export class FastMouse extends BaseMouse {
     private playHurtEffect(): void {
         if (!this._graphics) return;
 
-        // 使用DrawingHelper绘制受伤效果，但用红色高亮
+        // 直接绘制受伤效果，红色高亮表示受伤
         this._graphics.clear();
         this._graphics.fillColor = new Color(255, 100, 100); // 红色受伤效果
         this._graphics.circle(0, 0, 12);

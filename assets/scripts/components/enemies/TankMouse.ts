@@ -22,7 +22,7 @@ export class TankMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.TANK_MOUSE,
-            name: "坦克老鼠",
+            name: "坦克鼠",
             category: EnemyCategory.ARMORED,
             health: 120,
             maxHealth: 120,
@@ -44,11 +44,67 @@ export class TankMouse extends BaseMouse {
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return "images/emeies/TankMouse";
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        // 创建坦克老鼠外观 - 深灰色厚重外观
-        this._graphics = this.getGraphicsComponent();
-        
-        this.drawTankMouseAppearance();
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 坦克老鼠 - 深灰色厚重外观
+        graphics.fillColor = new Color(70, 70, 70); // 深灰色
+        graphics.roundRect(-20, -15, 40, 30, 5); // 矩形坦克身体
+        graphics.fill();
+
+        // 厚重边框
+        graphics.strokeColor = new Color(40, 40, 40);
+        graphics.lineWidth = 4;
+        graphics.roundRect(-20, -15, 40, 30, 5);
+        graphics.stroke();
+
+        // 炮塔
+        graphics.fillColor = new Color(80, 80, 80);
+        graphics.circle(0, -5, 12);
+        graphics.fill();
+        graphics.stroke();
+
+        // 炮管
+        graphics.fillColor = new Color(60, 60, 60);
+        graphics.rect(8, -8, 15, 6);
+        graphics.fill();
+        graphics.stroke();
+
+        // 履带
+        graphics.fillColor = new Color(50, 50, 50);
+        graphics.rect(-22, 12, 44, 8);
+        graphics.fill();
+        graphics.stroke();
+
+        // 履带轮
+        for (let i = 0; i < 6; i++) {
+            const x = -20 + (i * 8);
+            graphics.fillColor = new Color(30, 30, 30);
+            graphics.circle(x, 16, 3);
+            graphics.fill();
+        }
+
+        // 装甲板纹理
+        graphics.strokeColor = new Color(90, 90, 90);
+        graphics.lineWidth = 1;
+        for (let i = 0; i < 3; i++) {
+            const y = -10 + (i * 7);
+            graphics.moveTo(-15, y);
+            graphics.lineTo(15, y);
+            graphics.stroke();
+        }
     }
     
     /**

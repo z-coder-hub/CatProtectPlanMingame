@@ -73,27 +73,38 @@ export class StormTyrant extends BaseMouse {
     /**
      * 初始化疾风暴君外观
      */
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return null; // 使用Graphics回退绘制
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
-        
-        // 风暴色彩 - 青蓝色主体
-        graphics.fillColor = new Color(70, 150, 200, 255);    // 青蓝色身体
-        graphics.strokeColor = new Color(50, 120, 180, 255);  // 深蓝边框
-        graphics.lineWidth = 2;
-        
-        // 流线型身体 - 体现速度感
-        graphics.ellipse(0, 0, 18, 25);
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+
+        // 疾风暴君 - 青蓝色风暴形态
+        graphics.fillColor = new Color(70, 150, 200); // 青蓝色
+        graphics.ellipse(0, 0, 18, 25); // 流线型身体
         graphics.fill();
+
+        graphics.strokeColor = new Color(50, 120, 180);
+        graphics.lineWidth = 2;
+        graphics.ellipse(0, 0, 18, 25);
         graphics.stroke();
-        
-        // 风暴眼 - 中央旋涡
-        graphics.fillColor = new Color(100, 180, 220, 255);
+
+        // 风暴眼
+        graphics.fillColor = new Color(100, 180, 220);
         graphics.circle(0, 0, 8);
         graphics.fill();
-        
+
         // 内部旋涡纹理
-        graphics.strokeColor = new Color(130, 200, 240, 255);
-        graphics.lineWidth = 2;
+        graphics.strokeColor = new Color(130, 200, 240);
         for (let i = 0; i < 4; i++) {
             const angle = (i * Math.PI) / 2;
             const startX = Math.cos(angle) * 3;
@@ -104,14 +115,14 @@ export class StormTyrant extends BaseMouse {
             graphics.lineTo(endX, endY);
             graphics.stroke();
         }
-        
-        // 风暴翼 - 体现飞行能力
-        graphics.fillColor = new Color(90, 170, 210, 200);    // 半透明风翼
+
+        // 风暴翼
+        graphics.fillColor = new Color(90, 170, 210, 200);
         graphics.ellipse(-22, -5, 8, 15);
         graphics.fill();
         graphics.ellipse(22, -5, 8, 15);
         graphics.fill();
-        
+
         // 疾风尾迹
         graphics.strokeColor = new Color(120, 190, 230, 150);
         graphics.lineWidth = 3;

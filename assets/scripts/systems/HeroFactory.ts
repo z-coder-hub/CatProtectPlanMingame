@@ -1,4 +1,4 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Node } from 'cc';
 import { HeroType } from '../types/GameTypes';
 import { HERO_CONFIGS } from '../types/GameConstants';
 

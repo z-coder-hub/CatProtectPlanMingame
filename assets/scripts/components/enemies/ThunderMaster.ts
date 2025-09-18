@@ -76,9 +76,38 @@ export class ThunderMaster extends BaseMouse {
     /**
      * 初始化雷电大师外观
      */
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string | null {
+        return null; // 使用Graphics回退绘制
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
-        this.drawBasicVisuals(graphics);
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 无需额外的外观初始化
+    }
+
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(graphics: Graphics): void {
+        graphics.clear();
+        // 雷电大师 - 紫蓝电光色
+        graphics.fillColor = new Color(100, 100, 200);
+        // 三角锥形法师身体
+        graphics.moveTo(0, -25);
+        graphics.lineTo(-15, 15);
+        graphics.lineTo(15, 15);
+        graphics.close();
+        graphics.fill();
+        // 雷电法师头部
+        graphics.fillColor = new Color(120, 120, 220);
+        graphics.circle(0, -15, 10);
+        graphics.fill();
+        // 雷电眼睛
+        graphics.fillColor = new Color(255, 255, 100);
+        graphics.circle(-4, -15, 2);
+        graphics.fill();
+        graphics.circle(4, -15, 2);
+        graphics.fill();
     }
     
     /**
