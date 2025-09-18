@@ -8,6 +8,8 @@ import { WaveManager } from '../managers/WaveManager';
 import { GameManager } from '../managers/GameManager';
 import { LevelManager } from '../managers/LevelManager';
 import { Castle } from '../components/game/Castle';
+import { ProjectileSystem } from '../projectiles/ProjectileSystem';
+import { EnemyPoolManager } from './EnemyPoolManager';
 
 const { ccclass, property } = _decorator;
 
@@ -120,6 +122,12 @@ export class GameBootstrap extends Component {
         const gridNode = new Node("GridDeploymentSystem");
         gridNode.parent = this._canvasNode;
         this._gridSystem = gridNode.addComponent(GridDeploymentSystem);
+
+        // 初始化投射物系统
+        ProjectileSystem.initialize();
+
+        // 初始化敌人对象池系统
+        EnemyPoolManager.initialize();
 
         // 网格系统已通过默认属性值使用游戏配置
 

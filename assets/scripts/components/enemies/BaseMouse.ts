@@ -1,7 +1,8 @@
-import { _decorator, Color, Component, Graphics, Label, Node, tween, Vec3 } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, tween, Vec3, director } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
-import { EnemyConfig, EnemyState, EnemyType, EnemyUnitStats, EnemyCategory } from '../../types/GameTypes';
+import { EnemyConfig, EnemyState, EnemyUnitStats, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType } from '../../types/GameConstants';
 import { DrawingHelper } from '../../utils/DrawingHelper';
 
 const { ccclass, property } = _decorator;
@@ -48,6 +49,8 @@ export abstract class BaseMouse extends Component {
 
     // 移动行为相关属性（从BasicMouse提取的完整系统）
     protected _zigzagAmplitude: number = 0;                 // 蜿蜒幅度
+
+    // === 对象池支持 ===
     protected _movementPattern: 'zigzag' | 'curves' | 'spiral' | 'dash' | 'straight' | 'stealth_sway' = 'zigzag'; // 移动模式
     protected _segmentCount: number = 6;                    // 移动分段数量
 
@@ -95,6 +98,7 @@ export abstract class BaseMouse extends Component {
 
         // 启动移动（只执行一次）
         if (!this._movementStarted) {
+            console.log(`[BaseMouse] 🚀 开始移动: ${this.enemyType}, 位置: ${this.node.position}, 状态: ${this.enemyState}`);
             this.startMovementTowardsCastle();
             this._movementStarted = true;
         }
@@ -537,10 +541,101 @@ export abstract class BaseMouse extends Component {
         // 这里不再重复调用UnregisterEnemy
 
         this.createDeathEffect();
-        this.node.destroy();
+
+        // 回收到对象池而不是直接销毁
+        if (this.node && this.node.isValid) {
+            // 使用全局事件通知回收，避免循环依赖
+            director.emit('enemy-recycle', this.node, this.enemyType);
+        }
     }
 
     protected createDeathEffect(): void {
+    }
+
+    // === 对象池接口方法 ===
+
+
+    /**
+     * 对象池重用方法 - 当从对象池中取出时调用
+     * 重置敌人状态以供重用
+     */
+    public reuse(..._args: any[]): void {
+        // 重置基础状态
+        this.enemyState = EnemyState.IDLE;
+        this.currentTarget = null;
+        this._isMoving = false;
+        this._movementStarted = false;
+
+        // 重置生命值
+        this.currentHealth = this.maxHealth;
+
+        // 重置节点状态（位置由EnemyFactory设置）
+        this.node.active = true;
+
+        // 停止所有移动
+        this.stopMovement();
+
+        // 重新获取管理器引用（如果需要）
+        if (!this._battleManager) {
+            this._battleManager = BattleManager.instance;
+        }
+        if (!this._gameManager) {
+            this._gameManager = GameManager.instance;
+        }
+
+        // 重新注册到BattleManager（关键修复）
+        if (this._battleManager) {
+            this._battleManager.RegisterEnemy(this.node);
+            console.log(`[BaseMouse] 🔄 重用敌人已重新注册到BattleManager: ${this.enemyType}`);
+        } else {
+            console.error(`[BaseMouse] ❌ 无法重新注册敌人，BattleManager不存在: ${this.enemyType}`);
+        }
+
+        // 重置血条
+        if (this._healthBarContainer) {
+            this._healthBarContainer.active = true;
+        }
+        this.updateMouseHealthBarDisplay();
+
+        // 调用子类的重置逻辑
+        this.onPoolReuse();
+    }
+
+    /**
+     * 对象池回收方法 - 当放入对象池时调用
+     * 清理敌人状态
+     */
+    public unuse(): void {
+        // 停止所有移动和调度
+        this.stopMovement();
+        this.unscheduleAllCallbacks();
+
+        // 重置状态
+        this.enemyState = EnemyState.DEAD;
+        this.currentTarget = null;
+        this.node.active = false;
+
+        // 隐藏血条
+        if (this._healthBarContainer) {
+            this._healthBarContainer.active = false;
+        }
+
+        // 调用子类的清理逻辑
+        this.onPoolUnuse();
+    }
+
+    /**
+     * 子类可重写：对象池重用时的特殊逻辑
+     */
+    protected onPoolReuse(): void {
+        // 默认实现为空，子类可重写
+    }
+
+    /**
+     * 子类可重写：对象池回收时的特殊逻辑
+     */
+    protected onPoolUnuse(): void {
+        // 默认实现为空，子类可重写
     }
 
     // === Tween移动控制方法 ===

@@ -67,8 +67,7 @@ assets/
 │   └── utils/                 # 工具类
 │       ├── DrawingHelper.ts   # 绘图辅助工具
 │       ├── EffectHelper.ts    # 特效辅助工具
-│       ├── UIHelper.ts        # UI辅助工具
-│       └── SimpleObjectPool.ts # 简单对象池
+│       └── UIHelper.ts        # UI辅助工具
 ├── textures/                  # 图片资源
 ├── animations/                # 动画资源
 └── scenes/                    # 场景文件
@@ -76,36 +75,50 @@ assets/
 
 ## 开发原则
 
-### 8. 按需实现原则 (YAGNI - You Aren't Gonna Need It)
-- **避免提前生成**: 如果一个函数方法暂时没有使用的地方，就不用提前生成
+### 8. 按需实现原则 (YAGNI - You Aren't Gonna Need It) ⚡
+- **严格禁止提前生成**: 如果一个函数方法暂时没有使用的地方，就**绝对不要**提前生成
 - **按需开发**: 只在实际需要时才创建新的方法、类或系统
 - **延迟决策**: 等到明确需求时再实现具体功能，避免过度设计
 - **渐进式开发**: 优先实现核心功能，然后根据实际需要逐步扩展
+- **立即删除**: 发现未使用的方法时应立即删除，不要保留"以备后用"
 
 #### YAGNI 实践要点：
 - **需求驱动**：所有代码必须有明确的使用场景和需求支撑
 - **最小可行产品**：首先实现最小功能集，确保系统可用
 - **重构优于预设计**：在真正需要时通过重构扩展功能，而不是提前预设复杂架构
 - **删除无用代码**：定期清理没有被调用的方法和类
+- **工具方法例外**：状态查询、清理、配置等管理方法即使暂时未使用也可能有价值，但需要明确标记用途
 
+#### YAGNI 违规示例：
 ```typescript
 // ❌ 错误：提前生成可能用不到的方法
-class Hero {
-    // 这些方法目前没有任何地方调用
-    public getExperience(): number { return this.experience; }
-    public levelUp(): void { this.level++; }
-    public getSkillPoints(): number { return this.skillPoints; }
+class ProjectilePoolManager {
+    // 这些方法目前没有任何地方调用，违反YAGNI原则
+    static getPoolsInfo(): PoolInfo { ... }      // 状态查询
+    static clearAllPools(): void { ... }         // 场景切换清理
+    static setMaxPoolSize(size: number): void { ... } // 配置设置
+    static preloadPool(type: ProjectileType, count: number): void { ... } // 预热功能
 }
 
 // ✅ 正确：只实现当前需要的方法
-class Hero {
-    public performAttack(): void {
-        // 实际在战斗系统中被调用的方法
+class ProjectilePoolManager {
+    static getProjectile(type: ProjectileType): Node {
+        // 实际在ProjectileSystem中被调用的方法
     }
 
-    // 当未来真正需要经验系统时再添加相关方法
+    static recycleProjectile(node: Node, type: ProjectileType): void {
+        // 实际在BaseProjectile中被调用的方法
+    }
+
+    // 当未来真正需要状态查询或预热功能时再添加相关方法
 }
 ```
+
+#### YAGNI 执行准则：
+- **代码审查时严格检查**：任何新增方法必须有明确的调用者
+- **定期清理无用方法**：每周检查并删除未被使用的方法
+- **抵制"可能有用"的诱惑**：即使逻辑完善，没有使用者就不要实现
+- **文档化例外情况**：如果确实需要保留某些"备用"方法，必须在代码中明确注释原因
 
 ### ⚠️ 重要：敌人文件修改前必读
 
@@ -383,7 +396,7 @@ enum EnemyType {
   MOUSE_KING, MECH_MOUSE,
   // 新BOSS单位（关卡4-10专用）
   ARMOR_OVERLORD, SHADOW_ASSASSIN, STORM_TYRANT,
-  GIANT_BEHEMOTH, THUNDER_MASTER, MECH_COMMANDER, 
+  GIANT_BEHEMOTH, THUNDER_MASTER, MECH_COMMANDER,
   ULTIMATE_OVERLORD
 }
 

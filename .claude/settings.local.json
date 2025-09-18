@@ -5,7 +5,11 @@
       "mcp__context7__get-library-docs",
       "Bash(npx tsc:*)",
       "Bash(find:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:docs.cocos.com)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []
