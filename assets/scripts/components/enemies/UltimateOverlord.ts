@@ -60,9 +60,6 @@ export class UltimateOverlord extends BaseMouse {
         this.summonType = config.summonType || EnemyType.MOUSE_KING;
         this.damageReduction = config.damageReduction || 0.1;
 
-        // 终极霸王体型最大
-        this.node.scale = new Vec3(2.2, 2.2, 1);
-
         // 初始潜行判定
         this.checkStealthState();
     }
@@ -101,7 +98,8 @@ export class UltimateOverlord extends BaseMouse {
         this._zigzagAmplitude = 45 + Math.random() * 35; // 45-80像素的大幅摆动
         this._segmentCount = 12 + Math.floor(Math.random() * 6); // 12-17段移动，最复杂的移动路径
 
-        console.log(`终极霸王移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**

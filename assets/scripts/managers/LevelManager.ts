@@ -130,22 +130,8 @@ export class LevelManager extends Component {
         });
 
         console.log(`英雄解锁状态初始化完成，默认解锁: ${defaultUnlockedHeroes.length} 个英雄`);
-        
-        // 输出初始状态
-        this.debugHeroUnlockStatus("初始化完成");
     }
 
-    /**
-     * 调试用：输出英雄解锁状态
-     */
-    private debugHeroUnlockStatus(context: string): void {
-        console.log(`🔍 [${context}] 英雄解锁状态详情:`);
-        const heroRecordEntries = Object.keys(this._heroRecords).map(key => [key, this._heroRecords[key as HeroType]]);
-        heroRecordEntries.forEach(([type, record]: [string, HeroUnlockRecord]) => {
-            const status = record.status === HeroUnlockStatus.UNLOCKED ? '✅' : '🔒';
-            console.log(`  ${status} ${type}: ${record.status}`);
-        });
-    }
 
     /**
      * 初始化关卡记录
@@ -420,7 +406,7 @@ export class LevelManager extends Component {
             console.log(`🔍 验证解锁状态: ${this._heroRecords[heroType].status}`);
             
             // 输出解锁后的完整状态
-            this.debugHeroUnlockStatus(`解锁${heroType}后`);
+            console.log(`🔓 英雄 ${heroType} 已解锁`);
             return true;
         } else {
             console.log(`ℹ️ 英雄已经解锁: ${heroType} (状态: ${record.status})`);
@@ -479,36 +465,4 @@ export class LevelManager extends Component {
     // ====================== 调试和工具方法 ======================
 
 
-    /**
-     * 获取调试信息
-     */
-    public GetDebugInfo(): {
-        totalLevels: number;
-        unlockedLevels: number;
-        completedLevels: number;
-        unlockedWorlds: number;
-        unlockedHeroes: number;
-    } {
-        const allLevels = LEVEL_CONFIGS.getAllLevels();
-        const unlockedLevels = allLevels.filter(level => {
-            const status = this.GetLevelStatus(level.id);
-            return status !== LevelCompletionStatus.LOCKED;
-        }).length;
-        
-        const completedLevels = allLevels.filter(level => {
-            const status = this.GetLevelStatus(level.id);
-            return status === LevelCompletionStatus.COMPLETED || 
-                   status === LevelCompletionStatus.PERFECT;
-        }).length;
-
-        const unlockedHeroes = this.GetUnlockedHeroes().length;
-
-        return {
-            totalLevels: allLevels.length,
-            unlockedLevels,
-            completedLevels,
-            unlockedWorlds: 0, // 线性模式下不使用世界概念
-            unlockedHeroes
-        };
-    }
 }

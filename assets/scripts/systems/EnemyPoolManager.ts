@@ -121,14 +121,11 @@ export class EnemyPoolManager {
      * 注册全局事件监听器，避免循环依赖
      */
     static initialize(): void {
-        console.log("[EnemyPoolManager] 🚀 开始初始化敌人对象池系统...");
-
         // 监听敌人回收事件
         director.on('enemy-recycle', this.recycleEnemy, this);
-        console.log("[EnemyPoolManager] 📡 已注册敌人回收事件监听器");
 
-        console.log(`[EnemyPoolManager] ⚙️ 对象池配置: 最大大小=${this._maxPoolSize}`);
-        console.log("[EnemyPoolManager] 🎉 敌人对象池系统初始化完成");
+        const supportedTypes = Array.from(this._componentClasses.keys());
+        console.log(`[EnemyPoolManager] 敌人对象池系统初始化完成，支持 ${supportedTypes.length} 种敌人类型`);
     }
 
     // === 对象池核心方法 ===

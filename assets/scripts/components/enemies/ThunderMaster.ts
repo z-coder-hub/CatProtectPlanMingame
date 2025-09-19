@@ -70,7 +70,8 @@ export class ThunderMaster extends BaseMouse {
         this._zigzagAmplitude = 35 + Math.random() * 25; // 35-60像素的中幅摆动
         this._segmentCount = 10 + Math.floor(Math.random() * 6); // 10-15段移动，高频闪现效果
 
-        console.log(`雷电大师移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**

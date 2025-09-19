@@ -66,6 +66,7 @@ export class MouseKing extends BaseMouse {
         this._zigzagAmplitude = 25 + Math.random() * 15; // 25-40像素（BOSS威严的大幅移动）
         this._segmentCount = 5 + Math.floor(Math.random() * 4); // 5-8段移动（更多分段，更优雅）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
@@ -77,8 +78,7 @@ export class MouseKing extends BaseMouse {
     // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
         // 基类已处理图片/Graphics显示，这里可以添加特殊效果
-        // BOSS比普通敌人更大
-        this.node.setScale(1.5, 1.5, 1.5);
+        // 大小由基类的统一尺寸管理系统控制
     }
 
     // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）

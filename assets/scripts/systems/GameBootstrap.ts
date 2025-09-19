@@ -27,8 +27,6 @@ enum InitPhase {
 @ccclass('GameBootstrap')
 export class GameBootstrap extends Component {
 
-    @property({ tooltip: "是否启用调试日志" })
-    public enableDebugLogs: boolean = true;
 
     @property({ tooltip: "初始化超时时间(秒)" })
     public initTimeout: number = 10;
@@ -129,8 +127,6 @@ export class GameBootstrap extends Component {
         // 初始化敌人对象池系统
         EnemyPoolManager.initialize();
 
-        // 网格系统已通过默认属性值使用游戏配置
-
         this.log("基础系统创建完成");
     }
 
@@ -160,12 +156,6 @@ export class GameBootstrap extends Component {
         widget.right = 0;
         widget.updateAlignment();
 
-        // 打印Canvas和背景节点尺寸信息用于调试
-        const canvasTransform = this._canvasNode.getComponent(UITransform);
-        if (canvasTransform) {
-            this.log(`Canvas尺寸: ${canvasTransform.contentSize.width} x ${canvasTransform.contentSize.height}`);
-        }
-        this.log(`背景节点尺寸: ${transform.contentSize.width} x ${transform.contentSize.height}`);
 
         // 加载背景图片（Cocos Creator 3.x需要指定子资源类型）
         resources.load("images/backgroup/spriteFrame", SpriteFrame, (err, spriteFrame) => {
@@ -188,14 +178,10 @@ export class GameBootstrap extends Component {
                 // 强制更新Widget对齐，确保节点尺寸正确
                 widget.updateAlignment();
 
-                // 打印图片和Sprite尺寸信息用于调试
-                this.log(`原图尺寸: ${spriteFrame.originalSize.width} x ${spriteFrame.originalSize.height}`);
-                this.log(`Widget对齐后节点尺寸: ${transform.contentSize.width} x ${transform.contentSize.height}`);
-                this.log("背景图片加载成功并已调暗");
+                this.log("游戏背景初始化完成");
             }
         });
 
-        this.log("游戏背景创建完成");
     }
 
     /**
@@ -246,7 +232,6 @@ export class GameBootstrap extends Component {
 
             graphics.stroke();
 
-            this.log("已创建回退背景：深绿色网格背景");
         }
     }
 
@@ -328,9 +313,7 @@ export class GameBootstrap extends Component {
 
     // 日志输出方法
     private log(message: string, ...args: any[]): void {
-        if (this.enableDebugLogs) {
-            console.log(`[GameBootstrap] ${message}`, ...args);
-        }
+        console.log(`[GameBootstrap] ${message}`, ...args);
     }
 
     private error(message: string, ...args: any[]): void {

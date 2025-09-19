@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Graphics, tween, Tween, Canvas, director, UITransform, director as Director } from 'cc';
+import { _decorator, Component, Node, Vec3, Graphics, tween, Tween, Canvas, director, UITransform } from 'cc';
 import { BaseHero } from '../components/heroes/BaseHero';
 import { BaseMouse } from '../components/enemies/BaseMouse';
 import { BattleManager } from '../managers/BattleManager';

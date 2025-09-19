@@ -47,9 +47,6 @@ export class GiantBehemoth extends BaseMouse {
         // 威慑特效范围
         const config = this.getConfig();
         this.intimidationRange = config.aoeAttackRange || 80;
-
-        // 巨兽霸主体型更大
-        this.node.scale = new Vec3(1.8, 1.8, 1);
     }
 
 
@@ -65,7 +62,8 @@ export class GiantBehemoth extends BaseMouse {
         this._zigzagAmplitude = 3 + Math.random() * 5; // 3-8像素的微小摆动
         this._segmentCount = 3 + Math.floor(Math.random() * 2); // 3-4段移动，保持简洁威严
 
-        console.log(`巨兽霸主移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
 
     /**

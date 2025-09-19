@@ -1,4 +1,4 @@
-import { _decorator, Node, Vec3, Graphics, Color, tween } from 'cc';
+import { _decorator, Color, Graphics, Node, tween, Vec3 } from 'cc';
 
 const { ccclass } = _decorator;
 
@@ -66,21 +66,21 @@ const EFFECT_CONFIGS: Record<EffectType, EffectConfig> = {
 
 @ccclass('EffectHelper')
 export class EffectHelper {
-    
+
     // 创建特效
     public static createEffect(
-        type: EffectType, 
-        position: Vec3, 
-        parent: Node, 
+        type: EffectType,
+        position: Vec3,
+        parent: Node,
         customConfig?: Partial<EffectConfig>
     ): Node {
         const config = { ...EFFECT_CONFIGS[type], ...customConfig };
         const effectNode = new Node(`${type}Effect_${Date.now()}`);
         effectNode.parent = parent;
         effectNode.setPosition(position);
-        
+
         const graphics = effectNode.addComponent(Graphics);
-        
+
         // 根据特效类型绘制
         switch (type) {
             case EffectType.DEATH:
@@ -95,13 +95,13 @@ export class EffectHelper {
                 this.createSimpleEffect(graphics, config);
                 break;
         }
-        
+
         // 设置自动销毁
         this.scheduleDestroy(effectNode, config.duration);
-        
+
         return effectNode;
     }
-    
+
     // 创建简单圆形特效
     private static createSimpleEffect(graphics: Graphics, config: EffectConfig): void {
         graphics.fillColor = config.color;
@@ -133,7 +133,7 @@ export class EffectHelper {
             fade();
         }
     }
-    
+
     // 创建粒子特效
     private static createParticleEffect(graphics: Graphics, config: EffectConfig): void {
         const particles = config.particles || 8;
@@ -141,53 +141,53 @@ export class EffectHelper {
             const angle = (i / particles) * Math.PI * 2;
             const x = Math.cos(angle) * config.size;
             const y = Math.sin(angle) * config.size;
-            
+
             graphics.fillColor = config.color;
             graphics.circle(x, y, 3);
             graphics.fill();
         }
     }
-    
-    
+
+
     // 创建闪电特效
     private static createLightningEffect(graphics: Graphics, config: EffectConfig): void {
         graphics.strokeColor = config.color;
         graphics.lineWidth = 3;
-        
+
         // 绘制随机闪电路径
         const segments = 5;
         const zigzagRange = config.size * 0.3;
         let currentX = 0;
         let currentY = -config.size;
-        
+
         graphics.moveTo(currentX, currentY);
-        
+
         for (let i = 1; i <= segments; i++) {
             const progress = i / segments;
             const targetY = config.size * progress * 2 - config.size;
             const randomOffset = (Math.random() - 0.5) * zigzagRange;
-            
+
             currentX += randomOffset;
             currentY = targetY;
-            
+
             graphics.lineTo(currentX, currentY);
         }
-        
+
         graphics.stroke();
-        
+
         // 添加闪电球
         graphics.fillColor = config.color;
         graphics.circle(0, 0, 4);
         graphics.fill();
     }
-    
-    
+
+
     // 统一的销毁调度
     private static scheduleDestroy(node: Node, duration: number): void {
         if (node && node.isValid) {
             // 转换毫秒为秒，使用 Tween 系统进行延迟销毁
             const delayInSeconds = duration / 1000;
-            
+
             tween(node)
                 .delay(delayInSeconds)
                 .call(() => {
@@ -198,7 +198,7 @@ export class EffectHelper {
                 .start();
         }
     }
-    
+
     // 创建死亡特效的快捷方法
     public static createDeathEffect(position: Vec3, parent: Node): Node {
         return this.createEffect(EffectType.DEATH, position, parent);
@@ -208,8 +208,8 @@ export class EffectHelper {
     public static createAttackEffect(position: Vec3, parent: Node): Node {
         return this.createEffect(EffectType.ATTACK, position, parent);
     }
-    
-    
+
+
     // 创建敌人死亡特效
     public static createEnemyDeathEffect(position: Vec3, parent: Node): Node {
         return this.createEffect(EffectType.DEATH, position, parent, {
@@ -217,7 +217,7 @@ export class EffectHelper {
             particles: 12
         });
     }
-    
+
     // 创建敌人受伤特效
     public static createEnemyHurtEffect(position: Vec3, parent: Node): Node {
         return this.createEffect(EffectType.HIT, position, parent, {
@@ -226,7 +226,7 @@ export class EffectHelper {
             duration: 150
         });
     }
-    
+
     // 创建咆哮特效
     public static createRoarEffect(position: Vec3, parent: Node): Node {
         return this.createEffect(EffectType.FIRE, position, parent, {
@@ -236,7 +236,7 @@ export class EffectHelper {
             particles: 12
         });
     }
-    
+
     // 创建狂暴特效
     public static createBerserkEffect(position: Vec3, parent: Node): Node {
         return this.createEffect(EffectType.FIRE, position, parent, {
@@ -246,7 +246,7 @@ export class EffectHelper {
             particles: 15
         });
     }
-    
+
     // 创建金币掉落特效
     public static createGoldDropEffect(position: Vec3, parent: Node): Node {
         return this.createEffect(EffectType.HEAL, position, parent, {
@@ -256,7 +256,7 @@ export class EffectHelper {
             particles: 8
         });
     }
-    
+
     // 创建速度爆发特效
     public static createSpeedBurstEffect(position: Vec3, parent: Node): Node {
         return this.createEffect(EffectType.LIGHTNING, position, parent, {
@@ -265,5 +265,4 @@ export class EffectHelper {
             duration: 300
         });
     }
-    
 }

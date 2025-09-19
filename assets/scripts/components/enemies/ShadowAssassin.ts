@@ -62,6 +62,7 @@ export class ShadowAssassin extends BaseMouse {
         this._zigzagAmplitude = 20 + Math.random() * 15; // 20-35像素（较大摆动）
         this._segmentCount = 4 + Math.floor(Math.random() * 5); // 4-8段移动（复杂路径）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     

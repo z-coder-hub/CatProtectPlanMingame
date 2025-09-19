@@ -41,6 +41,7 @@ export class TankMouse extends BaseMouse {
         this._zigzagAmplitude = 3 + Math.random() * 4; // 3-7像素（极小摆动）
         this._segmentCount = 2 + Math.floor(Math.random() * 2); // 2-3段移动（最少分段）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
@@ -161,17 +162,21 @@ export class TankMouse extends BaseMouse {
      */
     public takeDamage(damage: number): void {
         if (!this.isAlive) return;
-        
+
         // 护甲减伤：最终伤害 = 原始伤害 - 护甲值（最低为1）
         const actualDamage = Math.max(1, damage - this.armorValue);
-        
+
         this.currentHealth = Math.max(0, this.currentHealth - actualDamage);
+
+        // 更新血条显示
+        this.updateMouseHealthBarDisplay();
+
         this.onTakeDamage(actualDamage);
-        
+
         if (this.currentHealth <= 0) {
             this.die();
         }
-        
+
         console.log(`${this.unitName}护甲减伤: ${damage} → ${actualDamage} 实际伤害`);
     }
     

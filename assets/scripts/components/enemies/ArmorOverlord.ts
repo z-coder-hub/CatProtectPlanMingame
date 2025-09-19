@@ -47,6 +47,7 @@ export class ArmorOverlord extends BaseMouse {
         this._zigzagAmplitude = 5 + Math.random() * 7; // 5-12像素（极小摆动）
         this._segmentCount = 2 + Math.floor(Math.random() * 3); // 2-4段移动（少分段，稳重）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
@@ -106,50 +107,6 @@ export class ArmorOverlord extends BaseMouse {
         graphics.fill();
     }
 
-    private initializeArmorOverlordVisuals(): void {
-        const graphics = this.getGraphicsComponent();
-        
-        // 绘制重型装甲外观 - 深灰色的重型坦克
-        graphics.fillColor = new Color(70, 70, 70, 255);    // 深灰色装甲
-        graphics.strokeColor = new Color(50, 50, 50, 255);  // 边框
-        graphics.lineWidth = 3;
-        
-        // 主体装甲 - 矩形坦克形状
-        graphics.roundRect(-25, -20, 50, 40, 5);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 装甲板装饰
-        graphics.fillColor = new Color(90, 90, 90, 255);    // 浅灰色装甲板
-        graphics.rect(-20, -15, 15, 8);
-        graphics.fill();
-        graphics.rect(5, -15, 15, 8);
-        graphics.fill();
-        graphics.rect(-20, 7, 15, 8);
-        graphics.fill();
-        graphics.rect(5, 7, 15, 8);
-        graphics.fill();
-        
-        // 护甲光泽效果
-        graphics.fillColor = new Color(120, 120, 120, 180);  // 半透明高光
-        graphics.rect(-22, -17, 44, 3);
-        graphics.fill();
-        
-        // 履带或重型腿部
-        graphics.fillColor = new Color(40, 40, 40, 255);     // 黑色履带
-        graphics.rect(-25, 20, 50, 8);
-        graphics.fill();
-        graphics.rect(-25, -28, 50, 8);
-        graphics.fill();
-        
-        // 重甲统领标识 - 头顶装甲尖刺
-        graphics.fillColor = new Color(100, 100, 100, 255);
-        graphics.moveTo(0, -25);
-        graphics.lineTo(-8, -35);
-        graphics.lineTo(8, -35);
-        graphics.close();
-        graphics.fill();
-    }
     
     /**
      * 护甲减伤处理

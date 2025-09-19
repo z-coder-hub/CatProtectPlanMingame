@@ -104,9 +104,12 @@ export class ArmoredMouse extends BaseMouse {
         const patterns: ('zigzag' | 'curves' | 'spiral' | 'dash' | 'straight' | 'stealth_sway')[] = ['straight', 'zigzag', 'curves'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
 
-        // 装甲老鼠使用BaseMouse统一的移动参数，无需自定义停顿逻辑
+        // 设置装甲老鼠的移动参数
+        this._zigzagAmplitude = 8 + Math.random() * 10; // 8-18像素（中等摆动）
+        this._segmentCount = 4 + Math.floor(Math.random() * 3); // 4-6段移动
 
-        console.log(`装甲老鼠移动模式: ${this._movementPattern}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
 
 
@@ -201,9 +204,9 @@ export class ArmoredMouse extends BaseMouse {
         // 护甲减伤计算
         const actualDamage = Math.max(1, damage - this.armor); // 至少造成1点伤害
 
-        // 调用父类方法但传入减伤后的伤害
+        // 调用基类的takeDamage方法，让基类统一处理血条更新
         this.currentHealth = Math.max(0, this.currentHealth - actualDamage);
-        this.updateHealthBarDisplay();
+        this.updateMouseHealthBarDisplay(); // 使用基类的血条更新方法
 
         // 触发受伤回调
         this.onTakeDamage(actualDamage);
@@ -275,31 +278,11 @@ export class ArmoredMouse extends BaseMouse {
     protected onTakeDamage(damage: number): void {
         console.log(`装甲老鼠实际受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
 
-        // 更新血条显示
-        this.updateHealthBarDisplay();
-
-        // 受伤闪烁效果
+        // 受伤闪烁效果（血条更新已在takeDamage中处理）
         this.playHurtEffect();
     }
 
-    // 更新血条显示
-    private updateHealthBarDisplay(): void {
-        if (this._healthBarForeground && this._healthBarContainer) {
-            const healthPercent = this.currentHealth / this.maxHealth;
-
-            // 直接更新血条，移除DrawingHelper依赖
-            this._healthBarForeground.clear();
-            if (healthPercent > 0) {
-                this._healthBarForeground.fillColor = new Color(255, 0, 0);
-                const currentWidth = 35 * healthPercent;
-                this._healthBarForeground.rect(-35 / 2, -5 / 2, currentWidth, 5);
-                this._healthBarForeground.fill();
-            }
-
-            // 血条始终显示，只有死亡时才隐藏
-            this._healthBarContainer.active = healthPercent > 0;
-        }
-    }
+    // 已删除自定义血条更新方法，使用基类的updateMouseHealthBarDisplay()
 
     // 播放受伤效果
     private playHurtEffect(): void {

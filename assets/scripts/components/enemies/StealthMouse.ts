@@ -214,19 +214,23 @@ export class StealthMouse extends BaseMouse {
      */
     public takeDamage(damage: number): void {
         if (!this.isAlive) return;
-        
+
         // 闪避判定
         const dodgeRoll = Math.random();
         if (dodgeRoll < this.dodgeChance) {
             console.log(`${this.unitName}闪避了攻击！(${(dodgeRoll * 100).toFixed(1)}% < ${(this.dodgeChance * 100).toFixed(1)}%)`);
             this.createDodgeEffect();
-            return;
+            return; // 闪避成功，不受伤，血条无需更新
         }
-        
+
         // 没有闪避，正常受伤
         this.currentHealth = Math.max(0, this.currentHealth - damage);
+
+        // 更新血条显示
+        this.updateMouseHealthBarDisplay();
+
         this.onTakeDamage(damage);
-        
+
         if (this.currentHealth <= 0) {
             this.die();
         }
@@ -274,6 +278,7 @@ export class StealthMouse extends BaseMouse {
         // 设置潜行移动参数
         this._zigzagAmplitude = 12 + Math.random() * 13; // 12-25像素
         this._segmentCount = 4 + Math.floor(Math.random() * 4); // 4-7段移动
+
 
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }

@@ -67,7 +67,8 @@ export class StormTyrant extends BaseMouse {
         this._zigzagAmplitude = 60 + Math.random() * 40; // 60-100像素的大幅摆动
         this._segmentCount = 8 + Math.floor(Math.random() * 4); // 8-11段移动，增加旋风效果
 
-        console.log(`疾风暴君移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**

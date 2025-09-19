@@ -128,6 +128,46 @@ class ProjectilePoolManager {
 - **抵制"可能有用"的诱惑**：即使逻辑完善，没有使用者就不要实现
 - **文档化例外情况**：如果确实需要保留某些"备用"方法，必须在代码中明确注释原因
 
+### 9. 禁止Debug模式原则 🚫
+- **严格禁止Debug模式**: 不引入任何形式的debug模式、调试开关或调试配置
+- **无条件日志输出**: 所有必要的日志直接输出，不通过debug开关控制
+- **避免调试复杂性**: debug模式会增加代码复杂性和维护成本
+- **生产环境一致性**: 开发环境和生产环境保持完全一致的代码路径
+
+#### 禁止Debug模式实践要点：
+- **删除调试开关**: 移除所有 `enableDebugLogs`、`isDebugMode` 等调试标志
+- **直接日志输出**: 使用 `console.log()` 直接输出，不包装在条件判断中
+- **移除调试方法**: 删除专门用于调试的方法如 `GetDebugInfo()`、`printDebugState()` 等
+- **简化代码路径**: 避免因调试模式产生的不同代码执行路径
+
+#### 禁止的Debug模式示例：
+```typescript
+// ❌ 错误：引入debug模式
+@property({ tooltip: "是否启用调试日志" })
+public enableDebugLogs: boolean = true;
+
+private log(message: string): void {
+    if (this.enableDebugLogs) {
+        console.log(message);
+    }
+}
+
+public GetDebugInfo(): DebugInfo {
+    // 专门的调试方法
+}
+
+// ✅ 正确：直接简洁的日志输出
+private log(message: string): void {
+    console.log(message);
+}
+```
+
+#### 原则说明：
+- **代码简洁性**: 移除不必要的条件判断和配置项
+- **维护成本**: 减少因调试开关导致的代码分支维护
+- **行为一致性**: 确保开发和生产环境行为完全一致
+- **性能优化**: 避免运行时的条件判断开销
+
 ### ⚠️ 重要：敌人文件修改前必读
 
 **在修改 `assets/scripts/components/enemies/` 目录下的任何文件之前，必须先阅读 `ENEMIES_DESIGN_PRINCIPLES.md` 文档。**

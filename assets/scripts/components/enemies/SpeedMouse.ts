@@ -87,6 +87,7 @@ export class SpeedMouse extends BaseMouse {
         this._zigzagAmplitude = 10 + Math.random() * 10; // 10-20像素（较小摆动）
         this._segmentCount = 2 + Math.floor(Math.random() * 3); // 2-4段移动（更少分段，更快）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
 

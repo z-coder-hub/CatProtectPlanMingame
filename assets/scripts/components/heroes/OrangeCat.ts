@@ -1,4 +1,4 @@
-import { _decorator, Node, Vec3, Color } from 'cc';
+import { _decorator, Node, Color } from 'cc';
 import { BaseHero } from './BaseHero';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';

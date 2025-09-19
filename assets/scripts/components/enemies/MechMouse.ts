@@ -40,8 +40,7 @@ export class MechMouse extends BaseMouse {
     // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
         // 基类已处理图片/Graphics显示，这里可以添加特殊效果
-        // BOSS比普通敌人更大
-        this.node.setScale(1.3, 1.3, 1.3);
+        // 大小由基类的统一尺寸管理系统控制
     }
 
     // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）

@@ -45,23 +45,13 @@ export class ProjectileSystem {
      * 初始化投射物系统
      */
     static initialize(): void {
-        console.log("[ProjectileSystem] 🚀 开始初始化投射物系统...");
-
         // 监听投射物回收事件
         director.on('projectile-recycle', this.recycleProjectile, this);
-        console.log("[ProjectileSystem] 📡 已注册投射物回收事件监听器");
 
         // 验证组件类映射
         const types = Array.from(this._componentClasses.keys());
-        console.log(`[ProjectileSystem] 📋 已注册的投射物类型: ${types.join(', ')}`);
 
-        types.forEach(type => {
-            const componentClass = this._componentClasses.get(type);
-            console.log(`[ProjectileSystem] ✅ ${type}: ${componentClass?.name || 'Unknown'}`);
-        });
-
-        console.log(`[ProjectileSystem] ⚙️ 对象池配置: 最大大小=${this._maxPoolSize}`);
-        console.log("[ProjectileSystem] 🎉 投射物系统初始化完成，对象池管理已就绪");
+        console.log(`[ProjectileSystem] 投射物系统初始化完成，支持 ${types.length} 种投射物类型`);
     }
 
 
@@ -78,7 +68,6 @@ export class ProjectileSystem {
             console.error(`[ProjectileSystem] 未找到 ${type} 的组件类`);
             return null;
         }
-        console.log(`[ProjectileSystem] 获取组件类: ${type} -> ${componentClass.name}`);
         return componentClass;
     }
 
@@ -109,8 +98,6 @@ export class ProjectileSystem {
                 pool = new NodePool(); // 降级为空对象池
                 this._pools.set(type, pool);
             }
-        } else {
-            console.log(`[ProjectileSystem] 🔄 使用现有对象池: ${type}, 当前大小: ${pool.size()}`);
         }
         return pool;
     }
@@ -121,11 +108,10 @@ export class ProjectileSystem {
      * @returns 从池中获取的节点，如果池为空则创建新节点
      */
     private static getProjectile(type: ProjectileType): Node {
-        console.log(`[ProjectileSystem] 🎯 请求投射物节点: ${type}`);
+
         const pool = this.getPool(type);
 
         // NodePool.get() 会自动调用组件的 reuse() 方法
-        console.log(`[ProjectileSystem] 尝试从对象池获取节点，池当前大小: ${pool.size()}`);
         let node = pool.get();
 
         if (!node) {
@@ -133,8 +119,6 @@ export class ProjectileSystem {
             console.log(`[ProjectileSystem] 🆕 对象池为空，创建新节点: ${type}`);
             node = this.createProjectileNode(type);
             console.log(`[ProjectileSystem] ✅ 新节点创建完成: ${type}, 池大小: ${pool.size()}`);
-        } else {
-            console.log(`[ProjectileSystem] ♻️ 从池中获取 ${type} 节点，剩余: ${pool.size()}`);
         }
 
         if (node) {

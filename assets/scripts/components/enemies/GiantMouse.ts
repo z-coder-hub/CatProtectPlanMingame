@@ -139,6 +139,7 @@ export class GiantMouse extends BaseMouse {
         this._zigzagAmplitude = 15 + Math.random() * 10; // 15-25像素（比基础老鼠小）
         this._segmentCount = 3 + Math.floor(Math.random() * 3); // 3-5段移动（更少分段）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
 

@@ -155,7 +155,8 @@ export class MechCommander extends BaseMouse {
         this._zigzagAmplitude = 15 + Math.random() * 20; // 15-35像素的精确摆动
         this._segmentCount = 6 + Math.floor(Math.random() * 3); // 6-8段移动，保持稳定
 
-        console.log(`机械军团长移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
 
     /**
@@ -263,32 +264,6 @@ export class MechCommander extends BaseMouse {
         }
     }
 
-    /**
-     * 绘制机械细节
-     */
-    private drawMechanicalDetails(graphics: Graphics): void {
-        graphics.strokeColor = new Color(180, 180, 180, 255);
-        graphics.lineWidth = 1;
-
-        // 机械纹路
-        graphics.moveTo(-12, -5);
-        graphics.lineTo(12, -5);
-        graphics.stroke();
-        graphics.moveTo(-12, 0);
-        graphics.lineTo(12, 0);
-        graphics.stroke();
-        graphics.moveTo(-12, 5);
-        graphics.lineTo(12, 5);
-        graphics.stroke();
-
-        // 机械接缝
-        graphics.moveTo(-15, -10);
-        graphics.lineTo(-15, 10);
-        graphics.stroke();
-        graphics.moveTo(15, -10);
-        graphics.lineTo(15, 10);
-        graphics.stroke();
-    }
 
     /**
      * 更新机械特效和逻辑
