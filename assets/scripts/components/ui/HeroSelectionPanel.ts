@@ -246,48 +246,86 @@ export class HeroSelectionPanel extends Component {
         const iconNode = buttonNode.getChildByName("HeroIcon");
         if (!iconNode) return;
 
-        // 更新Sprite颜色（如果存在）
-        const sprite = iconNode.getComponent(Sprite);
-        if (sprite) {
-            sprite.color = isUnlocked ? new Color(255, 255, 255) : new Color(120, 120, 120);
+        // 更新父节点的背景Graphics（如果存在）
+        const bgGraphics = iconNode.getComponent(Graphics);
+        if (bgGraphics) {
+            // 重新绘制肉色背景
+            bgGraphics.clear();
+            bgGraphics.fillColor = new Color(255, 218, 185, 255); // 肉色背景
+
+            // 根据图标容器尺寸计算背景大小
+            const iconTransform = iconNode.getComponent(UITransform);
+            let maxSize = 50; // 默认尺寸
+            if (iconTransform) {
+                const containerWidth = iconTransform.contentSize.width;
+                const containerHeight = iconTransform.contentSize.height;
+                const availableWidth = Math.max(containerWidth - 10, 20);
+                const availableHeight = Math.max(containerHeight - 10, 20);
+                maxSize = Math.min(availableWidth, availableHeight);
+            }
+
+            bgGraphics.rect(-maxSize / 2, -maxSize / 2, maxSize, maxSize);
+            bgGraphics.fill();
         }
 
-        // 更新Graphics图标（如果存在）
-        const iconGraphics = iconNode.getComponent(Graphics);
-        if (iconGraphics) {
-            // 简单的回退图标更新
-            this.updateSimpleFallbackIcon(iconGraphics, heroType, isUnlocked);
+        // 更新Sprite颜色（如果存在子节点sprite）
+        const spriteNode = iconNode.getChildByName("sprite");
+        if (spriteNode) {
+            const sprite = spriteNode.getComponent(Sprite);
+            if (sprite) {
+                sprite.color = isUnlocked ? new Color(255, 255, 255) : new Color(120, 120, 120);
+            }
+        }
+
+        // 更新直接在iconNode上的Sprite（兼容旧结构）
+        const directSprite = iconNode.getComponent(Sprite);
+        if (directSprite) {
+            directSprite.color = isUnlocked ? new Color(255, 255, 255) : new Color(120, 120, 120);
+        }
+
+        // 更新Graphics图标（如果存在子节点icon，这是回退图标情况）
+        const iconSubNode = iconNode.getChildByName("icon");
+        if (iconSubNode) {
+            const iconGraphics = iconSubNode.getComponent(Graphics);
+            if (iconGraphics) {
+                // 重新绘制回退图标（不需要背景，父节点已有）
+                iconGraphics.clear();
+                const color = isUnlocked ? new Color(128, 128, 128) : new Color(80, 80, 80);
+                iconGraphics.fillColor = color;
+                iconGraphics.circle(0, 0, 20);
+                iconGraphics.fill();
+            }
         }
     }
 
-    /**
-     * 更新简单回退图标状态
-     */
-    private updateSimpleFallbackIcon(graphics: Graphics, heroType: HeroType, isUnlocked: boolean): void {
-        // 清除现有绘制内容
-        graphics.clear();
-
-        // 简单的灰色圆形作为基本回退图标
-        const color = isUnlocked ? new Color(128, 128, 128) : new Color(80, 80, 80);
-        graphics.fillColor = color;
-        graphics.circle(0, 0, 20);
-        graphics.fill();
-
-        console.log(`更新基本回退图标: ${heroType}, 解锁=${isUnlocked}`);
-    }
 
     /**
      * 创建简单的回退图标（用于图片资源缺失时）
      */
     private createSimpleFallbackIcon(iconNode: Node, heroType: HeroType, isUnlocked: boolean): void {
-        // 添加Graphics组件
-        const graphics = iconNode.addComponent(Graphics);
+        // 在父节点上添加Graphics组件绘制背景
+        const bgGraphics = iconNode.addComponent(Graphics);
+
+        // 绘制肉色背景
+        bgGraphics.fillColor = new Color(255, 218, 185, 255); // 肉色背景
+        bgGraphics.rect(-25, -25, 50, 50);
+        bgGraphics.fill();
+
+        // 创建前景子节点放置图标
+        const iconSubNode = new Node("icon");
+        iconNode.addChild(iconSubNode);
+        const iconTransform = iconSubNode.addComponent(UITransform);
+        const iconGraphics = iconSubNode.addComponent(Graphics);
+
+        // 设置子节点尺寸和位置
+        iconTransform.setContentSize(50, 50);
+        iconSubNode.setPosition(0, 0);
 
         // 简单的灰色圆形作为基本回退图标
         const color = isUnlocked ? new Color(128, 128, 128) : new Color(80, 80, 80);
-        graphics.fillColor = color;
-        graphics.circle(0, 0, 20);
-        graphics.fill();
+        iconGraphics.fillColor = color;
+        iconGraphics.circle(0, 0, 20);
+        iconGraphics.fill();
 
         console.log(`创建基本回退图标: ${heroType}, 解锁=${isUnlocked}`);
     }
@@ -1047,8 +1085,14 @@ export class HeroSelectionPanel extends Component {
      * 加载英雄图片
      */
     private loadHeroImage(iconNode: Node, imagePath: string, isUnlocked: boolean): void {
-        // 添加Sprite组件
-        const sprite = iconNode.addComponent(Sprite);
+        // 在父节点上添加Graphics组件绘制背景
+        const graphics = iconNode.addComponent(Graphics);
+
+        // 创建前景子节点放置Sprite
+        const spriteNode = new Node("sprite");
+        iconNode.addChild(spriteNode);
+        const spriteTransform = spriteNode.addComponent(UITransform);
+        const sprite = spriteNode.addComponent(Sprite);
 
         // 提前设置Sprite属性和尺寸，避免异步加载导致的布局问题
         sprite.type = Sprite.Type.SIMPLE;
@@ -1066,15 +1110,17 @@ export class HeroSelectionPanel extends Component {
             const availableHeight = Math.max(containerHeight - 10, 20);
             const maxSize = Math.min(availableWidth, availableHeight);
 
-            // 预设为最大可用尺寸的正方形，保证布局稳定
-            const spriteTransform = sprite.node.getComponent(UITransform);
-            if (spriteTransform) {
-                spriteTransform.setContentSize(maxSize, maxSize);
-                console.log(`预设Sprite尺寸: ${maxSize}x${maxSize} (容器: ${containerWidth.toFixed(1)}x${containerHeight.toFixed(1)})`);
-            }
+            // 绘制肉色背景
+            graphics.fillColor = new Color(255, 218, 185, 255); // 肉色背景
+            graphics.rect(-maxSize / 2, -maxSize / 2, maxSize, maxSize);
+            graphics.fill();
+
+            // 设置Sprite子节点的尺寸和位置
+            spriteTransform.setContentSize(maxSize, maxSize);
+            spriteNode.setPosition(0, 0);
+            console.log(`预设Sprite尺寸: ${maxSize}x${maxSize} (容器: ${containerWidth.toFixed(1)}x${containerHeight.toFixed(1)})`);
 
             // 确保图片在图标容器中居中显示
-            sprite.node.setPosition(0, 0);
         }
 
         // 应用未解锁状态的视觉效果

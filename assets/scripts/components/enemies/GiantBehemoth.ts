@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, tween, Vec3 } from 'cc';
+import { _decorator, Color, Sprite, tween, Vec3 } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { BaseHero } from '../heroes/BaseHero';
@@ -70,8 +70,8 @@ export class GiantBehemoth extends BaseMouse {
      * 初始化巨兽霸主外观
      */
     // 实现抽象方法：获取敌人图片路径
-    protected getEnemyImagePath(): string | null {
-        return null; // 使用Graphics回退绘制
+    protected getEnemyImagePath(): string {
+        return "images/emeies/GiantBehemoth";
     }
 
     // 重写：初始化特殊外观（现在基类处理图片加载）
@@ -81,25 +81,13 @@ export class GiantBehemoth extends BaseMouse {
     }
 
     // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
-    protected drawEnemyGraphics(graphics: Graphics): void {
-        graphics.clear();
-        // 巨兽霸主 - 深棕红色巨兽
-        graphics.fillColor = new Color(120, 80, 50);
-        graphics.roundRect(-30, -25, 60, 50, 8);
-        graphics.fill();
-        graphics.strokeColor = new Color(80, 50, 30);
-        graphics.lineWidth = 4;
-        graphics.stroke();
-        // 巨兽头部
-        graphics.fillColor = new Color(100, 65, 40);
-        graphics.circle(0, -35, 20);
-        graphics.fill();
-        // 红色眼睛
-        graphics.fillColor = new Color(200, 50, 50);
-        graphics.circle(-8, -35, 4);
-        graphics.fill();
-        graphics.circle(8, -35, 4);
-        graphics.fill();
+    protected drawEnemyGraphics(graphics: any): void {
+        // 巨兽霸主已迁移到Sprite颜色系统
+        // 使用深棕红色代表巨兽的威严
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(120, 80, 50); // 深棕红色巨兽
+        }
     }
 
     /**
@@ -142,23 +130,12 @@ export class GiantBehemoth extends BaseMouse {
      * 显示威慑蓄力特效
      */
     private showIntimidationChargeEffect(): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
-
-        // 添加威慑光环
-        graphics.strokeColor = new Color(255, 180, 80, 200);
-        graphics.lineWidth = 5;
-        graphics.circle(0, 0, this.intimidationRange);
-        graphics.stroke();
-
-        // 威慑波纹效果
-        graphics.strokeColor = new Color(200, 120, 60, 150);
-        graphics.lineWidth = 3;
-        for (let i = 0; i < 6; i++) {
-            const radius = 30 + (i * 15);
-            graphics.circle(0, 0, radius);
-            graphics.stroke();
+        // 威慑蓄力特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 180, 80); // 威慑光环色
         }
+        console.log(`巨兽霸主展示威慑蓄力特效，范围：${this.intimidationRange}`);
     }
 
     /**
@@ -196,70 +173,30 @@ export class GiantBehemoth extends BaseMouse {
      * 显示威慑命中特效
      */
     private showIntimidationHitEffect(targetPos: Vec3): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
-
-        // 在目标位置显示威慑特效
+        // 威慑命中特效 - 改为日志输出
         const relativePos = targetPos.subtract(this.node.position);
-        graphics.fillColor = new Color(255, 200, 100, 150);
-        graphics.circle(relativePos.x, relativePos.y, 12);
-        graphics.fill();
-
-        // 威慑波纹
-        graphics.strokeColor = new Color(255, 180, 80, 100);
-        graphics.lineWidth = 2;
-        graphics.circle(relativePos.x, relativePos.y, 20);
-        graphics.stroke();
+        console.log(`巨兽霸主在位置(${relativePos.x.toFixed(1)}, ${relativePos.y.toFixed(1)})显示威慑命中特效`);
     }
 
     /**
      * 显示威慑爆发特效
      */
     private showIntimidationExplosion(): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
-
-        // 重绘基础外观
-        graphics.clear();
-        this.initializeMouseVisuals();
-
-        // 添加威慑爆发特效
-        graphics.strokeColor = new Color(255, 180, 80, 255);
-        graphics.lineWidth = 6;
-        graphics.circle(0, 0, this.intimidationRange);
-        graphics.stroke();
-
-        // 威慑冲击波
-        for (let i = 0; i < 4; i++) {
-            graphics.strokeColor = new Color(255, 200, 120, 180 - (i * 40));
-            graphics.lineWidth = 4;
-            graphics.circle(0, 0, this.intimidationRange + (i * 25));
-            graphics.stroke();
+        // 威慑爆发特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 180, 80); // 威慑爆发色
         }
-
-        // 威慑光线
-        graphics.strokeColor = new Color(255, 220, 100, 200);
-        graphics.lineWidth = 3;
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * Math.PI) / 6;
-            const startX = Math.cos(angle) * 40;
-            const startY = Math.sin(angle) * 40;
-            const endX = Math.cos(angle) * (this.intimidationRange + 20);
-            const endY = Math.sin(angle) * (this.intimidationRange + 20);
-            graphics.moveTo(startX, startY);
-            graphics.lineTo(endX, endY);
-            graphics.stroke();
-        }
+        console.log(`巨兽霸主展示威慑爆发特效，范围：${this.intimidationRange}`);
 
         // 2秒后恢复正常外观
         tween(this.node)
             .delay(2.0)
             .call(() => {
                 if (this.node && this.node.isValid) {
-                    const graphics = this.getGraphicsComponent();
-                    if (graphics) {
-                        graphics.clear();
-                        this.initializeMouseVisuals();
+                    const sprite = this.node.getComponent(Sprite);
+                    if (sprite) {
+                        sprite.color = new Color(120, 80, 50); // 恢复深棕红色
                     }
                 }
             })
@@ -272,14 +209,19 @@ export class GiantBehemoth extends BaseMouse {
     protected onTakeDamage(_damage: number): void {
         console.log("巨兽霸主发出威慑的咆哮！");
 
-        // 愤怒威慑特效
-        const graphics = this.getGraphicsComponent();
-        if (graphics) {
-            // 添加愤怒威慑光环
-            graphics.strokeColor = new Color(255, 120, 60, 200);
-            graphics.lineWidth = 4;
-            graphics.circle(0, 0, 40);
-            graphics.stroke();
+        // 简化的受伤效果
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 120, 60);
+
+            tween(this.node)
+                .delay(0.3)
+                .call(() => {
+                    if (sprite && this.node.isValid) {
+                        sprite.color = Color.WHITE;
+                    }
+                })
+                .start();
         }
     }
 
@@ -293,30 +235,25 @@ export class GiantBehemoth extends BaseMouse {
     protected onDie(): void {
         console.log("巨兽霸主轰然倒下，大地震颤！");
 
-        // 倒塌特效
-        const graphics = this.getGraphicsComponent();
-        if (graphics) {
-            graphics.clear();
-
-            // 显示倒塌的巨兽
-            graphics.fillColor = new Color(120, 80, 50, 200);
-            graphics.ellipse(0, 0, 80, 40); // 横向椭圆表示倒下
-            graphics.fill();
-
-            // 烟尘效果
-            graphics.fillColor = new Color(150, 150, 150, 100);
-            for (let i = 0; i < 15; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 60 + 30;
-                const x = Math.cos(angle) * distance;
-                const y = Math.sin(angle) * distance;
-                const size = Math.random() * 8 + 4;
-                graphics.circle(x, y, size);
-                graphics.fill();
-            }
+        // 简化的死亡效果
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(120, 80, 50, 200);
         }
 
         // 调用父类死亡处理
         super.onDie();
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置巨兽霸主的威慑范围
+     */
+    protected onReuse(): void {
+        // 重新初始化威慑范围
+        const config = this.getConfig();
+        this.intimidationRange = config.aoeAttackRange || 80;
+
+        console.log(`[GiantBehemoth] 🔄 重用时重置威慑范围: ${this.intimidationRange}`);
     }
 }

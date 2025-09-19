@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Vec3, tween } from 'cc';
+import { _decorator, Color, Sprite, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
@@ -78,8 +78,8 @@ export class ThunderMaster extends BaseMouse {
      * 初始化雷电大师外观
      */
     // 实现抽象方法：获取敌人图片路径
-    protected getEnemyImagePath(): string | null {
-        return null; // 使用Graphics回退绘制
+    protected getEnemyImagePath(): string {
+        return "images/emeies/ThunderMaster";
     }
 
     // 重写：初始化特殊外观（现在基类处理图片加载）
@@ -89,122 +89,47 @@ export class ThunderMaster extends BaseMouse {
     }
 
     // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
-    protected drawEnemyGraphics(graphics: Graphics): void {
-        graphics.clear();
-        // 雷电大师 - 紫蓝电光色
-        graphics.fillColor = new Color(100, 100, 200);
-        // 三角锥形法师身体
-        graphics.moveTo(0, -25);
-        graphics.lineTo(-15, 15);
-        graphics.lineTo(15, 15);
-        graphics.close();
-        graphics.fill();
-        // 雷电法师头部
-        graphics.fillColor = new Color(120, 120, 220);
-        graphics.circle(0, -15, 10);
-        graphics.fill();
-        // 雷电眼睛
-        graphics.fillColor = new Color(255, 255, 100);
-        graphics.circle(-4, -15, 2);
-        graphics.fill();
-        graphics.circle(4, -15, 2);
-        graphics.fill();
+    protected drawEnemyGraphics(graphics: any): void {
+        // 雷电大师已迁移到Sprite颜色系统
+        this.drawBasicVisuals();
     }
-    
+
     /**
-     * 绘制基础外观（不重新获取Graphics组件）
+     * 绘制基础外观（改为Sprite颜色）
      */
-    private drawBasicVisuals(graphics: Graphics): void {
+    private drawBasicVisuals(): void {
         // 雷电色彩 - 紫蓝电光色
-        graphics.fillColor = new Color(100, 100, 200, 255);   // 紫蓝色身体
-        graphics.strokeColor = new Color(70, 70, 170, 255);   // 深紫蓝边框
-        graphics.lineWidth = 3;
-        
-        // 法师身体 - 三角锥形
-        graphics.moveTo(0, -25);
-        graphics.lineTo(-15, 15);
-        graphics.lineTo(15, 15);
-        graphics.close();
-        graphics.fill();
-        graphics.stroke();
-        
-        // 雷电法师头部
-        graphics.fillColor = new Color(120, 120, 220, 255);
-        graphics.circle(0, -15, 10);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 电光眼睛
-        graphics.fillColor = new Color(255, 255, 100, 255);   // 亮黄色电光眼
-        graphics.circle(-4, -15, 3);
-        graphics.fill();
-        graphics.circle(4, -15, 3);
-        graphics.fill();
-        
-        // 雷电法杖
-        graphics.strokeColor = new Color(200, 200, 250, 255);
-        graphics.lineWidth = 4;
-        graphics.moveTo(-18, 5);
-        graphics.lineTo(-25, -10);
-        graphics.stroke();
-        
-        // 法杖顶端的雷电球
-        graphics.fillColor = new Color(255, 255, 150, 255);
-        graphics.circle(-25, -10, 5);
-        graphics.fill();
-        
-        // 电流护盾
-        this.drawShield(graphics);
-        
-        // 身体电弧
-        this.drawLightningArcs(graphics);
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(100, 100, 200); // 紫蓝色身体
+        }
     }
     
     /**
-     * 绘制电流护盾
+     * 绘制电流护盾（改为Sprite颜色变化）
      */
-    private drawShield(graphics: Graphics): void {
+    private drawShield(): void {
         if (this.currentShield <= 0) return;
-        
-        const shieldAlpha = Math.floor((this.currentShield / this.shieldStrength) * 150);
-        graphics.strokeColor = new Color(150, 200, 255, shieldAlpha);
-        graphics.lineWidth = 3;
-        graphics.circle(0, 0, 30);
-        graphics.stroke();
-        
-        // 护盾电弧装饰
-        for (let i = 0; i < 6; i++) {
-            const angle = (i * Math.PI) / 3;
-            const x = Math.cos(angle) * 28;
-            const y = Math.sin(angle) * 28;
-            graphics.strokeColor = new Color(200, 220, 255, shieldAlpha);
-            graphics.lineWidth = 2;
-            graphics.moveTo(x, y);
-            graphics.lineTo(x * 1.2, y * 1.2);
-            graphics.stroke();
+
+        // 护盾特效 - 使用颜色强度显示护盾状态
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            const shieldIntensity = this.currentShield / this.shieldStrength;
+            sprite.color = new Color(
+                Math.floor(100 + shieldIntensity * 50),
+                Math.floor(100 + shieldIntensity * 100),
+                Math.floor(200 + shieldIntensity * 55)
+            );
         }
+        console.log(`雷电大师护盾强度：${this.currentShield}/${this.shieldStrength}`);
     }
     
     /**
-     * 绘制雷电弧
+     * 绘制雷电弧（改为日志输出）
      */
-    private drawLightningArcs(graphics: Graphics): void {
-        graphics.strokeColor = new Color(255, 255, 200, 200);
-        graphics.lineWidth = 2;
-        
-        // 身体周围的电弧
-        for (let i = 0; i < 4; i++) {
-            const startAngle = (i * Math.PI) / 2;
-            const endAngle = startAngle + Math.PI / 4;
-            const startX = Math.cos(startAngle) * 12;
-            const startY = Math.sin(startAngle) * 12;
-            const endX = Math.cos(endAngle) * 20;
-            const endY = Math.sin(endAngle) * 20;
-            
-            graphics.moveTo(startX, startY);
-            graphics.lineTo(endX, endY);
-            graphics.stroke();
-        }
+    private drawLightningArcs(): void {
+        // 雷电弧特效已经通过Sprite颜色变化体现
+        console.log("雷电大师身体周围电弧效果");
     }
     
     /**
@@ -239,30 +164,24 @@ export class ThunderMaster extends BaseMouse {
     }
     
     /**
-     * 更新雷电特效（减少Graphics组件重复访问）
+     * 更新雷电特效（改为Sprite颜色变化）
      */
     private updateLightningEffect(): void {
-        if (!this._graphics) {
-            this._graphics = this.getGraphicsComponent();
-        }
-        if (!this._graphics) return;
-        
         // 重绘基础外观
-        this._graphics.clear();
-        this.drawBasicVisuals(this._graphics);
-        
-        // 添加随机雷电闪烁
-        this._graphics.strokeColor = new Color(255, 255, 100, Math.random() * 100 + 100);
-        this._graphics.lineWidth = 1;
-        for (let i = 0; i < 3; i++) {
-            const startX = (Math.random() - 0.5) * 30;
-            const startY = (Math.random() - 0.5) * 30;
-            const endX = (Math.random() - 0.5) * 40;
-            const endY = (Math.random() - 0.5) * 40;
-            this._graphics.moveTo(startX, startY);
-            this._graphics.lineTo(endX, endY);
-            this._graphics.stroke();
+        this.drawBasicVisuals();
+
+        // 添加随机雷电闪烁 - 改为颜色闪烁效果
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            const flickerIntensity = Math.random() * 0.5 + 0.5;
+            sprite.color = new Color(
+                Math.floor(100 + flickerIntensity * 155),
+                Math.floor(100 + flickerIntensity * 155),
+                Math.floor(200 + flickerIntensity * 55)
+            );
         }
+
+        console.log("雷电大师更新雷电闪烁特效");
     }
     
     /**
@@ -322,37 +241,17 @@ export class ThunderMaster extends BaseMouse {
      * 显示电磁干扰特效
      */
     private showElectromagneticInterferenceEffect(targets: any[]): void {
-        if (!this._graphics) {
-            this._graphics = this.getGraphicsComponent();
-        }
-        if (!this._graphics) return;
-
         console.log(`雷电大师对${targets.length}个英雄展示电磁干扰特效`);
 
-        // 电磁干扰场
-        this._graphics.strokeColor = new Color(150, 200, 255, 200);
-        this._graphics.lineWidth = 3;
-        this._graphics.circle(0, 0, 120); // 干扰范围
-        this._graphics.stroke();
+        // 电磁干扰特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(150, 200, 255); // 蓝色电磁场色
+        }
 
         // 对每个目标显示干扰特效
         targets.forEach(target => {
             if (target) {
-                const targetPos = target.position.subtract(this.node.position);
-
-                // 电磁波线
-                this._graphics.strokeColor = new Color(180, 220, 255, 150);
-                this._graphics.lineWidth = 2;
-                this._graphics.moveTo(0, 0);
-                this._graphics.lineTo(targetPos.x, targetPos.y);
-                this._graphics.stroke();
-
-                // 干扰环效果
-                this._graphics.strokeColor = new Color(120, 180, 255, 120);
-                this._graphics.lineWidth = 2;
-                this._graphics.circle(targetPos.x, targetPos.y, 15);
-                this._graphics.stroke();
-
                 const heroComponent = target.getComponent(BaseHero);
                 if (heroComponent) {
                     console.log(`英雄${heroComponent.unitName}受到电磁干扰效果影响`);
@@ -365,9 +264,9 @@ export class ThunderMaster extends BaseMouse {
             .delay(2.5)
             .call(() => {
                 if (this.node && this.node.isValid) {
-                    if (this._graphics) {
-                        this._graphics.clear();
-                        this.drawBasicVisuals(this._graphics);
+                    const sprite = this.node.getComponent(Sprite);
+                    if (sprite) {
+                        sprite.color = new Color(100, 100, 200); // 恢复紫蓝色
                     }
                 }
             })
@@ -398,27 +297,25 @@ export class ThunderMaster extends BaseMouse {
     }
     
     /**
-     * 显示护盾受击特效（减少Graphics组件重复访问）
+     * 显示护盾受击特效（改为Sprite颜色变化）
      */
     private showShieldHitEffect(): void {
-        if (!this._graphics) {
-            this._graphics = this.getGraphicsComponent();
+        // 护盾受击特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 255, 255); // 白色闪烁
+
+            // 短暂闪烁后恢复
+            tween(this.node)
+                .delay(0.2)
+                .call(() => {
+                    if (this.node && this.node.isValid && sprite) {
+                        sprite.color = new Color(100, 100, 200); // 恢复紫蓝色
+                    }
+                })
+                .start();
         }
-        if (!this._graphics) return;
-        
-        // 护盾电弧爆发
-        this._graphics.strokeColor = new Color(255, 255, 255, 255);
-        this._graphics.lineWidth = 3;
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * Math.PI) / 4;
-            const startX = Math.cos(angle) * 25;
-            const startY = Math.sin(angle) * 25;
-            const endX = Math.cos(angle) * 40;
-            const endY = Math.sin(angle) * 40;
-            this._graphics.moveTo(startX, startY);
-            this._graphics.lineTo(endX, endY);
-            this._graphics.stroke();
-        }
+        console.log("雷电大师护盾受击特效");
     }
     
     
@@ -427,34 +324,26 @@ export class ThunderMaster extends BaseMouse {
      */
     protected onDie(): void {
         console.log("雷电大师化作雷光消散...");
-        
-        // 雷电消散特效
-        if (!this._graphics) {
-            this._graphics = this.getGraphicsComponent();
+
+        // 雷电消散特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 255, 100); // 亮黄色雷电爆发
         }
-        if (this._graphics) {
-            this._graphics.clear();
-            
-            // 显示爆发的雷电
-            this._graphics.strokeColor = new Color(255, 255, 200, 255);
-            this._graphics.lineWidth = 4;
-            for (let i = 0; i < 16; i++) {
-                const angle = (i * Math.PI) / 8;
-                const length = 30 + Math.random() * 30;
-                const endX = Math.cos(angle) * length;
-                const endY = Math.sin(angle) * length;
-                this._graphics.moveTo(0, 0);
-                this._graphics.lineTo(endX, endY);
-                this._graphics.stroke();
-            }
-            
-            // 中央雷电球
-            this._graphics.fillColor = new Color(255, 255, 100, 255);
-            this._graphics.circle(0, 0, 15);
-            this._graphics.fill();
-        }
-        
+
         // 调用父类死亡处理
         super.onDie();
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置雷电大师的护盾强度
+     */
+    protected onReuse(): void {
+        // 重新初始化护盾强度
+        const config = this.getConfig();
+        this.shieldStrength = config.shieldStrength || 100;
+
+        console.log(`[ThunderMaster] 🔄 重用时重置护盾强度: ${this.shieldStrength}`);
     }
 }

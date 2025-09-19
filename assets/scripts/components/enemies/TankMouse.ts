@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, tween } from 'cc';
+import { _decorator, Color, Sprite, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
@@ -13,7 +13,7 @@ export class TankMouse extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.TANK_MOUSE;
 
-    // 私有属性（基类已提供 _graphics）
+    // 私有属性
 
     @property({ tooltip: "护甲值(减少受到的伤害)" })
     public armorValue: number = 3;
@@ -46,7 +46,7 @@ export class TankMouse extends BaseMouse {
     }
     
     // 实现抽象方法：获取敌人图片路径
-    protected getEnemyImagePath(): string | null {
+    protected getEnemyImagePath(): string {
         return "images/emeies/TankMouse";
     }
 
@@ -56,105 +56,21 @@ export class TankMouse extends BaseMouse {
         // 无需额外的外观初始化
     }
 
-    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
-    protected drawEnemyGraphics(graphics: Graphics): void {
-        graphics.clear();
-
-        // 坦克老鼠 - 深灰色厚重外观
-        graphics.fillColor = new Color(70, 70, 70); // 深灰色
-        graphics.roundRect(-20, -15, 40, 30, 5); // 矩形坦克身体
-        graphics.fill();
-
-        // 厚重边框
-        graphics.strokeColor = new Color(40, 40, 40);
-        graphics.lineWidth = 4;
-        graphics.roundRect(-20, -15, 40, 30, 5);
-        graphics.stroke();
-
-        // 炮塔
-        graphics.fillColor = new Color(80, 80, 80);
-        graphics.circle(0, -5, 12);
-        graphics.fill();
-        graphics.stroke();
-
-        // 炮管
-        graphics.fillColor = new Color(60, 60, 60);
-        graphics.rect(8, -8, 15, 6);
-        graphics.fill();
-        graphics.stroke();
-
-        // 履带
-        graphics.fillColor = new Color(50, 50, 50);
-        graphics.rect(-22, 12, 44, 8);
-        graphics.fill();
-        graphics.stroke();
-
-        // 履带轮
-        for (let i = 0; i < 6; i++) {
-            const x = -20 + (i * 8);
-            graphics.fillColor = new Color(30, 30, 30);
-            graphics.circle(x, 16, 3);
-            graphics.fill();
-        }
-
-        // 装甲板纹理
-        graphics.strokeColor = new Color(90, 90, 90);
-        graphics.lineWidth = 1;
-        for (let i = 0; i < 3; i++) {
-            const y = -10 + (i * 7);
-            graphics.moveTo(-15, y);
-            graphics.lineTo(15, y);
-            graphics.stroke();
-        }
-    }
-    
     /**
-     * 绘制坦克老鼠外观
+     * 通过Sprite颜色变化实现装甲效果
+     * @param showArmor 是否显示装甲效果
      */
-    private drawTankMouseAppearance(): void {
-        if (!this._graphics) return;
-        
-        // 绘制坦克老鼠身体（厚重的矩形 + 装甲细节）
-        this._graphics.fillColor = new Color(80, 80, 80, 255);      // 深灰色装甲
-        this._graphics.strokeColor = new Color(50, 50, 50, 255);    // 更深的边框
-        this._graphics.lineWidth = 3;
-        
-        // 主体 - 厚重的矩形
-        this._graphics.roundRect(-18, -12, 36, 24, 4);
-        this._graphics.fill();
-        this._graphics.stroke();
-        
-        // 装甲板细节
-        this._graphics.fillColor = new Color(100, 100, 100, 255);   // 稍亮的装甲细节
-        this._graphics.roundRect(-14, -8, 28, 16, 2);
-        this._graphics.fill();
-        
-        // 装甲纹理线条
-        this._graphics.strokeColor = new Color(120, 120, 120, 255);
-        this._graphics.lineWidth = 1;
-        this._graphics.moveTo(-12, -6);
-        this._graphics.lineTo(12, -6);
-        this._graphics.moveTo(-12, 0);
-        this._graphics.lineTo(12, 0);
-        this._graphics.moveTo(-12, 6);
-        this._graphics.lineTo(12, 6);
-        this._graphics.stroke();
-        
-        // 眼睛 - 小而坚毅
-        this._graphics.fillColor = new Color(255, 0, 0, 255);       // 红色眼睛
-        this._graphics.circle(-6, 3, 2);
-        this._graphics.fill();
-        this._graphics.circle(6, 3, 2);
-        this._graphics.fill();
-        
-        // 履带/脚部
-        this._graphics.fillColor = new Color(60, 60, 60, 255);
-        this._graphics.rect(-16, -16, 8, 4);
-        this._graphics.fill();
-        this._graphics.rect(8, -16, 8, 4);
-        this._graphics.fill();
-        
-        console.log(`${this.unitName}外观创建完成`);
+    private updateArmorAppearance(showArmor: boolean = false): void {
+        const sprite = this.node.getComponent(Sprite);
+        if (!sprite) return;
+
+        if (showArmor) {
+            // 装甲效果时显示稍亮的灰色
+            sprite.color = new Color(120, 120, 120, 255);
+        } else {
+            // 正常时深灰色装甲
+            sprite.color = new Color(80, 80, 80, 255);
+        }
     }
     
     /**
@@ -192,6 +108,19 @@ export class TankMouse extends BaseMouse {
         
         // 创建护甲防护特效（可选）
         this.createArmorEffect();
+
+        // 显示装甲效果
+        this.updateArmorAppearance(true);
+
+        // 0.2秒后恢复正常颜色
+        tween(this.node)
+            .delay(0.2)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.updateArmorAppearance(false);
+                }
+            })
+            .start();
     }
     
     /**

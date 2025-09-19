@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, tween, Vec3, UIOpacity } from 'cc';
+import { _decorator, Color, Sprite, tween, Vec3, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
@@ -13,7 +13,7 @@ export class StealthMouse extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.STEALTH_MOUSE;
     
-    // 私有属性（基类已提供 _graphics）
+    // 私有属性
     
     @property({ tooltip: "闪避几率(0-1)" })
     public dodgeChance: number = 0.3;
@@ -48,7 +48,7 @@ export class StealthMouse extends BaseMouse {
     }
     
     // 实现抽象方法：获取敌人图片路径
-    protected getEnemyImagePath(): string | null {
+    protected getEnemyImagePath(): string {
         return "images/emeies/StealthMouse";
     }
 
@@ -58,120 +58,21 @@ export class StealthMouse extends BaseMouse {
         // 无需额外的外观初始化
     }
 
-    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
-    protected drawEnemyGraphics(graphics: Graphics): void {
-        graphics.clear();
-
-        // 潜行老鼠 - 紫色半透明外观
-        const alpha = this._isStealthed ? 100 : 255;
-        graphics.fillColor = new Color(128, 0, 128, alpha); // 紫色，可能半透明
-        graphics.circle(0, 0, 14);
-        graphics.fill();
-
-        // 边框
-        graphics.strokeColor = new Color(64, 0, 64, alpha);
-        graphics.lineWidth = 2;
-        graphics.circle(0, 0, 14);
-        graphics.stroke();
-
-        // 忍者面具
-        graphics.fillColor = new Color(32, 32, 32, alpha);
-        graphics.rect(-12, 8, 24, 6);
-        graphics.fill();
-
-        // 眼睛（发光）
-        graphics.fillColor = new Color(255, 255, 0, alpha);
-        graphics.circle(-5, 10, 2);
-        graphics.fill();
-        graphics.circle(5, 10, 2);
-        graphics.fill();
-
-        // 潜行阴影效果
-        if (!this._isStealthed) {
-            graphics.fillColor = new Color(0, 0, 0, 50);
-            graphics.circle(2, -2, 12);
-            graphics.fill();
-        }
-
-        // 潜行波纹
-        graphics.strokeColor = new Color(128, 0, 128, 80);
-        graphics.lineWidth = 1;
-        for (let i = 1; i <= 3; i++) {
-            graphics.circle(0, 0, 14 + i * 4);
-            graphics.stroke();
-        }
-    }
-    
     /**
-     * 绘制潜行老鼠外观
+     * 通过Sprite颜色变化实现潜行效果
      * @param isStealthed 是否处于潜行状态
      */
-    private drawStealthMouseAppearance(isStealthed: boolean): void {
-        if (!this._graphics) return;
-        
-        this._graphics.clear();
-        
-        // 根据潜行状态调整透明度和颜色
-        const alpha = isStealthed ? 128 : 255;  // 潜行时半透明
-        const bodyColor = isStealthed ? 
-            new Color(150, 100, 200, alpha) :    // 潜行时偏紫色
-            new Color(100, 100, 150, alpha);     // 正常时深蓝色
-        
-        // 绘制敏捷的身体（椭圆形，更流线型）
-        this._graphics.fillColor = bodyColor;
-        this._graphics.strokeColor = new Color(80, 80, 120, alpha);
-        this._graphics.lineWidth = 2;
-        
-        // 主体 - 流线型椭圆
-        this._graphics.ellipse(-14, -6, 28, 12);
-        this._graphics.fill();
-        this._graphics.stroke();
-        
-        // 头部
-        this._graphics.fillColor = new Color(120, 120, 170, alpha);
-        this._graphics.ellipse(-8, 2, 16, 10);
-        this._graphics.fill();
-        
-        // 眼睛 - 敏锐的眼神
-        const eyeColor = isStealthed ? 
-            new Color(200, 150, 255, alpha) :    // 潜行时发光的紫色眼睛
-            new Color(255, 255, 100, alpha);     // 正常时黄色眼睛
-        
-        this._graphics.fillColor = eyeColor;
-        this._graphics.circle(-4, 5, 3);
-        this._graphics.fill();
-        this._graphics.circle(4, 5, 3);
-        this._graphics.fill();
-        
-        // 耳朵 - 尖锐警觉
-        this._graphics.fillColor = bodyColor;
-        this._graphics.moveTo(-10, 8);
-        this._graphics.lineTo(-6, 12);
-        this._graphics.lineTo(-2, 8);
-        this._graphics.close();
-        this._graphics.fill();
-        
-        this._graphics.moveTo(2, 8);
-        this._graphics.lineTo(6, 12);
-        this._graphics.lineTo(10, 8);
-        this._graphics.close();
-        this._graphics.fill();
-        
-        // 尾巴 - 细长敏捷
-        this._graphics.strokeColor = bodyColor;
-        this._graphics.lineWidth = 3;
-        this._graphics.moveTo(12, -2);
-        this._graphics.quadraticCurveTo(18, -8, 24, -4);
-        this._graphics.stroke();
-        
-        // 潜行特效 - 在潜行状态时添加光环
+    private updateStealthAppearance(isStealthed: boolean): void {
+        const sprite = this.node.getComponent(Sprite);
+        if (!sprite) return;
+
+        // 根据潜行状态调整Sprite颜色
         if (isStealthed) {
-            this._graphics.strokeColor = new Color(200, 150, 255, 100);
-            this._graphics.lineWidth = 1;
-            this._graphics.circle(0, 0, 20);
-            this._graphics.stroke();
-            this._graphics.circle(0, 0, 24);
-            this._graphics.stroke();
+            // 潜行时偏紫色半透明
+            sprite.color = new Color(150, 100, 200, 160);
+        } else {
+            // 正常时深蓝色
+            sprite.color = new Color(100, 100, 150, 255);
         }
     }
     
@@ -197,10 +98,8 @@ export class StealthMouse extends BaseMouse {
     private toggleStealthState(): void {
         this._isStealthed = !this._isStealthed;
         
-        // 重新绘制外观
-        if (this._graphics) {
-            this.drawStealthMouseAppearance(this._isStealthed);
-        }
+        // 更新潜行外观
+        this.updateStealthAppearance(this._isStealthed);
         
         // 调整节点透明度
         const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);

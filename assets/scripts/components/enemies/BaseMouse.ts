@@ -38,11 +38,9 @@ export abstract class BaseMouse extends Component {
     protected _healthBarContainer: Node | null = null;
     protected _healthBarForeground: Graphics | null = null;
     protected _nameLabel: Label | null = null;
-    protected _graphics: Graphics | null = null;
 
     // === 统一外观系统属性（模仿BaseHero） ===
     protected _sprite: Sprite | null = null;
-    protected _fallbackGraphics: Graphics | null = null;
 
     // === 外观抖动分离系统 ===
     protected _visualNode: Node | null = null;              // 专用外观子节点，用于承载抖动效果
@@ -72,9 +70,9 @@ export abstract class BaseMouse extends Component {
     // === 抽象方法：图片资源路径（模仿BaseHero） ===
     /**
      * 获取敌人图片资源路径
-     * 子类实现此方法返回对应的图片路径，如果返回null则使用Graphics回退
+     * 子类必须实现此方法返回对应的图片路径
      */
-    protected abstract getEnemyImagePath(): string | null;
+    protected abstract getEnemyImagePath(): string;
 
     protected onLoad(): void {
         // === 阶段1: 核心组件初始化 ===
@@ -204,20 +202,16 @@ export abstract class BaseMouse extends Component {
      * 初始化基础外观组件 - 所有敌人共同的外观元素
      */
     protected initializeBaseVisuals(): void {
-        // 尝试加载敌人图片，失败则使用Graphics回退
+        // 加载敌人图片
         this.loadEnemySpriteOrFallback();
     }
 
     /**
-     * 加载敌人图片或创建Graphics回退
+     * 加载敌人图片
      */
     protected loadEnemySpriteOrFallback(): void {
         const imagePath = this.getEnemyImagePath();
-        if (imagePath) {
-            this.loadEnemySprite(imagePath);
-        } else {
-            this.createEnemyGraphicsFallback();
-        }
+        this.loadEnemySprite(imagePath);
     }
 
     /**
@@ -267,12 +261,7 @@ export abstract class BaseMouse extends Component {
         resources.load(imagePath + "/spriteFrame", SpriteFrame, (err, spriteFrame) => {
             if (err) {
                 console.error(`加载敌人图片失败: ${imagePath}`, err);
-                // 加载失败时回退到Graphics绘制
-                if (this._sprite && this._sprite.isValid) {
-                    this._sprite.destroy();
-                    this._sprite = null;
-                }
-                this.createEnemyGraphicsFallback();
+                // 素材齐全后不再使用Graphics回退
                 return;
             }
 
@@ -286,25 +275,6 @@ export abstract class BaseMouse extends Component {
         });
     }
 
-    /**
-     * 创建Graphics回退显示
-     */
-    protected createEnemyGraphicsFallback(): void {
-        // 使用外观节点的Graphics绘制系统作为回退
-        this._fallbackGraphics = this.getVisualGraphicsComponent();
-
-        // 调用子类的绘制方法
-        if (this._fallbackGraphics) {
-            this.drawEnemyGraphics(this._fallbackGraphics);
-            console.log(`敌人 ${this.enemyType} 使用Graphics回退显示`);
-        }
-    }
-
-    /**
-     * 绘制敌人Graphics外观 - 子类必须实现
-     * 当图片加载失败或没有图片资源时，会调用此方法绘制外观
-     */
-    protected abstract drawEnemyGraphics(graphics: Graphics): void;
 
     // 子类可选重写：初始化敌人特殊外观（如特效、动画等）
     protected initializeMouseVisuals(): void {
@@ -932,8 +902,22 @@ export abstract class BaseMouse extends Component {
         }
         this.updateMouseHealthBarDisplay();
 
-        // 调用子类的重置逻辑
-        this.onPoolReuse();
+        // 重置Sprite颜色到正常状态（修复死亡时变黑的问题）
+        if (this._sprite && this._sprite.isValid) {
+            this._sprite.color = new Color(255, 255, 255, 255); // 恢复正常白色
+            console.log(`[BaseMouse] 🎨 重置Sprite颜色: ${this.enemyType}`);
+        }
+
+        // 允许子类重新初始化特殊状态（如装甲鼠的护甲值）
+        this.onReuse();
+    }
+
+    /**
+     * 子类可重写：对象池重用时的额外初始化
+     * 用于重新初始化子类特有的状态和属性
+     */
+    protected onReuse(): void {
+        // 默认空实现，子类可根据需要重写
     }
 
     /**
@@ -1142,38 +1126,6 @@ export abstract class BaseMouse extends Component {
         }
     }
 
-    // === 组件获取工具方法组 ===
-
-    /**
-     * 获取外观节点的Graphics组件，直接添加模式
-     * 用于外观绘制，支持抖动效果分离
-     */
-    protected getVisualGraphicsComponent(): Graphics {
-        if (!this._visualNode) {
-            console.error("外观节点未创建，无法获取Graphics组件");
-            return null;
-        }
-
-        if (!this._graphics) {
-            // 直接添加Graphics组件到外观节点
-            this._graphics = this._visualNode.addComponent(Graphics);
-            if (!this._graphics) {
-                // 如果添加失败，尝试获取现有组件
-                this._graphics = this._visualNode.getComponent(Graphics);
-                if (!this._graphics) {
-                    console.error("无法获取外观节点Graphics组件:", this._visualNode.name);
-                }
-            }
-        }
-        return this._graphics;
-    }
-
-    /**
-     * 获取主节点Graphics组件，保留用于兼容性
-     * 遵循CLAUDE.md禁止条件性组件添加的原则
-     */
-    protected getGraphicsComponent(): Graphics {
-        // 现在重定向到外观节点的Graphics组件
-        return this.getVisualGraphicsComponent();
-    }
+    // === 组件获取工具方法组已移除 ===
+    // 素材齐全后不再需要Graphics相关方法
 }

@@ -143,7 +143,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
 // 游戏配置
 export const GAME_CONFIG: GameConfig = {
     initialGold: 400,                    // 难度降低：从250增加到400，提供更多初始金币
-    castleHealth: 200,                   // 难度降低：从120增加到200，增强城堡防御
+    castleHealth: 1000,                  // 临时调试：大幅增加城堡生命值，方便测试敌人和英雄
     restDuration: 90,                    // 难度降低：从120减到90秒，减少等待时间
     gridConfig: {
         rows: 11,

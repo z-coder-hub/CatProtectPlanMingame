@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, tween } from 'cc';
+import { _decorator, Color, Sprite, tween } from 'cc';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { EffectHelper } from '../../utils/EffectHelper';
 import { BaseMouse } from './BaseMouse';
@@ -29,7 +29,7 @@ export class SpeedMouse extends BaseMouse {
     }
 
     // 实现抽象方法：获取敌人图片路径
-    protected getEnemyImagePath(): string | null {
+    protected getEnemyImagePath(): string {
         return "images/emeies/SpeedMouse";
     }
 
@@ -40,36 +40,6 @@ export class SpeedMouse extends BaseMouse {
     }
 
     // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
-    protected drawEnemyGraphics(graphics: Graphics): void {
-        graphics.clear();
-
-        // 疾速老鼠 - 更小更精致的外观，青色表示极速
-        graphics.fillColor = new Color(0, 255, 255); // 青色
-        graphics.circle(0, 0, 10); // 更小的身体
-        graphics.fill();
-
-        // 边框
-        graphics.strokeColor = new Color(0, 200, 200);
-        graphics.lineWidth = 2;
-        graphics.circle(0, 0, 10);
-        graphics.stroke();
-
-        // 疾速尾迹（多重残影效果）
-        graphics.strokeColor = new Color(100, 255, 255, 150); // 半透明青色
-        graphics.lineWidth = 2;
-        for (let i = 0; i < 5; i++) {
-            const offset = i * 3;
-            graphics.circle(-offset - 10, 0, 8 - i);
-            graphics.stroke();
-        }
-
-        // 眼睛（白色，表示专注）
-        graphics.fillColor = new Color(255, 255, 255);
-        graphics.circle(-3, 3, 1.5);
-        graphics.fill();
-        graphics.circle(3, 3, 1.5);
-        graphics.fill();
-    }
 
     // 痾速老鼠不再有攻击能力，移除 performAttack 方法
 
@@ -93,57 +63,21 @@ export class SpeedMouse extends BaseMouse {
 
     // 删除不必要的中间层函数initializeVisuals()
 
-    private drawSpeedMouseAppearance(): void {
-        this._graphics = this.getGraphicsComponent();
-        if (!this._graphics) return;
+    /**
+     * 通过Sprite颜色变化实现速度效果
+     * @param isBoosted 是否加速状态
+     */
+    private updateSpeedAppearance(isBoosted: boolean = false): void {
+        const sprite = this.node.getComponent(Sprite);
+        if (!sprite) return;
 
-        this._graphics.clear();
-
-        // 疾速老鼠 - 流线型外观
-        this._graphics.fillColor = new Color(200, 200, 50); // 亮黄色，表示速度
-        this._graphics.circle(0, 0, 12); // 较小的身体
-        this._graphics.fill();
-
-        // 动感边框
-        this._graphics.strokeColor = new Color(255, 255, 100);
-        this._graphics.lineWidth = 2;
-        this._graphics.circle(0, 0, 12);
-        this._graphics.stroke();
-
-        // 尖锐的耳朵
-        this._graphics.fillColor = new Color(180, 180, 40);
-        this._graphics.moveTo(-8, 8);
-        this._graphics.lineTo(-12, 18);
-        this._graphics.lineTo(-4, 15);
-        this._graphics.close();
-        this._graphics.fill();
-
-        this._graphics.moveTo(8, 8);
-        this._graphics.lineTo(12, 18);
-        this._graphics.lineTo(4, 15);
-        this._graphics.close();
-        this._graphics.fill();
-
-        // 机警的眼睛
-        this._graphics.fillColor = new Color(255, 255, 255);
-        this._graphics.circle(-4, 4, 2);
-        this._graphics.fill();
-        this._graphics.circle(4, 4, 2);
-        this._graphics.fill();
-
-        this._graphics.fillColor = new Color(0, 0, 0);
-        this._graphics.circle(-4, 4, 1);
-        this._graphics.fill();
-        this._graphics.circle(4, 4, 1);
-        this._graphics.fill();
-
-        // 长尾巴 - 表示速度感
-        this._graphics.strokeColor = new Color(200, 200, 50);
-        this._graphics.lineWidth = 3;
-        this._graphics.moveTo(10, -5);
-        this._graphics.lineTo(25, -15);
-        this._graphics.lineTo(30, -10);
-        this._graphics.stroke();
+        if (isBoosted) {
+            // 加速时更亮的黄色
+            sprite.color = new Color(255, 255, 150, 255);
+        } else {
+            // 正常时亮黄色
+            sprite.color = new Color(200, 200, 50, 255);
+        }
     }
 
 
@@ -178,20 +112,17 @@ export class SpeedMouse extends BaseMouse {
             .start();
 
         // 加速视觉效果
-        if (this._graphics) {
-            this._graphics.fillColor = new Color(255, 255, 150); // 更亮的颜色
-            this.drawSpeedMouseAppearance();
+        this.updateSpeedAppearance(true);
 
-            tween(this.node)
-                .delay(1)
-                .call(() => {
-                    if (this._graphics && this.node.isValid) {
-                        this._graphics.fillColor = new Color(200, 200, 50);
-                        this.drawSpeedMouseAppearance();
-                    }
-                })
-                .start();
-        }
+        // 1秒后恢复正常颜色
+        tween(this.node)
+            .delay(1)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.updateSpeedAppearance(false);
+                }
+            })
+            .start();
     }
 
     private createHurtEffect(): void {
@@ -199,18 +130,17 @@ export class SpeedMouse extends BaseMouse {
             EffectHelper.createEnemyHurtEffect(this.node.position, this.node.parent);
         }
 
-        // 快速闪烁效果
-        if (this._graphics) {
-            const originalColor = this._graphics.fillColor;
-            this._graphics.fillColor = new Color(255, 100, 100);
-            this.drawSpeedMouseAppearance();
+        // 受伤时红色闪烁效果
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            const originalColor = sprite.color.clone();
+            sprite.color = new Color(255, 100, 100, 255);
 
             tween(this.node)
                 .delay(0.1)
                 .call(() => {
-                    if (this._graphics && this.node.isValid) {
-                        this._graphics.fillColor = originalColor;
-                        this.drawSpeedMouseAppearance();
+                    if (this.node && this.node.isValid && sprite) {
+                        sprite.color = originalColor;
                     }
                 })
                 .start();
@@ -237,10 +167,10 @@ export class SpeedMouse extends BaseMouse {
             EffectHelper.createSpeedBurstEffect(this.node.position, this.node.parent);
         }
 
-        // 变灰色表示死亡
-        if (this._graphics) {
-            this._graphics.fillColor = new Color(80, 80, 80);
-            this.drawSpeedMouseAppearance();
+        // 死亡时变灰色
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(80, 80, 80, 255);
         }
     }
 

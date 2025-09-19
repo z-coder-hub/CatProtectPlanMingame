@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, tween } from 'cc';
+import { _decorator, Color, Sprite, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
@@ -70,8 +70,8 @@ export class ShadowAssassin extends BaseMouse {
      * 初始化潜影刺客外观
      */
     // 实现抽象方法：获取敌人图片路径
-    protected getEnemyImagePath(): string | null {
-        return null; // 使用Graphics回退绘制
+    protected getEnemyImagePath(): string {
+        return "images/emeies/ShadowAssassin";
     }
 
     // 重写：初始化特殊外观（现在基类处理图片加载）
@@ -80,105 +80,27 @@ export class ShadowAssassin extends BaseMouse {
         // 无需额外的外观初始化
     }
 
-    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
-    protected drawEnemyGraphics(graphics: Graphics): void {
-        graphics.clear();
-
-        const alpha = this.isStealthed ? 80 : 255;
-
-        // 潜影刺客 - 暗黑色刺客形态
-        graphics.fillColor = new Color(64, 0, 128, alpha); // 深紫色
-        graphics.circle(0, 0, 16);
-        graphics.fill();
-
-        // 刺客面具
-        graphics.fillColor = new Color(32, 0, 64, alpha);
-        graphics.rect(-14, 10, 28, 8);
-        graphics.fill();
-
-        // 发光的暗影眼睛
-        graphics.fillColor = new Color(128, 0, 255, alpha);
-        graphics.circle(-6, 12, 2);
-        graphics.fill();
-        graphics.circle(6, 12, 2);
-        graphics.fill();
-
-        // 暗影刺刀
-        graphics.strokeColor = new Color(200, 200, 200, alpha);
-        graphics.lineWidth = 2;
-        graphics.moveTo(-18, -5);
-        graphics.lineTo(-25, -10);
-        graphics.moveTo(18, -5);
-        graphics.lineTo(25, -10);
-        graphics.stroke();
-
-        // 潜影波纹
-        graphics.strokeColor = new Color(128, 0, 255, 60);
-        graphics.lineWidth = 1;
-        for (let i = 1; i <= 3; i++) {
-            graphics.circle(0, 0, 16 + i * 6);
-            graphics.stroke();
-        }
-    }
-    
     /**
-     * 绘制潜行状态外观
+     * 通过Sprite颜色和透明度实现潜行效果
+     * @param isStealthed 是否潜行状态
      */
-    private drawStealthedForm(graphics: Graphics): void {
-        graphics.fillColor = new Color(80, 40, 120, 100);     // 半透明紫色
-        graphics.strokeColor = new Color(60, 20, 100, 120);   // 紫色边框
-        graphics.lineWidth = 2;
-        
-        // 半透明身体轮廓
-        graphics.circle(0, 0, 15);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 暗影效果
-        graphics.fillColor = new Color(40, 20, 60, 80);
-        for (let i = 0; i < 6; i++) {
-            const angle = (i * Math.PI) / 3;
-            const x = Math.cos(angle) * 20;
-            const y = Math.sin(angle) * 20;
-            graphics.circle(x, y, 3);
-            graphics.fill();
+    private updateStealthAppearance(isStealthed: boolean): void {
+        const sprite = this.node.getComponent(Sprite);
+        const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);
+
+        if (isStealthed) {
+            // 潜行时半透明紫色
+            if (sprite) {
+                sprite.color = new Color(80, 40, 120, 255);
+            }
+            uiOpacity.opacity = 120; // 半透明
+        } else {
+            // 显现时深灰色
+            if (sprite) {
+                sprite.color = new Color(50, 50, 50, 255);
+            }
+            uiOpacity.opacity = 255; // 完全不透明
         }
-    }
-    
-    /**
-     * 绘制显现状态外观
-     */
-    private drawVisibleForm(graphics: Graphics): void {
-        graphics.fillColor = new Color(50, 50, 50, 255);      // 深灰色身体
-        graphics.strokeColor = new Color(30, 30, 30, 255);    // 黑色边框
-        graphics.lineWidth = 2;
-        
-        // 刺客身体 - 流线型
-        graphics.ellipse(0, 0, 16, 20);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 刺客面具
-        graphics.fillColor = new Color(20, 20, 20, 255);      // 黑色面具
-        graphics.ellipse(0, -8, 12, 8);
-        graphics.fill();
-        
-        // 红色眼睛
-        graphics.fillColor = new Color(200, 50, 50, 255);
-        graphics.circle(-4, -8, 2);
-        graphics.fill();
-        graphics.circle(4, -8, 2);
-        graphics.fill();
-        
-        // 暗影刀刃（伸出的武器）
-        graphics.strokeColor = new Color(150, 150, 150, 255);
-        graphics.lineWidth = 3;
-        graphics.moveTo(-20, -5);
-        graphics.lineTo(-25, -8);
-        graphics.stroke();
-        graphics.moveTo(20, -5);
-        graphics.lineTo(25, -8);
-        graphics.stroke();
     }
     
     /**
@@ -203,14 +125,7 @@ export class ShadowAssassin extends BaseMouse {
             
             // 如果潜行状态发生变化，更新外观
             if (wasStealthed !== this.isStealthed) {
-                const graphics = this.getGraphicsComponent();
-                graphics.clear();
-                if (this.isStealthed) {
-                    this.drawStealthedForm(graphics);
-                } else {
-                    this.drawVisibleForm(graphics);
-                }
-                
+                this.updateStealthAppearance(this.isStealthed);
                 console.log(`潜影刺客${this.isStealthed ? '进入' : '脱离'}潜行状态`);
             }
         }
@@ -235,9 +150,7 @@ export class ShadowAssassin extends BaseMouse {
         // 受到攻击后强制脱离潜行
         if (this.isStealthed) {
             this.isStealthed = false;
-            const graphics = this.getGraphicsComponent();
-            graphics.clear();
-            this.drawVisibleForm(graphics);
+            this.updateStealthAppearance(false);
         }
     }
     
@@ -246,25 +159,19 @@ export class ShadowAssassin extends BaseMouse {
      */
     protected onDie(): void {
         console.log("潜影刺客消失在阴影中...");
-        
-        // 阴影消散特效
-        const graphics = this.getGraphicsComponent();
-        graphics.clear();
-        
-        // 显示消散的暗影粒子
-        graphics.fillColor = new Color(40, 20, 60, 150);
-        for (let i = 0; i < 10; i++) {
-            const angle = (i * Math.PI) / 5;
-            const distance = 10 + (i * 5);
-            const x = Math.cos(angle) * distance;
-            const y = Math.sin(angle) * distance;
-            graphics.circle(x, y, 2);
-            graphics.fill();
+
+        // 阴影消散特效 - 通过渐隐实现
+        const uiOpacity = this.node.getComponent(UIOpacity) || this.node.addComponent(UIOpacity);
+        const sprite = this.node.getComponent(Sprite);
+
+        // 渐变为深紫色并渐隐
+        if (sprite) {
+            sprite.color = new Color(40, 20, 60, 255);
         }
-        
-        // 延迟销毁，展示消散效果
-        tween(this.node)
-            .delay(0.8)
+
+        // 渐隐消散效果
+        tween(uiOpacity)
+            .to(0.8, { opacity: 0 })
             .call(() => {
                 if (this.node && this.node.isValid) {
                     super.onDie();

@@ -11,7 +11,21 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(grep:*)",
-      "Bash(for file in ArmoredMouse.ts MouseKing.ts ShadowAssassin.ts GiantBehemoth.ts)"
+      "Bash(for file in ArmoredMouse.ts MouseKing.ts ShadowAssassin.ts GiantBehemoth.ts)",
+      "Bash(chmod:*)",
+      "Bash(\"/Users/shiyuanchen/Project/CatProtectPlanMingame/batch_update_enemies.sh\")",
+      "Bash(for:*)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(then echo \"=== $file ===\")",
+      "Bash(head:*)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(do echo \"=== 处理 $file ===\")",
+      "Bash(do)",
+      "Bash(echo:*)",
+      "Bash(if [ -f \"assets/scripts/components/enemies/$file\" ])",
+      "Bash(then)",
+      "Bash(/Users/shiyuanchen/Project/CatProtectPlanMingame/batch_update_enemies.sh:*)"
     ],
     "deny": [],
     "ask": []
