@@ -15,7 +15,7 @@ export class MaineThunder extends BaseHero {
     // 继承父类的onLoad和start方法，无需重写
     // 基类已经处理了所有必要的初始化工作
     
-    // 实现BaseHero的拽象方法
+    // 实现BaseHero的抽象方法
     protected initializeHeroStats(): void {
         const config = HERO_CONFIGS[HeroType.MAINE_THUNDER];
         

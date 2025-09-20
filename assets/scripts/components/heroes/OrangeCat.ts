@@ -78,8 +78,4 @@ export class OrangeCat extends BaseHero {
         return "images/placed/OrangeCat_placed";
     }
     
-    // 组件销毁时清理资源 - 大幅简化，不再需要管理子弹
-    protected onDestroy(): void {
-        // 攻击动画由BaseHero统一管理，无需额外清理
-    }
 }

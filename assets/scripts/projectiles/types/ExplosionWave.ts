@@ -25,11 +25,18 @@ export class ExplosionWave extends BaseProjectile {
     @property({ tooltip: "推拽效果强度" })
     public knockbackForce: number = 50;
     
-    protected onLoad(): void {
-        super.onLoad();
-        // 爆炸冲击波是近程投射物
-        this.maxRange = 200;
-        this.hitRadius = 40; // 触发爆炸的碰撞范围 - 放大1.6倍以匹配视觉尺寸
+    /**
+     * 获取爆炸冲击波投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            maxRange: 200,  // 爆炸冲击波是近程投射物
+            hitRadius: 40   // 触发爆炸的碰撞范围 - 放大1.6倍以匹配视觉尺寸
+        };
     }
     
     /**

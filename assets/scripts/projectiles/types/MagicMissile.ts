@@ -19,9 +19,6 @@ export class MagicMissile extends BaseProjectile {
     @property({ tooltip: "AOE攻击范围" })
     public aoeRange: number = 80;
     
-    protected onLoad(): void {
-        super.onLoad();
-    }
     
     /**
      * 初始化魔法弹的视觉外观
@@ -310,5 +307,18 @@ export class MagicMissile extends BaseProjectile {
      */
     public get expectedAOEDamage(): number {
         return this.damage * this.aoeDamageMultiplier;
+    }
+
+    /**
+     * 获取魔法弹投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            // 使用默认配置，无需特殊设置
+        };
     }
 }

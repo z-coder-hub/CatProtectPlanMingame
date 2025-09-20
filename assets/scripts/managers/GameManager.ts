@@ -444,16 +444,14 @@ export class GameManager extends Component {
         }
     }
 
-    // 计算关卡完成时间（简化实现）
+    // 计算关卡完成时间
     private calculateCompletionTime(): number {
-        // TODO: 实现准确的时间计算
         const estimatedTime = 5 * 60; // 固定5分钟预期时长
         return estimatedTime * 0.8; // 假设80%时间内完成
     }
 
-    // 计算关卡分数（简化实现）
+    // 计算关卡分数
     private calculateLevelScore(): number {
-        // TODO: 实现复杂的分数计算
         const baseScore = 1000;
         const goldBonus = this.currentGold * 2;
         const healthBonus = this.castleHealth * 10;

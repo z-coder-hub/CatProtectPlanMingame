@@ -24,9 +24,17 @@ export class LightningBolt extends BaseProjectile {
     
     private hitTargets: Set<Node> = new Set(); // 记录已击中的目标，避免重复
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.hitRadius = 30; // 雷电的碰撞检测范围稍大
+    /**
+     * 获取雷电弹投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            hitRadius: 30   // 雷电的碰撞检测范围稍大
+        };
     }
     
     /**
@@ -448,14 +456,18 @@ export class LightningBolt extends BaseProjectile {
     }
     
     /**
-     * 重置击中目标记录（投射物回收时调用）
+     * 重写重用方法以重置击中目标记录
      */
-    public resetHitTargets(): void {
+    public reuse(_args: any): void {
+        super.reuse(_args);
         this.hitTargets.clear();
     }
-    
-    protected onDestroy(): void {
-        super.onDestroy();
+
+    /**
+     * 重写回收方法以清理击中目标记录
+     */
+    public unuse(): void {
+        super.unuse();
         this.hitTargets.clear();
     }
 }

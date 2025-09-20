@@ -78,7 +78,6 @@ export class ProjectileSystem {
      * @returns 对应的对象池
      */
     private static getPool(type: ProjectileType): NodePool {
-        console.log(`[ProjectileSystem] 请求对象池: ${type}`);
         let pool = this._pools.get(type);
         if (!pool) {
             // 创建新的对象池，传入对应的组件类作为池处理器
@@ -88,13 +87,12 @@ export class ProjectileSystem {
                 return new NodePool(); // 返回空的对象池作为降级处理
             }
 
-            console.log(`[ProjectileSystem] 创建新对象池，使用组件类: ${componentClass.name}`);
             try {
                 pool = new NodePool(componentClass);
                 this._pools.set(type, pool);
-                console.log(`[ProjectileSystem] ✅ 成功创建 ${type} 对象池`);
+                console.log(`[ProjectileSystem] 创建 ${type} 对象池`);
             } catch (error) {
-                console.error(`[ProjectileSystem] ❌ 创建对象池失败: ${type}`, error);
+                console.error(`[ProjectileSystem] 创建对象池失败: ${type}`, error);
                 pool = new NodePool(); // 降级为空对象池
                 this._pools.set(type, pool);
             }
@@ -108,7 +106,6 @@ export class ProjectileSystem {
      * @returns 从池中获取的节点，如果池为空则创建新节点
      */
     private static getProjectile(type: ProjectileType): Node {
-
         const pool = this.getPool(type);
 
         // NodePool.get() 会自动调用组件的 reuse() 方法
@@ -116,15 +113,11 @@ export class ProjectileSystem {
 
         if (!node) {
             // 对象池为空，创建新节点
-            console.log(`[ProjectileSystem] 🆕 对象池为空，创建新节点: ${type}`);
             node = this.createProjectileNode(type);
-            console.log(`[ProjectileSystem] ✅ 新节点创建完成: ${type}, 池大小: ${pool.size()}`);
         }
 
-        if (node) {
-            console.log(`[ProjectileSystem] 🎉 成功获取节点: ${node.name}, 有效性: ${node.isValid}`);
-        } else {
-            console.error(`[ProjectileSystem] ❌ 节点获取失败: ${type}`);
+        if (!node) {
+            console.error(`[ProjectileSystem] 节点获取失败: ${type}`);
         }
 
         return node;
@@ -136,31 +129,23 @@ export class ProjectileSystem {
      * @param type 投射物类型
      */
     static recycleProjectile(node: Node, type: ProjectileType): void {
-        console.log(`[ProjectileSystem] 🔄 请求回收投射物: ${type}`);
-
         if (!node || !node.isValid) {
-            console.warn(`[ProjectileSystem] ⚠️ 尝试回收无效的 ${type} 节点: node=${!!node}, valid=${node?.isValid}`);
+            console.warn(`[ProjectileSystem] 尝试回收无效的 ${type} 节点`);
             return;
         }
 
-        console.log(`[ProjectileSystem] 节点有效，准备回收: ${node.name}`);
         const pool = this.getPool(type);
-
-        // 检查池的大小限制
-        console.log(`[ProjectileSystem] 池状态检查: 当前大小=${pool.size()}, 最大大小=${this._maxPoolSize}`);
 
         if (pool.size() < this._maxPoolSize) {
             try {
                 // NodePool.put() 会自动调用组件的 unuse() 方法
                 pool.put(node);
-                console.log(`[ProjectileSystem] ✅ ${type} 成功回收到池，当前池大小: ${pool.size()}`);
             } catch (error) {
-                console.error(`[ProjectileSystem] ❌ 回收到池失败: ${type}`, error);
+                console.error(`[ProjectileSystem] 回收到池失败: ${type}`, error);
                 node.destroy();
             }
         } else {
             // 池已满，直接销毁
-            console.log(`[ProjectileSystem] 🗑️ ${type} 池已满(${pool.size()}/${this._maxPoolSize})，销毁节点`);
             node.destroy();
         }
     }
@@ -171,24 +156,20 @@ export class ProjectileSystem {
      * @returns 新创建的节点
      */
     private static createProjectileNode(type: ProjectileType): Node {
-        console.log(`[ProjectileSystem] 🛠️ 开始创建投射物节点: ${type}`);
-
         const componentClass = this.getComponentClass(type);
         if (!componentClass) {
-            console.error(`[ProjectileSystem] ❌ 组件类不存在，创建未知节点: ${type}`);
+            console.error(`[ProjectileSystem] 组件类不存在: ${type}`);
             return new Node(`Unknown_${type}`);
         }
 
-        console.log(`[ProjectileSystem] 创建节点和组件...`);
         const node = new Node(type);
 
         try {
             const component = node.addComponent(componentClass) as BaseProjectile;
             component.setPoolType(type);
-            console.log(`[ProjectileSystem] ✅ 节点创建成功: ${node.name}, 组件: ${component.constructor.name}`);
             return node;
         } catch (error) {
-            console.error(`[ProjectileSystem] ❌ 创建节点失败: ${type}`, error);
+            console.error(`[ProjectileSystem] 创建节点失败: ${type}`, error);
             node.destroy();
             return new Node(`Error_${type}`);
         }

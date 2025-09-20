@@ -25,9 +25,17 @@ export class IceShard extends BaseProjectile {
     @property({ tooltip: "冰霜AOE伤害倍率" })
     public frostDamageMultiplier: number = 0.8;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.hitRadius = 42; // 冰弹的碰撞检测范围 - 放大1.5倍以匹配视觉尺寸
+    /**
+     * 获取冰弹投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            hitRadius: 42   // 冰弹的碰撞检测范围 - 放大1.5倍以匹配视觉尺寸
+        };
     }
     
     /**

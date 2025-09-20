@@ -1,31 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs",
-      "Bash(npx tsc:*)",
-      "Bash(find:*)",
-      "mcp__ide__getDiagnostics",
-      "WebFetch(domain:docs.cocos.com)",
-      "WebSearch",
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(grep:*)",
-      "Bash(for file in ArmoredMouse.ts MouseKing.ts ShadowAssassin.ts GiantBehemoth.ts)",
-      "Bash(chmod:*)",
-      "Bash(\"/Users/shiyuanchen/Project/CatProtectPlanMingame/batch_update_enemies.sh\")",
-      "Bash(for:*)",
-      "Bash(do if [ -f \"$file\" ])",
-      "Bash(then echo \"=== $file ===\")",
-      "Bash(head:*)",
-      "Bash(fi)",
-      "Bash(done)",
-      "Bash(do echo \"=== 处理 $file ===\")",
-      "Bash(do)",
-      "Bash(echo:*)",
-      "Bash(if [ -f \"assets/scripts/components/enemies/$file\" ])",
-      "Bash(then)",
-      "Bash(/Users/shiyuanchen/Project/CatProtectPlanMingame/batch_update_enemies.sh:*)"
+      "Bash(! grep -q -A5 -B5 \"protected onLoad(): void\" \"$file\")"
     ],
     "deny": [],
     "ask": []

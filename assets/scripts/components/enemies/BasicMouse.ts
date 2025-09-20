@@ -28,14 +28,9 @@ export class BasicMouse extends BaseMouse {
 
     // 实现抽象方法：获取敌人图片路径
     protected getEnemyImagePath(): string {
-        return "images/emeies/BasicMouse";
+        return "images/enemies/BasicMouse";
     }
 
-    // 重写：初始化特殊外观
-    protected initializeMouseVisuals(): void {
-        // 基类已处理图片加载，这里可以添加特殊效果
-        // 无需额外的外观初始化
-    }
 
 
 

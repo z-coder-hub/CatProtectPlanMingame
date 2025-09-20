@@ -18,9 +18,6 @@ export class PhysicalBullet extends BaseProjectile {
     @property({ tooltip: "暴击倍率" })
     public critMultiplier: number = 1.5;
     
-    protected onLoad(): void {
-        super.onLoad();
-    }
     
     /**
      * 初始化物理子弹的视觉外观
@@ -156,5 +153,18 @@ export class PhysicalBullet extends BaseProjectile {
      */
     public get expectedDamage(): number {
         return this.damage * (1 + this.critChance * (this.critMultiplier - 1));
+    }
+
+    /**
+     * 获取物理子弹投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            // 使用默认配置，无需特殊设置
+        };
     }
 }

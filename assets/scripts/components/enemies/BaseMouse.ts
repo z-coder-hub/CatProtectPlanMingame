@@ -278,7 +278,7 @@ export abstract class BaseMouse extends Component {
 
     // 子类可选重写：初始化敌人特殊外观（如特效、动画等）
     protected initializeMouseVisuals(): void {
-        // 默认实现为空，子类可重写添加特殊外观
+        // 子类可重写添加特殊外观
     }
 
     // 统一的老鼠标签配置 - 基于敌人分类提供默认配置，并考虑节点缩放
@@ -947,23 +947,10 @@ export abstract class BaseMouse extends Component {
             this._healthBarContainer.active = false;
         }
 
-        // 调用子类的清理逻辑
-        this.onPoolUnuse();
+        // 对象池回收完成
     }
 
-    /**
-     * 子类可重写：对象池重用时的特殊逻辑
-     */
-    protected onPoolReuse(): void {
-        // 默认实现为空，子类可重写
-    }
 
-    /**
-     * 子类可重写：对象池回收时的特殊逻辑
-     */
-    protected onPoolUnuse(): void {
-        // 默认实现为空，子类可重写
-    }
 
     // === Tween移动控制方法 ===
 

@@ -72,7 +72,7 @@ export class MouseKing extends BaseMouse {
     
     // 实现抽象方法：获取敌人图片路径
     protected getEnemyImagePath(): string {
-        return "images/emeies/MouseKing";
+        return "images/enemies/MouseKing";
     }
 
     // 重写：初始化特殊外观（现在基类处理图片加载）

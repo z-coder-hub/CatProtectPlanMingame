@@ -34,7 +34,7 @@ export class MechMouse extends BaseMouse {
 
     // 实现抽象方法：获取敌人图片路径
     protected getEnemyImagePath(): string {
-        return "images/emeies/MechMouse";
+        return "images/enemies/MechMouse";
     }
 
     // 重写：初始化特殊外观（现在基类处理图片加载）

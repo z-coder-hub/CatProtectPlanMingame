@@ -24,11 +24,18 @@ export class SwordWave extends BaseProjectile {
     
     private isChargedAttack: boolean = false;
     
-    protected onLoad(): void {
-        super.onLoad();
-        // 剑气的飞行距离较短
-        this.maxRange = 150;
-        this.hitRadius = 56; // 更大的碰撞检测范围 - 放大1.6倍以匹配视觉尺寸
+    /**
+     * 获取剑气投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            maxRange: 150,  // 剑气的飞行距离较短
+            hitRadius: 56   // 更大的碰撞检测范围 - 放大1.6倍以匹配视觉尺寸
+        };
     }
     
     /**

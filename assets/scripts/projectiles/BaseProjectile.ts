@@ -73,15 +73,44 @@ export abstract class BaseProjectile extends Component {
      * @returns 是否可以击中该目标
      */
     protected abstract canHitTarget(target: BaseMouse): boolean;
-    
+
+    /**
+     * 获取投射物配置 - 子类必须实现
+     * 替代重写onLoad方法的统一配置方式
+     * @returns 投射物配置对象
+     */
+    protected abstract getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    };
+
     // === 通用方法，基类实现 ===
-    
+
     protected onLoad(): void {
         // 获取或创建Graphics组件
         this.graphics = this.node.getComponent(Graphics) || this.node.addComponent(Graphics);
-        
+
+        // 应用子类配置
+        this.applyProjectileConfig();
+
         // 初始化视觉外观
         this.initializeVisuals();
+    }
+
+    /**
+     * 应用投射物配置
+     */
+    private applyProjectileConfig(): void {
+        const config = this.getProjectileConfig();
+
+        if (config.maxRange !== undefined) {
+            this.maxRange = config.maxRange;
+        }
+
+        if (config.hitRadius !== undefined) {
+            this.hitRadius = config.hitRadius;
+        }
     }
     
     /**
@@ -367,8 +396,7 @@ export abstract class BaseProjectile extends Component {
             this.initializeVisuals();
         }
 
-        // 调用子类的重置逻辑
-        this.onPoolReuse();
+        // 对象池重用完成
     }
 
     /**
@@ -399,25 +427,9 @@ export abstract class BaseProjectile extends Component {
             delete (this.node as any)._collisionCheckFunction;
         }
 
-        // 调用子类的清理逻辑
-        this.onPoolUnuse();
+        // 对象池回收完成
     }
 
-    /**
-     * 子类可重写：对象池重用时的特殊逻辑
-     */
-    protected onPoolReuse(): void {
-        // 默认实现为空，子类可重写
-        console.log(`[BaseProjectile] 子类重用逻辑: ${this.constructor.name}`);
-    }
-
-    /**
-     * 子类可重写：对象池回收时的特殊逻辑
-     */
-    protected onPoolUnuse(): void {
-        // 默认实现为空，子类可重写
-        console.log(`[BaseProjectile] 子类回收逻辑: ${this.constructor.name}`);
-    }
 
     
     /**

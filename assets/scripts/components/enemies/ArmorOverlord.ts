@@ -56,13 +56,7 @@ export class ArmorOverlord extends BaseMouse {
      */
     // 实现抽象方法：获取敌人图片路径
     protected getEnemyImagePath(): string {
-        return "images/emeies/ArmorOverlord";
-    }
-
-    // 重写：初始化特殊外观（现在基类处理图片加载）
-    protected initializeMouseVisuals(): void {
-        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
-        // 无需额外的外观初始化
+        return "images/enemies/ArmorOverlord";
     }
 
 
