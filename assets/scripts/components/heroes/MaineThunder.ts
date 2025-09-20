@@ -72,7 +72,7 @@ export class MaineThunder extends BaseHero {
     // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "缅因猫雷法",
+            text: this.unitName || "缅因雷法师",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,

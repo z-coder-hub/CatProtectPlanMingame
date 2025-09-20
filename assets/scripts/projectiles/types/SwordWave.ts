@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 
 /**
  * 剑气投射物
- * 用于：英国短毛猫骑士、布偶猫守护者
+ * 用于：短毛骑士、布偶猫守护者
  * 特性：近程投射物，扇形攻击范围，银白色剑光效果
  */
 @ccclass('SwordWave')

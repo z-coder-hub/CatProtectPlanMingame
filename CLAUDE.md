@@ -191,7 +191,7 @@ private log(message: string): void {
 
 ### 2. 代码驱动开发
 - 所有组件、UI都通过TypeScript代码动态创建
-- 使用Graphics API绘制游戏对象外观
+- 优先使用游戏资源（图片、精灵等），资源缺失时使用Graphics API作为回退方案
 - 避免过度依赖编辑器配置
 
 ### 3. 组件化架构

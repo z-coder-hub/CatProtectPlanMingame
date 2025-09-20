@@ -27,7 +27,7 @@ export class NorwegianIce extends BaseHero {
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
         // 现在使用白色圆点显示，无需自定义绘制
-        // 挪威森林猫使用白色圆点（无placed资源）
+        // 冰霜法师使用白色圆点（无placed资源）
     }
     
     // 目标分配由 BattleManager 统一处理
@@ -104,7 +104,7 @@ export class NorwegianIce extends BaseHero {
     // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "挪威森林猫冰法",
+            text: this.unitName || "冰霜法师",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,

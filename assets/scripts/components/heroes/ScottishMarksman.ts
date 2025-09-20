@@ -97,7 +97,7 @@ export class ScottishMarksman extends BaseHero {
     // 重写标签配置
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "苏格兰折耳猫射手",
+            text: this.unitName || "折耳射手",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,

@@ -17,7 +17,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
 
     [HeroType.PERSIAN_SNIPER]: {
         type: HeroType.PERSIAN_SNIPER,
-        name: "波斯猫狙击手",
+        name: "波斯狙击手",
         category: HeroCategory.RANGED_PHYSICAL,
         attackDamage: 30,        // 高伤害精确狙击手
         attackRange: 1000,       // 超大攻击范围，覆盖整个战场
@@ -30,7 +30,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
 
     [HeroType.BENGAL_HUNTER]: {
         type: HeroType.BENGAL_HUNTER,
-        name: "孟加拉猫猎手",
+        name: "孟加拉猎手",
         category: HeroCategory.RANGED_PHYSICAL,
         attackDamage: 12,        // 高攻速连射专家
         attackRange: 1000,       // 超大攻击范围，覆盖整个战场
@@ -41,7 +41,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
 
     [HeroType.SCOTTISH_MARKSMAN]: {
         type: HeroType.SCOTTISH_MARKSMAN,
-        name: "苏格兰折耳猫射手",
+        name: "折耳射手",
         category: HeroCategory.RANGED_PHYSICAL,
         attackDamage: 20,        // 多重锁定射手，精确制导
         attackRange: 1000,       // 超大攻击范围，覆盖整个战场
@@ -67,7 +67,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
 
     [HeroType.MAINE_THUNDER]: {
         type: HeroType.MAINE_THUNDER,
-        name: "缅因猫雷法师",
+        name: "缅因雷法师",
         category: HeroCategory.RANGED_MAGIC,
         attackDamage: 32,        // 链式攻击法师
         attackRange: 400,
@@ -78,7 +78,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
 
     [HeroType.NORWEGIAN_ICE]: {
         type: HeroType.NORWEGIAN_ICE,
-        name: "挪威森林猫冰法师",
+        name: "冰霜法师",
         category: HeroCategory.RANGED_MAGIC,
         attackDamage: 20,        // 控制型法师
         attackRange: 320,
@@ -91,7 +91,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
 
     [HeroType.ABYSSINIAN_ARCHER]: {
         type: HeroType.ABYSSINIAN_ARCHER,
-        name: "阿比西尼亚猫弓箭手",
+        name: "精灵弓手",
         category: HeroCategory.RANGED_MAGIC,
         attackDamage: 15,        // 远程多发齐射专家
         attackRange: 360,
@@ -104,7 +104,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
     // === 近战英雄 (3种，27%) ===
     [HeroType.BRITISH_KNIGHT]: {
         type: HeroType.BRITISH_KNIGHT,
-        name: "英国短毛猫骑士",
+        name: "短毛骑士",
         category: HeroCategory.MELEE,
         attackDamage: 30,        // 前排控制专家
         attackRange: 60,
@@ -114,7 +114,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
 
     [HeroType.RUSSIAN_BLUE]: {
         type: HeroType.RUSSIAN_BLUE,
-        name: "俄罗斯蓝猫刺客",
+        name: "蓝猫刺客",
         category: HeroCategory.MELEE,
         attackDamage: 45,        // 隐身突袭者，高爆发输出
         attackRange: 90,
@@ -127,7 +127,7 @@ export const HERO_CONFIGS: Record<HeroType, HeroConfig> = {
 
     [HeroType.AMERICAN_BOMBER]: {
         type: HeroType.AMERICAN_BOMBER,
-        name: "美国短毛猫爆破手",
+        name: "爆破专家",
         category: HeroCategory.MELEE,
         attackDamage: 42,        // 近程爆炸专家
         attackRange: 120,

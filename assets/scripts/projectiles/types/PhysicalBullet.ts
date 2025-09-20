@@ -6,7 +6,7 @@ const { ccclass, property } = _decorator;
 
 /**
  * 物理子弹投射物
- * 用于：橘猫射手、波斯猫狙击手、孟加拉猎手、苏格兰折耳猫射手
+ * 用于：橘猫射手、波斯狙击手、孟加拉猎手、折耳射手
  * 特性：直线飞行，单体伤害，黄色子弹外观
  */
 @ccclass('PhysicalBullet')
@@ -141,7 +141,7 @@ export class PhysicalBullet extends BaseProjectile {
     
     /**
      * 设置暴击属性
-     * 波斯猫狙击手等英雄会设置暴击属性
+     * 波斯狙击手等英雄会设置暴击属性
      */
     public setCriticalProperties(critChance: number, critMultiplier: number): void {
         this.critChance = Math.max(0, Math.min(1, critChance)); // 限制在0-1之间

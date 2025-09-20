@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 
 /**
  * 爆炸冲击波投射物
- * 用于：美国短毛猫爆破手、俄罗斯蓝猫刺客（近战爆破）
+ * 用于：爆破专家、蓝猫刺客（近战爆破）
  * 特性：短程投射物，大范围爆炸伤害，橙色冲击波，推拽效果
  */
 @ccclass('ExplosionWave')

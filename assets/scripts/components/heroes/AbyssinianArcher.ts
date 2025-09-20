@@ -27,7 +27,7 @@ export class AbyssinianArcher extends BaseHero {
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
         // 现在使用白色圆点显示，无需自定义绘制
-        // 阿比西尼亚弓箭手使用白色圆点（无placed资源）
+        // 精灵弓手使用白色圆点（无placed资源）
     }
     
     protected onAttack(target: Node): void {
@@ -106,7 +106,7 @@ export class AbyssinianArcher extends BaseHero {
     // 重写标签配置
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "阿比西尼亚猫弓箭手",
+            text: this.unitName || "精灵弓手",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,

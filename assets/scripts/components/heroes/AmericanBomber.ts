@@ -26,7 +26,7 @@ export class AmericanBomber extends BaseHero {
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
         // 现在使用placed图片显示，无需自定义绘制
-        // 美国短毛猫爆破手使用placed图片：AmericanBomber_placed.png
+        // 爆破专家使用placed图片：AmericanBomber_placed.png
     }
 
     // 目标分配由 BattleManager 统一处理
@@ -89,7 +89,7 @@ export class AmericanBomber extends BaseHero {
     // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "美国短毛猫爆破手",
+            text: this.unitName || "爆破专家",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,

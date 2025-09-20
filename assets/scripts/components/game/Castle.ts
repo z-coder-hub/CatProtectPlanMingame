@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, Graphics, Label, Node, UITransform, tween } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, tween, UITransform } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { UIHelper } from '../../utils/UIHelper';
 
@@ -46,11 +46,10 @@ export class Castle extends Component {
     // 初始化城堡外观
     private initializeCastleVisuals(): void {
         this._graphics = this.node.addComponent(Graphics);
-
         this.drawCastle();
     }
 
-    // 绘制城堡 - 简单蓝色长条
+    // 绘制蓝色长城
     private drawCastle(): void {
         if (!this._graphics) return;
 
@@ -60,15 +59,58 @@ export class Castle extends Component {
         const transform = this.node.getComponent(UITransform);
         const castleWidth = transform ? transform.width : 720;
 
-        // 绘制城堡主体（蓝色长条）
-        this._graphics.fillColor = new Color(70, 130, 180); // 蓝色
+        // 城墙基座 - 深蓝色
+        this._graphics.fillColor = new Color(50, 100, 150);
+        this._graphics.rect(
+            -castleWidth / 2,
+            -this._castleHeight / 2,
+            castleWidth,
+            this._castleHeight * 0.6
+        );
+        this._graphics.fill();
+
+        // 城墙垛口 - 浅蓝色
+        this._graphics.fillColor = new Color(70, 130, 180);
+        const battlmentCount = Math.floor(castleWidth / 30); // 每30像素一个垛口
+        const battlmentWidth = castleWidth / battlmentCount;
+        const battlmentHeight = this._castleHeight * 0.4;
+
+        for (let i = 0; i < battlmentCount; i++) {
+            // 交替绘制高低垛口，形成锯齿状
+            if (i % 2 === 0) {
+                const x = -castleWidth / 2 + i * battlmentWidth;
+                this._graphics.rect(
+                    x,
+                    this._castleHeight * 0.1,
+                    battlmentWidth,
+                    battlmentHeight
+                );
+                this._graphics.fill();
+            }
+        }
+
+        // 城门 - 暗蓝色
+        const gateWidth = castleWidth * 0.08;
+        const gateHeight = this._castleHeight * 0.5;
+        this._graphics.fillColor = new Color(30, 60, 100);
+        this._graphics.rect(
+            -gateWidth / 2,
+            -this._castleHeight / 2,
+            gateWidth,
+            gateHeight
+        );
+        this._graphics.fill();
+
+        // 城墙边框 - 白色描边
+        this._graphics.strokeColor = new Color(200, 220, 240);
+        this._graphics.lineWidth = 2;
         this._graphics.rect(
             -castleWidth / 2,
             -this._castleHeight / 2,
             castleWidth,
             this._castleHeight
         );
-        this._graphics.fill();
+        this._graphics.stroke();
     }
 
     // 创建血量文本显示
@@ -145,7 +187,7 @@ export class Castle extends Component {
         // 创建爆炸特效
         this.createExplosionEffect();
 
-        // 改变外观为废墟
+        // 改变城堡外观为灰色废墟效果
         if (this._graphics) {
             this._graphics.clear();
 
@@ -153,7 +195,8 @@ export class Castle extends Component {
             const transform = this.node.getComponent(UITransform);
             const castleWidth = transform ? transform.width : 720;
 
-            this._graphics.fillColor = new Color(64, 64, 64); // 变成灰色废墟
+            // 绘制废墟效果 - 灰色
+            this._graphics.fillColor = new Color(64, 64, 64);
             this._graphics.rect(
                 -castleWidth / 2,
                 -this._castleHeight / 2,

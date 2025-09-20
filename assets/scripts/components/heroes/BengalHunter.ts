@@ -81,7 +81,7 @@ export class BengalHunter extends BaseHero {
     // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "孟加拉猫猎手",
+            text: this.unitName || "孟加拉猎手",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,

@@ -179,7 +179,7 @@ export class ProjectileSystem {
 
     /**
      * 创建物理子弹
-     * 用于：橘猫射手、波斯猫狙击手、孟加拉猎手、苏格兰折耳猫射手
+     * 用于：橘猫射手、波斯狙击手、孟加拉猎手、折耳射手
      * @param owner 发射者英雄
      * @param targetPos 目标位置
      * @param critChance 暴击几率（可选）
@@ -271,7 +271,7 @@ export class ProjectileSystem {
 
     /**
      * 创建剑气
-     * 用于：英国短毛猫骑士、布偶猫守护者
+     * 用于：短毛骑士、布偶猫守护者
      * @param owner 发射者英雄
      * @param targetPos 目标位置
      * @param isCharged 是否为冲锋攻击（可选）
@@ -317,7 +317,7 @@ export class ProjectileSystem {
 
     /**
      * 创建雷电弹
-     * 用于：缅因猫雷法师
+     * 用于：缅因雷法师
      * @param owner 发射者英雄
      * @param targetPos 目标位置
      * @param chainCount 链式跳跃次数（可选）
@@ -364,7 +364,7 @@ export class ProjectileSystem {
 
     /**
      * 创建冰弹
-     * 用于：挪威森林猫冰法师
+     * 用于：冰霜法师
      * @param owner 发射者英雄
      * @param targetPos 目标位置
      * @param freezeRange 冰冻范围（可选）
@@ -410,7 +410,7 @@ export class ProjectileSystem {
 
     /**
      * 创建爆炸冲击波
-     * 用于：美国短毛猫爆破手、俄罗斯蓝猫刺客
+     * 用于：爆破专家、蓝猫刺客
      * @param owner 发射者英雄
      * @param targetPos 目标位置
      * @param explosionRadius 爆炸半径（可选）

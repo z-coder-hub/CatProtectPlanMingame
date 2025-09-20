@@ -22,20 +22,20 @@ export enum HeroCategory {
 export enum HeroType {
     // 射击英雄 - 物理射击子类 (4种)
     ORANGE_CAT = "OrangeCat",              // 橘猫射手
-    PERSIAN_SNIPER = "PersianSniper",      // 波斯猫狙击手
+    PERSIAN_SNIPER = "PersianSniper",      // 波斯狙击手
     BENGAL_HUNTER = "BengalHunter",        // 孟加拉猎手
-    SCOTTISH_MARKSMAN = "ScottishMarksman", // 苏格兰折耳猫射手
+    SCOTTISH_MARKSMAN = "ScottishMarksman", // 折耳射手
 
     // 射击英雄 - 魔法射击子类 (4种)
     SIAMESE_MAGE = "SiameseMage",          // 暹罗猫法师
-    MAINE_THUNDER = "MaineThunder",        // 缅因猫雷法师
-    NORWEGIAN_ICE = "NorwegianIce",        // 挪威森林猫冰法师
-    ABYSSINIAN_ARCHER = "AbyssinianArcher", // 阿比西尼亚猫弓箭手
+    MAINE_THUNDER = "MaineThunder",        // 缅因雷法师
+    NORWEGIAN_ICE = "NorwegianIce",        // 冰霜法师
+    ABYSSINIAN_ARCHER = "AbyssinianArcher", // 精灵弓手
 
     // 近战英雄 (3种)
-    BRITISH_KNIGHT = "BritishKnight",      // 英国短毛猫骑士
-    RUSSIAN_BLUE = "RussianBlue",          // 俄罗斯蓝猫刺客
-    AMERICAN_BOMBER = "AmericanBomber"     // 美国短毛猫爆破手
+    BRITISH_KNIGHT = "BritishKnight",      // 短毛骑士
+    RUSSIAN_BLUE = "RussianBlue",          // 蓝猫刺客
+    AMERICAN_BOMBER = "AmericanBomber"     // 爆破专家
 }
 
 // 敌人分类枚举

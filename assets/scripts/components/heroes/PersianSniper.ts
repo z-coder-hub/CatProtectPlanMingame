@@ -66,7 +66,7 @@ export class PersianSniper extends BaseHero {
     // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "波斯猫狙击手",
+            text: this.unitName || "波斯狙击手",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,

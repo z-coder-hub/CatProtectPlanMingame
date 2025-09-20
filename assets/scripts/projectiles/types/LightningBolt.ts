@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 
 /**
  * 雷电弹投射物
- * 用于：缅因猫雷法师
+ * 用于：缅因雷法师
  * 特性：链式跳跃攻击，蓝色闪电效果，能弹射到附近敌人
  */
 @ccclass('LightningBolt')

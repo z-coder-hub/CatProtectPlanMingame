@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 
 /**
  * 冰弹投射物
- * 用于：挪威森林猫冰法师
+ * 用于：冰霜法师
  * 特性：冰蓝色外观，减速效果，冻结范围内敌人，AOE冰霜伤害
  */
 @ccclass('IceShard')

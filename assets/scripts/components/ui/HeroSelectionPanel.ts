@@ -227,7 +227,8 @@ export class HeroSelectionPanel extends Component {
 
                 // 更新背景色
                 const heroName = this.getHeroDisplayName(heroType);
-                const bgWidth = Math.max(60, heroName.length * 10);
+                // 使用更精确的宽度计算，确保背景完全覆盖文字
+                const bgWidth = Math.max(80, heroName.length * 16 + 10);
 
                 nameBg.clear();
                 nameBg.fillColor = isUnlocked
@@ -546,7 +547,7 @@ export class HeroSelectionPanel extends Component {
         });
 
         // 重新创建按钮
-        const buttonWidth = 110; // 增加宽度以容纳完整英雄名称
+        const buttonWidth = 120; // 适中宽度，配合简化后的英雄名称
         const buttonHeight = 120;
         const buttonSpacing = 24;
 
@@ -577,7 +578,7 @@ export class HeroSelectionPanel extends Component {
      */
     private updateContentSize(contentNode: Node): void {
         const availableHeroes = this.getAllHeroTypes();
-        const buttonWidth = 110; // 增加宽度以容纳完整英雄名称
+        const buttonWidth = 120; // 适中宽度，配合简化后的英雄名称
         const buttonSpacing = 24;
         const paddingTotal = buttonSpacing * 2;
 
@@ -696,7 +697,7 @@ export class HeroSelectionPanel extends Component {
         const contentTransform = contentNode.addComponent(UITransform);
 
         const availableHeroes = this.getAllHeroTypes();
-        const buttonWidth = 110; // 增加宽度以容纳完整英雄名称
+        const buttonWidth = 120; // 适中宽度，配合简化后的英雄名称
         const buttonHeight = 120; // 增加高度以容纳名称标签，100 * 1.2 = 120
         const buttonSpacing = 24; // 20 * 1.2 = 24
         const paddingTotal = buttonSpacing * 2;
@@ -887,7 +888,8 @@ export class HeroSelectionPanel extends Component {
 
         // 设置名称背景的UITransform
         const bgTransform = nameBgNode.addComponent(UITransform);
-        const bgWidth = Math.max(60, heroName.length * 10); // 调整宽度计算以适应完整名称
+        // 中文字符宽度计算，增加字符宽度和额外边距确保完全覆盖
+        const bgWidth = Math.max(80, heroName.length * 16 + 10); // 16像素每字符 + 10像素额外边距
         bgTransform.setContentSize(bgWidth, 19.2);
 
         // 使用Widget进行顶部对齐

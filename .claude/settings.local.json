@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(! grep -q -A5 -B5 \"protected onLoad(): void\" \"$file\")"
+      "Read(//Users/shiyuanchen/Project/Claude-Code-Development-Kit/**)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
