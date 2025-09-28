@@ -157,7 +157,23 @@ export class StealthMouse extends BaseMouse {
             })
             .start();
     }
-    
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置幻影鼠的潜行状态和计时器
+     */
+    protected onReuse(): void {
+        // 重置潜行状态
+        this._isStealthed = false;
+        this._stealthTimer = 0;
+        this._stealthCooldown = 3; // 重置为默认值
+
+        // 重置外观到正常状态
+        this.updateStealthAppearance(false);
+
+        console.log(`[StealthMouse] 🔄 重用时重置潜行系统: 潜行状态=false, 计时器=0, 冷却=${this._stealthCooldown}秒`);
+    }
+
     /**
      * 获取潜行老鼠标签配置
      */

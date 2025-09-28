@@ -67,10 +67,10 @@ export abstract class BaseMouse extends Component {
     // 抽象方法，子类必须实现各自的配置
     protected abstract getConfig(): EnemyConfig;
 
-    // === 抽象方法：图片资源路径（模仿BaseHero） ===
+    // === 抽象方法：子类必须实现的图片路径 ===
     /**
-     * 获取敌人图片资源路径
-     * 子类必须实现此方法返回对应的图片路径
+     * 获取敌人图片资源路径 - 抽象方法，子类显式提供图片路径
+     * 符合开闭原则：新增敌人时只需实现此方法，无需修改基类
      */
     protected abstract getEnemyImagePath(): string;
 
@@ -130,7 +130,7 @@ export abstract class BaseMouse extends Component {
             this._visualOriginalScale = this._visualNode.scale.clone();
         }
 
-        console.log(`${this.unitName}大小已设置: 缩放倍数 ${scaleMultiplier.toFixed(2)}x (${config.category}类型)`);
+        // 敌人大小已设置
     }
 
     /**
@@ -147,7 +147,7 @@ export abstract class BaseMouse extends Component {
             case EnemyCategory.SPECIAL:
                 return 1.1;     // 略大，体现特殊
             case EnemyCategory.BOSS:
-                return 2.0;     // 大型BOSS
+                return 1.5;     // 适度大型BOSS
             default:
                 return 1.0;
         }
@@ -195,7 +195,7 @@ export abstract class BaseMouse extends Component {
         // 保存外观节点的原始缩放
         this._visualOriginalScale = this._visualNode.scale.clone();
 
-        console.log(`${this.unitName}外观节点已创建，用于分离抖动效果`);
+        // 外观节点已创建
     }
 
     /**
@@ -250,7 +250,7 @@ export abstract class BaseMouse extends Component {
                     spriteSize = 40;
                     break;
                 case EnemyCategory.BOSS:
-                    spriteSize = 60; // BOSS更大
+                    spriteSize = 50; // BOSS适度更大
                     break;
             }
 
@@ -271,7 +271,7 @@ export abstract class BaseMouse extends Component {
 
             // 设置SpriteFrame
             this._sprite.spriteFrame = spriteFrame;
-            console.log(`成功加载敌人图片: ${imagePath}`);
+            // 敌人图片加载完成
         });
     }
 
@@ -335,7 +335,7 @@ export abstract class BaseMouse extends Component {
             case EnemyCategory.BOSS:
                 return {
                     text: this.unitName,
-                    fontSize: 24, // BOSS用更大字体
+                    fontSize: 22, // BOSS统一字体大小
                     color: new Color(255, 255, 255),
                     yOffset: 55 * scaleMultiplier, // BOSS体型更大，标签位置更高，增加间距
                     size: { width: 120, height: 32 }
@@ -420,7 +420,7 @@ export abstract class BaseMouse extends Component {
 
             case EnemyCategory.BOSS:
                 return {
-                    width: 120 * scaleMultiplier,
+                    width: 100 * scaleMultiplier,
                     height: 12,
                     yOffset: (labelBottom - healthBarSpacing) * scaleMultiplier,
                     backgroundColor: new Color(60, 60, 60),
@@ -561,7 +561,7 @@ export abstract class BaseMouse extends Component {
         this._zigzagAmplitude = 20 + Math.random() * 30; // 20-50像素的摆动幅度
         this._segmentCount = 4 + Math.floor(Math.random() * 4); // 4-7段移动
 
-        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+        // 移动模式已设置
     }
 
     // === 抖动效果系统方法组 ===
@@ -574,7 +574,7 @@ export abstract class BaseMouse extends Component {
         // 统一设置抖动参数（根据敌人分类调整）
         this.initializeShakeAmplitude();
 
-        console.log(`${this.unitName}抖动效果已启用: 位置抖动 ${this._shakeAmplitude.toFixed(1)}px, 大小抖动 ${(this._scaleShakeAmplitude * 100).toFixed(0)}%`);
+        // 抖动效果已初始化
     }
 
     /**
@@ -602,8 +602,8 @@ export abstract class BaseMouse extends Component {
                 this._scaleShakeAmplitude = 0.10 + Math.random() * 0.15; // 10%-25%大小抖动
                 break;
             case EnemyCategory.BOSS:
-                this._shakeAmplitude = 10 + Math.random() * 15; // 10-25像素，威慑性抖动
-                this._scaleShakeAmplitude = 0.15 + Math.random() * 0.25; // 15%-40%大小抖动
+                this._shakeAmplitude = 6 + Math.random() * 8; // 6-14像素，适度威慑性抖动
+                this._scaleShakeAmplitude = 0.08 + Math.random() * 0.12; // 8%-20%大小抖动
                 break;
             default:
                 this._shakeAmplitude = 5 + Math.random() * 8; // 默认明显抖动
@@ -879,6 +879,8 @@ export abstract class BaseMouse extends Component {
         if (this._visualNode) {
             this._visualNode.setScale(this._visualOriginalScale);
         }
+
+        // 🔧 简化：移动参数会在startMovement时重新初始化，无需手动重置
 
         // 重新获取管理器引用（如果需要）
         if (!this._battleManager) {

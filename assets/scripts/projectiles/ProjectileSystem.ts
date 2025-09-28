@@ -12,6 +12,53 @@ import { SwordWave } from './types/SwordWave';
 const { ccclass } = _decorator;
 
 /**
+ * 投射物创建参数接口
+ * 统一各种投射物的创建参数，遵循开闭原则
+ */
+export interface ProjectileParams {
+    /** 发射者英雄 */
+    owner: BaseHero;
+    /** 目标位置 */
+    targetPos: Vec3;
+
+    // 通用属性
+    /** 伤害倍率（可选，默认1.0） */
+    damageMultiplier?: number;
+    /** 速度倍率（可选，默认1.0） */
+    speedMultiplier?: number;
+
+    // 物理投射物属性
+    /** 暴击几率（0-1，可选） */
+    critChance?: number;
+    /** 暴击倍率（可选，默认1.5） */
+    critMultiplier?: number;
+
+    // AOE投射物属性
+    /** AOE伤害倍率（可选） */
+    aoeDamageMultiplier?: number;
+    /** AOE范围（可选） */
+    aoeRange?: number;
+
+    // 特殊状态属性
+    /** 是否为冲锋状态（剑气用） */
+    isCharged?: boolean;
+    /** 冲锋倍率（可选） */
+    chargeMultiplier?: number;
+
+    // 连锁属性
+    /** 连锁目标数量（雷电用） */
+    chainTargets?: number;
+    /** 连锁伤害衰减（可选） */
+    chainDamageReduction?: number;
+
+    // 状态效果属性
+    /** 减速持续时间（冰系用） */
+    slowDuration?: number;
+    /** 减速百分比（冰系用） */
+    slowPercent?: number;
+}
+
+/**
  * 投射物系统管理器
  * 统一创建和管理所有投射物，消除英雄攻击逻辑中的重复代码
  * 内置对象池管理，提高投射物创建和回收的性能
@@ -175,10 +222,119 @@ export class ProjectileSystem {
         }
     }
 
-    // === 工厂方法 - 创建具体投射物类型 ===
+    // === 统一投射物创建方法 ===
 
     /**
-     * 创建物理子弹
+     * 统一投射物创建接口
+     * 遵循开闭原则：新增投射物类型时只需扩展参数接口，无需修改此方法
+     * @param type 投射物类型
+     * @param params 创建参数
+     * @returns 创建的投射物组件，失败返回null
+     */
+    static CreateProjectile(type: ProjectileType, params: ProjectileParams): BaseProjectile | null {
+        if (!params.owner || !params.targetPos) {
+            console.error(`[ProjectileSystem] CreateProjectile参数无效: ${type}`);
+            return null;
+        }
+
+        const projectileNode = this.getProjectile(type);
+        if (!projectileNode) {
+            console.error(`[ProjectileSystem] 无法创建投射物节点: ${type}`);
+            return null;
+        }
+
+        const projectile = projectileNode.getComponent(BaseProjectile);
+        if (!projectile) {
+            console.error(`[ProjectileSystem] 投射物组件缺失: ${type}`);
+            return null;
+        }
+
+        // 设置对象池类型
+        projectile.setPoolType(type);
+
+        // 设置父节点
+        projectileNode.parent = params.owner.node.parent;
+
+        // 应用通用参数
+        const damage = params.owner.attackDamage * (params.damageMultiplier || 1.0);
+        const speed = params.owner.bulletSpeed * (params.speedMultiplier || 1.0);
+
+        // 根据投射物类型设置特殊属性
+        this.applySpecialProperties(projectile, type, params);
+
+        // 发射投射物
+        projectile.Launch(params.owner, params.targetPos, damage, speed);
+
+        console.log(`[ProjectileSystem] 创建投射物: ${type}, 伤害${damage}, 速度${speed}`);
+        return projectile;
+    }
+
+    /**
+     * 应用投射物类型特殊属性
+     * @param projectile 投射物组件
+     * @param type 投射物类型
+     * @param params 参数
+     */
+    private static applySpecialProperties(projectile: BaseProjectile, type: ProjectileType, params: ProjectileParams): void {
+        switch (type) {
+            case ProjectileType.PHYSICAL_BULLET:
+                const bullet = projectile as PhysicalBullet;
+                bullet.setCriticalProperties(
+                    params.critChance || 0,
+                    params.critMultiplier || 1.5
+                );
+                break;
+
+            case ProjectileType.MAGIC_MISSILE:
+                const missile = projectile as MagicMissile;
+                missile.setAOEProperties(
+                    params.aoeDamageMultiplier || 1.5,
+                    params.aoeRange || 80
+                );
+                break;
+
+            case ProjectileType.SWORD_WAVE:
+                const wave = projectile as SwordWave;
+                wave.setChargedAttack(
+                    params.isCharged || false,
+                    params.chargeMultiplier || 1.5
+                );
+                break;
+
+            case ProjectileType.LIGHTNING_BOLT:
+                const lightning = projectile as LightningBolt;
+                lightning.setChainProperties(
+                    params.chainTargets || 3,
+                    100, // chainRange
+                    params.chainDamageReduction || 0.2
+                );
+                break;
+
+            case ProjectileType.ICE_SHARD:
+                const ice = projectile as IceShard;
+                ice.setFrostProperties(
+                    80, // freezeRange
+                    params.slowPercent || 0.5,
+                    params.slowDuration || 3.0
+                );
+                break;
+
+            case ProjectileType.EXPLOSION_WAVE:
+                const explosion = projectile as ExplosionWave;
+                explosion.setExplosionProperties(
+                    params.aoeRange || 120,
+                    params.aoeDamageMultiplier || 2.0,
+                    0.5, // edgeMultiplier
+                    50   // knockbackForce
+                );
+                break;
+        }
+    }
+
+    // === 工厂方法 - 创建具体投射物类型（向后兼容） ===
+
+    /**
+     * 创建物理子弹（向后兼容接口）
      * 用于：橘猫射手、波斯狙击手、孟加拉猎手、折耳射手
      * @param owner 发射者英雄
      * @param targetPos 目标位置
@@ -192,39 +348,16 @@ export class ProjectileSystem {
         critChance: number = 0,
         critMultiplier: number = 1.5
     ): PhysicalBullet | null {
-        if (!owner || !targetPos) {
-            console.error("[ProjectileSystem] CreatePhysicalBullet参数无效");
-            return null;
-        }
-
-        const bulletNode = this.getProjectile(ProjectileType.PHYSICAL_BULLET);
-        if (!bulletNode) {
-            console.error("[ProjectileSystem] 无法创建物理子弹节点");
-            return null;
-        }
-
-        const bullet = bulletNode.getComponent(PhysicalBullet);
-        if (!bullet) {
-            console.error("[ProjectileSystem] 物理子弹组件缺失");
-            return null;
-        }
-
-        // 设置对象池类型
-        bullet.setPoolType(ProjectileType.PHYSICAL_BULLET);
-
-        // 设置暴击属性
-        bullet.setCriticalProperties(critChance, critMultiplier);
-
-        // 设置父节点并发射
-        bulletNode.parent = owner.node.parent;
-        bullet.Launch(owner, targetPos, owner.attackDamage, owner.bulletSpeed);
-
-        console.log(`[ProjectileSystem] 创建物理子弹: 伤害${owner.attackDamage}, 速度${owner.bulletSpeed}`);
-        return bullet;
+        return this.CreateProjectile(ProjectileType.PHYSICAL_BULLET, {
+            owner,
+            targetPos,
+            critChance,
+            critMultiplier
+        }) as PhysicalBullet;
     }
 
     /**
-     * 创建魔法弹
+     * 创建魔法弹（向后兼容接口）
      * 用于：暹罗猫法师
      * @param owner 发射者英雄
      * @param targetPos 目标位置
@@ -238,35 +371,12 @@ export class ProjectileSystem {
         aoeDamageMultiplier: number = 1.5,
         aoeRange: number = 80
     ): MagicMissile | null {
-        if (!owner || !targetPos) {
-            console.error("[ProjectileSystem] CreateMagicMissile参数无效");
-            return null;
-        }
-
-        const missileNode = this.getProjectile(ProjectileType.MAGIC_MISSILE);
-        if (!missileNode) {
-            console.error("[ProjectileSystem] 无法创建魔法弹节点");
-            return null;
-        }
-
-        const missile = missileNode.getComponent(MagicMissile);
-        if (!missile) {
-            console.error("[ProjectileSystem] 魔法弹组件缺失");
-            return null;
-        }
-
-        // 设置对象池类型
-        missile.setPoolType(ProjectileType.MAGIC_MISSILE);
-
-        // 设置AOE属性
-        missile.setAOEProperties(aoeDamageMultiplier, aoeRange);
-
-        // 设置父节点并发射
-        missileNode.parent = owner.node.parent;
-        missile.Launch(owner, targetPos, owner.attackDamage, owner.bulletSpeed);
-
-        console.log(`[ProjectileSystem] 创建魔法弹: 伤害${owner.attackDamage}, AOE${aoeRange}`);
-        return missile;
+        return this.CreateProjectile(ProjectileType.MAGIC_MISSILE, {
+            owner,
+            targetPos,
+            aoeDamageMultiplier,
+            aoeRange
+        }) as MagicMissile;
     }
 
     /**
@@ -352,7 +462,6 @@ export class ProjectileSystem {
 
         // 设置链式攻击属性
         bolt.setChainProperties(chainCount, chainRange, 0.6);
-        bolt.resetHitTargets();
 
         // 设置父节点并发射
         boltNode.parent = owner.node.parent;

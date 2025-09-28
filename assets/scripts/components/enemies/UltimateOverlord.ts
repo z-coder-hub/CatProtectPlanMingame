@@ -1,4 +1,4 @@
-import { _decorator, Component, Color, Sprite, Vec3, tween } from 'cc';
+import { _decorator, Color, Sprite, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
@@ -6,7 +6,7 @@ import { BattleManager } from '../../managers/BattleManager';
 import { BaseHero } from '../heroes/BaseHero';
 import { EnemyFactory } from '../../systems/EnemyFactory';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 /**
  * 终极霸王 - 最终BOSS
@@ -94,9 +94,9 @@ export class UltimateOverlord extends BaseMouse {
         const patterns: ('spiral' | 'curves' | 'zigzag')[] = ['spiral', 'curves', 'zigzag'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
 
-        // 大幅度的复杂摆动 - 体现终极BOSS的不可预测性和威胁
-        this._zigzagAmplitude = 45 + Math.random() * 35; // 45-80像素的大幅摆动
-        this._segmentCount = 12 + Math.floor(Math.random() * 6); // 12-17段移动，最复杂的移动路径
+        // 适度的复杂摆动 - 体现终极BOSS的不可预测性
+        this._zigzagAmplitude = 25 + Math.random() * 15; // 25-40像素的适度摆动
+        this._segmentCount = 8 + Math.floor(Math.random() * 3); // 8-10段移动，复杂但不过度
 
 
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
@@ -111,7 +111,7 @@ export class UltimateOverlord extends BaseMouse {
     }
 
     // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
-    protected drawEnemyGraphics(graphics: any): void {
+    protected drawEnemyGraphics(_graphics: any): void {
         // 终极霸王已迁移到Sprite颜色系统
         this.drawNormalForm();
     }

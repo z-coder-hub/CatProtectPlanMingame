@@ -1,6 +1,6 @@
 import { _decorator, Color, Sprite, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
 const { ccclass, property } = _decorator;
 

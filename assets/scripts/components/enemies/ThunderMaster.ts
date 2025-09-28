@@ -1,7 +1,6 @@
 import { _decorator, Color, Sprite, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
-import { GameManager } from '../../managers/GameManager';
 import { BattleManager } from '../../managers/BattleManager';
 import { BaseHero } from '../heroes/BaseHero';
 
@@ -66,9 +65,9 @@ export class ThunderMaster extends BaseMouse {
         const patterns: ('zigzag' | 'dash')[] = ['zigzag', 'dash'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
 
-        // 中等幅度的电光闪现摆动 - 体现雷电的不可预测性
-        this._zigzagAmplitude = 35 + Math.random() * 25; // 35-60像素的中幅摆动
-        this._segmentCount = 10 + Math.floor(Math.random() * 6); // 10-15段移动，高频闪现效果
+        // 适度的电光闪现摆动 - 体现雷电的活跃性
+        this._zigzagAmplitude = 20 + Math.random() * 15; // 20-35像素的适度摆动
+        this._segmentCount = 6 + Math.floor(Math.random() * 3); // 6-8段移动，保持闪现效果
 
 
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
@@ -83,7 +82,7 @@ export class ThunderMaster extends BaseMouse {
     }
 
     // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
-    protected drawEnemyGraphics(graphics: any): void {
+    protected drawEnemyGraphics(_graphics: any): void {
         // 雷电大师已迁移到Sprite颜色系统
         this.drawBasicVisuals();
     }
@@ -97,33 +96,6 @@ export class ThunderMaster extends BaseMouse {
         if (sprite) {
             sprite.color = new Color(100, 100, 200); // 紫蓝色身体
         }
-    }
-    
-    /**
-     * 绘制电流护盾（改为Sprite颜色变化）
-     */
-    private drawShield(): void {
-        if (this.currentShield <= 0) return;
-
-        // 护盾特效 - 使用颜色强度显示护盾状态
-        const sprite = this.node.getComponent(Sprite);
-        if (sprite) {
-            const shieldIntensity = this.currentShield / this.shieldStrength;
-            sprite.color = new Color(
-                Math.floor(100 + shieldIntensity * 50),
-                Math.floor(100 + shieldIntensity * 100),
-                Math.floor(200 + shieldIntensity * 55)
-            );
-        }
-        console.log(`雷电大师护盾强度：${this.currentShield}/${this.shieldStrength}`);
-    }
-    
-    /**
-     * 绘制雷电弧（改为日志输出）
-     */
-    private drawLightningArcs(): void {
-        // 雷电弧特效已经通过Sprite颜色变化体现
-        console.log("雷电大师身体周围电弧效果");
     }
     
     /**
@@ -338,6 +310,11 @@ export class ThunderMaster extends BaseMouse {
         const config = this.getConfig();
         this.shieldStrength = config.shieldStrength || 100;
 
-        console.log(`[ThunderMaster] 🔄 重用时重置护盾强度: ${this.shieldStrength}`);
+        // 🔧 修复：重置所有计时器
+        this.currentShield = this.shieldStrength;
+        this.interferenceeCooldown = 0;
+        this.lightningEffectTimer = 0;
+
+        console.log(`[ThunderMaster] 🔄 重用时重置雷电系统: 护盾=${this.shieldStrength}, 计时器已重置`);
     }
 }

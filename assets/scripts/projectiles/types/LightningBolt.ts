@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { BattleManager } from '../../managers/BattleManager';
@@ -349,8 +349,6 @@ export class LightningBolt extends BaseProjectile {
         
         // 绘制锯齿状闪电线
         const segments = 5;
-        const segmentLength = direction.length() / segments;
-        let currentPos = Vec3.ZERO;
         
         chainGraphics.moveTo(0, 0);
         

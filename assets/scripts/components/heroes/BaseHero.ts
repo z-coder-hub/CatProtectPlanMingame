@@ -1,7 +1,8 @@
-import { _decorator, Animation, Color, Component, EventTouch, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Vec3, tween, resources } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Vec3, tween, resources } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
 import { HeroState, HeroType, UnitStats } from '../../types/GameTypes';
+import { HERO_CONFIGS } from '../../types/GameConstants';
 
 const { ccclass, property } = _decorator;
 
@@ -53,7 +54,6 @@ export abstract class BaseHero extends Component {
     protected _sprite: Sprite | null = null;
     protected _fallbackGraphics: Graphics | null = null;
     protected _nameLabel: Label | null = null;
-    protected _animation: Animation | null = null;
 
     // === 统一攻击动画系统属性 ===
     protected _isPlayingAttackAnimation: boolean = false;
@@ -178,15 +178,39 @@ export abstract class BaseHero extends Component {
 
 
     // === 抽象方法，子类必须实现 ===
-    protected abstract initializeHeroStats(): void;
     protected abstract initializeHeroVisuals(): void;
-    protected abstract getHeroLabelConfig(): {
+
+    // === 通用方法，可被子类重写 ===
+
+    /**
+     * 初始化英雄属性 - 抽象方法，子类必须实现自己的属性设置
+     * 符合开闭原则：新增英雄时只需实现此方法，无需修改基类
+     */
+    protected abstract initializeHeroStats(): void;
+
+    /**
+     * 获取英雄标签配置 - 通用实现，符合开闭原则
+     * 自动从unitName生成，新增英雄无需修改基类
+     */
+    protected getHeroLabelConfig(): {
         text: string;
         fontSize: number;
         color: Color;
         yOffset: number;
         size: { width: number; height: number };
-    };
+    } {
+        const heroName = this.unitName || "英雄";
+        // 根据名称长度自动调整宽度
+        const nameWidth = Math.max(100, heroName.length * 12);
+
+        return {
+            text: heroName,
+            fontSize: 18,
+            color: Color.WHITE,
+            yOffset: 35,
+            size: { width: nameWidth, height: 24 }
+        };
+    }
 
     // === 统一外观系统方法 ===
 
@@ -217,8 +241,8 @@ export abstract class BaseHero extends Component {
     }
 
     /**
-     * 获取英雄的placed图片路径
-     * 由子类实现，返回自己的资源配置
+     * 获取英雄的placed图片路径 - 抽象方法，子类显式提供图片路径
+     * 符合开闭原则：新增英雄时只需实现此方法，无需修改基类
      */
     protected abstract getPlacedImagePath(): string | null;
 
@@ -333,11 +357,12 @@ export abstract class BaseHero extends Component {
     }
 
     /**
-     * 英雄点击处理方法 - 子类可以重写
+     * 英雄点击处理方法 - 通用实现，子类可以重写
      */
     protected onHeroClickHandler(): void {
-        // 点击处理逻辑，子类可重写
+        // 通用点击处理逻辑
         console.log(`${this.unitName} 被点击`);
+        // 子类可重写此方法来实现特殊的点击行为
     }
 
     // === 通用属性访问器 ===
@@ -456,40 +481,6 @@ export abstract class BaseHero extends Component {
         return 'ranged';
     }
 
-    /**
-     * 统一的动画初始化方法 - 根据英雄类型自动选择动画
-     */
-    protected initializeDefaultAnimation(): void {
-        this._animation = this.node.getComponent(Animation);
-        if (this._animation) {
-            // 根据英雄类型构建动画名称
-            const animationName = this.getIdleAnimationName();
-            if (this._animation.getState(animationName)) {
-                this._animation.play(animationName);
-            }
-        }
-    }
-
-    /**
-     * 获取idle动画名称 - 根据英雄类型自动生成
-     */
-    protected getIdleAnimationName(): string {
-        const heroTypeMap: Record<HeroType, string> = {
-            [HeroType.ORANGE_CAT]: 'orange_cat_idle',
-            [HeroType.SIAMESE_MAGE]: 'siamese_mage_idle',
-            [HeroType.MAINE_THUNDER]: 'maine_thunder_idle',
-            [HeroType.PERSIAN_SNIPER]: 'persian_sniper_idle',
-            [HeroType.BRITISH_KNIGHT]: 'british_knight_idle',
-            [HeroType.BENGAL_HUNTER]: 'bengal_hunter_idle',
-            [HeroType.NORWEGIAN_ICE]: 'norwegian_ice_idle',
-            [HeroType.SCOTTISH_MARKSMAN]: 'scottish_marksman_idle',
-            [HeroType.ABYSSINIAN_ARCHER]: 'abyssinian_archer_idle',
-            [HeroType.RUSSIAN_BLUE]: 'russian_blue_idle',
-            [HeroType.AMERICAN_BOMBER]: 'american_bomber_idle'
-        };
-
-        return heroTypeMap[this.heroType] || 'default_idle';
-    }
 
 
 }

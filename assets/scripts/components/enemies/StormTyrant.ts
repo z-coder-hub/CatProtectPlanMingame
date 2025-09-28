@@ -1,10 +1,10 @@
-import { _decorator, Component, Color, Sprite, tween, Vec3 } from 'cc';
+import { _decorator, Color, Sprite, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { EnemyFactory } from '../../systems/EnemyFactory';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 /**
  * 疾风暴君 - 极速移动召唤BOSS
@@ -63,9 +63,9 @@ export class StormTyrant extends BaseMouse {
         const patterns: ('spiral' | 'curves')[] = ['spiral', 'curves'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
 
-        // 大幅度的旋风式摆动 - 体现疾风暴君的狂野移动
-        this._zigzagAmplitude = 60 + Math.random() * 40; // 60-100像素的大幅摆动
-        this._segmentCount = 8 + Math.floor(Math.random() * 4); // 8-11段移动，增加旋风效果
+        // 适度的旋风式摆动 - 体现疾风暴君的快速移动
+        this._zigzagAmplitude = 30 + Math.random() * 20; // 30-50像素的适度摆动
+        this._segmentCount = 6 + Math.floor(Math.random() * 3); // 6-8段移动，保持流畅性
 
 
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
@@ -178,7 +178,7 @@ export class StormTyrant extends BaseMouse {
     /**
      * 疾风暴君受伤效果
      */
-    protected onTakeDamage(damage: number): void {
+    protected onTakeDamage(_damage: number): void {
         console.log("疾风暴君在风暴中闪避攻击！");
         
         // 风暴闪避特效 - 短暂变白色
@@ -222,5 +222,22 @@ export class StormTyrant extends BaseMouse {
         
         // 调用父类死亡处理
         super.onDie();
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置疾风暴君的召唤和风暴特效系统
+     */
+    protected onReuse(): void {
+        // 重新初始化召唤相关属性
+        const config = this.getConfig();
+        this.summonCount = config.summonCount || 3;
+        this.summonType = config.summonType || EnemyType.SPEED_MOUSE;
+
+        // 重置计时器
+        this.summonCooldown = 0;
+        this.stormEffectTimer = 0;
+
+        console.log(`[StormTyrant] 🔄 重用时重置风暴系统: 召唤数量=${this.summonCount}, 类型=${this.summonType}, 计时器已重置`);
     }
 }

@@ -11,7 +11,6 @@ const { ccclass } = _decorator;
 export class ScottishMarksman extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.SCOTTISH_MARKSMAN;
-    private _multiTargets: Node[] = [];
     
     // 实现BaseHero的抽象方法
     protected initializeHeroStats(): void {
@@ -27,8 +26,7 @@ export class ScottishMarksman extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 使用基类的统一动画初始化
-        this.initializeDefaultAnimation();
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
     
     protected onAttack(target: Node): void {
@@ -105,8 +103,9 @@ export class ScottishMarksman extends BaseHero {
         };
     }
 
-    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    // 实现BaseHero的抽象方法 - 获取placed图片路径（目前无美术资源）
     protected getPlacedImagePath(): string | null {
-        return null; // 暂时没有placed图片资源
+        return "images/placed/ScottishMarksman_placed";
     }
+
 }

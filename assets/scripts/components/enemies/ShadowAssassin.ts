@@ -173,7 +173,27 @@ export class ShadowAssassin extends BaseMouse {
             })
             .start();
     }
-    
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置潜影刺客的特殊状态和属性
+     */
+    protected onReuse(): void {
+        // 重新初始化潜行相关属性
+        const config = this.getConfig();
+        this.stealthChance = config.stealthChance || 0.6;
+        this.damageReduction = config.damageReduction || 0.3;
+
+        // 重置状态
+        this.isStealthed = false;
+        this.stealthTimer = 0;
+
+        // 重置外观到正常状态
+        this.updateStealthAppearance(false);
+
+        console.log(`[ShadowAssassin] 🔄 重用时重置潜行属性: 潜行几率=${this.stealthChance}, 减伤=${this.damageReduction}`);
+    }
+
     /**
      * 实现标签配置
      */

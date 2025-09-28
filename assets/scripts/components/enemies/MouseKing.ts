@@ -1,4 +1,4 @@
-import { _decorator, Color, Sprite, Vec3, Node, tween, UIOpacity } from 'cc';
+import { _decorator, Vec3, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
@@ -82,17 +82,6 @@ export class MouseKing extends BaseMouse {
     }
 
     // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
-    
-    /**
-     * 通过Sprite颜色设置老鼠王外观
-     */
-    private updateMouseKingAppearance(): void {
-        const sprite = this.node.getComponent(Sprite);
-        if (sprite) {
-            // 老鼠王金黄色外观
-            sprite.color = new Color(255, 215, 0, 255);
-        }
-    }
     
     /**
      * 重写update方法，添加召唤逻辑

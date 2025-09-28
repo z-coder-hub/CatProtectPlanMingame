@@ -1,6 +1,5 @@
 import { _decorator, Color, Graphics, Node, tween } from 'cc';
 import { BaseHero } from './BaseHero';
-import { BaseMouse } from '../enemies/BaseMouse';
 import { HeroType } from '../../types/GameTypes';
 import { HERO_CONFIGS } from '../../types/GameConstants';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
@@ -26,8 +25,7 @@ export class BengalHunter extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 现在使用placed图片显示，无需自定义绘制
-        // 孟加拉猎手使用placed图片：BengalHunter_placed.png
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
     
     // 目标分配由 BattleManager 统一处理
@@ -89,9 +87,10 @@ export class BengalHunter extends BaseHero {
         };
     }
 
-    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    // 实现BaseHero的抽象方法 - 获取placed图片路径（目前无美术资源）
     protected getPlacedImagePath(): string | null {
         return "images/placed/BengalHunter_placed";
     }
+
 
 }

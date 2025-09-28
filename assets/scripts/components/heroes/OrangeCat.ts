@@ -1,7 +1,6 @@
-import { _decorator, Node, Color } from 'cc';
+import { _decorator, Node } from 'cc';
 import { BaseHero } from './BaseHero';
 import { HeroType } from '../../types/GameTypes';
-import { HERO_CONFIGS } from '../../types/GameConstants';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 
 const { ccclass, property } = _decorator;
@@ -44,38 +43,27 @@ export class OrangeCat extends BaseHero {
     
     
     
-    // 实现BaseHero的抽象方法
+    // 使用BaseHero的通用初始化方法，无需重写
+    
+    // 实现BaseHero的抽象方法：初始化英雄属性
     protected initializeHeroStats(): void {
-        const config = HERO_CONFIGS[HeroType.ORANGE_CAT];
-        
-        this.unitName = config.name;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.bulletSpeed = config.bulletSpeed || 300;
-        this.cost = config.cost;
-    }
-    
-    // 实现BaseHero的抽象方法
-    protected initializeHeroVisuals(): void {
-        // 使用基类的统一动画初始化
-        this.initializeDefaultAnimation();
-    }
-    
-    // 实现BaseHero的抽象方法 - 英雄标签配置
-    protected getHeroLabelConfig() {
-        return {
-            text: this.unitName || "橘猫射手",
-            fontSize: 18,
-            color: Color.WHITE,
-            yOffset: 35,
-            size: { width: 100, height: 24 }
-        };
+        this.unitName = "橘猫射手";
+        this.attackDamage = 15;
+        this.attackRange = 500;  // 超大攻击范围
+        this.attackSpeed = 1.0;
+        this.bulletSpeed = 300;
+        this.cost = 50;
     }
 
-    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    // 实现BaseHero的抽象方法：初始化英雄外观
+    protected initializeHeroVisuals(): void {
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
+    }
+
+    // 实现抽象方法：提供英雄图片路径
     protected getPlacedImagePath(): string | null {
         return "images/placed/OrangeCat_placed";
     }
+
     
 }

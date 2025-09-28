@@ -26,8 +26,7 @@ export class AbyssinianArcher extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 现在使用白色圆点显示，无需自定义绘制
-        // 精灵弓手使用白色圆点（无placed资源）
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
     
     protected onAttack(target: Node): void {
@@ -114,8 +113,9 @@ export class AbyssinianArcher extends BaseHero {
         };
     }
 
-    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    // 实现BaseHero的抽象方法 - 获取placed图片路径（目前无美术资源）
     protected getPlacedImagePath(): string | null {
-        return null; // 暂时没有placed图片资源
+        return "images/placed/AbyssinianArcher_placed";
     }
+
 }

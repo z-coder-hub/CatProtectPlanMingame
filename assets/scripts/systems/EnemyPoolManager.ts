@@ -1,5 +1,6 @@
 import { _decorator, Node, NodePool, director } from 'cc';
 import { EnemyType } from '../types/GameTypes';
+import { BaseMouse } from '../components/enemies/BaseMouse';
 import { BasicMouse } from '../components/enemies/BasicMouse';
 import { GiantMouse } from '../components/enemies/GiantMouse';
 import { FastMouse } from '../components/enemies/FastMouse';
@@ -18,6 +19,28 @@ import { MechCommander } from '../components/enemies/MechCommander';
 import { UltimateOverlord } from '../components/enemies/UltimateOverlord';
 
 const { ccclass } = _decorator;
+
+/**
+ * 敌人自动注册装饰器
+ * 使用方式：@RegisterEnemy(EnemyType.BASIC_MOUSE)
+ *
+ * 遵循开闭原则：新增敌人时无需修改池管理器，只需使用此装饰器
+ *
+ * 示例：
+ * ```typescript
+ * @RegisterEnemy(EnemyType.NEW_ENEMY)
+ * export class NewEnemy extends BaseMouse {
+ *     // 敌人实现
+ * }
+ * ```
+ */
+export function RegisterEnemy(enemyType: EnemyType) {
+    return function<T extends new (...args: any[]) => BaseMouse>(constructor: T) {
+        // 自动注册到池管理器
+        EnemyPoolManager.registerEnemyClass(enemyType, constructor as new () => BaseMouse);
+        return constructor;
+    };
+}
 
 /**
  * 基于官方 NodePool 的敌人对象池管理器
@@ -50,69 +73,92 @@ export class EnemyPoolManager {
     private static _pools: Map<EnemyType, NodePool> = new Map();
     private static _maxPoolSize: number = 15; // 每种敌人的最大池大小
 
-    // === 敌人组件类映射 ===
-    /** 敌人组件类映射表，用于NodePool创建时的池处理器 */
-    private static readonly _componentClasses = new Map<EnemyType, any>([
-        // 基础单位
-        [EnemyType.BASIC_MOUSE, BasicMouse],
-        [EnemyType.GIANT_MOUSE, GiantMouse],
+    // === 动态注册表 - 支持装饰器自动注册 ===
+    /** 敌人组件类动态注册表 */
+    private static _enemyRegistry: Map<EnemyType, new () => BaseMouse> = new Map();
 
-        // 快速单位
-        [EnemyType.FAST_MOUSE, FastMouse],
-        [EnemyType.SPEED_MOUSE, SpeedMouse],
+    // 静态初始化 - 注册现有敌人（向后兼容）
+    private static _initialized = false;
 
-        // 装甲单位
-        [EnemyType.ARMORED_MOUSE, ArmoredMouse],
-        [EnemyType.TANK_MOUSE, TankMouse],
+    /**
+     * 初始化现有敌人注册（仅执行一次）
+     */
+    private static initializeRegistry(): void {
+        if (this._initialized) return;
 
-        // 特殊单位
-        [EnemyType.STEALTH_MOUSE, StealthMouse],
+        // 注册现有敌人类型（向后兼容）
+        this._enemyRegistry.set(EnemyType.BASIC_MOUSE, BasicMouse);
+        this._enemyRegistry.set(EnemyType.GIANT_MOUSE, GiantMouse);
+        this._enemyRegistry.set(EnemyType.FAST_MOUSE, FastMouse);
+        this._enemyRegistry.set(EnemyType.SPEED_MOUSE, SpeedMouse);
+        this._enemyRegistry.set(EnemyType.ARMORED_MOUSE, ArmoredMouse);
+        this._enemyRegistry.set(EnemyType.TANK_MOUSE, TankMouse);
+        this._enemyRegistry.set(EnemyType.STEALTH_MOUSE, StealthMouse);
+        this._enemyRegistry.set(EnemyType.MOUSE_KING, MouseKing);
+        this._enemyRegistry.set(EnemyType.MECH_MOUSE, MechMouse);
+        this._enemyRegistry.set(EnemyType.ARMOR_OVERLORD, ArmorOverlord);
+        this._enemyRegistry.set(EnemyType.SHADOW_ASSASSIN, ShadowAssassin);
+        this._enemyRegistry.set(EnemyType.STORM_TYRANT, StormTyrant);
+        this._enemyRegistry.set(EnemyType.GIANT_BEHEMOTH, GiantBehemoth);
+        this._enemyRegistry.set(EnemyType.THUNDER_MASTER, ThunderMaster);
+        this._enemyRegistry.set(EnemyType.MECH_COMMANDER, MechCommander);
+        this._enemyRegistry.set(EnemyType.ULTIMATE_OVERLORD, UltimateOverlord);
 
-        // 基础BOSS单位
-        [EnemyType.MOUSE_KING, MouseKing],
-        [EnemyType.MECH_MOUSE, MechMouse],
+        this._initialized = true;
+        console.log(`[EnemyPoolManager] 📝 已注册 ${this._enemyRegistry.size} 种敌人类型`);
+    }
 
-        // 新BOSS单位
-        [EnemyType.ARMOR_OVERLORD, ArmorOverlord],
-        [EnemyType.SHADOW_ASSASSIN, ShadowAssassin],
-        [EnemyType.STORM_TYRANT, StormTyrant],
-        [EnemyType.GIANT_BEHEMOTH, GiantBehemoth],
-        [EnemyType.THUNDER_MASTER, ThunderMaster],
-        [EnemyType.MECH_COMMANDER, MechCommander],
-        [EnemyType.ULTIMATE_OVERLORD, UltimateOverlord]
-    ]);
+    /**
+     * 注册敌人类（供装饰器使用）
+     * @param enemyType 敌人类型
+     * @param enemyClass 敌人类构造函数
+     */
+    public static registerEnemyClass(enemyType: EnemyType, enemyClass: new () => BaseMouse): void {
+        this.initializeRegistry();
 
-    // === 敌人工厂方法映射 ===
-    /** 敌人节点创建工厂方法映射表，每种敌人类型对应一个创建函数 */
-    private static readonly _factoryMethods: Map<EnemyType, () => Node> = new Map([
-        // 基础单位
-        [EnemyType.BASIC_MOUSE, () => EnemyPoolManager.createBasicMouseNode()],
-        [EnemyType.GIANT_MOUSE, () => EnemyPoolManager.createGiantMouseNode()],
+        if (this._enemyRegistry.has(enemyType)) {
+            console.warn(`[EnemyPoolManager] ⚠️ 敌人类型 ${enemyType} 已存在，将被覆盖`);
+        }
 
-        // 快速单位
-        [EnemyType.FAST_MOUSE, () => EnemyPoolManager.createFastMouseNode()],
-        [EnemyType.SPEED_MOUSE, () => EnemyPoolManager.createSpeedMouseNode()],
+        this._enemyRegistry.set(enemyType, enemyClass);
+        console.log(`[EnemyPoolManager] ✅ 注册敌人类型: ${enemyType}`);
+    }
 
-        // 装甲单位
-        [EnemyType.ARMORED_MOUSE, () => EnemyPoolManager.createArmoredMouseNode()],
-        [EnemyType.TANK_MOUSE, () => EnemyPoolManager.createTankMouseNode()],
+    /**
+     * 通用敌人节点创建方法
+     * @param enemyType 敌人类型
+     * @returns 创建的敌人节点
+     */
+    private static createEnemyNode(enemyType: EnemyType): Node {
+        this.initializeRegistry();
 
-        // 特殊单位
-        [EnemyType.STEALTH_MOUSE, () => EnemyPoolManager.createStealthMouseNode()],
+        const componentClass = this._enemyRegistry.get(enemyType);
+        if (!componentClass) {
+            console.error(`[EnemyPoolManager] ❌ 未注册的敌人类型: ${enemyType}`);
+            return new Node(`Unknown_${enemyType}`);
+        }
 
-        // BOSS单位
-        [EnemyType.MOUSE_KING, () => EnemyPoolManager.createMouseKingNode()],
-        [EnemyType.MECH_MOUSE, () => EnemyPoolManager.createMechMouseNode()],
+        try {
+            // 创建敌人节点
+            const enemyNode = new Node(`Enemy_${enemyType}_${Date.now()}`);
 
-        // 新BOSS单位
-        [EnemyType.ARMOR_OVERLORD, () => EnemyPoolManager.createArmorOverlordNode()],
-        [EnemyType.SHADOW_ASSASSIN, () => EnemyPoolManager.createShadowAssassinNode()],
-        [EnemyType.STORM_TYRANT, () => EnemyPoolManager.createStormTyrantNode()],
-        [EnemyType.GIANT_BEHEMOTH, () => EnemyPoolManager.createGiantBehemothNode()],
-        [EnemyType.THUNDER_MASTER, () => EnemyPoolManager.createThunderMasterNode()],
-        [EnemyType.MECH_COMMANDER, () => EnemyPoolManager.createMechCommanderNode()],
-        [EnemyType.ULTIMATE_OVERLORD, () => EnemyPoolManager.createUltimateOverlordNode()]
-    ]);
+            // 添加敌人组件
+            const enemyComponent = enemyNode.addComponent(componentClass as any);
+
+            // 验证组件是否正确创建
+            if (!enemyComponent) {
+                console.error(`[EnemyPoolManager] ❌ 敌人组件创建失败: ${enemyType}`);
+                enemyNode.destroy();
+                return new Node(`Failed_${enemyType}`);
+            }
+
+            return enemyNode;
+
+        } catch (error) {
+            console.error(`[EnemyPoolManager] ❌ 创建敌人节点时发生错误: ${enemyType}`, error);
+            return new Node(`Error_${enemyType}`);
+        }
+    }
 
     // === 初始化方法 ===
 
@@ -124,7 +170,8 @@ export class EnemyPoolManager {
         // 监听敌人回收事件
         director.on('enemy-recycle', this.recycleEnemy, this);
 
-        const supportedTypes = Array.from(this._componentClasses.keys());
+        this.initializeRegistry();
+        const supportedTypes = Array.from(this._enemyRegistry.keys());
         console.log(`[EnemyPoolManager] 敌人对象池系统初始化完成，支持 ${supportedTypes.length} 种敌人类型`);
     }
 
@@ -140,17 +187,17 @@ export class EnemyPoolManager {
         let pool = this._pools.get(type);
         if (!pool) {
             // 获取对应的组件类
-            const componentClass = this._componentClasses.get(type);
+            const componentClass = this._enemyRegistry.get(type);
             if (!componentClass) {
                 console.error(`[EnemyPoolManager] ❌ 未找到 ${type} 的组件类`);
                 // 降级处理：创建空对象池
                 pool = new NodePool();
             } else {
                 // 创建新的对象池，传入组件类作为池处理器
-                console.log(`[EnemyPoolManager] 🆕 创建 ${type} 对象池，使用组件类: ${componentClass.name}`);
+                // 创建对象池
                 try {
                     pool = new NodePool(componentClass);
-                    console.log(`[EnemyPoolManager] ✅ 成功创建 ${type} 对象池，支持自动调用 reuse/unuse`);
+                    // 对象池创建成功
                 } catch (error) {
                     console.error(`[EnemyPoolManager] ❌ 创建对象池失败: ${type}`, error);
                     // 降级处理：创建空对象池
@@ -181,18 +228,11 @@ export class EnemyPoolManager {
 
         if (!node) {
             // 对象池为空，创建新节点
-            const factory = this._factoryMethods.get(type);
-            if (factory) {
-                node = factory();
-                console.log(`[EnemyPoolManager] 🆕 创建新的 ${type} 节点，池大小: ${pool.size()}`);
-            } else {
-                console.error(`[EnemyPoolManager] ❌ 未找到 ${type} 的工厂方法`);
-                return new Node(`Unknown_${type}`);
-            }
+            node = this.createEnemyNode(type);
         } else {
             // NodePool.get() 会自动调用组件的 reuse() 方法
-            console.log(`[EnemyPoolManager] ♻️ 从池中获取 ${type} 节点，剩余: ${pool.size()}`);
-            console.log(`[EnemyPoolManager] 🔄 节点已通过reuse()方法重置状态`);
+            // 从池中获取节点
+            // 节点状态已重置
         }
 
         return node;
@@ -223,8 +263,8 @@ export class EnemyPoolManager {
         if (pool.size() < this._maxPoolSize) {
             // NodePool.put() 会自动调用组件的 unuse() 方法
             pool.put(node);
-            console.log(`[EnemyPoolManager] ♻️ ${type} 回收到池，当前池大小: ${pool.size()}`);
-            console.log(`[EnemyPoolManager] 📦 节点已通过unuse()方法清理状态`);
+            // 节点已回收到对象池
+            // 节点状态已清理
         } else {
             // 池已满，直接销毁
             console.log(`[EnemyPoolManager] 🗑️ ${type} 池已满(${pool.size()}/${this._maxPoolSize})，销毁节点`);
@@ -232,108 +272,5 @@ export class EnemyPoolManager {
         }
     }
 
-    // === 敌人节点创建工厂方法 ===
-
-    // 基础单位
-    private static createBasicMouseNode(): Node {
-        const node = new Node(EnemyType.BASIC_MOUSE);
-        node.addComponent(BasicMouse);
-        return node;
-    }
-
-    private static createGiantMouseNode(): Node {
-        const node = new Node(EnemyType.GIANT_MOUSE);
-        node.addComponent(GiantMouse);
-        return node;
-    }
-
-    // 快速单位
-    private static createFastMouseNode(): Node {
-        const node = new Node(EnemyType.FAST_MOUSE);
-        node.addComponent(FastMouse);
-        return node;
-    }
-
-    private static createSpeedMouseNode(): Node {
-        const node = new Node(EnemyType.SPEED_MOUSE);
-        node.addComponent(SpeedMouse);
-        return node;
-    }
-
-    // 装甲单位
-    private static createArmoredMouseNode(): Node {
-        const node = new Node(EnemyType.ARMORED_MOUSE);
-        node.addComponent(ArmoredMouse);
-        return node;
-    }
-
-    private static createTankMouseNode(): Node {
-        const node = new Node(EnemyType.TANK_MOUSE);
-        node.addComponent(TankMouse);
-        return node;
-    }
-
-    // 特殊单位
-    private static createStealthMouseNode(): Node {
-        const node = new Node(EnemyType.STEALTH_MOUSE);
-        node.addComponent(StealthMouse);
-        return node;
-    }
-
-    // BOSS单位
-    private static createMouseKingNode(): Node {
-        const node = new Node(EnemyType.MOUSE_KING);
-        node.addComponent(MouseKing);
-        return node;
-    }
-
-    private static createMechMouseNode(): Node {
-        const node = new Node(EnemyType.MECH_MOUSE);
-        node.addComponent(MechMouse);
-        return node;
-    }
-
-    // 新BOSS单位
-    private static createArmorOverlordNode(): Node {
-        const node = new Node(EnemyType.ARMOR_OVERLORD);
-        node.addComponent(ArmorOverlord);
-        return node;
-    }
-
-    private static createShadowAssassinNode(): Node {
-        const node = new Node(EnemyType.SHADOW_ASSASSIN);
-        node.addComponent(ShadowAssassin);
-        return node;
-    }
-
-    private static createStormTyrantNode(): Node {
-        const node = new Node(EnemyType.STORM_TYRANT);
-        node.addComponent(StormTyrant);
-        return node;
-    }
-
-    private static createGiantBehemothNode(): Node {
-        const node = new Node(EnemyType.GIANT_BEHEMOTH);
-        node.addComponent(GiantBehemoth);
-        return node;
-    }
-
-    private static createThunderMasterNode(): Node {
-        const node = new Node(EnemyType.THUNDER_MASTER);
-        node.addComponent(ThunderMaster);
-        return node;
-    }
-
-    private static createMechCommanderNode(): Node {
-        const node = new Node(EnemyType.MECH_COMMANDER);
-        node.addComponent(MechCommander);
-        return node;
-    }
-
-    private static createUltimateOverlordNode(): Node {
-        const node = new Node(EnemyType.ULTIMATE_OVERLORD);
-        node.addComponent(UltimateOverlord);
-        return node;
-    }
 
 }

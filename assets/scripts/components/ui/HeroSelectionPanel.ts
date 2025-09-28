@@ -243,7 +243,7 @@ export class HeroSelectionPanel extends Component {
     /**
      * 更新英雄图标状态
      */
-    private updateHeroIcon(buttonNode: Node, heroType: HeroType, isUnlocked: boolean): void {
+    private updateHeroIcon(buttonNode: Node, _heroType: HeroType, isUnlocked: boolean): void {
         const iconNode = buttonNode.getChildByName("HeroIcon");
         if (!iconNode) return;
 
@@ -1151,7 +1151,7 @@ export class HeroSelectionPanel extends Component {
             // 只设置SpriteFrame，其他属性已经预设好了
             sprite.spriteFrame = spriteFrame;
 
-            console.log(`成功加载英雄图片: ${imagePath}`);
+            // 英雄图片加载完成
         });
     }
 
@@ -1252,7 +1252,12 @@ export class HeroSelectionPanel extends Component {
             [HeroType.ORANGE_CAT]: "images/placed/OrangeCat_placed",
             [HeroType.PERSIAN_SNIPER]: "images/placed/PersianSniper_placed",
             [HeroType.BENGAL_HUNTER]: "images/placed/BengalHunter_placed",
+            [HeroType.SCOTTISH_MARKSMAN]: "images/placed/ScottishMarksman_placed",
+            [HeroType.SIAMESE_MAGE]: "images/placed/SiameseMage_placed",
             [HeroType.MAINE_THUNDER]: "images/placed/MaineThunder_placed",
+            [HeroType.NORWEGIAN_ICE]: "images/placed/NorwegianIce_placed",
+            [HeroType.ABYSSINIAN_ARCHER]: "images/placed/AbyssinianArcher_placed",
+            [HeroType.BRITISH_KNIGHT]: "images/placed/BritishKnight_placed",
             [HeroType.RUSSIAN_BLUE]: "images/placed/RussianBlue_placed",
             [HeroType.AMERICAN_BOMBER]: "images/placed/AmericanBomber_placed"
         };

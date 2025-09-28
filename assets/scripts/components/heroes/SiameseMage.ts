@@ -1,7 +1,6 @@
-import { _decorator, Node, Vec3, Color } from 'cc';
+import { _decorator, Node } from 'cc';
 import { BaseHero } from './BaseHero';
 import { HeroType } from '../../types/GameTypes';
-import { HERO_CONFIGS } from '../../types/GameConstants';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
 
 const { ccclass, property } = _decorator;
@@ -20,40 +19,27 @@ export class SiameseMage extends BaseHero {
     
     // 英雄类型
     public readonly heroType: HeroType = HeroType.SIAMESE_MAGE;
-    
-    // 实现BaseHero的抽象方法
+
+    // 实现BaseHero的抽象方法：初始化英雄属性
     protected initializeHeroStats(): void {
-        const config = HERO_CONFIGS[HeroType.SIAMESE_MAGE];
-        
-        this.unitName = config.name;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.bulletSpeed = config.bulletSpeed || 350;
-        this.cost = config.cost;
-        this.aoeDamage = config.aoeDamage || 1.5;
-        this.aoeRange = config.aoeRange || 80;
+        this.unitName = "暹罗猫法师";
+        this.attackDamage = 20;
+        this.attackRange = 300;
+        this.attackSpeed = 1.2;
+        this.bulletSpeed = 250;
+        this.cost = 70;
+
+        // 设置AOE属性
+        this.aoeDamage = 1.5;
+        this.aoeRange = 80;
     }
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeDefaultAnimation();
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
     
     // 继承父类start()方法，无需重写
-    
-    // 重写标签配置，使用完整英雄名称
-    protected getHeroLabelConfig() {
-        return {
-            text: this.unitName || "暹罗猫法师",
-            fontSize: 18,
-            color: Color.WHITE,
-            yOffset: 35,
-            size: { width: 110, height: 24 }  // 增加宽度以容纳完整名称
-        };
-    }
-    
-    
     
     // 目标分配由 BattleManager 统一处理
     
@@ -69,14 +55,12 @@ export class SiameseMage extends BaseHero {
         return 'magic';
     }
 
-    // 重写基类的点击处理方法
-    protected onHeroClickHandler(): void {
-        console.log(`${this.unitName} 被点击`);
+    // 使用BaseHero的通用方法，无需重写
+
+    // 实现抽象方法：提供英雄图片路径
+    protected getPlacedImagePath(): string | null {
+        return "images/placed/SiameseMage_placed";
     }
 
-    // 实现BaseHero的抽象方法 - 获取placed图片路径
-    protected getPlacedImagePath(): string | null {
-        return null; // 暂时没有placed图片资源
-    }
 
 }

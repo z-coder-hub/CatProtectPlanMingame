@@ -25,8 +25,7 @@ export class AmericanBomber extends BaseHero {
 
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 现在使用placed图片显示，无需自定义绘制
-        // 爆破专家使用placed图片：AmericanBomber_placed.png
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
 
     // 目标分配由 BattleManager 统一处理
@@ -97,8 +96,9 @@ export class AmericanBomber extends BaseHero {
         };
     }
 
-    // 实现BaseHero的抽象方法 - 获取placed图片路径
+    // 实现BaseHero的抽象方法 - 获取placed图片路径（目前无美术资源）
     protected getPlacedImagePath(): string | null {
         return "images/placed/AmericanBomber_placed";
     }
+
 }

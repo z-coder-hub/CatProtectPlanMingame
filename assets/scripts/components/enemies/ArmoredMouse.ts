@@ -1,4 +1,4 @@
-import { _decorator, Color, Node, tween, Vec3, Sprite } from 'cc';
+import { _decorator, Color, tween, Sprite } from 'cc';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { BaseMouse } from './BaseMouse';
 

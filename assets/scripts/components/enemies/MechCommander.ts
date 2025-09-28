@@ -166,7 +166,7 @@ export class MechCommander extends BaseMouse {
     }
 
     // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
-    protected drawEnemyGraphics(graphics: any): void {
+    protected drawEnemyGraphics(_graphics: any): void {
         // 机械军团长已迁移到Sprite颜色系统
         this.drawBasicVisuals();
     }
@@ -379,7 +379,7 @@ export class MechCommander extends BaseMouse {
 
     /**
      * 对象池重用时的额外初始化
-     * 重置机械军团长的特殊属性
+     * 重置机械军团长的特殊属性和计时器
      */
     protected onReuse(): void {
         // 重新初始化特殊属性
@@ -388,6 +388,12 @@ export class MechCommander extends BaseMouse {
         this.summonType = config.summonType || EnemyType.MECH_MOUSE;
         this.healRate = config.healRate || 20;
 
-        console.log(`[MechCommander] 🔄 重用时重置特殊属性: 召唤=${this.summonCount}, 类型=${this.summonType}, 修复=${this.healRate}`);
+        // 🔧 修复：重置所有计时器和状态
+        this.summonCooldown = 0;
+        this.healCooldown = 0;
+        this.spawnedCount = 0;
+        this.mechEffectTimer = 0;
+
+        console.log(`[MechCommander] 🔄 重用时重置机械系统: 召唤=${this.summonCount}, 类型=${this.summonType}, 修复=${this.healRate}, 计时器已重置`);
     }
 }

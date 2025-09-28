@@ -321,7 +321,7 @@ export class LevelManager extends Component {
     /**
      * 检查解锁条件 (简化版)
      */
-    public CheckUnlockConditions(conditions?: any[]): boolean {
+    public CheckUnlockConditions(_conditions?: any[]): boolean {
         // 简化：总是返回true，使用基于关卡顺序的解锁逻辑
         return true;
     }

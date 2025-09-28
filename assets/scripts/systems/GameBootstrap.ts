@@ -139,7 +139,7 @@ export class GameBootstrap extends Component {
         backgroundNode.parent = this._canvasNode;
 
         // 添加UITransform组件并设置为全屏尺寸
-        const transform = backgroundNode.addComponent(UITransform);
+        backgroundNode.addComponent(UITransform);
 
         // 添加Sprite组件
         const sprite = backgroundNode.addComponent(Sprite);

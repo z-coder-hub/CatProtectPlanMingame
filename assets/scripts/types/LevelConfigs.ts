@@ -1,5 +1,5 @@
 import {
-    LevelConfig, WaveConfig, RewardConfig,
+    LevelConfig,
     RewardType, EnemyType, HeroType
 } from './GameTypes';
 

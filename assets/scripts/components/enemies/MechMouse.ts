@@ -44,7 +44,7 @@ export class MechMouse extends BaseMouse {
     }
 
     // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
-    protected drawEnemyGraphics(graphics: any): void {
+    protected drawEnemyGraphics(_graphics: any): void {
         // 机械老鼠已迁移到Sprite颜色系统
         this.drawMechMouseAppearance();
     }
@@ -225,5 +225,16 @@ export class MechMouse extends BaseMouse {
             .start();
         
         console.log(`${this.unitName}机械系统损毁，爆炸解体！`);
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置机甲鼠的引擎发光效果
+     */
+    protected onReuse(): void {
+        // 重置引擎发光效果
+        this._engineGlow = 0;
+
+        console.log(`[MechMouse] 🔄 重用时重置机械系统: 引擎发光已重置`);
     }
 }

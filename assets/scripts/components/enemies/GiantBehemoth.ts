@@ -75,7 +75,7 @@ export class GiantBehemoth extends BaseMouse {
     }
 
     // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
-    protected drawEnemyGraphics(graphics: any): void {
+    protected drawEnemyGraphics(_graphics: any): void {
         // 巨兽霸主已迁移到Sprite颜色系统
         // 使用深棕红色代表巨兽的威严
         const sprite = this.node.getComponent(Sprite);

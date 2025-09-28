@@ -224,7 +224,67 @@ private log(message: string): void {
 - 定期清理未使用的import和方法
 - 保持项目结构简洁明了
 
-### 7. 事件和通信设计
+### 7. 开闭原则 (Open-Closed Principle) 🔐
+- **对扩展开放，对修改封闭**: 软件实体应该对扩展开放，对修改封闭
+- **抽象基类设计**: 基类应该定义抽象接口和最小必要的共同逻辑，而不是包含所有实现
+- **子类特化实现**: 每个子类应该实现自己的特定行为，而不是依赖基类的通用实现
+- **避免过度集中**: 不要将所有逻辑都放到基类中，这会导致基类过于复杂且难以维护
+- **保持抽象层次**: 基类专注于定义契约和核心流程，具体实现留给子类
+
+#### 开闭原则实践要点：
+- **正确的基类设计**：提供抽象方法定义和必要的生命周期管理
+- **错误的基类设计**：将所有可能的实现都写在基类中，子类只是调用
+- **扩展性优先**：新增功能通过继承扩展，而不是修改现有基类
+- **职责分离**：基类负责框架和流程，子类负责具体的业务逻辑
+
+#### 开闭原则示例：
+```typescript
+// ✅ 正确：开闭原则的基类设计
+abstract class BaseHero extends Component {
+    // 抽象方法 - 强制子类实现自己的逻辑
+    protected abstract initializeHeroStats(): void;
+    protected abstract getHeroLabelConfig(): LabelConfig;
+
+    // 基类只负责框架和生命周期
+    protected onLoad(): void {
+        this.initializeHeroStats();     // 调用子类实现
+        this.setupHeroVisuals();        // 基类通用逻辑
+    }
+}
+
+// ✅ 子类实现自己的特定逻辑
+class OrangeCat extends BaseHero {
+    protected initializeHeroStats(): void {
+        // OrangeCat的特定属性设置
+        this.attackDamage = 15;
+        this.attackRange = 200;
+    }
+
+    protected getHeroLabelConfig(): LabelConfig {
+        // OrangeCat特定的标签配置
+        return { text: "橘猫射手", fontSize: 18 };
+    }
+}
+
+// ❌ 错误：违反开闭原则的设计
+class BaseHero extends Component {
+    // 错误：基类包含所有实现，子类失去特化能力
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[this.heroType];
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        // 通用实现无法体现子类特色
+    }
+}
+```
+
+#### 违反开闭原则的信号：
+- **基类方法过多**：基类包含大量具体实现方法
+- **子类过于简单**：子类只是调用基类方法，没有自己的逻辑
+- **修改基类频繁**：每次新增功能都需要修改基类代码
+- **通用实现泛滥**：用if-else或switch处理不同子类的差异
+
+### 8. 事件和通信设计
 - **优先使用 Cocos Creator 官方事件系统**: Cocos Creator 提供了成熟优化的事件框架，应作为首选通信方式
 - **充分利用节点事件**: 使用 `node.emit()` 和 `node.on()` 进行组件间通信，这是官方推荐的标准做法
 - **合理使用触摸事件**: 利用 `Node.EventType.TOUCH_*` 系列事件处理用户交互

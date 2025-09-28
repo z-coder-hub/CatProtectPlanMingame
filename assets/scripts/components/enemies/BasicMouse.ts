@@ -1,4 +1,4 @@
-import { _decorator, Color, Sprite, tween } from 'cc';
+import { _decorator, Color, tween } from 'cc';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { EffectHelper } from '../../utils/EffectHelper';
 import { BaseMouse } from './BaseMouse';
@@ -26,7 +26,7 @@ export class BasicMouse extends BaseMouse {
         };
     }
 
-    // 实现抽象方法：获取敌人图片路径
+    // 实现抽象方法：提供敌人图片路径
     protected getEnemyImagePath(): string {
         return "images/enemies/BasicMouse";
     }
@@ -45,7 +45,7 @@ export class BasicMouse extends BaseMouse {
 
     // 重写受伤方法，添加受伤反馈
     protected onTakeDamage(damage: number): void {
-        console.log(`小老鼠受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
+        // 受到伤害
 
         // 使用素材的受伤效果（如颜色闪烁）
         this.playHurtEffect();

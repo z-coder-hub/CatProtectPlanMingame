@@ -29,8 +29,7 @@ export class MaineThunder extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        // 现在使用placed图片显示，无需自定义绘制
-        // 缅因雷法师使用placed图片：MaineThunder_placed.png
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
     
     // 绘制方法已移除 - 现在使用placed图片显示
@@ -84,5 +83,6 @@ export class MaineThunder extends BaseHero {
     protected getPlacedImagePath(): string | null {
         return "images/placed/MaineThunder_placed";
     }
+
 
 }
