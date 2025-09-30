@@ -98,7 +98,7 @@ export class ProjectileSystem {
         // 验证组件类映射
         const types = Array.from(this._componentClasses.keys());
 
-        console.log(`[ProjectileSystem] 投射物系统初始化完成，支持 ${types.length} 种投射物类型`);
+        // 投射物系统初始化完成
     }
 
 
@@ -137,7 +137,7 @@ export class ProjectileSystem {
             try {
                 pool = new NodePool(componentClass);
                 this._pools.set(type, pool);
-                console.log(`[ProjectileSystem] 创建 ${type} 对象池`);
+                // 简化日志：创建对象池
             } catch (error) {
                 console.error(`[ProjectileSystem] 创建对象池失败: ${type}`, error);
                 pool = new NodePool(); // 降级为空对象池
@@ -265,7 +265,7 @@ export class ProjectileSystem {
         // 发射投射物
         projectile.Launch(params.owner, params.targetPos, damage, speed);
 
-        console.log(`[ProjectileSystem] 创建投射物: ${type}, 伤害${damage}, 速度${speed}`);
+        // 简化日志：创建投射物
         return projectile;
     }
 
@@ -421,7 +421,7 @@ export class ProjectileSystem {
         waveNode.parent = owner.node.parent;
         wave.Launch(owner, targetPos, owner.attackDamage, owner.bulletSpeed);
 
-        console.log(`[ProjectileSystem] 创建剑气: 伤害${owner.attackDamage}, 冲锋${isCharged}`);
+        // 简化日志：创建剑气冲击波
         return wave;
     }
 
@@ -467,7 +467,7 @@ export class ProjectileSystem {
         boltNode.parent = owner.node.parent;
         bolt.Launch(owner, targetPos, owner.attackDamage, owner.bulletSpeed);
 
-        console.log(`[ProjectileSystem] 创建雷电弹: 伤害${owner.attackDamage}, 链式${chainCount}次`);
+        // 简化日志：创建雷电弹
         return bolt;
     }
 
@@ -513,7 +513,7 @@ export class ProjectileSystem {
         shardNode.parent = owner.node.parent;
         shard.Launch(owner, targetPos, owner.attackDamage, owner.bulletSpeed);
 
-        console.log(`[ProjectileSystem] 创建冰弹: 伤害${owner.attackDamage}, 冰冻范围${freezeRange}`);
+        // 简化日志：创建冰弹
         return shard;
     }
 
@@ -559,7 +559,7 @@ export class ProjectileSystem {
         waveNode.parent = owner.node.parent;
         wave.Launch(owner, targetPos, owner.attackDamage, owner.bulletSpeed);
 
-        console.log(`[ProjectileSystem] 创建爆炸冲击波: 伤害${owner.attackDamage}, 爆炸半径${explosionRadius}`);
+        // 简化日志：创建爆炸冲击波
         return wave;
     }
 

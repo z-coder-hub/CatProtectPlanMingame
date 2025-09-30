@@ -1326,7 +1326,7 @@ export class HeroSelectionPanel extends Component {
 
         const worldPos = parentTransform.convertToNodeSpaceAR(new Vec3(touchLocation.x, touchLocation.y, 0));
         this._dragPreviewNode.setPosition(worldPos);
-        console.log(`📍 更新拖拽预览位置: (${worldPos.x.toFixed(1)}, ${worldPos.y.toFixed(1)})`);
+        // 简化日志：拖拽预览位置更新
         // 更新网格预览
         if (this._gridSystem) {
             this._gridSystem.UpdateHoverPosition(worldPos);
@@ -1338,10 +1338,10 @@ export class HeroSelectionPanel extends Component {
      * 完成英雄拖拽
      */
     private finishHeroDrag(event: EventTouch): void {
-        console.log(`🎯 完成拖拽部署: 英雄=${this._selectedHeroType}`);
+        // 简化日志：完成拖拽部署
 
         if (!this._selectedHeroType || !this._gridSystem) {
-            console.log("❌ 拖拽完成检查失败，清理状态");
+            // 拖拽完成检查失败
             this.cleanupDrag();
             return;
         }
@@ -1491,7 +1491,7 @@ export class HeroSelectionPanel extends Component {
             // 在垂直方向有移动，并且移动有一定的距离
             if (isVerticalMove && distance > 40) {
                 // 垂直移动：开始英雄拖拽
-                console.log(`distance, ${distance} ⬇️ 垂直拖拽检测，开始拖拽英雄，ΔX=${deltaX.toFixed(1)}, ΔY=${deltaY.toFixed(1)}`);
+                // 简化日志：开始垂直拖拽
                 this.startHeroDrag(this._selectedHeroType, event);
                 event.propagationStopped = true;
                 return;
@@ -1509,10 +1509,10 @@ export class HeroSelectionPanel extends Component {
      * 英雄按钮触摸结束
      */
     private onHeroButtonTouchCancelOrEnd(event: EventTouch): void {
-        console.log(`🔚 英雄按钮触摸结束: 拖拽=${this._isDragging}, 选中=${this._selectedHeroType}`);
+        // 简化日志：触摸结束
         if (this._isDragging) {
             // 如果正在拖拽，完成拖拽
-            console.log("🎯 完成拖拽部署");
+            // 简化日志：完成拖拽部署
             this.finishHeroDrag(event);
         }
     }

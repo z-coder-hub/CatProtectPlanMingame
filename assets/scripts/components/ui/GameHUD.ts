@@ -4,6 +4,7 @@ import { WaveManager } from '../../managers/WaveManager';
 import { GameBootstrap } from '../../systems/GameBootstrap';
 import { GameState } from '../../types/GameTypes';
 import { UIHelper } from '../../utils/UIHelper';
+import { GAME_CONFIG } from '../../types/GameConstants';
 
 const { ccclass } = _decorator;
 
@@ -234,7 +235,7 @@ export class GameHUD extends Component {
 
         const healthLabel = healthLabelNode.addComponent(Label);
         this._castleHealthLabel = healthLabel;
-        this._castleHealthLabel.string = "城堡 100/100";
+        this._castleHealthLabel.string = `城堡 ${GAME_CONFIG.castleHealth}/${GAME_CONFIG.castleHealth}`;
         this._castleHealthLabel.fontSize = 18.72;
         this._castleHealthLabel.color = new Color(255, 255, 255);
     }

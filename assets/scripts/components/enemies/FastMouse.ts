@@ -85,6 +85,17 @@ export class FastMouse extends BaseMouse {
             .start();
     }
 
+    /**
+     * 对象池重用时的额外初始化
+     * 重置疾风鼠的移动行为参数，确保每次重用时都有新的移动模式
+     */
+    protected onReuse(): void {
+        // 重新初始化移动行为，确保对象池重用时路径不会混乱
+        this.initializeMovementBehavior();
+
+        console.log(`[FastMouse] 🔄 对象池重用时重新初始化移动参数: 模式=${this._movementPattern}, 幅度=${this._zigzagAmplitude.toFixed(1)}, 分段=${this._segmentCount}`);
+    }
+
     // 重写创建死亡特效方法，添加快速老鼠的特殊特效
     protected createDeathEffect(): void {
         if (this.node.parent) {

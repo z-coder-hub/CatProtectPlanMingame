@@ -375,7 +375,7 @@ export abstract class BaseProjectile extends Component {
      * 实现 IPoolHandlerComponent 接口
      */
     public reuse(_args: any): void {
-        console.log(`[BaseProjectile] 🔄 重用投射物: ${this.poolType}`);
+        // 简化日志：投射物重用
 
         // 重置基础状态
         this.isActive = false;
@@ -405,7 +405,7 @@ export abstract class BaseProjectile extends Component {
      * 实现 IPoolHandlerComponent 接口
      */
     public unuse(): void {
-        console.log(`[BaseProjectile] 📦 回收投射物: ${this.poolType}`);
+        // 简化日志：投射物回收
 
         // 停止所有动画和调度
         Tween.stopAllByTarget(this.node);

@@ -41,12 +41,12 @@ export class BattleManager extends Component {
         }
 
         BattleManager._instance = this;
-        console.log("BattleManager初始化完成");
+        // BattleManager初始化完成
     }
 
     protected start(): void {
         // BattleManager 现在作为纯数据管理层，不依赖GameManager
-        console.log("BattleManager启动完成 - 独立数据管理层");
+        // BattleManager启动完成
     }
 
     protected onDestroy(): void {
@@ -249,7 +249,7 @@ export class BattleManager extends Component {
                 }
             }
 
-            console.log(`[BattleManager] 英雄注册: ${heroNode.name}, 网格坐标: (${(heroNode as any).gridRow}, ${(heroNode as any).gridCol})`);
+            // 简化日志：英雄注册完成
         }
     }
 
@@ -264,14 +264,14 @@ export class BattleManager extends Component {
                 delete (heroNode as any).gridCol;
             }
 
-            console.log(`[BattleManager] 英雄取消注册: ${heroNode.name}`);
+            // 简化日志：英雄取消注册
         }
     }
 
     public RegisterEnemy(enemyNode: Node): void {
         if (this._registeredEnemies.indexOf(enemyNode) === -1) {
             this._registeredEnemies.push(enemyNode);
-            console.log(`[BattleManager] 敌人注册: ${enemyNode.name}, 当前敌人数: ${this._registeredEnemies.length}`);
+            // 简化日志：敌人注册完成
         }
     }
 
@@ -279,7 +279,7 @@ export class BattleManager extends Component {
         const index = this._registeredEnemies.indexOf(enemyNode);
         if (index >= 0) {
             this._registeredEnemies.splice(index, 1);
-            console.log(`[BattleManager] 敌人取消注册: ${enemyNode.name}, 剩余敌人数: ${this._registeredEnemies.length}`);
+            // 简化日志：敌人取消注册
         }
     }
 
@@ -342,7 +342,7 @@ export class BattleManager extends Component {
         // 从注册列表中移除敌人（会自动处理其他清理）
         this.UnregisterEnemy(killedEnemy.node);
 
-        console.log(`${killedEnemy.unitName} 被击杀，通知奖励: ${goldReward} 金币`);
+        // 简化日志：敌人被击杀，奖励已在UI中显示
     }
 
     /**
@@ -369,7 +369,7 @@ export class BattleManager extends Component {
      */
     public ClearAllDeployedHeroes(): void {
         if (this._registeredHeroes.length === 0) {
-            console.log("没有已部署的英雄需要清除");
+            // 没有已部署的英雄需要清除
             return;
         }
 
@@ -396,7 +396,7 @@ export class BattleManager extends Component {
         // 清空数组
         this._registeredHeroes.length = 0;
 
-        console.log(`已清除 ${clearedCount} 个已部署的英雄，准备下一关卡`);
+        // 简化日志：已清除英雄，准备下一关卡
     }
 
 

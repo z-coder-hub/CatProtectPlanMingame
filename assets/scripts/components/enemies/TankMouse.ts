@@ -163,4 +163,14 @@ export class TankMouse extends BaseMouse {
         
         console.log(`${this.unitName}死亡，装甲破碎！`);
     }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 铁甲鼠重用时无需特殊处理，基类会在startMovement时统一初始化移动参数
+     */
+    protected onReuse(): void {
+        // 移除重复的移动参数初始化，避免与基类的startMovement冲突
+        // 基类会在startMovementTowardsCastle()时统一调用initializeMovementBehavior()
+        console.log(`[TankMouse] 🔄 对象池重用，移动参数将在开始移动时初始化`);
+    }
 }

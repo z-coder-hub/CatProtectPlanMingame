@@ -171,7 +171,7 @@ export abstract class BaseMouse extends Component {
 
         // 启动移动（只执行一次）
         if (!this._movementStarted) {
-            console.log(`[BaseMouse] 🚀 开始移动: ${this.enemyType}, 位置: ${this.node.position}, 状态: ${this.enemyState}`);
+            // 简化日志：敌人开始移动
             this.startMovementTowardsCastle();
             this._movementStarted = true;
         }
@@ -378,7 +378,7 @@ export abstract class BaseMouse extends Component {
                 return {
                     width: 30 * scaleMultiplier,
                     height: 4,
-                    yOffset: (labelBottom - healthBarSpacing) * scaleMultiplier,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(0, 255, 0),
                     borderColor: new Color(255, 255, 255),
@@ -389,7 +389,7 @@ export abstract class BaseMouse extends Component {
                 return {
                     width: 25 * scaleMultiplier,
                     height: 3,
-                    yOffset: (labelBottom - healthBarSpacing) * scaleMultiplier,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(255, 255, 100), // 快速单位用亮黄色
                     borderColor: new Color(255, 255, 255),
@@ -400,7 +400,7 @@ export abstract class BaseMouse extends Component {
                 return {
                     width: 50 * scaleMultiplier,
                     height: 6,
-                    yOffset: (labelBottom - healthBarSpacing) * scaleMultiplier,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(255, 215, 0), // 装甲单位用金色
                     borderColor: new Color(255, 255, 255),
@@ -411,7 +411,7 @@ export abstract class BaseMouse extends Component {
                 return {
                     width: 40 * scaleMultiplier,
                     height: 5,
-                    yOffset: (labelBottom - healthBarSpacing) * scaleMultiplier,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(200, 150, 255), // 特殊单位用紫色
                     borderColor: new Color(255, 255, 255),
@@ -422,7 +422,7 @@ export abstract class BaseMouse extends Component {
                 return {
                     width: 100 * scaleMultiplier,
                     height: 12,
-                    yOffset: (labelBottom - healthBarSpacing) * scaleMultiplier,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(255, 100, 100), // BOSS用红色前景
                     borderColor: new Color(255, 255, 255),
@@ -433,7 +433,7 @@ export abstract class BaseMouse extends Component {
                 return {
                     width: 30 * scaleMultiplier,
                     height: 4,
-                    yOffset: (labelBottom - healthBarSpacing) * scaleMultiplier,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(0, 255, 0),
                     borderColor: new Color(255, 255, 255),
@@ -734,7 +734,7 @@ export abstract class BaseMouse extends Component {
         // 启动缓动链
         this._movementTween = currentTween.start();
 
-        console.log(`开始${this._movementPattern}移动，路径点数量: ${pathPoints.length}, 总时长: ${(segmentDuration * (pathPoints.length - 1)).toFixed(2)}秒`);
+        // 简化日志：开始移动路径
     }
 
     /**
@@ -814,7 +814,7 @@ export abstract class BaseMouse extends Component {
         // 注意：敌人注销由BattleManager统一处理
         this.die();
 
-        console.log(`${this.unitName}到达城堡，造成 ${castleDamage} 点伤害`);
+        // 简化日志：到达城堡，伤害已在UI中显示
     }
 
     protected createCastleReachEffect(): void {
@@ -824,7 +824,7 @@ export abstract class BaseMouse extends Component {
      * 重写死亡方法，添加通用的金币奖励逻辑
      */
     protected onDie(): void {
-        console.log(`${this.unitName}死亡，奖励 ${this.goldReward} 金币`);
+        // 简化日志：敌人死亡，奖励已在UI中显示
 
         // 隐藏血条
         if (this._healthBarContainer) {
@@ -893,7 +893,7 @@ export abstract class BaseMouse extends Component {
         // 重新注册到BattleManager（关键修复）
         if (this._battleManager) {
             this._battleManager.RegisterEnemy(this.node);
-            console.log(`[BaseMouse] 🔄 重用敌人已重新注册到BattleManager: ${this.enemyType}`);
+            // 简化日志：重用敌人注册完成
         } else {
             console.error(`[BaseMouse] ❌ 无法重新注册敌人，BattleManager不存在: ${this.enemyType}`);
         }
@@ -907,7 +907,7 @@ export abstract class BaseMouse extends Component {
         // 重置Sprite颜色到正常状态（修复死亡时变黑的问题）
         if (this._sprite && this._sprite.isValid) {
             this._sprite.color = new Color(255, 255, 255, 255); // 恢复正常白色
-            console.log(`[BaseMouse] 🎨 重置Sprite颜色: ${this.enemyType}`);
+            // 简化日志：重置Sprite颜色
         }
 
         // 允许子类重新初始化特殊状态（如装甲鼠的护甲值）
@@ -994,7 +994,7 @@ export abstract class BaseMouse extends Component {
     // === 事件回调方法 (子类可重写) ===
 
     protected onTakeDamage(damage: number): void {
-        console.log(`${this.unitName}受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
+        // 简化日志：受到伤害，血量已在UI中显示
     }
 
     // === UI元素创建方法组 ===

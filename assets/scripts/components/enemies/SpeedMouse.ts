@@ -168,6 +168,16 @@ export class SpeedMouse extends BaseMouse {
         }
     }
 
+    /**
+     * 对象池重用时的额外初始化
+     * 闪电鼠重用时无需特殊处理，基类会在startMovement时统一初始化移动参数
+     */
+    protected onReuse(): void {
+        // 移除重复的移动参数初始化，避免与基类的startMovement冲突
+        // 基类会在startMovementTowardsCastle()时统一调用initializeMovementBehavior()
+        console.log(`[SpeedMouse] 🔄 对象池重用，移动参数将在开始移动时初始化`);
+    }
+
     // 移动由基类自动启动，无需手动控制
 
     // 获取敌人类型

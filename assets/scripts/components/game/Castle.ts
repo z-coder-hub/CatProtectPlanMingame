@@ -1,6 +1,7 @@
 import { _decorator, Color, Component, Graphics, Label, Node, tween, UITransform } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { UIHelper } from '../../utils/UIHelper';
+import { GAME_CONFIG } from '../../types/GameConstants';
 
 const { ccclass } = _decorator;
 
@@ -120,7 +121,7 @@ export class Castle extends Component {
         labelNode.setPosition(0, 0); // 居中显示在城堡内部
 
         this._healthLabel = labelNode.addComponent(Label);
-        this._healthLabel.string = "HP: 100/100";
+        this._healthLabel.string = `HP: ${GAME_CONFIG.castleHealth}/${GAME_CONFIG.castleHealth}`;
         this._healthLabel.fontSize = 22; // 18 * 1.2 = 21.6 ≈ 22
         this._healthLabel.color = new Color(255, 255, 255); // 白色文字
     }
@@ -130,7 +131,7 @@ export class Castle extends Component {
         if (!this._gameManager || !this._healthLabel) return;
 
         const currentHealth = this._gameManager.castleHealth;
-        const maxHealth = 100;
+        const maxHealth = GAME_CONFIG.castleHealth;
         this._healthLabel.string = `HP: ${Math.ceil(currentHealth)}/${maxHealth}`;
     }
 
@@ -205,6 +206,12 @@ export class Castle extends Component {
             );
             this._graphics.fill();
         }
+    }
+
+    // 恢复城堡正常外观（血量恢复时调用）
+    public restoreCastleAppearance(): void {
+        console.log("恢复城堡正常外观");
+        this.drawCastle(); // 重新绘制正常的城堡外观
     }
 
     // 创建爆炸特效

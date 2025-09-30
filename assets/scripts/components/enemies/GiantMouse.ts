@@ -136,6 +136,17 @@ export class GiantMouse extends BaseMouse {
 
     // 基类已实现完整的移动管理，无需额外的startMoving方法
 
+    /**
+     * 对象池重用时的额外初始化
+     * 重置巨鼠的移动行为参数，确保每次重用时都有新的移动模式
+     */
+    protected onReuse(): void {
+        // 重新初始化移动行为，确保对象池重用时路径不会混乱
+        this.initializeMovementBehavior();
+
+        console.log(`[GiantMouse] 🔄 对象池重用时重新初始化移动参数: 模式=${this._movementPattern}, 幅度=${this._zigzagAmplitude.toFixed(1)}, 分段=${this._segmentCount}`);
+    }
+
     // 获取敌人类型
     public getEnemyType(): EnemyType {
         return this.enemyType;
