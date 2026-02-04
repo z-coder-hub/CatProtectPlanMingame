@@ -1,4 +1,4 @@
-import { _decorator, Component, find, Node } from 'cc';
+import { _decorator, Component, find, Node, Sprite, UITransform, Widget, resources, SpriteFrame, Color, Graphics } from 'cc';
 import { GameHUD } from '../components/ui/GameHUD';
 import { HeroSelectionPanel } from '../components/ui/HeroSelectionPanel';
 import { GridDeploymentSystem } from './GridDeploymentSystem';
@@ -8,6 +8,8 @@ import { WaveManager } from '../managers/WaveManager';
 import { GameManager } from '../managers/GameManager';
 import { LevelManager } from '../managers/LevelManager';
 import { Castle } from '../components/game/Castle';
+import { ProjectileSystem } from '../projectiles/ProjectileSystem';
+import { EnemyPoolManager } from './EnemyPoolManager';
 
 const { ccclass, property } = _decorator;
 
@@ -25,8 +27,6 @@ enum InitPhase {
 @ccclass('GameBootstrap')
 export class GameBootstrap extends Component {
 
-    @property({ tooltip: "是否启用调试日志" })
-    public enableDebugLogs: boolean = true;
 
     @property({ tooltip: "初始化超时时间(秒)" })
     public initTimeout: number = 10;
@@ -113,15 +113,126 @@ export class GameBootstrap extends Component {
     private createBasicSystems(): void {
         if (!this._canvasNode) return;
 
+        // 首先创建游戏背景
+        this.createGameBackground();
 
         // 创建GridDeploymentSystem
         const gridNode = new Node("GridDeploymentSystem");
         gridNode.parent = this._canvasNode;
         this._gridSystem = gridNode.addComponent(GridDeploymentSystem);
 
-        // 网格系统已通过默认属性值使用游戏配置
+        // 初始化投射物系统
+        ProjectileSystem.initialize();
+
+        // 初始化敌人对象池系统
+        EnemyPoolManager.initialize();
 
         this.log("基础系统创建完成");
+    }
+
+    // 创建游戏背景
+    private createGameBackground(): void {
+        if (!this._canvasNode) return;
+
+        // 创建背景节点
+        const backgroundNode = new Node("GameBackground");
+        backgroundNode.parent = this._canvasNode;
+
+        // 添加UITransform组件并设置为全屏尺寸
+        backgroundNode.addComponent(UITransform);
+
+        // 添加Sprite组件
+        const sprite = backgroundNode.addComponent(Sprite);
+
+        // 添加Widget组件实现全屏填充
+        const widget = backgroundNode.addComponent(Widget);
+        widget.isAlignTop = true;
+        widget.isAlignBottom = true;
+        widget.isAlignLeft = true;
+        widget.isAlignRight = true;
+        widget.top = 0;
+        widget.bottom = 0;
+        widget.left = 0;
+        widget.right = 0;
+        widget.updateAlignment();
+
+
+        // 加载背景图片（Cocos Creator 3.x需要指定子资源类型）
+        resources.load("images/backgroup/spriteFrame", SpriteFrame, (err, spriteFrame) => {
+            if (err) {
+                this.error("背景图片加载失败:", err);
+                console.warn("使用纯色背景作为回退方案");
+                // 回退到纯色背景
+                this.createFallbackBackground(sprite);
+                return;
+            }
+
+            if (sprite && sprite.isValid && spriteFrame) {
+                sprite.spriteFrame = spriteFrame;
+                sprite.type = Sprite.Type.SIMPLE;
+                sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+
+                // 设置背景调暗效果 (RGB值调低，Alpha保持255)
+                sprite.color = new Color(120, 120, 120, 255);
+
+                // 强制更新Widget对齐，确保节点尺寸正确
+                widget.updateAlignment();
+
+                this.log("游戏背景初始化完成");
+            }
+        });
+
+    }
+
+    /**
+     * 创建回退背景（当图片资源加载失败时使用纯色背景）
+     */
+    private createFallbackBackground(sprite: Sprite): void {
+        if (!sprite || !sprite.isValid) return;
+
+        // 移除Sprite组件，改用Graphics绘制纯色背景
+        const node = sprite.node;
+        sprite.destroy();
+
+        // 检查是否已有Graphics组件，避免重复添加
+        let graphics = node.getComponent(Graphics);
+        if (!graphics) {
+            graphics = node.addComponent(Graphics);
+        }
+        const transform = node.getComponent(UITransform);
+
+        if (graphics && transform) {
+            graphics.clear();
+
+            // 使用深绿色作为游戏背景（模拟草地）
+            graphics.fillColor = new Color(34, 82, 34, 255); // 深绿色
+            graphics.rect(-transform.contentSize.width / 2, -transform.contentSize.height / 2,
+                         transform.contentSize.width, transform.contentSize.height);
+            graphics.fill();
+
+            // 添加网格线条来增加视觉效果
+            graphics.strokeColor = new Color(48, 96, 48, 255); // 稍浅的绿色
+            graphics.lineWidth = 1;
+
+            const gridSize = 100;
+            const width = transform.contentSize.width;
+            const height = transform.contentSize.height;
+
+            // 画垂直网格线
+            for (let x = 0; x <= width; x += gridSize) {
+                graphics.moveTo(x - width / 2, -height / 2);
+                graphics.lineTo(x - width / 2, height / 2);
+            }
+
+            // 画水平网格线
+            for (let y = 0; y <= height; y += gridSize) {
+                graphics.moveTo(-width / 2, y - height / 2);
+                graphics.lineTo(width / 2, y - height / 2);
+            }
+
+            graphics.stroke();
+
+        }
     }
 
     // 加载游戏资源
@@ -202,9 +313,7 @@ export class GameBootstrap extends Component {
 
     // 日志输出方法
     private log(message: string, ...args: any[]): void {
-        if (this.enableDebugLogs) {
-            console.log(`[GameBootstrap] ${message}`, ...args);
-        }
+        console.log(`[GameBootstrap] ${message}`, ...args);
     }
 
     private error(message: string, ...args: any[]): void {

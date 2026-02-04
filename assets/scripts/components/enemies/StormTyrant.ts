@@ -1,10 +1,10 @@
-import { _decorator, Component, Color, Graphics, tween, Vec3 } from 'cc';
+import { _decorator, Color, Sprite, tween, Vec3 } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
 import { EnemyFactory } from '../../systems/EnemyFactory';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 /**
  * 疾风暴君 - 极速移动召唤BOSS
@@ -63,64 +63,23 @@ export class StormTyrant extends BaseMouse {
         const patterns: ('spiral' | 'curves')[] = ['spiral', 'curves'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
 
-        // 大幅度的旋风式摆动 - 体现疾风暴君的狂野移动
-        this._zigzagAmplitude = 60 + Math.random() * 40; // 60-100像素的大幅摆动
-        this._segmentCount = 8 + Math.floor(Math.random() * 4); // 8-11段移动，增加旋风效果
+        // 适度的旋风式摆动 - 体现疾风暴君的快速移动
+        this._zigzagAmplitude = 30 + Math.random() * 20; // 30-50像素的适度摆动
+        this._segmentCount = 6 + Math.floor(Math.random() * 3); // 6-8段移动，保持流畅性
 
-        console.log(`疾风暴君移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**
      * 初始化疾风暴君外观
      */
-    protected initializeMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
-        
-        // 风暴色彩 - 青蓝色主体
-        graphics.fillColor = new Color(70, 150, 200, 255);    // 青蓝色身体
-        graphics.strokeColor = new Color(50, 120, 180, 255);  // 深蓝边框
-        graphics.lineWidth = 2;
-        
-        // 流线型身体 - 体现速度感
-        graphics.ellipse(0, 0, 18, 25);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 风暴眼 - 中央旋涡
-        graphics.fillColor = new Color(100, 180, 220, 255);
-        graphics.circle(0, 0, 8);
-        graphics.fill();
-        
-        // 内部旋涡纹理
-        graphics.strokeColor = new Color(130, 200, 240, 255);
-        graphics.lineWidth = 2;
-        for (let i = 0; i < 4; i++) {
-            const angle = (i * Math.PI) / 2;
-            const startX = Math.cos(angle) * 3;
-            const startY = Math.sin(angle) * 3;
-            const endX = Math.cos(angle + Math.PI / 4) * 6;
-            const endY = Math.sin(angle + Math.PI / 4) * 6;
-            graphics.moveTo(startX, startY);
-            graphics.lineTo(endX, endY);
-            graphics.stroke();
-        }
-        
-        // 风暴翼 - 体现飞行能力
-        graphics.fillColor = new Color(90, 170, 210, 200);    // 半透明风翼
-        graphics.ellipse(-22, -5, 8, 15);
-        graphics.fill();
-        graphics.ellipse(22, -5, 8, 15);
-        graphics.fill();
-        
-        // 疾风尾迹
-        graphics.strokeColor = new Color(120, 190, 230, 150);
-        graphics.lineWidth = 3;
-        for (let i = 0; i < 3; i++) {
-            graphics.moveTo(-18 - (i * 5), 0);
-            graphics.lineTo(-25 - (i * 5), 0);
-            graphics.stroke();
-        }
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string {
+        return "images/enemies/StormTyrant";
     }
+
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
     
     /**
      * 更新风暴特效和召唤逻辑
@@ -144,26 +103,19 @@ export class StormTyrant extends BaseMouse {
     }
     
     /**
-     * 更新风暴特效
+     * 通过Sprite颜色变化实现风暴特效
      */
     private updateStormEffect(): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
-        
-        // 重绘基础外观
-        graphics.clear();
-        this.initializeMouseVisuals();
-        
-        // 添加动态风暴环
+        const sprite = this.node.getComponent(Sprite);
+        if (!sprite) return;
+
+        // 动态风暴颜色效果
         const time = Date.now() / 1000;
-        graphics.strokeColor = new Color(150, 220, 255, 100);
-        graphics.lineWidth = 2;
-        
-        for (let i = 0; i < 3; i++) {
-            const radius = 25 + (i * 8) + Math.sin(time * 3 + i) * 5;
-            graphics.circle(0, 0, radius);
-            graphics.stroke();
-        }
+        const intensity = (Math.sin(time * 3) + 1) / 2; // 0-1之间变化
+        const blue = Math.floor(150 + intensity * 105); // 150-255之间变化
+        const green = Math.floor(220 + intensity * 35); // 220-255之间变化
+
+        sprite.color = new Color(100, green, blue, 255);
     }
     
     /**
@@ -202,36 +154,22 @@ export class StormTyrant extends BaseMouse {
     }
     
     /**
-     * 显示召唤特效
+     * 通过Sprite颜色闪烁实现召唤特效
      */
     private showSummonEffect(): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
-        
-        // 添加召唤风暴特效
-        graphics.strokeColor = new Color(200, 255, 200, 200);
-        graphics.lineWidth = 4;
-        graphics.circle(0, 0, 50);
-        graphics.stroke();
-        
-        // 风暴粒子
-        graphics.fillColor = new Color(150, 220, 255, 150);
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * Math.PI) / 6;
-            const x = Math.cos(angle) * 40;
-            const y = Math.sin(angle) * 40;
-            graphics.circle(x, y, 3);
-            graphics.fill();
-        }
-        
-        // 1秒后恢复正常外观
+        const sprite = this.node.getComponent(Sprite);
+        if (!sprite) return;
+
+        // 召唤时变为亮绿色
+        const originalColor = sprite.color.clone();
+        sprite.color = new Color(200, 255, 200, 255);
+
+        // 1秒后恢复正常颜色
         tween(this.node)
             .delay(1.0)
             .call(() => {
-                const graphics = this.getGraphicsComponent();
-                if (graphics) {
-                    graphics.clear();
-                    this.initializeMouseVisuals();
+                if (this.node && this.node.isValid && sprite) {
+                    sprite.color = originalColor;
                 }
             })
             .start();
@@ -240,17 +178,24 @@ export class StormTyrant extends BaseMouse {
     /**
      * 疾风暴君受伤效果
      */
-    protected onTakeDamage(damage: number): void {
+    protected onTakeDamage(_damage: number): void {
         console.log("疾风暴君在风暴中闪避攻击！");
         
-        // 风暴闪避特效
-        const graphics = this.getGraphicsComponent();
-        if (graphics) {
-            // 添加闪避风暴效果
-            graphics.strokeColor = new Color(255, 255, 255, 200);
-            graphics.lineWidth = 3;
-            graphics.circle(0, 0, 30);
-            graphics.stroke();
+        // 风暴闪避特效 - 短暂变白色
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            const originalColor = sprite.color.clone();
+            sprite.color = new Color(255, 255, 255, 255);
+
+            // 0.2秒后恢复
+            tween(this.node)
+                .delay(0.2)
+                .call(() => {
+                    if (this.node && this.node.isValid && sprite) {
+                        sprite.color = originalColor;
+                    }
+                })
+                .start();
         }
     }
     
@@ -264,29 +209,35 @@ export class StormTyrant extends BaseMouse {
     protected onDie(): void {
         console.log("疾风暴君化作狂风消散...");
         
-        // 风暴消散特效
-        const graphics = this.getGraphicsComponent();
-        if (graphics) {
-            graphics.clear();
-            
-            // 显示消散的风暴
-            graphics.strokeColor = new Color(120, 190, 230, 180);
-            graphics.lineWidth = 2;
-            for (let i = 0; i < 20; i++) {
-                const angle = (i * Math.PI) / 10;
-                const startRadius = 15;
-                const endRadius = 45;
-                const startX = Math.cos(angle) * startRadius;
-                const startY = Math.sin(angle) * startRadius;
-                const endX = Math.cos(angle) * endRadius;
-                const endY = Math.sin(angle) * endRadius;
-                graphics.moveTo(startX, startY);
-                graphics.lineTo(endX, endY);
-                graphics.stroke();
-            }
+        // 风暴消散特效 - 渐变蓝色并渐隐
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(120, 190, 230, 255);
+
+            // 渐隐消散
+            tween(sprite)
+                .to(0.8, { color: new Color(120, 190, 230, 0) })
+                .start();
         }
         
         // 调用父类死亡处理
         super.onDie();
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置疾风暴君的召唤和风暴特效系统
+     */
+    protected onReuse(): void {
+        // 重新初始化召唤相关属性
+        const config = this.getConfig();
+        this.summonCount = config.summonCount || 3;
+        this.summonType = config.summonType || EnemyType.SPEED_MOUSE;
+
+        // 重置计时器
+        this.summonCooldown = 0;
+        this.stormEffectTimer = 0;
+
+        console.log(`[StormTyrant] 🔄 重用时重置风暴系统: 召唤数量=${this.summonCount}, 类型=${this.summonType}, 计时器已重置`);
     }
 }

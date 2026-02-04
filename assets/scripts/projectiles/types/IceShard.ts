@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 
 /**
  * 冰弹投射物
- * 用于：挪威森林猫冰法师
+ * 用于：冰霜法师
  * 特性：冰蓝色外观，减速效果，冻结范围内敌人，AOE冰霜伤害
  */
 @ccclass('IceShard')
@@ -25,64 +25,188 @@ export class IceShard extends BaseProjectile {
     @property({ tooltip: "冰霜AOE伤害倍率" })
     public frostDamageMultiplier: number = 0.8;
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.hitRadius = 28; // 冰弹的碰撞检测范围
+    /**
+     * 获取冰弹投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            hitRadius: 42   // 冰弹的碰撞检测范围 - 放大1.5倍以匹配视觉尺寸
+        };
     }
     
     /**
      * 初始化冰弹的视觉外观
-     * 冰蓝色水晶形状，带有霜雾效果
+     * 复杂多面体冰晶，透明折射效果，寒霜微粒环绕
      */
     protected initializeVisuals(): void {
         if (!this.graphics) return;
-        
+
         this.graphics.clear();
-        
-        // 外层霜雾（淡蓝色）
-        this.graphics.fillColor = new Color(173, 216, 230, 120); // 淡蓝色雾气
-        this.graphics.circle(0, 0, 7);
+
+        // === 绘制寒气和霜雾层次 === - 放大1.5倍
+
+        // 外层寒气场（极淡蓝色）
+        this.graphics.fillColor = new Color(173, 216, 230, 80); // 极淡蓝色寒气
+        this.graphics.circle(0, 0, 12.75);
         this.graphics.fill();
-        
-        // 主体冰晶（冰蓝色六边形）
-        this.graphics.fillColor = new Color(135, 206, 235, 200); // 冰蓝色
-        // 绘制六边形冰晶
-        const radius = 5;
-        this.graphics.moveTo(radius, 0);
-        for (let i = 1; i <= 6; i++) {
-            const angle = (i * 60) * Math.PI / 180;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
+
+        // 中层霜雾（淡蓝色）
+        this.graphics.fillColor = new Color(176, 224, 230, 120); // 淡蓝色霜雾
+        this.graphics.circle(0, 0, 10.5);
+        this.graphics.fill();
+
+        // 内层冰雾（冰蓝色）
+        this.graphics.fillColor = new Color(135, 206, 235, 150); // 冰蓝色
+        this.graphics.circle(0, 0, 8.25);
+        this.graphics.fill();
+
+        // === 复杂多面体冰晶结构 ===
+
+        // 主体冰晶（不规则八边形）- 放大1.5倍
+        this.graphics.fillColor = new Color(135, 206, 235, 180); // 冰蓝色，半透明
+        const outerRadius = 7.5;
+        this.graphics.moveTo(outerRadius, 0);
+        for (let i = 1; i <= 8; i++) {
+            const angle = (i * 45) * Math.PI / 180;
+            const radiusVariation = outerRadius + (Math.sin(i * 2) * 1.2); // 不规则变化
+            const x = Math.cos(angle) * radiusVariation;
+            const y = Math.sin(angle) * radiusVariation;
             this.graphics.lineTo(x, y);
         }
         this.graphics.close();
         this.graphics.fill();
-        
-        // 内核（白色）
-        this.graphics.fillColor = new Color(255, 255, 255, 180);
-        this.graphics.circle(0, 0, 2.5);
-        this.graphics.fill();
-        
-        // 冰晶边框（深蓝色）
-        this.graphics.strokeColor = new Color(65, 105, 225, 255); // 深蓝色
-        this.graphics.lineWidth = 1.5;
-        this.graphics.moveTo(radius, 0);
+
+        // 内层冰晶（六边形）- 放大1.5倍
+        this.graphics.fillColor = new Color(176, 224, 230, 200); // 更透明的冰蓝
+        const innerRadius = 5.25;
+        this.graphics.moveTo(innerRadius, 0);
         for (let i = 1; i <= 6; i++) {
             const angle = (i * 60) * Math.PI / 180;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
+            const x = Math.cos(angle) * innerRadius;
+            const y = Math.sin(angle) * innerRadius;
+            this.graphics.lineTo(x, y);
+        }
+        this.graphics.close();
+        this.graphics.fill();
+
+        // === 冰晶内部结构和气泡 ===
+
+        // 冰晶核心（白色透明）- 放大1.5倍
+        this.graphics.fillColor = new Color(255, 255, 255, 150);
+        this.graphics.circle(0, 0, 3);
+        this.graphics.fill();
+
+        // 内部气泡和裂纹 - 放大1.5倍
+        this.graphics.fillColor = new Color(200, 230, 255, 120);
+        // 随机分布的小气泡
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * 60 + 30) * Math.PI / 180;
+            const distance = 2.25 + Math.random() * 2.25;
+            const x = Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            const size = 0.45 + Math.random() * 0.6;
+
+            this.graphics.circle(x, y, size);
+            this.graphics.fill();
+        }
+
+        // === 冰晶表面纹理和裂纹 === - 放大1.5倍
+
+        // 主要裂纹纹理
+        this.graphics.strokeColor = new Color(200, 230, 255, 180);
+        this.graphics.lineWidth = 1.8;
+
+        // 放射状内部纹理
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * 60) * Math.PI / 180;
+            const startX = Math.cos(angle) * 1.5;
+            const startY = Math.sin(angle) * 1.5;
+            const endX = Math.cos(angle) * 5.25;
+            const endY = Math.sin(angle) * 5.25;
+
+            this.graphics.moveTo(startX, startY);
+            this.graphics.lineTo(endX, endY);
+        }
+        this.graphics.stroke();
+
+        // 环形纹理（模拟冰层）
+        this.graphics.strokeColor = new Color(176, 224, 230, 140);
+        this.graphics.lineWidth = 1.2;
+        this.graphics.circle(0, 0, 3.75);
+        this.graphics.circle(0, 0, 6);
+        this.graphics.stroke();
+
+        // === 冰面高光和反射效果 === - 放大1.5倍
+
+        // 主要高光面
+        this.graphics.fillColor = new Color(255, 255, 255, 200);
+        // 上方高光区域
+        this.graphics.moveTo(-2.25, -3);
+        this.graphics.lineTo(2.25, -3.75);
+        this.graphics.lineTo(3, -1.5);
+        this.graphics.lineTo(-1.5, -0.75);
+        this.graphics.close();
+        this.graphics.fill();
+
+        // 次要高光点
+        this.graphics.fillColor = new Color(255, 255, 255, 150);
+        this.graphics.circle(2.25, 2.25, 1.2);
+        this.graphics.fill();
+        this.graphics.circle(-3, 0.75, 0.9);
+        this.graphics.fill();
+
+        // === 寒霜微粒效果 === - 放大1.5倍
+
+        // 环绕的冰霜微粒
+        this.graphics.fillColor = new Color(200, 230, 255, 180);
+        for (let i = 0; i < 16; i++) {
+            const angle = (i * 22.5) * Math.PI / 180;
+            const distance = 9 + Math.random() * 3;
+            const x = Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            const size = 0.3 + Math.random() * 0.45;
+
+            this.graphics.circle(x, y, size);
+            this.graphics.fill();
+        }
+
+        // === 冰晶轮廓和边框 === - 放大1.5倍
+
+        // 主体冰晶轮廓（深蓝色）
+        this.graphics.strokeColor = new Color(65, 105, 225, 255);
+        this.graphics.lineWidth = 2.7;
+        this.graphics.moveTo(outerRadius, 0);
+        for (let i = 1; i <= 8; i++) {
+            const angle = (i * 45) * Math.PI / 180;
+            const radiusVariation = outerRadius + (Math.sin(i * 2) * 1.2);
+            const x = Math.cos(angle) * radiusVariation;
+            const y = Math.sin(angle) * radiusVariation;
             this.graphics.lineTo(x, y);
         }
         this.graphics.close();
         this.graphics.stroke();
-        
-        // 绘制内部冰晶纹理
-        this.graphics.strokeColor = new Color(200, 230, 255, 150);
-        this.graphics.lineWidth = 1;
-        this.graphics.moveTo(0, -3);
-        this.graphics.lineTo(0, 3);
-        this.graphics.moveTo(-2.5, 0);
-        this.graphics.lineTo(2.5, 0);
+
+        // 内层冰晶轮廓
+        this.graphics.strokeColor = new Color(100, 149, 237, 200);
+        this.graphics.lineWidth = 1.8;
+        this.graphics.moveTo(innerRadius, 0);
+        for (let i = 1; i <= 6; i++) {
+            const angle = (i * 60) * Math.PI / 180;
+            const x = Math.cos(angle) * innerRadius;
+            const y = Math.sin(angle) * innerRadius;
+            this.graphics.lineTo(x, y);
+        }
+        this.graphics.close();
+        this.graphics.stroke();
+
+        // 寒气边界
+        this.graphics.strokeColor = new Color(176, 224, 230, 120);
+        this.graphics.lineWidth = 1.5;
+        this.graphics.circle(0, 0, 10.5);
         this.graphics.stroke();
     }
     

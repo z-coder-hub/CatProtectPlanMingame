@@ -1,6 +1,5 @@
-import { _decorator, Node, Color, Animation } from 'cc';
+import { _decorator, Node } from 'cc';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
-import { HERO_CONFIGS } from '../../types/GameConstants';
 import { HeroType } from '../../types/GameTypes';
 import { BaseHero } from './BaseHero';
 
@@ -24,32 +23,23 @@ export class PersianSniper extends BaseHero {
     // 英雄类型
     public readonly heroType: HeroType = HeroType.PERSIAN_SNIPER;
 
-    // 实现BaseHero的抽象方法
+    // 实现BaseHero的抽象方法：初始化英雄属性
     protected initializeHeroStats(): void {
-        const config = HERO_CONFIGS[HeroType.PERSIAN_SNIPER];
+        this.unitName = "波斯猫狙击手";
+        this.attackDamage = 30;
+        this.attackRange = 600;  // 超大攻击范围
+        this.attackSpeed = 0.7;  // 较慢但高伤害
+        this.bulletSpeed = 500;
+        this.cost = 80;
 
-        this.unitName = config.name;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.bulletSpeed = config.bulletSpeed || 500;
-        this.cost = config.cost;
-        this.critChance = config.critChance || 0.3;
-        this.critMultiplier = config.critMultiplier || 2.5;
+        // 设置暴击属性
+        this.critChance = 0.3;
+        this.critMultiplier = 2.5;
     }
 
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeAnimation();
-    }
-
-    private initializeAnimation(): void {
-        const animation = this.node.getComponent(Animation);
-        if (animation) {
-            if (animation.getState('persian_sniper_idle')) {
-                animation.play('persian_sniper_idle');
-            }
-        }
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
 
     // 使用基类的update方法
@@ -63,26 +53,17 @@ export class PersianSniper extends BaseHero {
         ProjectileSystem.CreatePhysicalBullet(this, target.position, this.critChance, this.critMultiplier);
     }
 
-    // 已移除重复的射击系统，统一使用ProjectileSystem进行子弹管理
     // ProjectileSystem已包含动态边界计算、碰撞检测、暴击处理等完整功能
 
     // 使用默认的远程攻击动画（无需重写getAttackAnimationType）
 
-    // 重写基类的英雄点击处理方法
-    protected onHeroClickHandler(): void {
-        console.log(`${this.unitName} 被点击`);
+    // 使用BaseHero的通用方法，无需重写
+
+    // 实现抽象方法：提供英雄图片路径
+    protected getPlacedImagePath(): string | null {
+        return "images/placed/PersianSniper_placed";
     }
 
-    // 重写标签配置，使用完整英雄名称
-    protected getHeroLabelConfig() {
-        return {
-            text: this.unitName || "波斯猫狙击手",
-            fontSize: 18,
-            color: Color.WHITE,
-            yOffset: 35,
-            size: { width: 120, height: 24 }  // 增加宽度以容纳完整名称
-        };
-    }
 
     protected onDestroy(): void {
         // 清理由基类处理

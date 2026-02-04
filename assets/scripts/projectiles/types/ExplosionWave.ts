@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 
 /**
  * 爆炸冲击波投射物
- * 用于：美国短毛猫爆破手、俄罗斯蓝猫刺客（近战爆破）
+ * 用于：爆破专家、蓝猫刺客（近战爆破）
  * 特性：短程投射物，大范围爆炸伤害，橙色冲击波，推拽效果
  */
 @ccclass('ExplosionWave')
@@ -25,73 +25,219 @@ export class ExplosionWave extends BaseProjectile {
     @property({ tooltip: "推拽效果强度" })
     public knockbackForce: number = 50;
     
-    protected onLoad(): void {
-        super.onLoad();
-        // 爆炸冲击波是近程投射物
-        this.maxRange = 200;
-        this.hitRadius = 25; // 触发爆炸的碰撞范围
+    /**
+     * 获取爆炸冲击波投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            maxRange: 200,  // 爆炸冲击波是近程投射物
+            hitRadius: 40   // 触发爆炸的碰撞范围 - 放大1.6倍以匹配视觉尺寸
+        };
     }
     
     /**
      * 初始化爆炸冲击波的视觉外观
-     * 橙红色能量球，带有火花和能量波纹
+     * 高压能量球，不稳定脉动，危险警告效果，压力波环绕
      */
     protected initializeVisuals(): void {
         if (!this.graphics) return;
-        
+
         this.graphics.clear();
-        
-        // 外层能量波（橙红色）
-        this.graphics.fillColor = new Color(255, 69, 0, 150); // 半透明橙红色
+
+        // === 绘制危险警告区域 === - 放大1.6倍
+
+        // 外层危险警告（闪烁红色）
+        this.graphics.fillColor = new Color(220, 20, 60, 60); // 深红色警告区
+        this.graphics.circle(0, 0, 16);
+        this.graphics.fill();
+
+        // 中层压力场（橙红色）
+        this.graphics.fillColor = new Color(255, 69, 0, 100); // 橙红色压力场
+        this.graphics.circle(0, 0, 13.6);
+        this.graphics.fill();
+
+        // === 绘制能量压缩层次 === - 放大1.6倍
+
+        // 第1层：外层能量波（暗橙色）
+        this.graphics.fillColor = new Color(255, 69, 0, 180); // 橙红色
+        this.graphics.circle(0, 0, 11.2);
+        this.graphics.fill();
+
+        // 第2层：压缩能量（亮橙色）
+        this.graphics.fillColor = new Color(255, 140, 0, 200); // 亮橙色
+        this.graphics.circle(0, 0, 8.8);
+        this.graphics.fill();
+
+        // 第3层：高压核心（金黄色）
+        this.graphics.fillColor = new Color(255, 215, 0, 240); // 金黄色
+        this.graphics.circle(0, 0, 6.4);
+        this.graphics.fill();
+
+        // 第4层：能量聚集点（白金色）
+        this.graphics.fillColor = new Color(255, 255, 200, 255); // 白金色
+        this.graphics.circle(0, 0, 4);
+        this.graphics.fill();
+
+        // 第5层：不稳定核心（纯白）
+        this.graphics.fillColor = new Color(255, 255, 255, 255); // 纯白核心
+        this.graphics.circle(0, 0, 2.4);
+        this.graphics.fill();
+
+        // === 压力波纹效果 === - 放大1.6倍
+
+        // 多层压力波环
+        this.graphics.strokeColor = new Color(255, 0, 0, 150);
+        this.graphics.lineWidth = 2.4;
+        for (let i = 0; i < 4; i++) {
+            const radius = 14.4 + i * 3.2;
+            this.graphics.circle(0, 0, radius);
+        }
+        this.graphics.stroke();
+
+        // 内层冲击波
+        this.graphics.strokeColor = new Color(255, 140, 0, 200);
+        this.graphics.lineWidth = 1.2;
+        this.graphics.circle(0, 0, 6.5);
         this.graphics.circle(0, 0, 8);
-        this.graphics.fill();
-        
-        // 中层爆炸核心（橙色）
-        this.graphics.fillColor = new Color(255, 140, 0, 200); // 橙色
-        this.graphics.circle(0, 0, 5.5);
-        this.graphics.fill();
-        
-        // 内层能量核心（黄色）
-        this.graphics.fillColor = new Color(255, 215, 0, 255); // 金黄色
-        this.graphics.circle(0, 0, 3);
-        this.graphics.fill();
-        
-        // 最内层（白色高亮）
-        this.graphics.fillColor = new Color(255, 255, 255, 255);
-        this.graphics.circle(0, 0, 1.5);
-        this.graphics.fill();
-        
-        // 外层能量波纹边框
-        this.graphics.strokeColor = new Color(255, 0, 0, 200); // 红色边框
+        this.graphics.stroke();
+
+        // === 能量不稳定效果 ===
+
+        // 随机能量溢出点
+        this.graphics.fillColor = new Color(255, 255, 0, 220);
+        for (let i = 0; i < 8; i++) {
+            const angle = (i * 45) * Math.PI / 180;
+            const distance = 3.5 + Math.random() * 2;
+            const x = Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            const size = 0.4 + Math.random() * 0.5;
+
+            this.graphics.circle(x, y, size);
+            this.graphics.fill();
+        }
+
+        // 能量裂缝（从核心向外的不规则线）
+        this.graphics.strokeColor = new Color(255, 255, 255, 180);
+        this.graphics.lineWidth = 1;
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * 60 + Math.random() * 20 - 10) * Math.PI / 180;
+            const startRadius = 1.8;
+            const midRadius = 3.5 + Math.random() * 1;
+            const endRadius = 5.5 + Math.random() * 1.5;
+
+            const startX = Math.cos(angle) * startRadius;
+            const startY = Math.sin(angle) * startRadius;
+            const midX = Math.cos(angle + 0.2) * midRadius; // 轻微弯曲
+            const midY = Math.sin(angle + 0.2) * midRadius;
+            const endX = Math.cos(angle) * endRadius;
+            const endY = Math.sin(angle) * endRadius;
+
+            this.graphics.moveTo(startX, startY);
+            this.graphics.lineTo(midX, midY);
+            this.graphics.lineTo(endX, endY);
+        }
+        this.graphics.stroke();
+
+        // === 危险火花放射 ===
+
+        // 主要火花爆射（大型十字）
+        this.graphics.strokeColor = new Color(255, 255, 0, 255);
+        this.graphics.lineWidth = 2.5;
+
+        // 强力十字火花
+        this.graphics.moveTo(-12, 0);
+        this.graphics.lineTo(-7, 0);
+        this.graphics.moveTo(7, 0);
+        this.graphics.lineTo(12, 0);
+        this.graphics.moveTo(0, -12);
+        this.graphics.lineTo(0, -7);
+        this.graphics.moveTo(0, 7);
+        this.graphics.lineTo(0, 12);
+        this.graphics.stroke();
+
+        // 次要火花（X形和斜向）
+        this.graphics.strokeColor = new Color(255, 140, 0, 200);
         this.graphics.lineWidth = 2;
-        this.graphics.circle(0, 0, 8);
-        this.graphics.stroke();
-        
-        // 绘制能量火花（小型十字和X形）
-        this.graphics.strokeColor = new Color(255, 255, 0, 200);
-        this.graphics.lineWidth = 1.5;
-        
-        // 十字火花
-        this.graphics.moveTo(-10, 0);
-        this.graphics.lineTo(-6, 0);
-        this.graphics.moveTo(6, 0);
-        this.graphics.lineTo(10, 0);
-        this.graphics.moveTo(0, -10);
-        this.graphics.lineTo(0, -6);
-        this.graphics.moveTo(0, 6);
-        this.graphics.lineTo(0, 10);
-        
+
         // X形火花
-        this.graphics.moveTo(-7, -7);
-        this.graphics.lineTo(-5, -5);
-        this.graphics.moveTo(5, 5);
-        this.graphics.lineTo(7, 7);
-        this.graphics.moveTo(-7, 7);
-        this.graphics.lineTo(-5, 5);
-        this.graphics.moveTo(5, -5);
-        this.graphics.lineTo(7, -7);
-        
+        this.graphics.moveTo(-9, -9);
+        this.graphics.lineTo(-6, -6);
+        this.graphics.moveTo(6, 6);
+        this.graphics.lineTo(9, 9);
+        this.graphics.moveTo(-9, 9);
+        this.graphics.lineTo(-6, 6);
+        this.graphics.moveTo(6, -6);
+        this.graphics.lineTo(9, -9);
         this.graphics.stroke();
+
+        // 额外的短火花
+        this.graphics.strokeColor = new Color(255, 215, 0, 180);
+        this.graphics.lineWidth = 1.5;
+        for (let i = 0; i < 8; i++) {
+            const angle = (i * 45 + 22.5) * Math.PI / 180; // 偏移22.5度
+            const startRadius = 6;
+            const endRadius = 9 + Math.random() * 2;
+
+            const startX = Math.cos(angle) * startRadius;
+            const startY = Math.sin(angle) * startRadius;
+            const endX = Math.cos(angle) * endRadius;
+            const endY = Math.sin(angle) * endRadius;
+
+            this.graphics.moveTo(startX, startY);
+            this.graphics.lineTo(endX, endY);
+        }
+        this.graphics.stroke();
+
+        // === 能量脉动指示 ===
+
+        // 核心脉动环
+        this.graphics.strokeColor = new Color(255, 255, 255, 200);
+        this.graphics.lineWidth = 1;
+        this.graphics.circle(0, 0, 3);
+        this.graphics.circle(0, 0, 4.5);
+        this.graphics.stroke();
+
+        // === 边框和警告轮廓 ===
+
+        // 主体危险边框（深红色）
+        this.graphics.strokeColor = new Color(178, 34, 34, 255);
+        this.graphics.lineWidth = 2.5;
+        this.graphics.circle(0, 0, 7);
+        this.graphics.stroke();
+
+        // 警告区域边框（闪烁效果）
+        this.graphics.strokeColor = new Color(255, 0, 0, 200);
+        this.graphics.lineWidth = 2;
+        this.graphics.circle(0, 0, 10);
+        this.graphics.stroke();
+
+        // 内核边框（亮黄色）
+        this.graphics.strokeColor = new Color(255, 255, 0, 255);
+        this.graphics.lineWidth = 1.5;
+        this.graphics.circle(0, 0, 4);
+        this.graphics.stroke();
+
+        // === 危险标识 ===
+
+        // 核心危险点
+        this.graphics.fillColor = new Color(255, 0, 0, 255);
+        this.graphics.circle(0, 0, 0.8);
+        this.graphics.fill();
+
+        // 外围警告点
+        this.graphics.fillColor = new Color(255, 69, 0, 200);
+        for (let i = 0; i < 4; i++) {
+            const angle = (i * 90) * Math.PI / 180;
+            const x = Math.cos(angle) * 8.5;
+            const y = Math.sin(angle) * 8.5;
+
+            this.graphics.circle(x, y, 1);
+            this.graphics.fill();
+        }
     }
     
     /**

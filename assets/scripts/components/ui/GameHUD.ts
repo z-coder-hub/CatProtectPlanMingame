@@ -4,6 +4,7 @@ import { WaveManager } from '../../managers/WaveManager';
 import { GameBootstrap } from '../../systems/GameBootstrap';
 import { GameState } from '../../types/GameTypes';
 import { UIHelper } from '../../utils/UIHelper';
+import { GAME_CONFIG } from '../../types/GameConstants';
 
 const { ccclass } = _decorator;
 
@@ -55,14 +56,11 @@ export class GameHUD extends Component {
 
     // 创建完整界面
     private createCompleteInterface(): void {
-        // 创建独立的信息显示区域（轻微下移）
+        // 创建独立的信息显示区域
         this.createInfoDisplayArea();
 
         // 创建独立的控制按钮区域（大幅下移）
         this.createControlButtonArea();
-
-        // 创建独立的关卡信息区域（在信息显示区域下方）
-        this.createLevelInfoArea();
     }
 
 
@@ -71,8 +69,8 @@ export class GameHUD extends Component {
         const infoAreaNode = new Node("InfoDisplayArea");
         infoAreaNode.parent = this.node;
 
-        // 左对齐布局，占据左侧600像素宽度，轻微下移10像素
-        UIHelper.SetupLeftAlignWidget(infoAreaNode, 450, 60, 0, 10, 0);
+        // 左对齐布局，占据左侧600像素宽度，增加高度以容纳关卡信息
+        UIHelper.SetupLeftAlignWidget(infoAreaNode, 450, 100, 0, 0, 0);
 
         // 创建背景
         UIHelper.CreatePanelWithBackground(infoAreaNode, new Color(30, 30, 30, 200));
@@ -102,7 +100,7 @@ export class GameHUD extends Component {
         infoPanelNode.parent = parent;
 
         // 使用UIHelper设置布局 - 左对齐填充高度
-        UIHelper.SetupLeftAlignWidget(infoPanelNode, 600, 58.5, 0, 0, 0);
+        UIHelper.SetupLeftAlignWidget(infoPanelNode, 600, 100, 0, 0, 0);
 
         // 金币显示
         this.createGoldDisplay(infoPanelNode);
@@ -110,33 +108,27 @@ export class GameHUD extends Component {
         // 波次显示
         this.createWaveDisplay(infoPanelNode);
 
+        // 关卡信息显示（在波次下方）
+        this.createLevelDisplay(infoPanelNode);
+
         // 城堡血量显示
         this.createCastleHealthDisplay(infoPanelNode);
     }
 
-    // 创建独立的关卡信息区域
-    private createLevelInfoArea(): void {
-        const levelAreaNode = new Node("LevelInfoArea");
-        levelAreaNode.parent = this.node;
-
-        // 设置在信息显示区域下方，宽度与上方信息区域一致（450px）
-        UIHelper.SetupLeftAlignWidget(levelAreaNode, 450, 40, 0, 80, 0); // top=80确保在信息区域下方，宽度450px与信息区域对齐
-
-        // 创建背景
-        UIHelper.CreatePanelWithBackground(levelAreaNode, new Color(40, 40, 40, 180));
-
-        // 创建关卡信息标签
+    // 创建关卡信息显示（在信息面板内）
+    private createLevelDisplay(parent: Node): void {
         const levelNode = new Node("LevelDisplay");
-        levelNode.parent = levelAreaNode;
+        levelNode.parent = parent;
 
-        // 在关卡信息区域内左对齐显示，保持与信息区域内容的边距一致
-        UIHelper.SetupLeftAlignWidget(levelNode, 430, 40, 15); // 左边距15px，宽度稍小于父容器
+        // 使用UIHelper设置布局 - 左对齐在金币文本下方
+        UIHelper.SetupLeftAlignWidget(levelNode, 400, 25, 15, 100);
 
         const levelLabel = levelNode.addComponent(Label);
         this._levelLabel = levelLabel;
         this._levelLabel.string = "关卡1: 新手训练";
-        this._levelLabel.fontSize = 20;
+        this._levelLabel.fontSize = 18;
         this._levelLabel.color = new Color(135, 206, 235); // 天蓝色
+        this._levelLabel.horizontalAlign = Label.HorizontalAlign.LEFT;
     }
 
     // 创建金币显示
@@ -188,8 +180,8 @@ export class GameHUD extends Component {
         const healthNode = new Node("CastleHealthDisplay");
         healthNode.parent = parent;
 
-        // 使用UIHelper设置布局，设置在中央位置
-        UIHelper.SetupLeftAlignWidget(healthNode, 117, 58.5, 300);
+        // 使用UIHelper设置布局，设置在中央位置，向下移动以适应关卡信息
+        UIHelper.SetupLeftAlignWidget(healthNode, 117, 58.5, 300, 30);
 
         // 血量条背景
         const healthBgNode = new Node("HealthBarBg");
@@ -243,7 +235,7 @@ export class GameHUD extends Component {
 
         const healthLabel = healthLabelNode.addComponent(Label);
         this._castleHealthLabel = healthLabel;
-        this._castleHealthLabel.string = "城堡 100/100";
+        this._castleHealthLabel.string = `城堡 ${GAME_CONFIG.castleHealth}/${GAME_CONFIG.castleHealth}`;
         this._castleHealthLabel.fontSize = 18.72;
         this._castleHealthLabel.color = new Color(255, 255, 255);
     }
@@ -309,7 +301,7 @@ export class GameHUD extends Component {
                 }
             }
         }
-        
+
         // 更新金币显示
         if (this._goldLabel) {
             this._goldLabel.string = stats.gold.toString();
@@ -485,11 +477,12 @@ export class GameHUD extends Component {
                 // 直接进入部署阶段并开始战斗
                 this._gameManager.StartGame();
                 // 立即开始战斗，跳过部署等待
-                setTimeout(() => {
+                // 使用Cocos Creator的调度系统而不是setTimeout
+                this.scheduleOnce(() => {
                     if (this._gameManager && this._gameManager.gameState === GameState.DEPLOYMENT) {
                         this._gameManager.StartBattle();
                     }
-                }, 100); // 短暂延迟确保状态切换完成
+                }, 0.1); // 短暂延迟确保状态切换完成
                 break;
             case GameState.DEPLOYMENT:
                 // 直接开始战斗

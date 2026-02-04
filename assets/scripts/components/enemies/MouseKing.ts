@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, Vec3, Node, tween, UIOpacity } from 'cc';
+import { _decorator, Vec3, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
@@ -34,7 +34,7 @@ export class MouseKing extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.MOUSE_KING,
-            name: "老鼠王",
+            name: "鼠王",
             category: EnemyCategory.BOSS,
             health: 200,
             maxHealth: 200,
@@ -66,141 +66,22 @@ export class MouseKing extends BaseMouse {
         this._zigzagAmplitude = 25 + Math.random() * 15; // 25-40像素（BOSS威严的大幅移动）
         this._segmentCount = 5 + Math.floor(Math.random() * 4); // 5-8段移动（更多分段，更优雅）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string {
+        return "images/enemies/MouseKing";
+    }
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
     protected initializeMouseVisuals(): void {
-        // 创建老鼠王外观 - 金黄色华贵外观，体型更大
-        const graphics = this.getGraphicsComponent();
-        
-        // 设置节点缩放，老鼠王比普通老鼠大50%
-        this.node.setScale(1.5, 1.5, 1.5);
-        
-        // 绘制老鼠王身体
-        this.drawMouseKingAppearance(graphics);
-        
-        console.log(`${this.unitName}外观创建完成`);
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 大小由基类的统一尺寸管理系统控制
     }
-    
-    /**
-     * 绘制老鼠王外观
-     * @param graphics 绘图组件
-     */
-    private drawMouseKingAppearance(graphics: Graphics): void {
-        graphics.clear();
-        
-        // 绘制华贵的老鼠王身体（金黄色）
-        graphics.fillColor = new Color(255, 215, 0, 255);      // 金黄色身体
-        graphics.strokeColor = new Color(218, 165, 32, 255);   // 深金色边框
-        graphics.lineWidth = 3;
-        
-        // 主体 - 椭圆形身体，比普通老鼠更大更圆润
-        graphics.ellipse(-16, -8, 32, 16);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 头部 - 更大的头部
-        graphics.fillColor = new Color(255, 235, 50, 255);     // 稍亮的金色头部
-        graphics.ellipse(-12, 0, 24, 14);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 王冠
-        graphics.fillColor = new Color(255, 0, 0, 255);        // 红色王冠
-        graphics.moveTo(-10, 8);
-        graphics.lineTo(-6, 15);
-        graphics.lineTo(-2, 12);
-        graphics.lineTo(2, 15);
-        graphics.lineTo(6, 12);
-        graphics.lineTo(10, 15);
-        graphics.lineTo(8, 8);
-        graphics.close();
-        graphics.fill();
-        
-        // 王冠宝石
-        graphics.fillColor = new Color(0, 255, 255, 255);      // 青色宝石
-        graphics.circle(0, 13, 2);
-        graphics.fill();
-        
-        // 眼睛 - 威严的红色眼睛
-        graphics.fillColor = new Color(255, 255, 255, 255);    // 白色眼白
-        graphics.ellipse(-6, 2, 8, 6);
-        graphics.fill();
-        graphics.ellipse(6, 2, 8, 6);
-        graphics.fill();
-        
-        // 眼珠 - 红色威严眼神
-        graphics.fillColor = new Color(255, 0, 0, 255);
-        graphics.circle(-4, 3, 3);
-        graphics.fill();
-        graphics.circle(4, 3, 3);
-        graphics.fill();
-        
-        // 瞳孔
-        graphics.fillColor = new Color(0, 0, 0, 255);
-        graphics.circle(-4, 3, 1);
-        graphics.fill();
-        graphics.circle(4, 3, 1);
-        graphics.fill();
-        
-        // 鼻子
-        graphics.fillColor = new Color(255, 100, 100, 255);
-        graphics.ellipse(0, -2, 6, 4);
-        graphics.fill();
-        
-        // 胡须
-        graphics.strokeColor = new Color(0, 0, 0, 255);
-        graphics.lineWidth = 2;
-        // 左胡须
-        graphics.moveTo(-12, 0);
-        graphics.lineTo(-18, -1);
-        graphics.moveTo(-12, 2);
-        graphics.lineTo(-18, 3);
-        // 右胡须
-        graphics.moveTo(12, 0);
-        graphics.lineTo(18, -1);
-        graphics.moveTo(12, 2);
-        graphics.lineTo(18, 3);
-        graphics.stroke();
-        
-        // 耳朵 - 大而圆润的耳朵
-        graphics.fillColor = new Color(255, 215, 0, 255);
-        graphics.circle(-14, 6, 6);
-        graphics.fill();
-        graphics.circle(14, 6, 6);
-        graphics.fill();
-        
-        // 耳朵内侧
-        graphics.fillColor = new Color(255, 180, 180, 255);
-        graphics.circle(-14, 6, 3);
-        graphics.fill();
-        graphics.circle(14, 6, 3);
-        graphics.fill();
-        
-        // 王者斗篷（简化的红色斗篷）
-        graphics.fillColor = new Color(139, 0, 0, 255);        // 深红色斗篷
-        graphics.ellipse(0, -12, 20, 8);
-        graphics.fill();
-        
-        // 脚部 - 更粗壮的脚
-        graphics.fillColor = new Color(218, 165, 32, 255);
-        graphics.circle(-8, -16, 4);
-        graphics.fill();
-        graphics.circle(8, -16, 4);
-        graphics.fill();
-        
-        // 尾巴 - 威严的粗尾巴
-        graphics.strokeColor = new Color(255, 215, 0, 255);
-        graphics.lineWidth = 6;
-        graphics.moveTo(14, -4);
-        graphics.quadraticCurveTo(22, -10, 28, -6);
-        graphics.stroke();
-        
-        // 尾巴尖端装饰
-        graphics.fillColor = new Color(255, 0, 0, 255);
-        graphics.circle(28, -6, 3);
-        graphics.fill();
-    }
+
+    // 实现抽象方法：绘制Graphics外观（当图片不可用时的回退方案）
     
     /**
      * 重写update方法，添加召唤逻辑
@@ -400,5 +281,18 @@ export class MouseKing extends BaseMouse {
             .start();
         
         console.log(`${this.unitName}王者陨落！`);
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置鼠王的召唤属性
+     */
+    protected onReuse(): void {
+        // 重新初始化召唤属性
+        const config = this.getConfig();
+        this.summonCount = config.summonCount || 3;
+        this.summonType = config.summonType || EnemyType.BASIC_MOUSE;
+
+        console.log(`[MouseKing] 🔄 重用时重置召唤属性: 数量=${this.summonCount}, 类型=${this.summonType}`);
     }
 }

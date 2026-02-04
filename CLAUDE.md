@@ -4,9 +4,9 @@
 
 ## 项目概述
 
-这是一个名为 "CatProtectPlanMingame" 的猫咪城堡防御游戏项目 - 使用 **Cocos Creator 3.8.6** 构建的塔防类迷你游戏，采用 **TypeScript** 开发。玩家通过部署不同类型的猫咪英雄来防御老鼠等敌人的攻击，保护城堡。
+这是一个名为 "CatProtectPlanMingame" 的猫咪城堡防御游戏项目 - 使用 **Cocos Creator 3.8.6** 构建的塔防类迷你游戏，采用 **TypeScript** 开发。玩家通过部署不同类型的猫咪英雄来防御鼠群等敌人的攻击，保护城堡。
 
-**游戏模式**: 10关渐进解锁系统，前3关快速解锁全部12种英雄，后7关为独特BOSS挑战。游戏失败后自动重置到第1关重新开始，没有关卡选择界面。
+**游戏模式**: 10关渐进解锁系统，前3关快速解锁全部11种英雄，后7关为独特BOSS挑战。游戏失败后自动重置到第1关重新开始，没有关卡选择界面。
 
 **核心特色**: 统一投射物攻击机制 - 所有英雄都基于发射投射物，包括物理子弹、魔法弹、冲击波等，提供丰富的射击体验。
 
@@ -23,7 +23,7 @@
 assets/
 ├── scripts/                    # TypeScript脚本文件
 │   ├── components/             # 游戏组件
-│   │   ├── heroes/            # 英雄组件 (12种英雄类型)
+│   │   ├── heroes/            # 英雄组件 (11种英雄类型)
 │   │   │   ├── BaseHero.ts    # 英雄抽象基类
 │   │   │   ├── OrangeCat.ts   # 橘猫射手
 │   │   │   ├── PersianSniper.ts # 波斯猫狙击手
@@ -32,18 +32,17 @@ assets/
 │   │   │   ├── MaineThunder.ts # 缅因猫雷法师
 │   │   │   ├── NorwegianIce.ts # 挪威森林猫冰法师
 │   │   │   ├── BritishKnight.ts # 英国短毛猫骑士
-│   │   │   ├── RagdollGuardian.ts # 布偶猫守护者
 │   │   │   ├── RussianBlue.ts # 俄罗斯蓝猫刺客(调整为近战)
 │   │   │   ├── AmericanBomber.ts # 美国短毛猫爆破手(调整为近战)
-│   │   │   ├── ScottishEngineer.ts # 苏格兰折耳猫工程师
-│   │   │   └── AbyssinianScout.ts # 阿比西尼亚猫侦察兵
-│   │   ├── enemies/           # 敌人组件 (16种老鼠类型，含7种新BOSS)
-│   │   │   ├── BaseMouse.ts   # 老鼠抽象基类
-│   │   │   ├── BasicMouse.ts  # 基础老鼠
-│   │   │   ├── GiantMouse.ts  # 巨型老鼠
-│   │   │   ├── FastMouse.ts   # 快速老鼠
+│   │   │   ├── ScottishMarksman.ts # 苏格兰折耳猫射手
+│   │   │   └── AbyssinianArcher.ts # 阿比西尼亚猫弓箭手
+│   │   ├── enemies/           # 敌人组件 (16种鼠类敌人，含7种新BOSS)
+│   │   │   ├── BaseMouse.ts   # 鼠类抽象基类
+│   │   │   ├── BasicMouse.ts  # 小老鼠
+│   │   │   ├── GiantMouse.ts  # 巨鼠
+│   │   │   ├── FastMouse.ts   # 疾风鼠
 │   │   │   ├── ENEMIES_DESIGN_PRINCIPLES.md # ⚠️ 敌人设计原则文档
-│   │   │   └── ... (其他13种老鼠，含7种新BOSS)
+│   │   │   └── ... (其他13种鼠类敌人，含7种新BOSS)
 │   │   ├── game/              # 游戏对象
 │   │   │   └── Castle.ts      # 城堡
 │   │   └── ui/                # UI组件
@@ -54,21 +53,29 @@ assets/
 │   │   ├── BattleManager.ts   # 战斗管理
 │   │   ├── WaveManager.ts     # 波次管理
 │   │   └── LevelManager.ts    # 关卡管理
+│   ├── projectiles/            # 投射物系统
+│   │   ├── BaseProjectile.ts  # 投射物抽象基类
+│   │   ├── ProjectileSystem.ts # 投射物系统管理器
+│   │   └── types/             # 投射物类型
+│   │       ├── PhysicalBullet.ts # 物理子弹
+│   │       ├── MagicMissile.ts # 魔法弹
+│   │       ├── SwordWave.ts   # 剑气冲击波
+│   │       ├── LightningBolt.ts # 雷电弹
+│   │       ├── IceShard.ts    # 冰弹
+│   │       └── ExplosionWave.ts # 爆炸波
 │   ├── systems/               # 系统类
 │   │   ├── GameBootstrap.ts   # 游戏启动器
 │   │   ├── GridDeploymentSystem.ts # 网格部署系统
 │   │   ├── HeroFactory.ts     # 英雄工厂系统
 │   │   ├── EnemyFactory.ts    # 敌人工厂系统
-│   │   └── SkillSystem.ts     # 技能系统
+│   │   └── EnemyPoolManager.ts # 敌人对象池管理
 │   ├── types/                 # 类型定义
 │   │   ├── GameTypes.ts       # 游戏类型定义
 │   │   ├── GameConstants.ts   # 游戏常量配置
 │   │   └── LevelConfigs.ts    # 关卡配置系统
 │   └── utils/                 # 工具类
-│       ├── DrawingHelper.ts   # 绘图辅助工具
 │       ├── EffectHelper.ts    # 特效辅助工具
-│       ├── UIHelper.ts        # UI辅助工具
-│       └── SimpleObjectPool.ts # 简单对象池
+│       └── UIHelper.ts        # UI辅助工具
 ├── textures/                  # 图片资源
 ├── animations/                # 动画资源
 └── scenes/                    # 场景文件
@@ -76,36 +83,90 @@ assets/
 
 ## 开发原则
 
-### 8. 按需实现原则 (YAGNI - You Aren't Gonna Need It)
-- **避免提前生成**: 如果一个函数方法暂时没有使用的地方，就不用提前生成
+### 8. 按需实现原则 (YAGNI - You Aren't Gonna Need It) ⚡
+- **严格禁止提前生成**: 如果一个函数方法暂时没有使用的地方，就**绝对不要**提前生成
 - **按需开发**: 只在实际需要时才创建新的方法、类或系统
 - **延迟决策**: 等到明确需求时再实现具体功能，避免过度设计
 - **渐进式开发**: 优先实现核心功能，然后根据实际需要逐步扩展
+- **立即删除**: 发现未使用的方法时应立即删除，不要保留"以备后用"
 
 #### YAGNI 实践要点：
 - **需求驱动**：所有代码必须有明确的使用场景和需求支撑
 - **最小可行产品**：首先实现最小功能集，确保系统可用
 - **重构优于预设计**：在真正需要时通过重构扩展功能，而不是提前预设复杂架构
 - **删除无用代码**：定期清理没有被调用的方法和类
+- **工具方法例外**：状态查询、清理、配置等管理方法即使暂时未使用也可能有价值，但需要明确标记用途
 
+#### YAGNI 违规示例：
 ```typescript
 // ❌ 错误：提前生成可能用不到的方法
-class Hero {
-    // 这些方法目前没有任何地方调用
-    public getExperience(): number { return this.experience; }
-    public levelUp(): void { this.level++; }
-    public getSkillPoints(): number { return this.skillPoints; }
+class ProjectilePoolManager {
+    // 这些方法目前没有任何地方调用，违反YAGNI原则
+    static getPoolsInfo(): PoolInfo { ... }      // 状态查询
+    static clearAllPools(): void { ... }         // 场景切换清理
+    static setMaxPoolSize(size: number): void { ... } // 配置设置
+    static preloadPool(type: ProjectileType, count: number): void { ... } // 预热功能
 }
 
 // ✅ 正确：只实现当前需要的方法
-class Hero {
-    public performAttack(): void {
-        // 实际在战斗系统中被调用的方法
+class ProjectilePoolManager {
+    static getProjectile(type: ProjectileType): Node {
+        // 实际在ProjectileSystem中被调用的方法
     }
 
-    // 当未来真正需要经验系统时再添加相关方法
+    static recycleProjectile(node: Node, type: ProjectileType): void {
+        // 实际在BaseProjectile中被调用的方法
+    }
+
+    // 当未来真正需要状态查询或预热功能时再添加相关方法
 }
 ```
+
+#### YAGNI 执行准则：
+- **代码审查时严格检查**：任何新增方法必须有明确的调用者
+- **定期清理无用方法**：每周检查并删除未被使用的方法
+- **抵制"可能有用"的诱惑**：即使逻辑完善，没有使用者就不要实现
+- **文档化例外情况**：如果确实需要保留某些"备用"方法，必须在代码中明确注释原因
+
+### 9. 禁止Debug模式原则 🚫
+- **严格禁止Debug模式**: 不引入任何形式的debug模式、调试开关或调试配置
+- **无条件日志输出**: 所有必要的日志直接输出，不通过debug开关控制
+- **避免调试复杂性**: debug模式会增加代码复杂性和维护成本
+- **生产环境一致性**: 开发环境和生产环境保持完全一致的代码路径
+
+#### 禁止Debug模式实践要点：
+- **删除调试开关**: 移除所有 `enableDebugLogs`、`isDebugMode` 等调试标志
+- **直接日志输出**: 使用 `console.log()` 直接输出，不包装在条件判断中
+- **移除调试方法**: 删除专门用于调试的方法如 `GetDebugInfo()`、`printDebugState()` 等
+- **简化代码路径**: 避免因调试模式产生的不同代码执行路径
+
+#### 禁止的Debug模式示例：
+```typescript
+// ❌ 错误：引入debug模式
+@property({ tooltip: "是否启用调试日志" })
+public enableDebugLogs: boolean = true;
+
+private log(message: string): void {
+    if (this.enableDebugLogs) {
+        console.log(message);
+    }
+}
+
+public GetDebugInfo(): DebugInfo {
+    // 专门的调试方法
+}
+
+// ✅ 正确：直接简洁的日志输出
+private log(message: string): void {
+    console.log(message);
+}
+```
+
+#### 原则说明：
+- **代码简洁性**: 移除不必要的条件判断和配置项
+- **维护成本**: 减少因调试开关导致的代码分支维护
+- **行为一致性**: 确保开发和生产环境行为完全一致
+- **性能优化**: 避免运行时的条件判断开销
 
 ### ⚠️ 重要：敌人文件修改前必读
 
@@ -130,7 +191,7 @@ class Hero {
 
 ### 2. 代码驱动开发
 - 所有组件、UI都通过TypeScript代码动态创建
-- 使用Graphics API绘制游戏对象外观
+- 优先使用游戏资源（图片、精灵等），资源缺失时使用Graphics API作为回退方案
 - 避免过度依赖编辑器配置
 
 ### 3. 组件化架构
@@ -163,7 +224,67 @@ class Hero {
 - 定期清理未使用的import和方法
 - 保持项目结构简洁明了
 
-### 7. 事件和通信设计
+### 7. 开闭原则 (Open-Closed Principle) 🔐
+- **对扩展开放，对修改封闭**: 软件实体应该对扩展开放，对修改封闭
+- **抽象基类设计**: 基类应该定义抽象接口和最小必要的共同逻辑，而不是包含所有实现
+- **子类特化实现**: 每个子类应该实现自己的特定行为，而不是依赖基类的通用实现
+- **避免过度集中**: 不要将所有逻辑都放到基类中，这会导致基类过于复杂且难以维护
+- **保持抽象层次**: 基类专注于定义契约和核心流程，具体实现留给子类
+
+#### 开闭原则实践要点：
+- **正确的基类设计**：提供抽象方法定义和必要的生命周期管理
+- **错误的基类设计**：将所有可能的实现都写在基类中，子类只是调用
+- **扩展性优先**：新增功能通过继承扩展，而不是修改现有基类
+- **职责分离**：基类负责框架和流程，子类负责具体的业务逻辑
+
+#### 开闭原则示例：
+```typescript
+// ✅ 正确：开闭原则的基类设计
+abstract class BaseHero extends Component {
+    // 抽象方法 - 强制子类实现自己的逻辑
+    protected abstract initializeHeroStats(): void;
+    protected abstract getHeroLabelConfig(): LabelConfig;
+
+    // 基类只负责框架和生命周期
+    protected onLoad(): void {
+        this.initializeHeroStats();     // 调用子类实现
+        this.setupHeroVisuals();        // 基类通用逻辑
+    }
+}
+
+// ✅ 子类实现自己的特定逻辑
+class OrangeCat extends BaseHero {
+    protected initializeHeroStats(): void {
+        // OrangeCat的特定属性设置
+        this.attackDamage = 15;
+        this.attackRange = 200;
+    }
+
+    protected getHeroLabelConfig(): LabelConfig {
+        // OrangeCat特定的标签配置
+        return { text: "橘猫射手", fontSize: 18 };
+    }
+}
+
+// ❌ 错误：违反开闭原则的设计
+class BaseHero extends Component {
+    // 错误：基类包含所有实现，子类失去特化能力
+    protected initializeHeroStats(): void {
+        const config = HERO_CONFIGS[this.heroType];
+        this.attackDamage = config.attackDamage;
+        this.attackRange = config.attackRange;
+        // 通用实现无法体现子类特色
+    }
+}
+```
+
+#### 违反开闭原则的信号：
+- **基类方法过多**：基类包含大量具体实现方法
+- **子类过于简单**：子类只是调用基类方法，没有自己的逻辑
+- **修改基类频繁**：每次新增功能都需要修改基类代码
+- **通用实现泛滥**：用if-else或switch处理不同子类的差异
+
+### 8. 事件和通信设计
 - **优先使用 Cocos Creator 官方事件系统**: Cocos Creator 提供了成熟优化的事件框架，应作为首选通信方式
 - **充分利用节点事件**: 使用 `node.emit()` 和 `node.on()` 进行组件间通信，这是官方推荐的标准做法
 - **合理使用触摸事件**: 利用 `Node.EventType.TOUCH_*` 系列事件处理用户交互
@@ -206,7 +327,7 @@ class Hero {
 ## 游戏角色
 
 ### 英雄类 (统一投射物攻击机制)
-基于DRY原则和纯塔防机制，英雄系统采用了简化的分类架构，包含**12种英雄类型**分为2个分类：
+基于DRY原则和纯塔防机制，英雄系统采用了简化的分类架构，包含**11种英雄类型**分为2个分类：
 
 - **BaseHero**: 英雄抽象基类，统一实现外观渲染、标签创建、点击事件和投射物攻击等通用功能
   - 统一的Graphics组件管理和外观绘制
@@ -237,7 +358,7 @@ BaseHero采用**强制抽象**与**可选重写**相结合的设计模式，在�
 
 此设计模式确保新增英雄时只需关注差异化特性，而无需重复实现通用功能。
 
-#### 🏹 射击英雄类 (8种，67%) - 投射物攻击专家
+#### 🏹 射击英雄类 (8种，73%) - 投射物攻击专家
 
 **物理射击子类 (4种)**：
 - **OrangeCat**: 橘猫射手 - 基础物理子弹，单体伤害，**超大攻击范围**
@@ -253,11 +374,10 @@ BaseHero采用**强制抽象**与**可选重写**相结合的设计模式，在�
 
 **重要特性**：所有物理射击英雄拥有**超大攻击范围**，攻击范围覆盖整个战场区域，可以攻击地图上任意位置的敌人。
 
-#### ⚔️ 近战英雄类 (4种，33% ✅) - 近距离战斗专家
+#### ⚔️ 近战英雄类 (3种，27%) - 近距离战斗专家
 - **BritishKnight**: 英短骑士 - 剑气冲击波，前排控制
-- **RagdollGuardian**: 布偶猫守护者 - 护盾冲击，防御反击
-- **🔄 RussianBlue**: 俄罗斯蓝猫刺客 - 调整为近战，暗影刃攻击，高暴击
-- **🔄 AmericanBomber**: 美国短毛猫爆破手 - 调整为近战，近程爆炸攻击
+- **RussianBlue**: 俄罗斯蓝猫刺客 - 调整为近战，暗影刃攻击，高暴击
+- **AmericanBomber**: 美国短毛猫爆破手 - 调整为近战，近程爆炸攻击
 
 每个英雄子类只需要：
 1. 实现 `initializeHeroStats()` 设置属性
@@ -268,11 +388,11 @@ BaseHero采用**强制抽象**与**可选重写**相结合的设计模式，在�
 ### 敌人类 (DRY原则重构)
 敌人系统同样采用统一的基类架构，包含**16种敌人类型**分为5个分类（含7种新BOSS）：
 
-- **BaseMouse**: 老鼠抽象基类，统一实现移动、标签等通用功能
+- **BaseMouse**: 鼠类抽象基类，统一实现移动、标签等通用功能
   - 统一的名称标签创建和配置（22px大字体）
   - 统一的城堡移动逻辑
   - 统一的生命值管理和死亡处理
-  - 老鼠专注突破防线，**不具备攻击能力**
+  - 鼠类敌人专注突破防线，**不具备攻击能力**
 
 #### 🚫 敌人设计原则 - 纯塔防机制
 **核心原则**: 敌人不能攻击或伤害英雄，这是塔防游戏的基本设计理念。
@@ -305,33 +425,49 @@ BaseHero采用**强制抽象**与**可选重写**相结合的设计模式，在�
 - 敌人配置中不应包含攻击相关的数值属性
 
 #### 基础单位 (2种)
-- **BasicMouse**: 基础老鼠 - 普通血量，中等速度
-- **GiantMouse**: 巨型老鼠 - 高血量，较慢速度
+- **BasicMouse**: 小老鼠 - 普通血量，中等速度
+  - **特殊能力**: 无特殊能力，标准突破单位
+- **GiantMouse**: 巨鼠 - 高血量，较慢速度
+  - **特殊能力**: 狂暴模式、额外金币掉落
 
 #### 快速单位 (2种)
-- **FastMouse**: 快速老鼠 - 低血量，高速移动
-- **SpeedMouse**: 疾速老鼠 - 极低血量，极高速度
+- **FastMouse**: 疾风鼠 - 低血量，高速移动
+  - **特殊能力**: 无特殊能力，标准快速单位
+- **SpeedMouse**: 闪电鼠 - 极低血量，极高速度
+  - **特殊能力**: 受伤加速、残影效果
 
 #### 装甲单位 (2种)
-- **ArmoredMouse**: 装甲老鼠 - 中等血量，护甲减伤
-- **TankMouse**: 坦克老鼠 - 极高血量，护甲值，缓慢移动
+- **ArmoredMouse**: 钢甲鼠 - 中等血量，护甲减伤
+  - **特殊能力**: 基础护甲减伤
+- **TankMouse**: 铁甲鼠 - 极高血量，护甲值，缓慢移动
+  - **特殊能力**: 护甲减伤
 
 #### 特殊单位 (1种)
-- **StealthMouse**: 潜行老鼠 - 潜行躲避攻击能力
+- **StealthMouse**: 幻影鼠 - 潜行躲避攻击能力
+  - **特殊能力**: 闪避攻击
 
 #### BOSS单位 (9种：2种基础BOSS + 7种新BOSS)
 **基础BOSS**:
-- **MouseKing**: 老鼠王 - 超高血量，可召唤小兵
-- **MechMouse**: 机械老鼠 - 高血量，特殊机械属性
+- **MouseKing**: 鼠王 - 超高血量，可召唤小兵
+  - **特殊能力**: 召唤小鼠
+- **MechMouse**: 机甲鼠 - 高血量，特殊机械属性
+  - **特殊能力**: 激光威慑、远程威胁显示
 
-**关卡4-10新BOSS**:
+**关卡4-10新BOSS** (具备强大防御和控制能力):
 - **ArmorOverlord**: 重甲统领 - 超高护甲值，减伤防御
+  - **特殊能力**: 超高护甲、伤害减免80%、重装冲锋威慑
 - **ShadowAssassin**: 潜影刺客 - 高潜行几率，伤害减免
+  - **特殊能力**: 永久潜行、伤害免疫50%、暗影闪烁
 - **StormTyrant**: 疾风暴君 - 极速移动，召唤疾速小兵
+  - **特殊能力**: 极速移动、召唤疾速小兵、风暴冲击威慑
 - **GiantBehemoth**: 巨兽霸主 - 超大血量，威慑践踏特效
+  - **特殊能力**: 超大血量、践踏范围威慑、地震冲击特效
 - **ThunderMaster**: 雷电大师 - 电磁干扰特效，电流场护盾
+  - **特殊能力**: 链式雷电威慑、电流场护盾、雷电风暴特效
 - **MechCommander**: 机械军团长 - 限量召唤机械兵，自我修复
+  - **特殊能力**: 无限召唤机械兵、自我修复、激光炮台威慑
 - **UltimateOverlord**: 终极霸王 - 融合所有BOSS防御能力，最终挑战
+  - **特殊能力**: 融合所有能力、多重形态、终极毁灭威慑
 
 ### 游戏对象
 - **Castle**: 城堡，玩家需要保护的目标
@@ -351,7 +487,7 @@ enum HeroType {
   // 射击英雄 - 魔法射击子类
   SIAMESE_MAGE, MAINE_THUNDER, NORWEGIAN_ICE, ABYSSINIAN_ARCHER,
   // 近战英雄
-  BRITISH_KNIGHT, RAGDOLL_GUARDIAN, RUSSIAN_BLUE, AMERICAN_BOMBER
+  BRITISH_KNIGHT, RUSSIAN_BLUE, AMERICAN_BOMBER
 }
 
 enum EnemyType {
@@ -367,7 +503,7 @@ enum EnemyType {
   MOUSE_KING, MECH_MOUSE,
   // 新BOSS单位（关卡4-10专用）
   ARMOR_OVERLORD, SHADOW_ASSASSIN, STORM_TYRANT,
-  GIANT_BEHEMOTH, THUNDER_MASTER, MECH_COMMANDER, 
+  GIANT_BEHEMOTH, THUNDER_MASTER, MECH_COMMANDER,
   ULTIMATE_OVERLORD
 }
 
@@ -385,7 +521,7 @@ enum EnemyState {
 }
 ```
 
-### 核心接口 (游戏机制纯化后)
+### 核心接口 (游戏机制纯化后 + v1.6简化)
 ```typescript
 // 英雄单位属性（无生命值，无移动速度）
 interface UnitStats {
@@ -403,7 +539,22 @@ interface EnemyUnitStats {
   moveSpeed: number;
 }
 
+// 简化的奖励类型（v1.6优化，仅保留实际使用的）
+enum RewardType {
+  GOLD = "gold",                    // 金币奖励
+  HERO_UNLOCK = "heroUnlock"        // 英雄解锁
+}
 
+// 简化的关卡配置（v1.6优化，移除未使用字段）
+interface LevelConfig {
+  id: string;                       // 关卡唯一ID
+  name: string;                     // 关卡名称
+  description: string;              // 关卡描述
+  initialGold: number;              // 初始金币
+  waves: WaveConfig[];              // 波次配置
+  rewards: RewardConfig[];          // 奖励配置
+  learningObjectives: string[];     // 学习目标
+}
 ```
 
 ## 开发规范
@@ -468,16 +619,16 @@ export class UIHelper {
 
 游戏数值配置分布在两个文件中：
 **`GameConstants.ts`** - 基础配置：
-- 英雄属性配置（12种英雄的完整属性，统一投射物攻击机制）
-- 敌人属性配置（16种老鼠的完整属性，含7种新BOSS）
+- 英雄属性配置（11种英雄的完整属性，统一投射物攻击机制）
+- 敌人属性配置（16种鼠类敌人的完整属性，含7种新BOSS）
 - UI常量
 - 游戏常量
 
 **`LevelConfigs.ts`** - 关卡系统：
 - 10关渐进解锁配置（前3关解锁，后7关BOSS挑战）
 - 波次配置（每关3个波次，共30个波次）
-- 世界配置（英雄解锁世界+BOSS挑战世界）
-- 奖励配置和解锁条件
+- 奖励配置（金币奖励和英雄解锁）
+- 简化的关卡管理接口
 
 ## 扩展指南
 
@@ -489,12 +640,44 @@ export class UIHelper {
 5. 配置投射物类型和效果（物理弹、魔法弹、冲击波）
 6. 可选实现特殊技能和自定义外观
 
+#### 🏰 英雄工厂系统功能参考
+HeroFactory提供完整的英雄创建和管理功能。以下功能已优化移除，但设计理念可供参考：
+
+**英雄部署管理**:
+- **批量创建机制**: 支持一次性创建多个英雄单位，适用于预设关卡或测试场景
+- **英雄可用性检查**: 验证英雄类型的配置完整性和组件可用性
+- **类型枚举管理**: 自动获取所有可用的英雄类型，用于UI显示和选择系统
+- **成本验证系统**: 提供英雄部署成本查询，支持资源管理策略
+
+**配置完整性保障**:
+- **双重验证机制**: 确保英雄既有配置数据(`HERO_CONFIGS`)又有对应组件类(`HERO_COMPONENTS`)
+- **错误容错处理**: 优雅处理配置缺失或组件创建失败的情况
+- **调试信息输出**: 详细的创建日志和错误报告，便于开发和调试
+
 ### 添加新敌人
 1. 在 `EnemyType` 枚举中添加新类型（选择合适的分类：基础/快速/装甲/特殊/BOSS）
 2. 在 `ENEMY_CONFIGS` 中添加配置（包含血量、速度、奖励等属性）
 3. 创建继承自 `BaseMouse` 的新组件类
 4. 实现 `initializeMouseStats()` 和 `initializeMouseVisuals()` 抽象方法
 5. 可选重写移动逻辑和特殊能力（如潜行、召唤等）
+
+#### 🎮 敌人工厂系统功能参考
+EnemyFactory提供完整的敌人创建和管理功能。以下功能已优化移除，但设计理念可供参考：
+
+**敌人生成管理**:
+- **批量创建机制**: 支持一次性创建多个敌人单位
+- **难度等级适配**: 根据关卡难度(1-10)智能选择合适的敌人类型：
+  - 难度1-2: 仅基础敌人(BasicMouse)
+  - 难度3-5: 基础+进阶敌人(BasicMouse, SpeedMouse)
+  - 难度6-8: 包含大部分敌人类型
+  - 难度9-10: 所有可用敌人包括BOSS
+- **随机生成系统**: 在合适的敌人池中随机选择，保证游戏变化性
+
+**敌人验证和AI管理**:
+- **节点有效性检查**: 确保敌人节点和组件的完整性
+- **类型识别系统**: 通过节点自动识别敌人类型
+- **移动AI启动**: 自动激活敌人的移动行为和路径寻找
+- **生命周期管理**: 从创建到销毁的完整管理流程
 
 ### 添加新UI组件
 1. 创建继承自 `Component` 的新UI类
@@ -1030,7 +1213,7 @@ if (!manager) {
 - 重构英雄类架构，实现BaseHero统一外观管理系统
 - 消除英雄子类中50-80行的重复代码
 - 统一英雄标签系统，实现18px大字体和1.5倍外观缩放
-- 重构老鼠类架构，实现BaseMouse统一标签配置（22px大字体）
+- 重构鼠类架构，实现BaseMouse统一标签配置（22px大字体）
 - 建立抽象基类模式，新增英雄/敌人只需实现差异化部分
 
 - **v1.3**: 游戏机制纯化，移除不必要属性
@@ -1039,11 +1222,11 @@ if (!manager) {
   - 修改GameConstants.ts，移除所有英雄配置中的health/maxHealth
   - 重构BaseHero.ts，移除takeDamage、die等生命值相关方法
   - 更新所有英雄子类，移除生命值初始化和死亡处理逻辑
-- **移除老鼠攻击能力**: 老鼠专注于突破防线，不攻击英雄
+- **移除鼠类攻击能力**: 鼠类敌人专注于突破防线，不攻击英雄
   - 更新EnemyUnitStats接口，移除攻击相关属性
   - 修改所有敌人配置，移除attackDamage、attackRange、attackSpeed
   - 重构BaseMouse.ts，移除攻击逻辑和状态处理
-  - 更新GameMechanicsDesign.md，明确老鼠只专注突破防线
+  - 更新GameMechanicsDesign.md，明确鼠类敌人只专注突破防线
 - **移除英雄移动速度**: 英雄固定部署，不会移动
   - 更新UnitStats接口，移除moveSpeed属性
   - 修改所有英雄配置，移除moveSpeed设置
@@ -1051,14 +1234,14 @@ if (!manager) {
   - 更新文档，明确英雄为固定防御单位
 
 - **v1.4**: 文档更新和内容扩展反映实际实现
-- **扩展英雄系统**: 完善12种英雄类型的文档描述
+- **扩展英雄系统**: 完善11种英雄类型的文档描述
   - 更新英雄分类：远程(3种)、法师(3种)、近战(2种)、辅助(2种)、特殊(2种)
   - 详细描述每种英雄的特色和能力（如穿透、AOE、光环、暴击等）
   - 明确英雄工厂系统和创建流程
 - **扩展敌人系统**: 完善9种敌人类型的文档描述
   - 更新敌人分类：基础(2种)、快速(2种)、装甲(2种)、特殊(1种)、BOSS(2种)
-  - 详细描述每种老鼠的特征（血量、速度、特殊能力等）
-  - 强调老鼠无攻击能力，专注突破防线的设计理念
+  - 详细描述每种鼠类敌人的特征（血量、速度、特殊能力等）
+  - 强调鼠类敌人无攻击能力，专注突破防线的设计理念
 - **完善项目结构**: 更新文档以反映实际的代码结构
   - 移除已不存在的BaseUnit.ts，突出BaseHero和BaseMouse基类
   - 添加工具类目录（utils）和完整的系统组件列表
@@ -1086,18 +1269,54 @@ if (!manager) {
   - 波次完成检测改为使用`BattleManager.instance.registeredEnemies`
   - 统一战斗统计数据来源，提高数据一致性
 
+- **v1.6**: 代码清理和类型系统优化，遵循YAGNI原则
+- **未使用代码大规模清理**: 系统性清理项目中的冗余代码，提升代码质量
+  - **删除未使用枚举**: 移除`UnitType`、`DeploymentMode`等完全未使用的枚举定义
+  - **清理未使用导入**: 移除4个英雄组件中多余的`Animation`导入，清理`GameTypes.ts`中的`Component`导入
+  - **简化类型系统**: 删除400+行未使用的复杂类型定义（成就系统、挑战模式、玩家进度系统等）
+  - **保留核心类型**: 仅保留实际使用的`RewardType`（GOLD、HERO_UNLOCK）和简化的`LevelConfig`接口
+- **配置数据优化**: 清理关卡配置中的无效字段和未使用数据
+  - 删除`WORLDS`数组和相关世界配置（当前版本未实现）
+  - 移除`COMPLETE_10_LEVELS`中的无效字段（`worldId`、`difficulty`、`unlockConditions`等）
+  - 简化`LEVEL_CONFIGS`对象，仅保留实际使用的方法
+- **类型安全保障**: 修复所有TypeScript编译错误，确保类型系统的一致性和正确性
+  - 添加LevelManager本地类型定义，保持功能完整性
+  - 统一枚举值使用，避免字符串常量错误
+  - 完善接口定义，补充缺失的字段
+
+- **v1.7**: systems目录代码清理和文档信息补充
+- **工厂系统代码精简**: 清理systems目录下的未使用方法，遵循YAGNI原则
+  - **EnemyFactory.ts优化**: 移除9个未使用方法，保留核心创建功能
+    - 删除批量创建、可用性检查、类型枚举、描述获取等辅助方法
+    - 删除特殊能力查询、AI启动、节点验证、随机选择等管理方法
+    - 保留`createEnemy()`核心方法，确保敌人创建功能完整
+  - **HeroFactory.ts优化**: 移除3个未使用方法，精简接口设计
+    - 删除批量创建英雄、可用性检查、类型枚举等辅助方法
+    - 保留`CreateHero()`、`GetHeroConfig()`、`GetHeroCost()`核心方法
+    - 维持英雄创建和配置查询的基本功能
+- **文档信息补充**: 将有价值的删除信息补充到设计文档中
+  - **敌人特殊能力详细描述**: 补充16种敌人的完整特殊能力说明
+    - 基础单位: BasicMouse(无特殊能力)、GiantMouse(狂暴模式、额外金币)
+    - 快速单位: FastMouse(无特殊能力)、SpeedMouse(受伤加速、残影效果)
+    - 装甲单位: ArmoredMouse/TankMouse(护甲减伤)、StealthMouse(闪避攻击)
+    - BOSS单位: 详细的威慑和控制特效描述（从链式雷电到终极毁灭）
+  - **工厂系统功能参考**: 记录被优化移除的高级功能设计理念
+    - 敌人工厂: 批量创建、难度适配、随机生成、AI管理等功能设计
+    - 英雄工厂: 批量部署、可用性验证、配置完整性保障等管理机制
+- **代码质量提升**: 通过TypeScript编译检查，确保系统稳定性
+
 ## 当前架构状态
 
 ### ✅ 已实现的系统
-- **优化的游戏内容**: 12种英雄类型和16种敌人类型，完美的战术平衡
+- **优化的游戏内容**: 11种英雄类型和16种敌人类型，完美的战术平衡
 - **统一UI系统**: GameHUD主界面 + HeroSelectionPanel英雄面板的协作式UI架构
 - **完整的英雄系统**: 包含5个分类的英雄，支持拖拽部署、技能系统、工厂创建
-- **多样化的敌人系统**: 从基础老鼠到BOSS单位，包含装甲、潜行、召唤等特殊机制
+- **多样化的敌人系统**: 从小老鼠到BOSS单位，包含装甲、潜行、召唤等特殊机制
 - **智能网格部署**: 11x6网格的英雄部署和管理，支持实时预览和冲突检测
 - **实时游戏状态管理**: 金币、波次、城堡血量、英雄冷却的动态显示
 - **高效通信系统**: 优先使用Cocos Creator官方事件框架，结合接口定义和直接引用
 - **DRY架构**: BaseHero和BaseMouse统一外观系统，大幅减少重复代码
-- **统一标签系统**: 英雄18px大字体，老鼠22px大字体，提供清晰的视觉识别
+- **统一标签系统**: 英雄18px大字体，鼠类敌人22px大字体，提供清晰的视觉识别
 - **工厂模式**: HeroFactory和EnemyFactory提供统一的单位创建和管理
 - **对象池优化**: SimpleObjectPool管理子弹等短生命周期对象，提升性能
 
@@ -1113,10 +1332,13 @@ if (!manager) {
 5. **代码清理**: 及时删除不需要的代码和文件，保持代码库整洁
 6. **DRY原则**: 新增英雄/敌人继承BaseHero/BaseMouse，只实现差异化功能
 7. **抽象优先**: 发现重复代码时，优先提取到基类或工具类中
+8. **YAGNI原则**: 遵循"你不会需要它"原则，避免提前实现未来"可能"需要的功能
+9. **类型安全**: 定期运行TypeScript检查，清理未使用的导入、变量和类型定义
+10. **简化优先**: 保持类型系统简洁，只定义实际使用的接口和枚举
 
 ---
 
-这是一个现代化的TypeScript游戏项目，具备良好的架构设计和类型安全保障。当前版本已解决重复系统和API兼容性问题，提供了统一且功能完整的用户界面系统。
+这是一个现代化的TypeScript游戏项目，具备良好的架构设计和类型安全保障。当前版本（v1.6）已完成大规模代码清理，遵循YAGNI原则，删除了450+行未使用代码，简化了类型系统，同时保持了完整的功能性和类型安全。项目现在更加简洁、高效、易于维护。
 
 
 

@@ -6,7 +6,7 @@ const { ccclass, property } = _decorator;
 
 /**
  * 物理子弹投射物
- * 用于：橘猫射手、波斯猫狙击手、孟加拉猎手、苏格兰折耳猫射手
+ * 用于：橘猫射手、波斯狙击手、孟加拉猎手、折耳射手
  * 特性：直线飞行，单体伤害，黄色子弹外观
  */
 @ccclass('PhysicalBullet')
@@ -18,27 +18,20 @@ export class PhysicalBullet extends BaseProjectile {
     @property({ tooltip: "暴击倍率" })
     public critMultiplier: number = 1.5;
     
-    protected onLoad(): void {
-        super.onLoad();
-    }
     
     /**
      * 初始化物理子弹的视觉外观
-     * 黄色圆形子弹，半径3像素
+     * 简单的黄色圆点
      */
     protected initializeVisuals(): void {
         if (!this.graphics) return;
-        
+
         this.graphics.clear();
-        this.graphics.fillColor = new Color(255, 255, 0, 255); // 亮黄色
-        this.graphics.circle(0, 0, 3);
+
+        // 绘制简单的黄色圆点
+        this.graphics.fillColor = new Color(255, 255, 0, 255); // 黄色
+        this.graphics.circle(0, 0, 4);
         this.graphics.fill();
-        
-        // 添加边框使子弹更清晰
-        this.graphics.strokeColor = new Color(255, 215, 0, 255); // 金黄色边框
-        this.graphics.lineWidth = 1;
-        this.graphics.circle(0, 0, 3);
-        this.graphics.stroke();
     }
     
     /**
@@ -78,14 +71,14 @@ export class PhysicalBullet extends BaseProjectile {
         
         const effectGraphics = effectNode.addComponent(Graphics);
         
-        // 创建黄色爆炸圆圈
+        // 创建黄色爆炸圆圈 - 放大1.7倍
         effectGraphics.fillColor = new Color(255, 255, 0, 150);
-        effectGraphics.circle(0, 0, 15);
+        effectGraphics.circle(0, 0, 25.5);
         effectGraphics.fill();
-        
-        // 添加白色中心点
+
+        // 添加白色中心点 - 放大1.7倍
         effectGraphics.fillColor = new Color(255, 255, 255, 200);
-        effectGraphics.circle(0, 0, 8);
+        effectGraphics.circle(0, 0, 13.6);
         effectGraphics.fill();
         
         // 特效持续0.2秒后销毁
@@ -112,19 +105,19 @@ export class PhysicalBullet extends BaseProjectile {
         
         const critGraphics = critEffectNode.addComponent(Graphics);
         
-        // 创建更大的橙红色爆炸圆圈
+        // 创建更大的橙红色爆炸圆圈 - 放大1.7倍
         critGraphics.fillColor = new Color(255, 140, 0, 180);
-        critGraphics.circle(0, 0, 25);
+        critGraphics.circle(0, 0, 42.5);
         critGraphics.fill();
-        
-        // 添加亮黄色中心
+
+        // 添加亮黄色中心 - 放大1.7倍
         critGraphics.fillColor = new Color(255, 255, 100, 220);
-        critGraphics.circle(0, 0, 15);
+        critGraphics.circle(0, 0, 25.5);
         critGraphics.fill();
-        
-        // 添加白色核心
+
+        // 添加白色核心 - 放大1.7倍
         critGraphics.fillColor = new Color(255, 255, 255, 255);
-        critGraphics.circle(0, 0, 8);
+        critGraphics.circle(0, 0, 13.6);
         critGraphics.fill();
         
         // 暴击特效持续0.3秒
@@ -148,7 +141,7 @@ export class PhysicalBullet extends BaseProjectile {
     
     /**
      * 设置暴击属性
-     * 波斯猫狙击手等英雄会设置暴击属性
+     * 波斯狙击手等英雄会设置暴击属性
      */
     public setCriticalProperties(critChance: number, critMultiplier: number): void {
         this.critChance = Math.max(0, Math.min(1, critChance)); // 限制在0-1之间
@@ -160,5 +153,18 @@ export class PhysicalBullet extends BaseProjectile {
      */
     public get expectedDamage(): number {
         return this.damage * (1 + this.critChance * (this.critMultiplier - 1));
+    }
+
+    /**
+     * 获取物理子弹投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            // 使用默认配置，无需特殊设置
+        };
     }
 }

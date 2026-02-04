@@ -1,7 +1,5 @@
-import { _decorator, Color, Graphics, Node, tween, Vec3 } from 'cc';
-import { BattleManager } from '../../managers/BattleManager';
+import { _decorator, Color, tween, Sprite } from 'cc';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
-import { DrawingHelper } from '../../utils/DrawingHelper';
 import { BaseMouse } from './BaseMouse';
 
 const { ccclass, property } = _decorator;
@@ -12,10 +10,12 @@ export class ArmoredMouse extends BaseMouse {
     @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 6;
 
-    @property({ tooltip: "护甲值（减伤）" })
-    public armor: number = 3;
+    // 护甲值从配置中动态获取，确保对象池重用时正确
+    public get armor(): number {
+        return this.getConfig().armorValue || 3;
+    }
 
-    // 私有属性（基类已提供 _graphics, _gameManager, _nameLabel, _healthBarContainer, _healthBarForeground）
+    // 私有属性（基类已提供 _gameManager, _nameLabel, _healthBarContainer, _healthBarForeground）
 
     // 装甲老鼠使用BaseMouse统一移动系统，移动相关属性已在基类中管理
 
@@ -26,7 +26,7 @@ export class ArmoredMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.ARMORED_MOUSE,
-            name: "装甲老鼠",
+            name: "钢甲鼠",
             category: EnemyCategory.ARMORED,
             health: 60,
             maxHealth: 60,
@@ -36,11 +36,11 @@ export class ArmoredMouse extends BaseMouse {
         };
     }
 
-    // 实现BaseMouse的抽象方法 - 合并函数，消除不必要的中间层
-    // 移除错误的initializeHealthBar()调用 - 该方法不存在，基类已统一处理血条
-    protected initializeMouseVisuals(): void {
-        this.drawArmoredMouseAppearance();
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string {
+        return "images/enemies/ArmoredMouse";
     }
+
 
     // 装甲老鼠不再有攻击能力，移除 performAttack 方法
 
@@ -53,9 +53,12 @@ export class ArmoredMouse extends BaseMouse {
         const patterns: ('zigzag' | 'curves' | 'spiral' | 'dash' | 'straight' | 'stealth_sway')[] = ['straight', 'zigzag', 'curves'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
 
-        // 装甲老鼠使用BaseMouse统一的移动参数，无需自定义停顿逻辑
+        // 设置装甲老鼠的移动参数
+        this._zigzagAmplitude = 8 + Math.random() * 10; // 8-18像素（中等摆动）
+        this._segmentCount = 4 + Math.floor(Math.random() * 3); // 4-6段移动
 
-        console.log(`装甲老鼠移动模式: ${this._movementPattern}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
 
 
@@ -64,74 +67,6 @@ export class ArmoredMouse extends BaseMouse {
     // 删除重复的血条创建系统！
     // BaseMouse已统一处理所有血条创建和管理，并根据EnemyCategory自动配置样式
 
-    // 绘制装甲老鼠外观
-    private drawArmoredMouseAppearance(): void {
-        this._graphics = this.getGraphicsComponent();
-        if (!this._graphics) return;
-
-        this._graphics.clear();
-
-        // 绘制装甲老鼠身体和边框（一条路径）
-        this._graphics.rect(-18, -18, 36, 36);
-
-        // 填充身体（深灰色，表示金属）
-        this._graphics.fillColor = new Color(105, 105, 105); // 深灰色
-        this._graphics.fill();
-
-        // 描边装甲边框（金色）
-        this._graphics.strokeColor = new Color(255, 215, 0); // 金色
-        this._graphics.lineWidth = 3;
-        this._graphics.stroke();
-
-        // 绘制装甲细节（装甲板）
-        this._graphics.strokeColor = new Color(192, 192, 192); // 银色细节
-        this._graphics.lineWidth = 2;
-        // 水平装甲线
-        this._graphics.moveTo(-15, -8);
-        this._graphics.lineTo(15, -8);
-        this._graphics.moveTo(-15, 0);
-        this._graphics.lineTo(15, 0);
-        this._graphics.moveTo(-15, 8);
-        this._graphics.lineTo(15, 8);
-        // 垂直装甲线
-        this._graphics.moveTo(-8, -15);
-        this._graphics.lineTo(-8, 15);
-        this._graphics.moveTo(0, -15);
-        this._graphics.lineTo(0, 15);
-        this._graphics.moveTo(8, -15);
-        this._graphics.lineTo(8, 15);
-        this._graphics.stroke();
-
-        // 绘制盾牌标识
-        this._graphics.fillColor = new Color(255, 215, 0); // 金色盾牌
-        this._graphics.moveTo(0, -15);
-        this._graphics.lineTo(-8, -8);
-        this._graphics.lineTo(-8, 8);
-        this._graphics.lineTo(0, 15);
-        this._graphics.lineTo(8, 8);
-        this._graphics.lineTo(8, -8);
-        this._graphics.close();
-        this._graphics.fill();
-
-        // 盾牌轮廓
-        this._graphics.strokeColor = new Color(184, 134, 11); // 深金色
-        this._graphics.lineWidth = 2;
-        this._graphics.moveTo(0, -15);
-        this._graphics.lineTo(-8, -8);
-        this._graphics.lineTo(-8, 8);
-        this._graphics.lineTo(0, 15);
-        this._graphics.lineTo(8, 8);
-        this._graphics.lineTo(8, -8);
-        this._graphics.close();
-        this._graphics.stroke();
-
-        // 绘制眼睛（蓝色，表示冷静）
-        this._graphics.fillColor = new Color(0, 0, 255); // 蓝色眼睛
-        this._graphics.circle(-6, -6, 2);
-        this._graphics.fill();
-        this._graphics.circle(6, -6, 2);
-        this._graphics.fill();
-    }
 
     // 重写标签配置 - 使用统一大字体
 
@@ -150,16 +85,19 @@ export class ArmoredMouse extends BaseMouse {
         // 护甲减伤计算
         const actualDamage = Math.max(1, damage - this.armor); // 至少造成1点伤害
 
-        // 调用父类方法但传入减伤后的伤害
+        // 调用基类的takeDamage方法，让基类统一处理血条更新
         this.currentHealth = Math.max(0, this.currentHealth - actualDamage);
-        this.updateHealthBarDisplay();
+        this.updateMouseHealthBarDisplay(); // 使用基类的血条更新方法
 
         // 触发受伤回调
         this.onTakeDamage(actualDamage);
 
+        // 简化的受伤效果
+        this.playHurtEffect();
+
         // 显示护甲阻挡效果
         if (damage > actualDamage) {
-            this.showArmorBlockEffect(damage - actualDamage);
+            console.log(`护甲阻挡了 ${damage - actualDamage} 点伤害`);
         }
 
         console.log(`装甲老鼠受到 ${damage} 点伤害，护甲阻挡 ${damage - actualDamage} 点，实际受到 ${actualDamage} 点伤害`);
@@ -170,50 +108,6 @@ export class ArmoredMouse extends BaseMouse {
         }
     }
 
-    // 显示护甲阻挡效果
-    private showArmorBlockEffect(blockedDamage: number): void {
-        const effectNode = new Node("ArmorBlockEffect");
-        effectNode.parent = this.node.parent;
-        effectNode.setPosition(Vec3.add(new Vec3(), this.node.position, new Vec3(0, 20, 0)));
-
-        const effectGraphics = effectNode.addComponent(Graphics);
-        effectGraphics.fillColor = new Color(255, 215, 0, 200); // 金色护甲效果
-        // 根据阻挡伤害调整效果大小
-        const effectSize = Math.min(20, 10 + blockedDamage * 2);
-        effectGraphics.circle(0, 0, effectSize);
-        effectGraphics.fill();
-
-        // 使用Tween系统实现护甲闪光效果，替代requestAnimationFrame
-        let scale = 1;
-        let opacity = 200;
-        const maxFrames = 10; // 控制动画帧数
-        let currentFrame = 0;
-
-        const updateEffect = () => {
-            currentFrame++;
-            scale = 1 + currentFrame * 0.1;
-            opacity = Math.max(0, 200 - currentFrame * 20);
-
-            if (effectGraphics && effectNode.isValid && currentFrame < maxFrames && opacity > 0) {
-                effectGraphics.clear();
-                effectGraphics.fillColor = new Color(255, 215, 0, opacity);
-                effectGraphics.circle(0, 0, 15 * scale);
-                effectGraphics.fill();
-
-                // 使用Tween进行下一帧更新
-                tween(effectNode)
-                    .delay(0.05)
-                    .call(updateEffect)
-                    .start();
-            } else {
-                if (effectNode && effectNode.isValid) {
-                    effectNode.destroy();
-                }
-            }
-        };
-
-        updateEffect();
-    }
 
     // 攻击城堡
     // 移除攻击城堡方法，使用父类的 reachCastle 方法
@@ -224,40 +118,26 @@ export class ArmoredMouse extends BaseMouse {
     protected onTakeDamage(damage: number): void {
         console.log(`装甲老鼠实际受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
 
-        // 更新血条显示
-        this.updateHealthBarDisplay();
-
-        // 受伤闪烁效果
+        // 受伤闪烁效果（血条更新已在takeDamage中处理）
         this.playHurtEffect();
     }
 
-    // 更新血条显示
-    private updateHealthBarDisplay(): void {
-        if (this._healthBarForeground && this._healthBarContainer) {
-            const healthPercent = this.currentHealth / this.maxHealth;
-            DrawingHelper.updateHealthBar(this._healthBarForeground, healthPercent, 35, 5);
-
-            // 血条始终显示，只有死亡时才隐藏
-            this._healthBarContainer.active = healthPercent > 0;
-        }
-    }
+    // 已删除自定义血条更新方法，使用基类的updateMouseHealthBarDisplay()
 
     // 播放受伤效果
     private playHurtEffect(): void {
-        if (!this._graphics) return;
+        const sprite = this.node.getComponent(Sprite);
+        if (!sprite) return;
 
-        // 装甲受伤效果 - 金色闪光
-        this._graphics.clear();
-        this._graphics.fillColor = new Color(255, 215, 100); // 亮金色受伤效果
-        this._graphics.rect(-18, -18, 36, 36);
-        this._graphics.fill();
+        // 受伤闪红效果
+        sprite.color = new Color(255, 100, 100);
 
-        // 300ms后恢复原色，使用Tween系统替代scheduleOnce
+        // 300ms后恢复原色
         tween(this.node)
             .delay(0.3)
             .call(() => {
-                if (this._graphics && this.node.isValid) {
-                    this.drawArmoredMouseAppearance();
+                if (sprite && this.node.isValid) {
+                    sprite.color = Color.WHITE;
                 }
             })
             .start();
@@ -283,35 +163,28 @@ export class ArmoredMouse extends BaseMouse {
 
     // 创建装甲破碎特效
     private createArmorBreakEffect(): void {
-        const effectNode = new Node("ArmorBreakEffect");
-        effectNode.parent = this.node.parent;
-        effectNode.setPosition(this.node.position);
+        // 简化的死亡效果
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 215, 0, 150); // 金色半透明
 
-        const effectGraphics = effectNode.addComponent(Graphics);
-
-        // 创建多个破碎片段
-        for (let i = 0; i < 6; i++) {
-            const angle = (i / 6) * Math.PI * 2;
-            const x = Math.cos(angle) * 20;
-            const y = Math.sin(angle) * 20;
-
-            effectGraphics.fillColor = new Color(255, 215, 0, 150); // 半透明金色
-            effectGraphics.rect(x - 3, y - 3, 6, 6);
-            effectGraphics.fill();
+            tween(sprite)
+                .to(0.5, { color: new Color(255, 215, 0, 0) })
+                .start();
         }
-
-        // 使用Tween系统进行延迟销毁，避免在已销毁的节点上调用scheduleOnce
-        tween(effectNode)
-            .delay(0.5)
-            .call(() => {
-                if (effectNode && effectNode.isValid) {
-                    effectNode.destroy();
-                }
-            })
-            .start();
     }
 
     // 装甲老鼠使用BaseMouse的统一待机状态处理
+
+    /**
+     * 对象池重用时的额外初始化
+     * 装甲老鼠重用时无需特殊处理，基类会在startMovement时统一初始化移动参数
+     */
+    protected onReuse(): void {
+        // 移除重复的移动参数初始化，避免与基类的startMovement冲突
+        // 基类会在startMovementTowardsCastle()时统一调用initializeMovementBehavior()
+        console.log(`[ArmoredMouse] 🔄 对象池重用，移动参数将在开始移动时初始化`);
+    }
 
     // 移除攻击英雄方法，装甲老鼠不再攻击
 }

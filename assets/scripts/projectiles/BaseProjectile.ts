@@ -3,7 +3,7 @@ import { BaseHero } from '../components/heroes/BaseHero';
 import { BaseMouse } from '../components/enemies/BaseMouse';
 import { BattleManager } from '../managers/BattleManager';
 import { GridDeploymentSystem } from '../systems/GridDeploymentSystem';
-import { PROJECTILE_CONFIG } from '../types/GameConstants';
+import { PROJECTILE_CONFIG, ProjectileType } from '../types/GameConstants';
 
 const { ccclass, property } = _decorator;
 
@@ -11,6 +11,8 @@ const { ccclass, property } = _decorator;
  * 投射物抽象基类
  * 定义所有投射物的通用行为和接口
  * 子类需要实现具体的视觉效果、击中逻辑和伤害处理
+ *
+ * 实现 IPoolHandlerComponent 接口，支持对象池的 reuse() 和 unuse() 方法
  */
 @ccclass('BaseProjectile')
 export abstract class BaseProjectile extends Component {
@@ -23,7 +25,7 @@ export abstract class BaseProjectile extends Component {
     protected speed: number = 300;
     
     @property({ tooltip: "碰撞检测半径" })
-    protected hitRadius: number = 25;
+    protected hitRadius: number = 40; // 放大1.6倍以匹配视觉尺寸
     
     @property({ tooltip: "最大飞行距离" })
     protected maxRange: number = PROJECTILE_CONFIG.maxRange;
@@ -38,6 +40,9 @@ export abstract class BaseProjectile extends Component {
 
     // === 组件引用 ===
     protected graphics: Graphics | null = null;
+
+    // === 对象池支持 ===
+    protected poolType: ProjectileType | null = null;
     
     // === 抽象方法，子类必须实现 ===
     
@@ -68,15 +73,44 @@ export abstract class BaseProjectile extends Component {
      * @returns 是否可以击中该目标
      */
     protected abstract canHitTarget(target: BaseMouse): boolean;
-    
+
+    /**
+     * 获取投射物配置 - 子类必须实现
+     * 替代重写onLoad方法的统一配置方式
+     * @returns 投射物配置对象
+     */
+    protected abstract getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    };
+
     // === 通用方法，基类实现 ===
-    
+
     protected onLoad(): void {
         // 获取或创建Graphics组件
         this.graphics = this.node.getComponent(Graphics) || this.node.addComponent(Graphics);
-        
+
+        // 应用子类配置
+        this.applyProjectileConfig();
+
         // 初始化视觉外观
         this.initializeVisuals();
+    }
+
+    /**
+     * 应用投射物配置
+     */
+    private applyProjectileConfig(): void {
+        const config = this.getProjectileConfig();
+
+        if (config.maxRange !== undefined) {
+            this.maxRange = config.maxRange;
+        }
+
+        if (config.hitRadius !== undefined) {
+            this.hitRadius = config.hitRadius;
+        }
     }
     
     /**
@@ -296,28 +330,107 @@ export abstract class BaseProjectile extends Component {
     }
     
     /**
-     * 销毁投射物
+     * 销毁投射物 - 现在支持对象池回收
      */
     protected destroyProjectile(): void {
         if (!this.isActive) return;
-        
+
         this.isActive = false;
-        
+
         // 停止所有动画
         Tween.stopAllByTarget(this.node);
-        
+
         // 取消碰撞检测调度
         const collisionCheckFunction = (this.node as any)._collisionCheckFunction;
         if (collisionCheckFunction) {
             this.unschedule(collisionCheckFunction);
             delete (this.node as any)._collisionCheckFunction;
         }
-        
-        // 直接销毁节点 - Cocos Creator会在当前帧逻辑结束后统一处理
-        if (this.node && this.node.isValid) {
-            this.node.destroy();
+
+        // 回收到对象池而不是直接销毁
+        if (this.poolType && this.node && this.node.isValid) {
+            // 使用全局事件通知回收，避免循环依赖
+            director.emit('projectile-recycle', this.node, this.poolType);
+        } else {
+            // 降级处理：直接销毁
+            if (this.node && this.node.isValid) {
+                this.node.destroy();
+            }
         }
     }
+
+    // === 对象池接口方法 ===
+
+    /**
+     * 设置投射物的对象池类型
+     * @param type 投射物类型
+     */
+    public setPoolType(type: ProjectileType): void {
+        this.poolType = type;
+    }
+
+    /**
+     * 对象池重用方法 - 当从对象池中取出时调用
+     * 重置投射物状态以供重用
+     * 实现 IPoolHandlerComponent 接口
+     */
+    public reuse(_args: any): void {
+        // 简化日志：投射物重用
+
+        // 重置基础状态
+        this.isActive = false;
+        this.owner = null;
+        this.traveledDistance = 0;
+        this.startPosition = Vec3.ZERO.clone();
+        this.targetPosition = Vec3.ZERO.clone();
+        this.direction = Vec3.ZERO.clone();
+
+        // 重置节点状态
+        this.node.setPosition(Vec3.ZERO);
+        this.node.active = true;
+
+        // 重置Graphics组件
+        if (this.graphics) {
+            this.graphics.clear();
+            // 重新初始化视觉效果
+            this.initializeVisuals();
+        }
+
+        // 对象池重用完成
+    }
+
+    /**
+     * 对象池回收方法 - 当放入对象池时调用
+     * 清理投射物状态
+     * 实现 IPoolHandlerComponent 接口
+     */
+    public unuse(): void {
+        // 简化日志：投射物回收
+
+        // 停止所有动画和调度
+        Tween.stopAllByTarget(this.node);
+        this.unscheduleAllCallbacks();
+
+        // 重置状态
+        this.isActive = false;
+        this.node.active = false;
+
+        // 清理Graphics
+        if (this.graphics) {
+            this.graphics.clear();
+        }
+
+        // 清理碰撞检测调度
+        const collisionCheckFunction = (this.node as any)._collisionCheckFunction;
+        if (collisionCheckFunction) {
+            this.unschedule(collisionCheckFunction);
+            delete (this.node as any)._collisionCheckFunction;
+        }
+
+        // 对象池回收完成
+    }
+
+
     
     /**
      * 获取基础伤害值

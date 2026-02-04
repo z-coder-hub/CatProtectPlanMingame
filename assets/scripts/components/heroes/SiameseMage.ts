@@ -1,11 +1,7 @@
-import { _decorator, Component, Node, Vec3, Graphics, Color, Animation, EventTouch, Label, tween, Tween } from 'cc';
+import { _decorator, Node } from 'cc';
 import { BaseHero } from './BaseHero';
-import { BaseMouse } from '../enemies/BaseMouse';
-import { HeroType, HeroState } from '../../types/GameTypes';
-import { HERO_CONFIGS } from '../../types/GameConstants';
+import { HeroType } from '../../types/GameTypes';
 import { ProjectileSystem } from '../../projectiles/ProjectileSystem';
-import { EffectHelper } from '../../utils/EffectHelper';
-import { BattleManager } from '../../managers/BattleManager';
 
 const { ccclass, property } = _decorator;
 
@@ -23,51 +19,27 @@ export class SiameseMage extends BaseHero {
     
     // 英雄类型
     public readonly heroType: HeroType = HeroType.SIAMESE_MAGE;
-    
-    // 实现BaseHero的抽象方法
+
+    // 实现BaseHero的抽象方法：初始化英雄属性
     protected initializeHeroStats(): void {
-        const config = HERO_CONFIGS[HeroType.SIAMESE_MAGE];
-        
-        this.unitName = config.name;
-        this.attackDamage = config.attackDamage;
-        this.attackRange = config.attackRange;
-        this.attackSpeed = config.attackSpeed;
-        this.bulletSpeed = config.bulletSpeed || 350;
-        this.cost = config.cost;
-        this.aoeDamage = config.aoeDamage || 1.5;
-        this.aoeRange = config.aoeRange || 80;
+        this.unitName = "暹罗猫法师";
+        this.attackDamage = 20;
+        this.attackRange = 300;
+        this.attackSpeed = 1.2;
+        this.bulletSpeed = 250;
+        this.cost = 70;
+
+        // 设置AOE属性
+        this.aoeDamage = 1.5;
+        this.aoeRange = 80;
     }
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeAnimation();
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
     
     // 继承父类start()方法，无需重写
-    
-    // 重写标签配置，使用完整英雄名称
-    protected getHeroLabelConfig() {
-        return {
-            text: this.unitName || "暹罗猫法师",
-            fontSize: 18,
-            color: Color.WHITE,
-            yOffset: 35,
-            size: { width: 110, height: 24 }  // 增加宽度以容纳完整名称
-        };
-    }
-    
-    private initializeAnimation(): void {
-        this._animation = this.node.getComponent(Animation);
-        if (this._animation) {
-            if (this._animation.getState('siamese_mage_idle')) {
-                this._animation.play('siamese_mage_idle');
-            }
-        }
-    }
-    
-    protected update(dt: number): void {
-        super.update(dt);
-    }
     
     // 目标分配由 BattleManager 统一处理
     
@@ -83,64 +55,12 @@ export class SiameseMage extends BaseHero {
         return 'magic';
     }
 
-    // 已移除多余的performAttack包装方法，直接使用onAttack实现
-    
-    private castMagicMissile(target: Node): void {
-        if (!target || !target.isValid) return;
-        
-        // 暹罗猫使用瞬发魔法攻击
-        const targetUnit = target.getComponent(BaseMouse);
-        if (targetUnit) {
-            targetUnit.takeDamage(this.attackDamage);
-            this.createMagicHitEffect(target.position);
-        }
+    // 使用BaseHero的通用方法，无需重写
+
+    // 实现抽象方法：提供英雄图片路径
+    protected getPlacedImagePath(): string | null {
+        return "images/placed/SiameseMage_placed";
     }
-    
-    private createMagicHitEffect(position: Vec3): void {
-        if (this.node.parent) {
-            EffectHelper.createMagicHitEffect(position, this.node.parent);
-        }
-    }
-    
-    
-    
-    private castElementalExplosion(centerPosition: Vec3): void {
-        const battleManager = BattleManager.instance;
-        if (!battleManager) return;
-        
-        // 对爆炸范围内的所有敌人造成伤害
-        const affectedEnemies = battleManager.GetEnemiesInRange(centerPosition, this.aoeRange);
-        const explosionDamage = this.attackDamage * this.aoeDamage;
-        
-        for (const enemy of affectedEnemies) {
-            const enemyUnit = enemy.getComponent(BaseMouse);
-            if (enemyUnit) {
-                enemyUnit.takeDamage(explosionDamage);
-            }
-        }
-        
-        // 创建爆炸特效
-        this.createExplosionEffect(centerPosition);
-    }
-    
-    private createExplosionEffect(position: Vec3): void {
-        if (this.node.parent) {
-            EffectHelper.createExplosionEffect(position, this.node.parent, this.aoeRange);
-        }
-    }
-    
-    
-    
-    // 重写基类的点击处理方法
-    protected onHeroClickHandler(): void {
-        console.log(`${this.unitName} 被点击`);
-    }
-    
-    private createClickFeedback(): void {
-        if (this.node.parent) {
-            const feedbackPos = Vec3.add(new Vec3(), this.node.position, new Vec3(0, 40, 0));
-            EffectHelper.createClickFeedback(feedbackPos, this.node.parent);
-        }
-    }
-    
+
+
 }

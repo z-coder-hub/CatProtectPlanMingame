@@ -1,4 +1,4 @@
-import { _decorator, Color } from 'cc';
+import { _decorator, Color, Sprite } from 'cc';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { EffectHelper } from '../../utils/EffectHelper';
 import { BaseMouse } from './BaseMouse';
@@ -11,7 +11,7 @@ export class GiantMouse extends BaseMouse {
     @property({ tooltip: "金币奖励", override: true })
     public goldReward: number = 8;
 
-    // 私有属性（基类已提供 _graphics 和移动系统）
+    // 私有属性（基类已提供 _gameManager 和移动系统）
 
     // 敌人类型
     public readonly enemyType: EnemyType = EnemyType.GIANT_MOUSE;
@@ -20,8 +20,8 @@ export class GiantMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.GIANT_MOUSE,
-            name: "巨型老鼠",
-            category: EnemyCategory.BASIC,
+            name: "巨鼠",
+            category: EnemyCategory.ARMORED, // 改为ARMORED分类，获得适中的大体型(1.3倍节点缩放+45px图片)
             health: 80,
             maxHealth: 80,
             moveSpeed: 80,
@@ -29,56 +29,12 @@ export class GiantMouse extends BaseMouse {
         };
     }
 
-    // 实现BaseMouse的抽象方法
-    protected initializeMouseVisuals(): void {
-        this._graphics = this.getGraphicsComponent();
-        this.drawGiantMouseAppearance();
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string {
+        return "images/enemies/GiantMouse";
     }
 
-    private drawGiantMouseAppearance(): void {
-        if (!this._graphics) return;
 
-        this._graphics.clear();
-
-        // 巨型老鼠 - 更大更威武的外观
-        this._graphics.fillColor = new Color(100, 50, 25); // 深棕色
-        this._graphics.circle(0, 0, 25); // 更大的身体
-        this._graphics.fill();
-
-        // 边框
-        this._graphics.strokeColor = new Color(60, 30, 15);
-        this._graphics.lineWidth = 2;
-        this._graphics.circle(0, 0, 25);
-        this._graphics.stroke();
-
-        // 耳朵
-        this._graphics.fillColor = new Color(80, 40, 20);
-        this._graphics.circle(-15, 15, 8);
-        this._graphics.fill();
-        this._graphics.circle(15, 15, 8);
-        this._graphics.fill();
-
-        // 眼睛 - 凶恶的红眼
-        this._graphics.fillColor = new Color(255, 0, 0);
-        this._graphics.circle(-8, 8, 4);
-        this._graphics.fill();
-        this._graphics.circle(8, 8, 4);
-        this._graphics.fill();
-
-        // 獠牙
-        this._graphics.fillColor = new Color(255, 255, 255);
-        this._graphics.rect(-3, -8, 2, 8);
-        this._graphics.fill();
-        this._graphics.rect(1, -8, 2, 8);
-        this._graphics.fill();
-
-        // 尾巴
-        this._graphics.strokeColor = new Color(100, 50, 25);
-        this._graphics.lineWidth = 6;
-        this._graphics.moveTo(20, -10);
-        this._graphics.lineTo(35, -20);
-        this._graphics.stroke();
-    }
 
     // 重写基类移动行为初始化，使用巨型老鼠的参数
     protected initializeMovementBehavior(): void {
@@ -90,13 +46,10 @@ export class GiantMouse extends BaseMouse {
         this._zigzagAmplitude = 15 + Math.random() * 10; // 15-25像素（比基础老鼠小）
         this._segmentCount = 3 + Math.floor(Math.random() * 3); // 3-5段移动（更少分段）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
 
-    protected update(dt: number): void {
-        super.update(dt);
-        // 基类Tween系统自动处理移动，无需额外处理
-    }
 
 
     // 重写受伤方法，添加巨型老鼠的特殊反应
@@ -126,43 +79,15 @@ export class GiantMouse extends BaseMouse {
         this.moveSpeed *= 1.5;
         // 移除攻击力提升，巨型老鼠不再攻击
 
-        // 变红色表示狂暴
-        if (this._graphics) {
-            this._graphics.clear();
-            this._graphics.fillColor = new Color(150, 50, 50); // 深红色
-            this._graphics.circle(0, 0, 25);
-            this._graphics.fill();
-
-            // 重绘其他部分...
-            this.drawBerserkAppearance();
+        // 简化的狂暴效果
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(150, 50, 50);
         }
 
         this.createBerserkEffect();
     }
 
-    private drawBerserkAppearance(): void {
-        if (!this._graphics) return;
-
-        // 狂暴状态的外观 - 更加凶恶
-        this._graphics.strokeColor = new Color(200, 0, 0);
-        this._graphics.lineWidth = 3;
-        this._graphics.circle(0, 0, 25);
-        this._graphics.stroke();
-
-        // 发光的红眼
-        this._graphics.fillColor = new Color(255, 50, 50);
-        this._graphics.circle(-8, 8, 5);
-        this._graphics.fill();
-        this._graphics.circle(8, 8, 5);
-        this._graphics.fill();
-
-        // 更大的獠牙
-        this._graphics.fillColor = new Color(255, 255, 255);
-        this._graphics.rect(-4, -10, 3, 10);
-        this._graphics.fill();
-        this._graphics.rect(1, -10, 3, 10);
-        this._graphics.fill();
-    }
 
     private createBerserkEffect(): void {
         if (this.node.parent) {
@@ -189,10 +114,10 @@ export class GiantMouse extends BaseMouse {
             EffectHelper.createEnemyDeathEffect(this.node.position, this.node.parent);
         }
 
-        // 变灰色表示死亡
-        if (this._graphics) {
-            this._graphics.fillColor = new Color(80, 80, 80);
-            this.drawGiantMouseAppearance();
+        // 简化的死亡效果
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(80, 80, 80);
         }
     }
 
@@ -210,6 +135,17 @@ export class GiantMouse extends BaseMouse {
     }
 
     // 基类已实现完整的移动管理，无需额外的startMoving方法
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置巨鼠的移动行为参数，确保每次重用时都有新的移动模式
+     */
+    protected onReuse(): void {
+        // 重新初始化移动行为，确保对象池重用时路径不会混乱
+        this.initializeMovementBehavior();
+
+        console.log(`[GiantMouse] 🔄 对象池重用时重新初始化移动参数: 模式=${this._movementPattern}, 幅度=${this._zigzagAmplitude.toFixed(1)}, 分段=${this._segmentCount}`);
+    }
 
     // 获取敌人类型
     public getEnemyType(): EnemyType {

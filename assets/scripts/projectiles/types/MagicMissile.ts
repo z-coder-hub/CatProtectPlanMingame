@@ -19,38 +19,134 @@ export class MagicMissile extends BaseProjectile {
     @property({ tooltip: "AOE攻击范围" })
     public aoeRange: number = 80;
     
-    protected onLoad(): void {
-        super.onLoad();
-    }
     
     /**
      * 初始化魔法弹的视觉外观
-     * 橙红色火球，带有火焰效果
+     * 多层火焰设计，魔法符文环绕，能量脉动核心
      */
     protected initializeVisuals(): void {
         if (!this.graphics) return;
-        
+
         this.graphics.clear();
-        
-        // 外层火焰（橙红色）
-        this.graphics.fillColor = new Color(255, 69, 0, 200); // 橙红色
-        this.graphics.circle(0, 0, 5);
+
+        // === 绘制五层火焰效果 === - 放大1.6倍
+
+        // 第1层：外层深红火焰（范围最大）
+        this.graphics.fillColor = new Color(139, 0, 0, 120); // 深红色，半透明
+        this.graphics.circle(0, 0, 10.4);
         this.graphics.fill();
-        
-        // 中层火焰（橙色）
-        this.graphics.fillColor = new Color(255, 140, 0, 220); // 橙色
-        this.graphics.circle(0, 0, 3.5);
+
+        // 第2层：橙红色火焰
+        this.graphics.fillColor = new Color(255, 69, 0, 180); // 橙红色
+        this.graphics.circle(0, 0, 8.32);
         this.graphics.fill();
-        
-        // 内层火焰（黄色核心）
-        this.graphics.fillColor = new Color(255, 255, 0, 255); // 亮黄色
-        this.graphics.circle(0, 0, 2);
+
+        // 第3层：亮橙色火焰
+        this.graphics.fillColor = new Color(255, 140, 0, 200); // 亮橙色
+        this.graphics.circle(0, 0, 6.08);
         this.graphics.fill();
-        
-        // 添加火焰边框效果
-        this.graphics.strokeColor = new Color(255, 0, 0, 150); // 红色边框
-        this.graphics.lineWidth = 1;
-        this.graphics.circle(0, 0, 5);
+
+        // 第4层：金黄色火焰
+        this.graphics.fillColor = new Color(255, 215, 0, 230); // 金黄色
+        this.graphics.circle(0, 0, 4);
+        this.graphics.fill();
+
+        // 第5层：白色能量核心
+        this.graphics.fillColor = new Color(255, 255, 255, 255); // 纯白色核心
+        this.graphics.circle(0, 0, 1.92);
+        this.graphics.fill();
+
+        // === 魔法符文环绕效果 ===
+
+        // 外层符文环（深红色）- 放大1.6倍
+        this.graphics.strokeColor = new Color(200, 50, 50, 200);
+        this.graphics.lineWidth = 2.4;
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * 60) * Math.PI / 180;
+            const radius = 11.2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+
+            // 绘制小型符文标记
+            this.graphics.circle(x, y, 1.28);
+            this.graphics.stroke();
+
+            // 符文连接线
+            const nextAngle = ((i + 1) * 60) * Math.PI / 180;
+            const nextX = Math.cos(nextAngle) * radius;
+            const nextY = Math.sin(nextAngle) * radius;
+            this.graphics.moveTo(x, y);
+            this.graphics.lineTo(nextX, nextY);
+        }
+        this.graphics.stroke();
+
+        // 内层能量符文（金色）- 放大1.6倍
+        this.graphics.strokeColor = new Color(255, 215, 0, 255);
+        this.graphics.lineWidth = 1.6;
+        for (let i = 0; i < 4; i++) {
+            const angle = (i * 90 + 45) * Math.PI / 180; // 偏移45度
+            const radius = 7.2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+
+            // 绘制能量符文
+            this.graphics.moveTo(x - 0.8, y - 0.8);
+            this.graphics.lineTo(x + 0.8, y + 0.8);
+            this.graphics.moveTo(x + 0.8, y - 0.8);
+            this.graphics.lineTo(x - 0.8, y + 0.8);
+        }
+        this.graphics.stroke();
+
+        // === 火焰细节和轮廓 ===
+
+        // 火焰跳动效果（不规则边缘）- 放大1.6倍
+        this.graphics.strokeColor = new Color(255, 100, 0, 180);
+        this.graphics.lineWidth = 1.28;
+        for (let i = 0; i < 8; i++) {
+            const angle = (i * 45) * Math.PI / 180;
+            const innerRadius = 5.6;
+            const outerRadius = 8.8 + Math.random() * 1.28; // 随机火焰长度
+
+            const innerX = Math.cos(angle) * innerRadius;
+            const innerY = Math.sin(angle) * innerRadius;
+            const outerX = Math.cos(angle) * outerRadius;
+            const outerY = Math.sin(angle) * outerRadius;
+
+            this.graphics.moveTo(innerX, innerY);
+            this.graphics.lineTo(outerX, outerY);
+        }
+        this.graphics.stroke();
+
+        // 主体火球轮廓 - 放大1.6倍
+        this.graphics.strokeColor = new Color(255, 0, 0, 200); // 深红色主轮廓
+        this.graphics.lineWidth = 1.92;
+        this.graphics.circle(0, 0, 8.32);
+        this.graphics.stroke();
+
+        // 能量核心轮廓 - 放大1.6倍
+        this.graphics.strokeColor = new Color(255, 255, 0, 255); // 黄色核心轮廓
+        this.graphics.lineWidth = 1.28;
+        this.graphics.circle(0, 0, 1.92);
+        this.graphics.stroke();
+
+        // === 魔法能量脉动线 === - 放大1.6倍
+        this.graphics.strokeColor = new Color(255, 255, 200, 150);
+        this.graphics.lineWidth = 0.8;
+
+        // 从核心向外的能量线
+        for (let i = 0; i < 12; i++) {
+            const angle = (i * 30) * Math.PI / 180;
+            const startRadius = 2.4;
+            const endRadius = 5.12;
+
+            const startX = Math.cos(angle) * startRadius;
+            const startY = Math.sin(angle) * startRadius;
+            const endX = Math.cos(angle) * endRadius;
+            const endY = Math.sin(angle) * endRadius;
+
+            this.graphics.moveTo(startX, startY);
+            this.graphics.lineTo(endX, endY);
+        }
         this.graphics.stroke();
     }
     
@@ -118,30 +214,30 @@ export class MagicMissile extends BaseProjectile {
         
         const effectGraphics = effectNode.addComponent(Graphics);
         
-        // 创建大型火焰爆炸效果
+        // 创建大型火焰爆炸效果 - 放大1.6倍
         // 外层爆炸（显示AOE范围）
         effectGraphics.fillColor = new Color(255, 69, 0, 100); // 半透明橙红色
         effectGraphics.circle(0, 0, this.aoeRange);
         effectGraphics.fill();
-        
+
         // 中层爆炸
         effectGraphics.fillColor = new Color(255, 140, 0, 150); // 橙色
-        effectGraphics.circle(0, 0, 40);
+        effectGraphics.circle(0, 0, 64);
         effectGraphics.fill();
-        
+
         // 内层爆炸
         effectGraphics.fillColor = new Color(255, 255, 0, 200); // 亮黄色
-        effectGraphics.circle(0, 0, 20);
+        effectGraphics.circle(0, 0, 32);
         effectGraphics.fill();
-        
+
         // 中心白色闪光
         effectGraphics.fillColor = new Color(255, 255, 255, 255);
-        effectGraphics.circle(0, 0, 10);
+        effectGraphics.circle(0, 0, 16);
         effectGraphics.fill();
-        
+
         // AOE范围边框
         effectGraphics.strokeColor = new Color(255, 0, 0, 200);
-        effectGraphics.lineWidth = 2;
+        effectGraphics.lineWidth = 3.2;
         effectGraphics.circle(0, 0, this.aoeRange);
         effectGraphics.stroke();
         
@@ -169,13 +265,13 @@ export class MagicMissile extends BaseProjectile {
         
         const aoeGraphics = aoeEffectNode.addComponent(Graphics);
         
-        // 小型火焰效果
+        // 小型火焰效果 - 放大1.6倍
         aoeGraphics.fillColor = new Color(255, 140, 0, 180);
-        aoeGraphics.circle(0, 0, 12);
+        aoeGraphics.circle(0, 0, 19.2);
         aoeGraphics.fill();
-        
+
         aoeGraphics.fillColor = new Color(255, 255, 0, 220);
-        aoeGraphics.circle(0, 0, 8);
+        aoeGraphics.circle(0, 0, 12.8);
         aoeGraphics.fill();
         
         // AOE特效持续0.2秒
@@ -211,5 +307,18 @@ export class MagicMissile extends BaseProjectile {
      */
     public get expectedAOEDamage(): number {
         return this.damage * this.aoeDamageMultiplier;
+    }
+
+    /**
+     * 获取魔法弹投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            // 使用默认配置，无需特殊设置
+        };
     }
 }

@@ -1,34 +1,23 @@
 {
   "permissions": {
     "allow": [
+      "Read(//Users/shiyuanchen/Project/Claude-Code-Development-Kit/**)",
       "Bash(find:*)",
-      "Bash(for file in assets/scripts/components/heroes/*.ts)",
-      "Bash(do echo \"=== $file ===\")",
-      "Bash(grep:*)",
-      "Bash(done)",
-      "Bash(npx tsc:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(git checkout:*)",
-      "Bash(for file in assets/scripts/components/enemies/SpeedMouse.ts assets/scripts/components/enemies/TankMouse.ts assets/scripts/components/enemies/MechMouse.ts)",
-      "Bash(for:*)",
+      "Bash(npx tsc:*)",
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
-      "Bash(do echo \"=== Processing $file ===\" grep -n \"getMouseLabelConfig\\|getHealthBarConfig\" \"assets/scripts/components/enemies/$file\")",
-      "Bash(do echo \"=== Processing $file ===\")",
-      "Bash(while read file)",
-      "Bash(do grep -q \"protected GetConfig\" \"$file\")",
-      "Bash(echo:*)",
-      "Bash(do echo -n \"$enemy: \")",
-      "Bash(do)",
-      "Bash(do echo \"=== 清理 $file ===\")",
-      "Bash(rg:*)",
-      "Bash(sed:*)",
-      "Bash(if grep -q \"protected GetConfig\" \"$file\")",
-      "Bash(then)",
-      "Bash(fi)",
-      "Bash(if grep -q \"this\\.GetConfig\" \"$file\")",
-      "Bash(continue)"
-    ]
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__performance_start_trace",
+      "mcp__chrome-devtools__performance_analyze_insight",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__list_network_requests"
+    ],
+    "deny": [],
+    "ask": []
   },
   "hooks": {
     "Notification": [

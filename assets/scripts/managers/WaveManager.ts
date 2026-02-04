@@ -87,7 +87,7 @@ export class WaveManager extends Component {
         }
 
         WaveManager._instance = this;
-        console.log("WaveManager初始化完成");
+        // WaveManager初始化完成
     }
 
     protected start(): void {
@@ -98,7 +98,7 @@ export class WaveManager extends Component {
             console.error("未找到BattleManager实例");
         }
 
-        console.log("WaveManager启动完成 - 独立执行控制层");
+        // WaveManager启动完成
     }
 
     // ====================== 关卡配置管理 ======================
@@ -108,7 +108,7 @@ export class WaveManager extends Component {
      */
     public SetLevelConfig(levelConfig: LevelConfig): void {
         this._currentLevelConfig = levelConfig;
-        console.log(`WaveManager设置关卡配置: ${levelConfig.name}, 波次数: ${levelConfig.waves.length}`);
+        // 简化日志：设置关卡配置完成
 
         // 重置波次状态
         this.ResetWaves();
@@ -165,7 +165,7 @@ export class WaveManager extends Component {
         this._waveState = WaveState.SPAWNING;
         this._waveTimer = 0;
 
-        console.log(`[WaveManager] 开始关卡 ${this._currentLevelConfig.name} 第 ${this.currentWaveNumber} 波（索引: ${this._currentWaveIndex}）`);
+        // 简化日志：波次开始信息已在UI中显示
 
         // 🎯 新架构：通过事件通知波次开始
         this.node.emit('wave-started', {
@@ -189,7 +189,7 @@ export class WaveManager extends Component {
             });
         }
 
-        console.log(`波次配置完成: ${this._enemySpawnQueue.length} 种敌人类型`);
+        // 简化日志：波次配置完成
     }
 
     // 更新等待状态
@@ -201,7 +201,7 @@ export class WaveManager extends Component {
             if (this.autoStartNextWave) {
                 // 开始当前设置的波次（这个值已经在PrepareNextWave中被正确设置）
                 this.StartWave(this.currentWaveNumber);
-                console.log(`[WaveManager] 等待时间结束，自动开始第 ${this.currentWaveNumber} 波`);
+                // 简化日志：自动开始波次
             }
         }
     }

@@ -1,8 +1,7 @@
-import { _decorator, Color, Component, Graphics, Label, Node, tween, Vec3 } from 'cc';
+import { _decorator, Color, Component, director, Graphics, Label, Node, resources, Sprite, SpriteFrame, tween, UITransform, Vec3 } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
-import { EnemyConfig, EnemyState, EnemyType, EnemyUnitStats, EnemyCategory } from '../../types/GameTypes';
-import { DrawingHelper } from '../../utils/DrawingHelper';
+import { EnemyCategory, EnemyConfig, EnemyState, EnemyType, EnemyUnitStats } from '../../types/GameTypes';
 
 const { ccclass, property } = _decorator;
 
@@ -39,7 +38,13 @@ export abstract class BaseMouse extends Component {
     protected _healthBarContainer: Node | null = null;
     protected _healthBarForeground: Graphics | null = null;
     protected _nameLabel: Label | null = null;
-    protected _graphics: Graphics | null = null;
+
+    // === 统一外观系统属性（模仿BaseHero） ===
+    protected _sprite: Sprite | null = null;
+
+    // === 外观抖动分离系统 ===
+    protected _visualNode: Node | null = null;              // 专用外观子节点，用于承载抖动效果
+    protected _visualOriginalScale: Vec3 = new Vec3(1, 1, 1); // 外观节点的原始缩放
 
     // === 统一Tween移动系统属性 ===
     protected _movementTween: any = null;
@@ -48,6 +53,11 @@ export abstract class BaseMouse extends Component {
 
     // 移动行为相关属性（从BasicMouse提取的完整系统）
     protected _zigzagAmplitude: number = 0;                 // 蜿蜒幅度
+    protected _shakeAmplitude: number = 0;                  // 抖动幅度
+    protected _scaleShakeAmplitude: number = 0;             // 大小抖动幅度
+    protected _originalScale: Vec3 = new Vec3(1, 1, 1);     // 真正的原始缩放
+
+    // === 对象池支持 ===
     protected _movementPattern: 'zigzag' | 'curves' | 'spiral' | 'dash' | 'straight' | 'stealth_sway' = 'zigzag'; // 移动模式
     protected _segmentCount: number = 6;                    // 移动分段数量
 
@@ -57,15 +67,32 @@ export abstract class BaseMouse extends Component {
     // 抽象方法，子类必须实现各自的配置
     protected abstract getConfig(): EnemyConfig;
 
+    // === 抽象方法：子类必须实现的图片路径 ===
+    /**
+     * 获取敌人图片资源路径 - 抽象方法，子类显式提供图片路径
+     * 符合开闭原则：新增敌人时只需实现此方法，无需修改基类
+     */
+    protected abstract getEnemyImagePath(): string;
+
     protected onLoad(): void {
-        this.initializeMouseStats();
-        this.initializeMouseVisuals();
-        this.createMouseNameLabel();
-        this.createMouseHealthBar();
+        // === 阶段1: 核心组件初始化 ===
+        this.initializeMouseStats();       // 1. 初始化属性配置
+        this.createVisualNode();           // 2. 创建专用外观节点
+        this.initializeMouseSize();        // 3. 统一大小管理 (会更新_originalScale)
+
+        // === 阶段2: 外观系统初始化 ===
+        this.initializeBaseVisuals();      // 4. 基础外观组件
+        this.initializeMouseVisuals();     // 5. 子类特殊外观
+
+        // === 阶段3: UI元素初始化 ===
+        this.createMouseNameLabel();       // 6. 名称标签
+        this.createMouseHealthBar();       // 7. 血条显示
     }
 
+    // === 核心初始化方法组 ===
+
     /**
-     * 初始化老鼠属性 - 使用子类配置
+     * 初始化老鼠属性 - 使用子类配置数据
      */
     private initializeMouseStats(): void {
         const config = this.getConfig();
@@ -75,6 +102,55 @@ export abstract class BaseMouse extends Component {
         this.currentHealth = config.health;
         this.moveSpeed = config.moveSpeed;
         this.goldReward = config.goldReward;
+    }
+
+    /**
+     * 初始化老鼠大小 - 统一的大小管理系统
+     */
+    private initializeMouseSize(): void {
+        const config = this.getConfig();
+        const scaleMultiplier = this.getMouseSizeMultiplier(config.category);
+
+        // 设置主节点缩放
+        this.node.setScale(scaleMultiplier, scaleMultiplier, 1);
+
+        // 更新保存的原始缩放值
+        this._originalScale = this.node.scale.clone();
+
+        // 如果外观节点存在，同步其UITransform尺寸和原始缩放
+        if (this._visualNode) {
+            // 同步外观节点的UITransform尺寸
+            const visualTransform = this._visualNode.getComponent(UITransform);
+            if (visualTransform) {
+                const baseSize = 50; // 基础尺寸
+                visualTransform.setContentSize(baseSize * scaleMultiplier, baseSize * scaleMultiplier);
+            }
+
+            // 保存外观节点的原始缩放
+            this._visualOriginalScale = this._visualNode.scale.clone();
+        }
+
+        // 敌人大小已设置
+    }
+
+    /**
+     * 根据敌人分类获取大小倍数
+     */
+    private getMouseSizeMultiplier(category: EnemyCategory): number {
+        switch (category) {
+            case EnemyCategory.BASIC:
+                return 1.0;     // 基础大小
+            case EnemyCategory.FAST:
+                return 0.8;     // 较小，体现速度
+            case EnemyCategory.ARMORED:
+                return 1.3;     // 较大，体现防御
+            case EnemyCategory.SPECIAL:
+                return 1.1;     // 略大，体现特殊
+            case EnemyCategory.BOSS:
+                return 1.5;     // 适度大型BOSS
+            default:
+                return 1.0;
+        }
     }
 
     protected start(): void {
@@ -95,16 +171,117 @@ export abstract class BaseMouse extends Component {
 
         // 启动移动（只执行一次）
         if (!this._movementStarted) {
+            // 简化日志：敌人开始移动
             this.startMovementTowardsCastle();
             this._movementStarted = true;
         }
     }
 
+    // === 外观节点管理方法组 ===
 
-    // 抽象方法，子类必须实现具体的老鼠外观
-    protected abstract initializeMouseVisuals(): void;
+    /**
+     * 创建专用外观节点 - 用于承载抖动效果，保持标签和血条稳定
+     */
+    protected createVisualNode(): void {
+        // 创建外观子节点
+        this._visualNode = new Node('MouseVisual');
+        this._visualNode.parent = this.node;
+        this._visualNode.setPosition(0, 0, 0);
 
-    // 统一的老鼠标签配置 - 基于敌人分类提供默认配置
+        // 设置外观节点的UITransform
+        const visualTransform = this._visualNode.addComponent(UITransform);
+        visualTransform.setContentSize(50, 50); // 默认尺寸
+
+        // 保存外观节点的原始缩放
+        this._visualOriginalScale = this._visualNode.scale.clone();
+
+        // 外观节点已创建
+    }
+
+    /**
+     * 初始化基础外观组件 - 所有敌人共同的外观元素
+     */
+    protected initializeBaseVisuals(): void {
+        // 加载敌人图片
+        this.loadEnemySpriteOrFallback();
+    }
+
+    /**
+     * 加载敌人图片
+     */
+    protected loadEnemySpriteOrFallback(): void {
+        const imagePath = this.getEnemyImagePath();
+        this.loadEnemySprite(imagePath);
+    }
+
+    /**
+     * 加载敌人精灵图片
+     */
+    protected loadEnemySprite(imagePath: string): void {
+        // 添加Sprite组件到外观节点
+        if (!this._visualNode) {
+            console.error("外观节点未创建，无法添加Sprite组件");
+            return;
+        }
+        this._sprite = this._visualNode.addComponent(Sprite);
+
+        // 设置Sprite属性
+        this._sprite.type = Sprite.Type.SIMPLE;
+        this._sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+
+        // 设置Sprite尺寸（根据敌人类型调整）
+        const spriteTransform = this._sprite.node.getComponent(UITransform);
+        if (spriteTransform) {
+            const config = this.getConfig();
+            let spriteSize = 40; // 默认尺寸
+
+            // 根据敌人分类调整尺寸
+            switch (config.category) {
+                case EnemyCategory.BASIC:
+                    spriteSize = 35;
+                    break;
+                case EnemyCategory.FAST:
+                    spriteSize = 30;
+                    break;
+                case EnemyCategory.ARMORED:
+                    spriteSize = 45;
+                    break;
+                case EnemyCategory.SPECIAL:
+                    spriteSize = 40;
+                    break;
+                case EnemyCategory.BOSS:
+                    spriteSize = 50; // BOSS适度更大
+                    break;
+            }
+
+            spriteTransform.setContentSize(spriteSize, spriteSize);
+        }
+
+        // 加载SpriteFrame资源
+        resources.load(imagePath + "/spriteFrame", SpriteFrame, (err, spriteFrame) => {
+            if (err) {
+                console.error(`加载敌人图片失败: ${imagePath}`, err);
+                // 素材齐全后不再使用Graphics回退
+                return;
+            }
+
+            if (!this._sprite || !this._sprite.isValid) {
+                return;
+            }
+
+            // 设置SpriteFrame
+            this._sprite.spriteFrame = spriteFrame;
+            // 敌人图片加载完成
+        });
+    }
+
+
+    // 子类可选重写：初始化敌人特殊外观（如特效、动画等）
+    protected initializeMouseVisuals(): void {
+        // 子类可重写添加特殊外观
+    }
+
+    // 统一的老鼠标签配置 - 基于敌人分类提供默认配置，并考虑节点缩放
     protected getMouseLabelConfig(): {
         text: string;
         fontSize: number;
@@ -114,6 +291,9 @@ export abstract class BaseMouse extends Component {
     } {
         const config = this.getConfig();
 
+        // 获取节点缩放比例以调整布局
+        const scaleMultiplier = this.node.scale.x; // 使用X轴缩放作为参考
+
         // 根据敌人分类提供统一配置
         switch (config.category) {
             case EnemyCategory.BASIC:
@@ -121,7 +301,7 @@ export abstract class BaseMouse extends Component {
                     text: this.unitName,
                     fontSize: 22,
                     color: new Color(255, 255, 255),
-                    yOffset: 35,
+                    yOffset: 35 * scaleMultiplier,
                     size: { width: 60, height: 28 }
                 };
 
@@ -130,7 +310,7 @@ export abstract class BaseMouse extends Component {
                     text: this.unitName,
                     fontSize: 22,
                     color: new Color(255, 255, 100), // 快速单位用亮黄色
-                    yOffset: 35,
+                    yOffset: 35 * scaleMultiplier,
                     size: { width: 70, height: 28 }
                 };
 
@@ -139,7 +319,7 @@ export abstract class BaseMouse extends Component {
                     text: this.unitName,
                     fontSize: 22,
                     color: new Color(255, 215, 0), // 装甲单位用金色
-                    yOffset: 40, // 装甲单位通常更高，需要更大偏移
+                    yOffset: 40 * scaleMultiplier, // 装甲单位通常更高，需要更大偏移
                     size: { width: 70, height: 28 }
                 };
 
@@ -148,16 +328,16 @@ export abstract class BaseMouse extends Component {
                     text: this.unitName,
                     fontSize: 22,
                     color: new Color(200, 150, 255), // 特殊单位用紫色
-                    yOffset: 35,
+                    yOffset: 35 * scaleMultiplier,
                     size: { width: 80, height: 28 }
                 };
 
             case EnemyCategory.BOSS:
                 return {
                     text: this.unitName,
-                    fontSize: 24, // BOSS用更大字体
+                    fontSize: 22, // BOSS统一字体大小
                     color: new Color(255, 255, 255),
-                    yOffset: 50, // BOSS体型更大，标签位置更高
+                    yOffset: 55 * scaleMultiplier, // BOSS体型更大，标签位置更高，增加间距
                     size: { width: 120, height: 32 }
                 };
 
@@ -166,13 +346,13 @@ export abstract class BaseMouse extends Component {
                     text: this.unitName,
                     fontSize: 22,
                     color: new Color(255, 255, 255),
-                    yOffset: 35,
+                    yOffset: 35 * scaleMultiplier,
                     size: { width: 60, height: 28 }
                 };
         }
     }
 
-    // 统一的血条配置 - 基于敌人分类提供默认配置
+    // 统一的血条配置 - 基于敌人分类提供默认配置，并考虑节点缩放和与标签的间距
     protected getHealthBarConfig(): {
         width: number;
         height: number;
@@ -184,13 +364,21 @@ export abstract class BaseMouse extends Component {
     } {
         const config = this.getConfig();
 
+        // 获取节点缩放比例以调整布局
+        const scaleMultiplier = this.node.scale.x;
+
+        // 获取标签配置以确保血条不与标签重叠
+        const labelConfig = this.getMouseLabelConfig();
+        const labelBottom = labelConfig.yOffset - (labelConfig.size.height / 2);
+        const healthBarSpacing = 8; // 血条与标签的间距
+
         // 根据敌人分类提供统一配置
         switch (config.category) {
             case EnemyCategory.BASIC:
                 return {
-                    width: 30,
+                    width: 30 * scaleMultiplier,
                     height: 4,
-                    yOffset: 25,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(0, 255, 0),
                     borderColor: new Color(255, 255, 255),
@@ -199,9 +387,9 @@ export abstract class BaseMouse extends Component {
 
             case EnemyCategory.FAST:
                 return {
-                    width: 25,
+                    width: 25 * scaleMultiplier,
                     height: 3,
-                    yOffset: 20,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(255, 255, 100), // 快速单位用亮黄色
                     borderColor: new Color(255, 255, 255),
@@ -210,9 +398,9 @@ export abstract class BaseMouse extends Component {
 
             case EnemyCategory.ARMORED:
                 return {
-                    width: 50,
+                    width: 50 * scaleMultiplier,
                     height: 6,
-                    yOffset: 30,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(255, 215, 0), // 装甲单位用金色
                     borderColor: new Color(255, 255, 255),
@@ -221,9 +409,9 @@ export abstract class BaseMouse extends Component {
 
             case EnemyCategory.SPECIAL:
                 return {
-                    width: 40,
+                    width: 40 * scaleMultiplier,
                     height: 5,
-                    yOffset: 25,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(200, 150, 255), // 特殊单位用紫色
                     borderColor: new Color(255, 255, 255),
@@ -232,9 +420,9 @@ export abstract class BaseMouse extends Component {
 
             case EnemyCategory.BOSS:
                 return {
-                    width: 120,
+                    width: 100 * scaleMultiplier,
                     height: 12,
-                    yOffset: 55,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(255, 100, 100), // BOSS用红色前景
                     borderColor: new Color(255, 255, 255),
@@ -243,9 +431,9 @@ export abstract class BaseMouse extends Component {
 
             default:
                 return {
-                    width: 30,
+                    width: 30 * scaleMultiplier,
                     height: 4,
-                    yOffset: 25,
+                    yOffset: labelBottom - healthBarSpacing,
                     backgroundColor: new Color(60, 60, 60),
                     foregroundColor: new Color(0, 255, 0),
                     borderColor: new Color(255, 255, 255),
@@ -332,6 +520,8 @@ export abstract class BaseMouse extends Component {
         return currentPos.y <= castlePos.y + threshold;
     }
 
+    // === 移动系统方法组 ===
+
     /**
      * 启动基于Tween的统一移动系统（从BasicMouse提取的完整系统）
      * 使用蜿蜒移动路径，支持多种移动模式
@@ -351,13 +541,16 @@ export abstract class BaseMouse extends Component {
         // 初始化移动行为（子类可重写以定制参数）
         this.initializeMovementBehavior();
 
+        // 统一处理抖动初始化 - 无论子类如何重写移动行为，都确保抖动效果生效
+        this.ensureShakeInitialization();
+
         // 根据移动模式创建不同的移动路径
         this.createWeavingMovementPath(currentPos, castlePos);
     }
 
     /**
      * 初始化移动行为参数
-     * 子类可重写此方法来定制移动参数
+     * 子类可重写此方法来定制移动参数，无需关心抖动初始化
      */
     protected initializeMovementBehavior(): void {
         // 默认移动参数配置（基础老鼠的参数）
@@ -368,7 +561,55 @@ export abstract class BaseMouse extends Component {
         this._zigzagAmplitude = 20 + Math.random() * 30; // 20-50像素的摆动幅度
         this._segmentCount = 4 + Math.floor(Math.random() * 4); // 4-7段移动
 
-        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+        // 移动模式已设置
+    }
+
+    // === 抖动效果系统方法组 ===
+
+    /**
+     * 确保抖动初始化 - 统一处理，子类无需关心
+     * 此方法在移动行为初始化后自动调用
+     */
+    private ensureShakeInitialization(): void {
+        // 统一设置抖动参数（根据敌人分类调整）
+        this.initializeShakeAmplitude();
+
+        // 抖动效果已初始化
+    }
+
+    /**
+     * 初始化抖动幅度参数
+     * 根据敌人分类设置不同的抖动强度
+     */
+    protected initializeShakeAmplitude(): void {
+        const config = this.getConfig();
+
+        switch (config.category) {
+            case EnemyCategory.BASIC:
+                this._shakeAmplitude = 5 + Math.random() * 8; // 5-13像素，明显抖动
+                this._scaleShakeAmplitude = 0.08 + Math.random() * 0.12; // 8%-20%大小抖动
+                break;
+            case EnemyCategory.FAST:
+                this._shakeAmplitude = 8 + Math.random() * 12; // 8-20像素，剧烈抖动
+                this._scaleShakeAmplitude = 0.12 + Math.random() * 0.18; // 12%-30%大小抖动
+                break;
+            case EnemyCategory.ARMORED:
+                this._shakeAmplitude = 3 + Math.random() * 5; // 3-8像素，稳重但可见抖动
+                this._scaleShakeAmplitude = 0.05 + Math.random() * 0.08; // 5%-13%大小抖动
+                break;
+            case EnemyCategory.SPECIAL:
+                this._shakeAmplitude = 6 + Math.random() * 10; // 6-16像素，特殊抖动
+                this._scaleShakeAmplitude = 0.10 + Math.random() * 0.15; // 10%-25%大小抖动
+                break;
+            case EnemyCategory.BOSS:
+                this._shakeAmplitude = 6 + Math.random() * 8; // 6-14像素，适度威慑性抖动
+                this._scaleShakeAmplitude = 0.08 + Math.random() * 0.12; // 8%-20%大小抖动
+                break;
+            default:
+                this._shakeAmplitude = 5 + Math.random() * 8; // 默认明显抖动
+                this._scaleShakeAmplitude = 0.08 + Math.random() * 0.12; // 默认大小抖动
+                break;
+        }
     }
 
     /**
@@ -394,7 +635,7 @@ export abstract class BaseMouse extends Component {
     }
 
     /**
-     * 根据移动模式生成路径点（从BasicMouse提取）
+     * 根据移动模式生成路径点（从BasicMouse提取，增加抖动效果）
      */
     protected generatePathPoints(startPos: Vec3, castlePos: Vec3, totalDistance: number): Vec3[] {
         const points: Vec3[] = [startPos];
@@ -437,11 +678,16 @@ export abstract class BaseMouse extends Component {
                     break;
             }
 
+            // 添加抖动效果
+            const shakeX = (Math.random() - 0.5) * this._shakeAmplitude;
+            const shakeY = (Math.random() - 0.5) * this._shakeAmplitude * 0.5; // Y轴抖动较小
+            xOffset += shakeX;
+
             // 限制X坐标不要移动到屏幕外
             const maxX = 300;
             xOffset = Math.max(-maxX, Math.min(maxX, startPos.x + xOffset)) - startPos.x;
 
-            points.push(new Vec3(startPos.x + xOffset, yPos, 0));
+            points.push(new Vec3(startPos.x + xOffset, yPos + shakeY, 0));
         }
 
         // 最后一个点是城堡位置
@@ -451,7 +697,7 @@ export abstract class BaseMouse extends Component {
     }
 
     /**
-     * 创建链式缓动移动（从BasicMouse提取）
+     * 创建链式缓动移动 - 使用parallel同时处理位置和大小变化
      */
     protected createChainedTweenMovement(pathPoints: Vec3[], segmentDuration: number): void {
         let currentTween = tween(this.node);
@@ -461,13 +707,25 @@ export abstract class BaseMouse extends Component {
             const targetPos = pathPoints[i];
             const isLastSegment = i === pathPoints.length - 1;
 
-            // 根据移动模式选择缓动效果 - 使用简化的缓动类型
-            currentTween = currentTween.to(segmentDuration, { position: targetPos });
+            // 生成该段的随机大小变化序列
+            const scalePoints = this.generateScaleShakePoints(segmentDuration);
+
+            // 使用parallel同时执行位置移动和大小抖动
+            currentTween = currentTween.parallel(
+                // 位置移动
+                tween(this.node).to(segmentDuration, { position: targetPos }),
+                // 大小抖动
+                this.createScaleShakeTween(scalePoints)
+            );
 
             // 如果是最后一段，添加到达城堡的回调
             if (isLastSegment) {
                 currentTween = currentTween.call(() => {
                     this._isMoving = false;
+                    // 恢复外观节点原始大小
+                    if (this._visualNode) {
+                        tween(this._visualNode).to(0.1, { scale: this._visualOriginalScale }).start();
+                    }
                     this.reachCastle();
                 });
             }
@@ -476,7 +734,50 @@ export abstract class BaseMouse extends Component {
         // 启动缓动链
         this._movementTween = currentTween.start();
 
-        console.log(`开始${this._movementPattern}移动，路径点数量: ${pathPoints.length}, 总时长: ${(segmentDuration * (pathPoints.length - 1)).toFixed(2)}秒`);
+        // 简化日志：开始移动路径
+    }
+
+    /**
+     * 生成单个移动段的大小抖动点序列 - 基于外观节点缩放
+     */
+    protected generateScaleShakePoints(duration: number): Vec3[] {
+        const shakeFrequency = 0.05; // 每50ms一个抖动点
+        const pointCount = Math.ceil(duration / shakeFrequency);
+        const scalePoints: Vec3[] = [];
+
+        for (let i = 0; i <= pointCount; i++) {
+            // 计算大小变化，基于外观节点的原始缩放
+            const scaleMultiplier = 1 + (Math.random() - 0.5) * this._scaleShakeAmplitude * 2;
+            const newScale = this._visualOriginalScale.x * scaleMultiplier;
+
+            // 限制范围
+            const minScale = this._visualOriginalScale.x * 0.5;
+            const maxScale = this._visualOriginalScale.x * 2.0;
+            const clampedScale = Math.max(minScale, Math.min(maxScale, newScale));
+
+            scalePoints.push(new Vec3(clampedScale, clampedScale, this._visualOriginalScale.z));
+        }
+
+        return scalePoints;
+    }
+
+    /**
+     * 创建大小抖动的tween动画 - 仅影响外观节点
+     */
+    protected createScaleShakeTween(scalePoints: Vec3[]): any {
+        if (scalePoints.length === 0 || !this._visualNode) {
+            return tween(this.node); // 返回空tween
+        }
+
+        let scaleTween = tween(this._visualNode); // 改为外观节点
+        const pointDuration = 0.05; // 每个点50ms
+
+        // 为每个大小变化点创建tween
+        for (let i = 0; i < scalePoints.length; i++) {
+            scaleTween = scaleTween.to(pointDuration, { scale: scalePoints[i] });
+        }
+
+        return scaleTween;
     }
 
     /**
@@ -513,7 +814,7 @@ export abstract class BaseMouse extends Component {
         // 注意：敌人注销由BattleManager统一处理
         this.die();
 
-        console.log(`${this.unitName}到达城堡，造成 ${castleDamage} 点伤害`);
+        // 简化日志：到达城堡，伤害已在UI中显示
     }
 
     protected createCastleReachEffect(): void {
@@ -523,25 +824,135 @@ export abstract class BaseMouse extends Component {
      * 重写死亡方法，添加通用的金币奖励逻辑
      */
     protected onDie(): void {
-        console.log(`${this.unitName}死亡，奖励 ${this.goldReward} 金币`);
+        // 简化日志：敌人死亡，奖励已在UI中显示
 
         // 隐藏血条
         if (this._healthBarContainer) {
             this._healthBarContainer.active = false;
         }
 
-        // 停止移动
+        // 停止移动（包含大小恢复）
         this.stopMovement();
 
         // 注意：击杀奖励和注销由BattleManager.HandleEnemyKilled统一处理
         // 这里不再重复调用UnregisterEnemy
 
         this.createDeathEffect();
-        this.node.destroy();
+
+        // 回收到对象池而不是直接销毁
+        if (this.node && this.node.isValid) {
+            // 使用全局事件通知回收，避免循环依赖
+            director.emit('enemy-recycle', this.node, this.enemyType);
+        }
     }
 
     protected createDeathEffect(): void {
     }
+
+    // === 对象池接口方法 ===
+
+
+    /**
+     * 对象池重用方法 - 当从对象池中取出时调用
+     * 重置敌人状态以供重用
+     */
+    public reuse(..._args: any[]): void {
+        // 重置基础状态
+        this.enemyState = EnemyState.IDLE;
+        this.currentTarget = null;
+        this._isMoving = false;
+        this._movementStarted = false;
+
+        // 重置生命值
+        this.currentHealth = this.maxHealth;
+
+        // 重置节点状态（位置由EnemyFactory设置）
+        this.node.active = true;
+
+        // 停止所有移动（包含大小恢复）
+        this.stopMovement();
+
+        // 恢复原始缩放
+        this.node.setScale(this._originalScale);
+
+        // 恢复外观节点原始缩放
+        if (this._visualNode) {
+            this._visualNode.setScale(this._visualOriginalScale);
+        }
+
+        // 🔧 简化：移动参数会在startMovement时重新初始化，无需手动重置
+
+        // 重新获取管理器引用（如果需要）
+        if (!this._battleManager) {
+            this._battleManager = BattleManager.instance;
+        }
+        if (!this._gameManager) {
+            this._gameManager = GameManager.instance;
+        }
+
+        // 重新注册到BattleManager（关键修复）
+        if (this._battleManager) {
+            this._battleManager.RegisterEnemy(this.node);
+            // 简化日志：重用敌人注册完成
+        } else {
+            console.error(`[BaseMouse] ❌ 无法重新注册敌人，BattleManager不存在: ${this.enemyType}`);
+        }
+
+        // 重置血条
+        if (this._healthBarContainer) {
+            this._healthBarContainer.active = true;
+        }
+        this.updateMouseHealthBarDisplay();
+
+        // 重置Sprite颜色到正常状态（修复死亡时变黑的问题）
+        if (this._sprite && this._sprite.isValid) {
+            this._sprite.color = new Color(255, 255, 255, 255); // 恢复正常白色
+            // 简化日志：重置Sprite颜色
+        }
+
+        // 允许子类重新初始化特殊状态（如装甲鼠的护甲值）
+        this.onReuse();
+    }
+
+    /**
+     * 子类可重写：对象池重用时的额外初始化
+     * 用于重新初始化子类特有的状态和属性
+     */
+    protected onReuse(): void {
+        // 默认空实现，子类可根据需要重写
+    }
+
+    /**
+     * 对象池回收方法 - 当放入对象池时调用
+     * 清理敌人状态
+     */
+    public unuse(): void {
+        // 停止所有移动、调度（包含大小恢复）
+        this.stopMovement();
+        this.unscheduleAllCallbacks();
+
+        // 重置状态
+        this.enemyState = EnemyState.DEAD;
+        this.currentTarget = null;
+        this.node.active = false;
+
+        // 恢复原始缩放
+        this.node.setScale(this._originalScale);
+
+        // 恢复外观节点原始缩放
+        if (this._visualNode) {
+            this._visualNode.setScale(this._visualOriginalScale);
+        }
+
+        // 隐藏血条
+        if (this._healthBarContainer) {
+            this._healthBarContainer.active = false;
+        }
+
+        // 对象池回收完成
+    }
+
+
 
     // === Tween移动控制方法 ===
 
@@ -554,6 +965,11 @@ export abstract class BaseMouse extends Component {
             this._movementTween = null;
         }
         this._isMoving = false;
+
+        // 恢复外观节点原始大小
+        if (this._visualNode && this._visualNode.isValid) {
+            tween(this._visualNode).to(0.1, { scale: this._visualOriginalScale }).start();
+        }
     }
 
     /**
@@ -578,21 +994,34 @@ export abstract class BaseMouse extends Component {
     // === 事件回调方法 (子类可重写) ===
 
     protected onTakeDamage(damage: number): void {
-        console.log(`${this.unitName}受到 ${damage} 点伤害，剩余血量: ${this.currentHealth}`);
+        // 简化日志：受到伤害，血量已在UI中显示
     }
 
-
+    // === UI元素创建方法组 ===
 
     protected createMouseNameLabel(): void {
         const labelConfig = this.getMouseLabelConfig();
 
-        this._nameLabel = DrawingHelper.createLabel(this.node, {
-            text: labelConfig.text,
-            fontSize: labelConfig.fontSize,
-            color: labelConfig.color,
-            position: { x: 0, y: labelConfig.yOffset, z: 0 },
-            size: labelConfig.size
-        });
+        // 直接创建标签，不依赖DrawingHelper
+        const labelNode = new Node(`Label_${labelConfig.text}`);
+        labelNode.parent = this.node;
+        labelNode.setPosition(0, labelConfig.yOffset, 0);
+
+        // 设置UITransform
+        const uiTransform = labelNode.addComponent(UITransform);
+        if (labelConfig.size) {
+            uiTransform.setContentSize(labelConfig.size.width, labelConfig.size.height);
+        } else {
+            uiTransform.setContentSize(labelConfig.text.length * labelConfig.fontSize, labelConfig.fontSize);
+        }
+
+        // 创建Label组件
+        this._nameLabel = labelNode.addComponent(Label);
+        this._nameLabel.string = labelConfig.text;
+        this._nameLabel.fontSize = labelConfig.fontSize;
+        this._nameLabel.color = labelConfig.color;
+        this._nameLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
+        this._nameLabel.verticalAlign = Label.VerticalAlign.CENTER;
     }
 
     /**
@@ -601,18 +1030,42 @@ export abstract class BaseMouse extends Component {
     protected createMouseHealthBar(): void {
         const healthBarConfig = this.getHealthBarConfig();
 
-        const healthBarData = DrawingHelper.createHealthBar(this.node, {
-            width: healthBarConfig.width,
-            height: healthBarConfig.height,
-            position: { x: 0, y: healthBarConfig.yOffset, z: 0 },
-            backgroundColor: healthBarConfig.backgroundColor || new Color(60, 60, 60),
-            foregroundColor: healthBarConfig.foregroundColor || new Color(0, 255, 0),
-            borderColor: healthBarConfig.borderColor || new Color(255, 255, 255),
-            borderWidth: healthBarConfig.borderWidth || 1
-        });
+        // 直接创建血条，不依赖DrawingHelper
+        // 创建血条容器
+        this._healthBarContainer = new Node(`HealthBar_${this.unitName}`);
+        this._healthBarContainer.parent = this.node;
+        this._healthBarContainer.setPosition(0, healthBarConfig.yOffset, 0);
 
-        this._healthBarContainer = healthBarData.container;
-        this._healthBarForeground = healthBarData.foreground;
+        // 设置血条容器UITransform
+        const containerTransform = this._healthBarContainer.addComponent(UITransform);
+        containerTransform.setContentSize(healthBarConfig.width, healthBarConfig.height);
+
+        // 创建背景
+        const backgroundGraphics = this._healthBarContainer.addComponent(Graphics);
+        const bgColor = healthBarConfig.backgroundColor || new Color(60, 60, 60);
+        backgroundGraphics.fillColor = bgColor;
+        backgroundGraphics.rect(-healthBarConfig.width / 2, -healthBarConfig.height / 2, healthBarConfig.width, healthBarConfig.height);
+        backgroundGraphics.fill();
+
+        // 创建边框
+        const borderColor = healthBarConfig.borderColor || new Color(255, 255, 255);
+        const borderWidth = healthBarConfig.borderWidth || 1;
+        backgroundGraphics.strokeColor = borderColor;
+        backgroundGraphics.lineWidth = borderWidth;
+        backgroundGraphics.rect(-healthBarConfig.width / 2, -healthBarConfig.height / 2, healthBarConfig.width, healthBarConfig.height);
+        backgroundGraphics.stroke();
+
+        // 创建前景血条
+        const foregroundNode = new Node('HealthBarForeground');
+        foregroundNode.parent = this._healthBarContainer;
+        foregroundNode.setPosition(0, 0, 0);
+
+        const foregroundTransform = foregroundNode.addComponent(UITransform);
+        foregroundTransform.setContentSize(healthBarConfig.width, healthBarConfig.height);
+
+        this._healthBarForeground = foregroundNode.addComponent(Graphics);
+        const fgColor = healthBarConfig.foregroundColor || new Color(0, 255, 0);
+        this._healthBarForeground.fillColor = fgColor;
 
         // 血条始终显示
         this._healthBarContainer.active = true;
@@ -622,41 +1075,46 @@ export abstract class BaseMouse extends Component {
     }
 
     /**
-     * 更新老鼠血条显示 - 统一的血条更新系统
+     * 更新老鼠血条显示 - 统一的血条更新系统，包含基础颜色变化
      */
     protected updateMouseHealthBarDisplay(): void {
         if (this._healthBarForeground && this._healthBarContainer) {
             const healthPercent = this.currentHealth / this.maxHealth;
             const config = this.getHealthBarConfig();
 
-            DrawingHelper.updateHealthBar(
-                this._healthBarForeground,
-                healthPercent,
-                config.width,
-                config.height
-            );
+            // 直接更新血条，不依赖DrawingHelper
+            this._healthBarForeground.clear();
+
+            if (healthPercent > 0) {
+                // 根据血量百分比动态调整血条颜色
+                let bloodColor = config.foregroundColor;
+                if (healthPercent <= 0.3) {
+                    // 30%以下：红色
+                    bloodColor = new Color(255, 0, 0);
+                } else if (healthPercent <= 0.7) {
+                    // 30%-70%：黄色
+                    bloodColor = new Color(255, 255, 0);
+                } else {
+                    // 70%以上：使用配置的默认颜色（通常是绿色或分类特色颜色）
+                    bloodColor = config.foregroundColor;
+                }
+
+                this._healthBarForeground.fillColor = bloodColor;
+                const currentWidth = config.width * healthPercent;
+                this._healthBarForeground.rect(
+                    -config.width / 2,
+                    -config.height / 2,
+                    currentWidth,
+                    config.height
+                );
+                this._healthBarForeground.fill();
+            }
 
             // 血条始终显示，只有死亡时才隐藏
             this._healthBarContainer.active = healthPercent > 0;
         }
     }
 
-    /**
-     * 获取Graphics组件，直接添加模式
-     * 遵循CLAUDE.md禁止条件性组件添加的原则
-     */
-    protected getGraphicsComponent(): Graphics {
-        if (!this._graphics) {
-            // 直接添加Graphics组件，让Cocos Creator处理重复检查
-            this._graphics = this.node.addComponent(Graphics);
-            if (!this._graphics) {
-                // 如果添加失败，尝试获取现有组件
-                this._graphics = this.node.getComponent(Graphics);
-                if (!this._graphics) {
-                    console.error("无法获取Graphics组件:", this.node.name);
-                }
-            }
-        }
-        return this._graphics;
-    }
+    // === 组件获取工具方法组已移除 ===
+    // 素材齐全后不再需要Graphics相关方法
 }

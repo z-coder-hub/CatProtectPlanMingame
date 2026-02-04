@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, tween, UIOpacity } from 'cc';
+import { _decorator, Color, Sprite, Vec3, tween, UIOpacity } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
@@ -14,7 +14,7 @@ export class MechMouse extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.MECH_MOUSE;
     
-    // 私有属性（基类已提供 _graphics）
+    // 私有属性（基类已提供 _gameManager）
     
     // 科技视觉效果属性
     private _engineGlow: number = 0;          // 引擎发光效果
@@ -23,7 +23,7 @@ export class MechMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.MECH_MOUSE,
-            name: "机械老鼠",
+            name: "机甲鼠",
             category: EnemyCategory.BOSS,
             health: 180,
             maxHealth: 180,
@@ -32,129 +32,33 @@ export class MechMouse extends BaseMouse {
         };
     }
 
-    protected initializeMouseVisuals(): void {
-        // 创建机械老鼠外观 - 银灰色科技外观
-        this._graphics = this.getGraphicsComponent();
-
-        // 设置节点缩放，机械老鼠比普通老鼠大30%
-        this.node.setScale(1.3, 1.3, 1.3);
-
-        // 绘制机械老鼠身体
-        this.drawMechMouseAppearance();
-        
-        console.log(`${this.unitName}外观创建完成`);
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string {
+        return "images/enemies/MechMouse";
     }
-    
+
+    // 重写：初始化特殊外观（现在基类处理图片加载）
+    protected initializeMouseVisuals(): void {
+        // 基类已处理图片/Graphics显示，这里可以添加特殊效果
+        // 大小由基类的统一尺寸管理系统控制
+    }
+
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(_graphics: any): void {
+        // 机械老鼠已迁移到Sprite颜色系统
+        this.drawMechMouseAppearance();
+    }
+
     /**
-     * 绘制机械老鼠外观
+     * 绘制机械老鼠外观（改为Sprite颜色）
      */
     private drawMechMouseAppearance(): void {
-        if (!this._graphics) return;
-        
-        this._graphics.clear();
-        
-        // 机械外观颜色
-        const bodyColor = new Color(120, 120, 140, 255);    // 银灰色机械身体
-        
-        // 绘制机械身体主体（矩形科技造型）
-        this._graphics.fillColor = bodyColor;
-        this._graphics.strokeColor = new Color(80, 80, 100, 255);
-        this._graphics.lineWidth = 2;
-        
-        // 主体 - 科技感矩形身体
-        this._graphics.roundRect(-15, -8, 30, 16, 3);
-        this._graphics.fill();
-        this._graphics.stroke();
-        
-        // 装甲板细节
-        this._graphics.fillColor = new Color(140, 140, 160, 255);
-        this._graphics.roundRect(-12, -6, 24, 12, 2);
-        this._graphics.fill();
-        
-        // 科技纹理线条
-        this._graphics.strokeColor = new Color(160, 160, 180, 255);
-        this._graphics.lineWidth = 1;
-        for (let i = -10; i <= 10; i += 5) {
-            this._graphics.moveTo(i, -5);
-            this._graphics.lineTo(i, 5);
+        // 机械外观颜色 - 银灰色机械身体
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            const bodyColor = new Color(120, 120, 140); // 银灰色机械身体
+            sprite.color = bodyColor;
         }
-        this._graphics.stroke();
-        
-        // 头部 - 机械头盔
-        this._graphics.fillColor = new Color(100, 100, 120, 255);
-        this._graphics.roundRect(-10, 0, 20, 12, 2);
-        this._graphics.fill();
-        this._graphics.stroke();
-        
-        // 眼部 - 发光的机械眼
-        const eyeColor = new Color(0, 200, 255, 255);    // 蓝色机械眼
-        
-        this._graphics.fillColor = eyeColor;
-        this._graphics.circle(-5, 4, 3);
-        this._graphics.fill();
-        this._graphics.circle(5, 4, 3);
-        this._graphics.fill();
-        
-        // 机械眼瞳孔
-        this._graphics.fillColor = new Color(255, 255, 255, 255);
-        this._graphics.circle(-5, 4, 1);
-        this._graphics.fill();
-        this._graphics.circle(5, 4, 1);
-        this._graphics.fill();
-        
-        // 科技装置口
-        this._graphics.fillColor = new Color(100, 100, 120, 255);
-        this._graphics.circle(0, -2, 4);
-        this._graphics.fill();
-        
-        // 科技装置内部
-        this._graphics.fillColor = new Color(50, 50, 70, 255);
-        this._graphics.circle(0, -2, 2);
-        this._graphics.fill();
-        
-        // 机械天线/传感器
-        this._graphics.strokeColor = new Color(120, 120, 140, 255);
-        this._graphics.lineWidth = 2;
-        this._graphics.moveTo(-8, 10);
-        this._graphics.lineTo(-8, 16);
-        this._graphics.moveTo(8, 10);
-        this._graphics.lineTo(8, 16);
-        this._graphics.stroke();
-        
-        // 天线顶端指示灯
-        this._graphics.fillColor = new Color(100, 255, 100, 255);
-        this._graphics.circle(-8, 16, 2);
-        this._graphics.fill();
-        this._graphics.circle(8, 16, 2);
-        this._graphics.fill();
-        
-        // 机械履带/脚部
-        this._graphics.fillColor = new Color(80, 80, 100, 255);
-        this._graphics.roundRect(-12, -16, 8, 6, 1);
-        this._graphics.fill();
-        this._graphics.roundRect(4, -16, 8, 6, 1);
-        this._graphics.fill();
-        
-        // 履带纹理
-        this._graphics.strokeColor = new Color(100, 100, 120, 255);
-        this._graphics.lineWidth = 1;
-        for (let i = -10; i <= 10; i += 3) {
-            this._graphics.moveTo(i, -15);
-            this._graphics.lineTo(i, -11);
-        }
-        this._graphics.stroke();
-        
-        // 机械尾部 - 推进器
-        this._graphics.fillColor = new Color(100, 100, 120, 255);
-        this._graphics.circle(14, -4, 4);
-        this._graphics.fill();
-        
-        // 推进器火焰效果（移动时显示）
-        const thrusterColor = new Color(255, Math.floor(100 + this._engineGlow * 155), 0, 255);
-        this._graphics.fillColor = thrusterColor;
-        this._graphics.circle(18, -4, 2);
-        this._graphics.fill();
-        
     }
     
     /**
@@ -176,8 +80,19 @@ export class MechMouse extends BaseMouse {
      * 更新科技外观效果
      */
     private updateTechAppearance(): void {
-        if (this._graphics) {
-            this.drawMechMouseAppearance();
+        // 更新科技外观 - 改为Sprite颜色变化
+        this.drawMechMouseAppearance();
+
+        // 添加引擎发光效果
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            const glowIntensity = this._engineGlow;
+            const baseColor = 120;
+            sprite.color = new Color(
+                baseColor,
+                baseColor,
+                Math.floor(140 + glowIntensity * 115) // 蓝色引擎发光
+            );
         }
     }
     
@@ -310,5 +225,16 @@ export class MechMouse extends BaseMouse {
             .start();
         
         console.log(`${this.unitName}机械系统损毁，爆炸解体！`);
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置机甲鼠的引擎发光效果
+     */
+    protected onReuse(): void {
+        // 重置引擎发光效果
+        this._engineGlow = 0;
+
+        console.log(`[MechMouse] 🔄 重用时重置机械系统: 引擎发光已重置`);
     }
 }

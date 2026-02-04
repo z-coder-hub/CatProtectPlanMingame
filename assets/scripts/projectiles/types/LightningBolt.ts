@@ -1,4 +1,4 @@
-import { _decorator, Color, Vec3, Node, Graphics, Component, tween } from 'cc';
+import { _decorator, Color, Vec3, Node, Graphics, tween } from 'cc';
 import { BaseProjectile } from '../BaseProjectile';
 import { BaseMouse } from '../../components/enemies/BaseMouse';
 import { BattleManager } from '../../managers/BattleManager';
@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 
 /**
  * 雷电弹投射物
- * 用于：缅因猫雷法师
+ * 用于：缅因雷法师
  * 特性：链式跳跃攻击，蓝色闪电效果，能弹射到附近敌人
  */
 @ccclass('LightningBolt')
@@ -24,48 +24,176 @@ export class LightningBolt extends BaseProjectile {
     
     private hitTargets: Set<Node> = new Set(); // 记录已击中的目标，避免重复
     
-    protected onLoad(): void {
-        super.onLoad();
-        this.hitRadius = 30; // 雷电的碰撞检测范围稍大
+    /**
+     * 获取雷电弹投射物配置
+     */
+    protected getProjectileConfig(): {
+        maxRange?: number;
+        hitRadius?: number;
+        [key: string]: any;
+    } {
+        return {
+            hitRadius: 30   // 雷电的碰撞检测范围稍大
+        };
     }
     
     /**
      * 初始化雷电弹的视觉外观
-     * 蓝白色闪电球，带有电弧效果
+     * 高压电能球，复杂电弧闪烁，电磁场环绕效果
      */
     protected initializeVisuals(): void {
         if (!this.graphics) return;
-        
+
         this.graphics.clear();
-        
-        // 外层电弧（深蓝色）
-        this.graphics.fillColor = new Color(25, 25, 112, 180); // 深蓝色
-        this.graphics.circle(0, 0, 6);
+
+        // === 绘制电磁场层次效果 === - 放大1.6倍
+
+        // 第1层：外层电磁场（深紫蓝色）
+        this.graphics.fillColor = new Color(25, 25, 112, 100); // 深紫蓝色，半透明
+        this.graphics.circle(0, 0, 12);
         this.graphics.fill();
-        
-        // 中层闪电（亮蓝色）
-        this.graphics.fillColor = new Color(0, 191, 255, 220); // 亮蓝色
-        this.graphics.circle(0, 0, 4);
+
+        // 第2层：电荷聚集区（深蓝色）
+        this.graphics.fillColor = new Color(65, 105, 225, 150); // 深蓝色
+        this.graphics.circle(0, 0, 9.6);
         this.graphics.fill();
-        
-        // 内核（白色）
-        this.graphics.fillColor = new Color(255, 255, 255, 255);
-        this.graphics.circle(0, 0, 2);
+
+        // 第3层：活跃电弧区（亮蓝色）
+        this.graphics.fillColor = new Color(0, 191, 255, 200); // 亮蓝色
+        this.graphics.circle(0, 0, 6.72);
         this.graphics.fill();
-        
-        // 闪电边框效果
-        this.graphics.strokeColor = new Color(255, 255, 0, 200); // 黄色闪电边框
+
+        // 第4层：电流核心（电蓝色）
+        this.graphics.fillColor = new Color(135, 206, 255, 240); // 电蓝色
+        this.graphics.circle(0, 0, 4.48);
+        this.graphics.fill();
+
+        // 第5层：电能核心（纯白色）
+        this.graphics.fillColor = new Color(255, 255, 255, 255); // 纯白核心
+        this.graphics.circle(0, 0, 2.4);
+        this.graphics.fill();
+
+        // === 复杂电弧系统 ===
+
+        // 主要电弧（大型闪电）- 放大1.6倍
+        this.graphics.strokeColor = new Color(255, 255, 0, 255); // 亮黄色主电弧
+        this.graphics.lineWidth = 4;
+
+        // 绘制主闪电（之字形）
+        this.graphics.moveTo(-8.8, -9.6);
+        this.graphics.lineTo(-1.6, -4.8);
+        this.graphics.lineTo(-4.8, -1.6);
+        this.graphics.lineTo(3.2, 1.6);
+        this.graphics.lineTo(-1.6, 4.8);
+        this.graphics.lineTo(7.2, 9.6);
+        this.graphics.stroke();
+
+        // 次要电弧（中型闪电）- 放大1.6倍
+        this.graphics.strokeColor = new Color(135, 206, 250, 200); // 淡蓝色次电弧
+        this.graphics.lineWidth = 2.88;
+
+        this.graphics.moveTo(8, -8);
+        this.graphics.lineTo(2.4, -3.2);
+        this.graphics.lineTo(4.8, 0);
+        this.graphics.lineTo(-1.6, 4);
+        this.graphics.lineTo(-7.2, 8.8);
+        this.graphics.stroke();
+
+        // 小型电弧放射（环形分布）- 放大1.6倍
+        this.graphics.strokeColor = new Color(255, 255, 200, 180);
+        this.graphics.lineWidth = 1.92;
+
+        for (let i = 0; i < 8; i++) {
+            const angle = (i * 45) * Math.PI / 180;
+            const startRadius = 4;
+            const midRadius = 7.2;
+            const endRadius = 10.4;
+
+            const startX = Math.cos(angle) * startRadius;
+            const startY = Math.sin(angle) * startRadius;
+            const midX = Math.cos(angle + 0.3) * midRadius; // 偏移制造电弧弯曲
+            const midY = Math.sin(angle + 0.3) * midRadius;
+            const endX = Math.cos(angle) * endRadius;
+            const endY = Math.sin(angle) * endRadius;
+
+            this.graphics.moveTo(startX, startY);
+            this.graphics.lineTo(midX, midY);
+            this.graphics.lineTo(endX, endY);
+        }
+        this.graphics.stroke();
+
+        // === 电磁场波纹效果 ===
+
+        // 外层电磁波纹
+        this.graphics.strokeColor = new Color(100, 149, 237, 120);
         this.graphics.lineWidth = 1;
+        for (let i = 0; i < 3; i++) {
+            const radius = 8 + i * 1.5;
+            this.graphics.circle(0, 0, radius);
+        }
+        this.graphics.stroke();
+
+        // 内层电流环
+        this.graphics.strokeColor = new Color(255, 255, 255, 200);
+        this.graphics.lineWidth = 0.8;
+        this.graphics.circle(0, 0, 3.5);
+        this.graphics.circle(0, 0, 5.5);
+        this.graphics.stroke();
+
+        // === 电荷粒子效果 ===
+
+        // 随机分布的电荷粒子
+        this.graphics.fillColor = new Color(255, 255, 0, 220);
+        for (let i = 0; i < 12; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 4 + Math.random() * 4;
+            const x = Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            const size = 0.3 + Math.random() * 0.4;
+
+            this.graphics.circle(x, y, size);
+            this.graphics.fill();
+        }
+
+        // === 电能脉冲线 ===
+
+        // 从核心向外的电能脉冲
+        this.graphics.strokeColor = new Color(200, 255, 255, 150);
+        this.graphics.lineWidth = 0.6;
+
+        for (let i = 0; i < 16; i++) {
+            const angle = (i * 22.5) * Math.PI / 180;
+            const startRadius = 1.8;
+            const endRadius = 3.5 + Math.random() * 1;
+
+            const startX = Math.cos(angle) * startRadius;
+            const startY = Math.sin(angle) * startRadius;
+            const endX = Math.cos(angle) * endRadius;
+            const endY = Math.sin(angle) * endRadius;
+
+            this.graphics.moveTo(startX, startY);
+            this.graphics.lineTo(endX, endY);
+        }
+        this.graphics.stroke();
+
+        // === 主体轮廓和边框 ===
+
+        // 电能球主轮廓
+        this.graphics.strokeColor = new Color(0, 191, 255, 255); // 亮蓝色主轮廓
+        this.graphics.lineWidth = 1.5;
         this.graphics.circle(0, 0, 6);
         this.graphics.stroke();
-        
-        // 绘制小型闪电形状
-        this.graphics.strokeColor = new Color(255, 255, 0, 255);
-        this.graphics.lineWidth = 2;
-        this.graphics.moveTo(-4, -6);
-        this.graphics.lineTo(2, -2);
-        this.graphics.lineTo(-2, 0);
-        this.graphics.lineTo(4, 4);
+
+        // 电能核心轮廓
+        this.graphics.strokeColor = new Color(255, 255, 255, 255); // 白色核心轮廓
+        this.graphics.lineWidth = 1;
+        this.graphics.circle(0, 0, 1.5);
+        this.graphics.stroke();
+
+        // 外层电磁场边界
+        this.graphics.strokeColor = new Color(138, 43, 226, 150); // 紫色电磁场边界
+        this.graphics.lineWidth = 1.2;
+        this.graphics.circle(0, 0, 7.5);
         this.graphics.stroke();
     }
     
@@ -221,8 +349,6 @@ export class LightningBolt extends BaseProjectile {
         
         // 绘制锯齿状闪电线
         const segments = 5;
-        const segmentLength = direction.length() / segments;
-        let currentPos = Vec3.ZERO;
         
         chainGraphics.moveTo(0, 0);
         
@@ -328,14 +454,18 @@ export class LightningBolt extends BaseProjectile {
     }
     
     /**
-     * 重置击中目标记录（投射物回收时调用）
+     * 重写重用方法以重置击中目标记录
      */
-    public resetHitTargets(): void {
+    public reuse(_args: any): void {
+        super.reuse(_args);
         this.hitTargets.clear();
     }
-    
-    protected onDestroy(): void {
-        super.onDestroy();
+
+    /**
+     * 重写回收方法以清理击中目标记录
+     */
+    public unuse(): void {
+        super.unuse();
         this.hitTargets.clear();
     }
 }

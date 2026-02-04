@@ -1,4 +1,4 @@
-import { _decorator, Component, Color, Graphics, Vec3, tween } from 'cc';
+import { _decorator, Color, Sprite, Vec3, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 import { GameManager } from '../../managers/GameManager';
@@ -6,7 +6,7 @@ import { BattleManager } from '../../managers/BattleManager';
 import { BaseHero } from '../heroes/BaseHero';
 import { EnemyFactory } from '../../systems/EnemyFactory';
 
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
 /**
  * 终极霸王 - 最终BOSS
@@ -60,9 +60,6 @@ export class UltimateOverlord extends BaseMouse {
         this.summonType = config.summonType || EnemyType.MOUSE_KING;
         this.damageReduction = config.damageReduction || 0.1;
 
-        // 终极霸王体型最大
-        this.node.scale = new Vec3(2.2, 2.2, 1);
-
         // 初始潜行判定
         this.checkStealthState();
     }
@@ -97,217 +94,110 @@ export class UltimateOverlord extends BaseMouse {
         const patterns: ('spiral' | 'curves' | 'zigzag')[] = ['spiral', 'curves', 'zigzag'];
         this._movementPattern = patterns[Math.floor(Math.random() * patterns.length)];
 
-        // 大幅度的复杂摆动 - 体现终极BOSS的不可预测性和威胁
-        this._zigzagAmplitude = 45 + Math.random() * 35; // 45-80像素的大幅摆动
-        this._segmentCount = 12 + Math.floor(Math.random() * 6); // 12-17段移动，最复杂的移动路径
+        // 适度的复杂摆动 - 体现终极BOSS的不可预测性
+        this._zigzagAmplitude = 25 + Math.random() * 15; // 25-40像素的适度摆动
+        this._segmentCount = 8 + Math.floor(Math.random() * 3); // 8-10段移动，复杂但不过度
 
-        console.log(`终极霸王移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**
      * 初始化终极霸王外观
      */
-    protected initializeMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
-        
-        if (this.isStealthed) {
-            this.drawStealthedForm(graphics);
-        } else {
-            this.drawNormalForm(graphics);
-        }
-        
-        // 根据激活的能力添加特效
-        this.addAbilityEffects(graphics);
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string {
+        return "images/enemies/UltimateOverlord";
     }
-    
+
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(_graphics: any): void {
+        // 终极霸王已迁移到Sprite颜色系统
+        this.drawNormalForm();
+    }
+
     /**
-     * 绘制正常状态外观
+     * 绘制正常状态外观（改为Sprite颜色）
      */
-    private drawNormalForm(graphics: Graphics): void {
+    private drawNormalForm(): void {
         // 终极霸王色彩 - 金紫色，象征至高无上
-        graphics.fillColor = new Color(150, 100, 200, 255);   // 紫色主体
-        graphics.strokeColor = new Color(200, 150, 50, 255);  // 金色边框
-        graphics.lineWidth = 4;
-        
-        // 王冠形状的头部
-        graphics.moveTo(0, -35);
-        graphics.lineTo(-8, -45);
-        graphics.lineTo(-15, -35);
-        graphics.lineTo(-20, -45);
-        graphics.lineTo(-25, -30);
-        graphics.lineTo(-15, -20);
-        graphics.lineTo(15, -20);
-        graphics.lineTo(25, -30);
-        graphics.lineTo(20, -45);
-        graphics.lineTo(15, -35);
-        graphics.lineTo(8, -45);
-        graphics.close();
-        graphics.fill();
-        graphics.stroke();
-        
-        // 威严的身体 - 八角形
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * Math.PI) / 4;
-            const x = Math.cos(angle) * 25;
-            const y = Math.sin(angle) * 20;
-            if (i === 0) {
-                graphics.moveTo(x, y);
-            } else {
-                graphics.lineTo(x, y);
-            }
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(150, 100, 200); // 紫色主体
         }
-        graphics.close();
-        graphics.fill();
-        graphics.stroke();
-        
-        // 霸王之眼 - 多色眼睛
-        graphics.fillColor = new Color(255, 50, 50, 255);     // 红色左眼
-        graphics.circle(-8, -25, 5);
-        graphics.fill();
-        graphics.fillColor = new Color(50, 255, 50, 255);     // 绿色右眼
-        graphics.circle(8, -25, 5);
-        graphics.fill();
-        
-        // 权杖 - 终极武器
-        graphics.strokeColor = new Color(255, 200, 50, 255);  // 金色权杖
-        graphics.lineWidth = 5;
-        graphics.moveTo(-30, 0);
-        graphics.lineTo(-45, -15);
-        graphics.stroke();
-        
-        // 权杖顶端宝珠
-        graphics.fillColor = new Color(100, 255, 255, 255);   // 青色宝珠
-        graphics.circle(-45, -15, 8);
-        graphics.fill();
-        graphics.strokeColor = new Color(50, 200, 200, 255);
-        graphics.lineWidth = 2;
-        graphics.circle(-45, -15, 8);
-        graphics.stroke();
-        
-        // 装甲护肩
-        graphics.fillColor = new Color(120, 80, 160, 255);
-        graphics.ellipse(-35, -10, 12, 8);
-        graphics.fill();
-        graphics.ellipse(35, -10, 12, 8);
-        graphics.fill();
-        
-        // 能量核心
-        graphics.fillColor = new Color(255, 255, 100, 200);
-        graphics.circle(0, 0, 8);
-        graphics.fill();
-        
-        // 神秘符文
-        this.drawRuneSymbols(graphics);
+
+        // 神秘符文特效
+        this.drawRuneSymbols();
     }
     
     /**
-     * 绘制潜行状态外观
+     * 绘制潜行状态外观（改为Sprite颜色）
      */
-    private drawStealthedForm(graphics: Graphics): void {
+    private drawStealthedForm(): void {
         // 半透明紫金色
-        graphics.fillColor = new Color(150, 100, 200, 120);
-        graphics.strokeColor = new Color(200, 150, 50, 150);
-        graphics.lineWidth = 3;
-        
-        // 简化的轮廓
-        graphics.circle(0, 0, 25);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 暗影漩涡
-        for (let i = 0; i < 6; i++) {
-            const angle = (i * Math.PI) / 3;
-            const x = Math.cos(angle) * 30;
-            const y = Math.sin(angle) * 30;
-            graphics.fillColor = new Color(100, 50, 150, 80);
-            graphics.circle(x, y, 4);
-            graphics.fill();
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(150, 100, 200, 120); // 半透明紫色
         }
+        console.log("终极霸王潜行状态外观");
     }
     
     /**
-     * 绘制符文符号
+     * 绘制符文符号（改为日志输出）
      */
-    private drawRuneSymbols(graphics: Graphics): void {
-        graphics.strokeColor = new Color(255, 200, 100, 180);
-        graphics.lineWidth = 2;
-        
-        // 在身体周围绘制神秘符文
-        for (let i = 0; i < 6; i++) {
-            const angle = (i * Math.PI) / 3;
-            const x = Math.cos(angle) * 15;
-            const y = Math.sin(angle) * 12;
-            
-            // 简单的符文形状
-            graphics.moveTo(x - 3, y - 3);
-            graphics.lineTo(x + 3, y - 3);
-            graphics.lineTo(x, y + 3);
-            graphics.close();
-            graphics.stroke();
-        }
+    private drawRuneSymbols(): void {
+        // 神秘符文特效已经通过Sprite颜色变化体现
+        console.log("终极霸王身体周围神秘符文效果");
     }
     
     /**
-     * 添加能力特效
+     * 添加能力特效（改为Sprite颜色变化）
      */
-    private addAbilityEffects(graphics: Graphics): void {
+    private addAbilityEffects(): void {
         switch (this.activeAbility) {
             case 'summon':
-                this.addSummonEffect(graphics);
+                this.addSummonEffect();
                 break;
             case 'intimidation':
-                this.addIntimidationEffect(graphics);
+                this.addIntimidationEffect();
                 break;
             case 'stealth':
-                this.addStealthEffect(graphics);
+                this.addStealthEffect();
                 break;
         }
     }
     
     /**
-     * 添加召唤特效
+     * 添加召唤特效（改为Sprite颜色变化）
      */
-    private addSummonEffect(graphics: Graphics): void {
-        graphics.strokeColor = new Color(200, 100, 255, 200);
-        graphics.lineWidth = 3;
-        graphics.circle(0, 0, 50);
-        graphics.stroke();
-        graphics.circle(0, 0, 40);
-        graphics.stroke();
+    private addSummonEffect(): void {
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(200, 100, 255); // 紫红色召唤特效
+        }
+        console.log("终极霸王召唤特效");
     }
     
     /**
-     * 添加链式攻击特效
+     * 添加威慑特效（改为Sprite颜色变化）
      */
-    private addIntimidationEffect(graphics: Graphics): void {
-        graphics.strokeColor = new Color(255, 255, 100, 200);
-        graphics.lineWidth = 4;
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * Math.PI) / 4;
-            const startX = Math.cos(angle) * 20;
-            const startY = Math.sin(angle) * 20;
-            const endX = Math.cos(angle) * 60;
-            const endY = Math.sin(angle) * 60;
-            graphics.moveTo(startX, startY);
-            graphics.lineTo(endX, endY);
-            graphics.stroke();
+    private addIntimidationEffect(): void {
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 255, 100); // 金黄色威慑特效
         }
+        console.log("终极霸王威慑特效");
     }
     
     /**
-     * 添加潜行特效
+     * 添加潜行特效（改为Sprite颜色变化）
      */
-    private addStealthEffect(graphics: Graphics): void {
-        graphics.strokeColor = new Color(150, 100, 200, 100);
-        graphics.lineWidth = 2;
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * Math.PI) / 6;
-            const radius = 35 + Math.sin(Date.now() / 200 + i) * 5;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            graphics.circle(x, y, 2);
-            graphics.stroke();
+    private addStealthEffect(): void {
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(150, 100, 200, 100); // 半透明潜行特效
         }
+        console.log("终极霸王潜行特效");
     }
     
     /**
@@ -351,19 +241,18 @@ export class UltimateOverlord extends BaseMouse {
     }
     
     /**
-     * 更新视觉特效（减少Graphics组件重复访问）
+     * 更新视觉特效（改为Sprite颜色变化）
      */
     private updateVisualEffects(): void {
-        if (!this._graphics) {
-            this._graphics = this.getGraphicsComponent();
+        if (this.isStealthed) {
+            this.drawStealthedForm();
+        } else {
+            this.drawNormalForm();
         }
-        if (this._graphics) {
-            this._graphics.clear();
-            if (this.isStealthed) {
-                this.drawStealthedForm(this._graphics);
-            } else {
-                this.drawNormalForm(this._graphics);
-            }
+
+        // 添加能力特效
+        if (this.activeAbility) {
+            this.addAbilityEffects();
         }
     }
     
@@ -463,9 +352,7 @@ export class UltimateOverlord extends BaseMouse {
             .start();
     }
     
-    // 已移除链式攻击相关方法，符合塔防游戏设计原则
     
-    // 已移除链式攻击相关方法，符合塔防游戏设计原则
     
     /**
      * 终极霸王复合受伤处理
@@ -496,27 +383,25 @@ export class UltimateOverlord extends BaseMouse {
     }
     
     /**
-     * 显示受伤特效
+     * 显示受伤特效（改为Sprite颜色变化）
      */
     private showDamageEffect(): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
-        
-        // 愤怒光环
-        graphics.strokeColor = new Color(255, 0, 0, 255);
-        graphics.lineWidth = 5;
-        graphics.circle(0, 0, 60);
-        graphics.stroke();
-        
-        // 能量爆发
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * Math.PI) / 6;
-            const x = Math.cos(angle) * 50;
-            const y = Math.sin(angle) * 50;
-            graphics.fillColor = new Color(255, 100, 100, 200);
-            graphics.circle(x, y, 4);
-            graphics.fill();
+        // 愤怒特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 0, 0); // 红色愤怒特效
+
+            // 短暂闪烁后恢复
+            tween(this.node)
+                .delay(0.4)
+                .call(() => {
+                    if (this.node && this.node.isValid && sprite) {
+                        this.updateVisualEffects(); // 恢复正常外观
+                    }
+                })
+                .start();
         }
+        console.log("终极霸王愤怒特效");
     }
     
     /**
@@ -528,48 +413,34 @@ export class UltimateOverlord extends BaseMouse {
      */
     protected onDie(): void {
         console.log("终极霸王的统治时代结束了！世界恢复和平...");
-        
-        // 终极死亡特效
-        const graphics = this.getGraphicsComponent();
-        if (graphics) {
-            graphics.clear();
-            
-            // 巨大的爆炸
-            graphics.fillColor = new Color(255, 255, 255, 255);
-            graphics.circle(0, 0, 50);
-            graphics.fill();
-            
-            // 彩色能量环
-            const colors = [
-                new Color(255, 100, 100, 200),
-                new Color(100, 255, 100, 200),
-                new Color(100, 100, 255, 200),
-                new Color(255, 255, 100, 200),
-                new Color(255, 100, 255, 200),
-                new Color(100, 255, 255, 200)
-            ];
-            
-            for (let i = 0; i < 6; i++) {
-                graphics.strokeColor = colors[i];
-                graphics.lineWidth = 8;
-                graphics.circle(0, 0, 40 + (i * 15));
-                graphics.stroke();
-            }
-            
-            // 胜利光芒
-            graphics.strokeColor = new Color(255, 255, 200, 255);
-            graphics.lineWidth = 6;
-            for (let i = 0; i < 16; i++) {
-                const angle = (i * Math.PI) / 8;
-                const endX = Math.cos(angle) * 100;
-                const endY = Math.sin(angle) * 100;
-                graphics.moveTo(0, 0);
-                graphics.lineTo(endX, endY);
-                graphics.stroke();
-            }
+
+        // 终极死亡特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 255, 255); // 白色终极爆炸
         }
-        
+
         // 调用父类死亡处理
         super.onDie();
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置终极霸王的特殊属性
+     */
+    protected onReuse(): void {
+        // 重新初始化所有特殊属性
+        const config = this.getConfig();
+        this.armorValue = config.armorValue || 5;
+        this.stealthChance = config.stealthChance || 0.15;
+        this.summonCount = config.summonCount || 2;
+        this.summonType = config.summonType || EnemyType.MOUSE_KING;
+        this.damageReduction = config.damageReduction || 0.1;
+
+        // 重置状态
+        this.activeAbility = '';
+        this.checkStealthState();
+
+        console.log(`[UltimateOverlord] 🔄 重用时重置特殊属性: 护甲=${this.armorValue}, 潜行=${this.stealthChance}, 召唤=${this.summonCount}`);
     }
 }

@@ -1,6 +1,6 @@
-import { _decorator, Color, Graphics, tween } from 'cc';
+import { _decorator, Color, Sprite, tween } from 'cc';
 import { BaseMouse } from './BaseMouse';
-import { EnemyType, EnemyState, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
+import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
 const { ccclass, property } = _decorator;
 
@@ -13,7 +13,7 @@ export class TankMouse extends BaseMouse {
     
     public readonly enemyType: EnemyType = EnemyType.TANK_MOUSE;
 
-    // 私有属性（基类已提供 _graphics）
+    // 私有属性
 
     @property({ tooltip: "护甲值(减少受到的伤害)" })
     public armorValue: number = 3;
@@ -22,7 +22,7 @@ export class TankMouse extends BaseMouse {
     protected getConfig(): EnemyConfig {
         return {
             type: EnemyType.TANK_MOUSE,
-            name: "坦克老鼠",
+            name: "铁甲鼠",
             category: EnemyCategory.ARMORED,
             health: 120,
             maxHealth: 120,
@@ -41,63 +41,31 @@ export class TankMouse extends BaseMouse {
         this._zigzagAmplitude = 3 + Math.random() * 4; // 3-7像素（极小摆动）
         this._segmentCount = 2 + Math.floor(Math.random() * 2); // 2-3段移动（最少分段）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
-    protected initializeMouseVisuals(): void {
-        // 创建坦克老鼠外观 - 深灰色厚重外观
-        this._graphics = this.getGraphicsComponent();
-        
-        this.drawTankMouseAppearance();
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string {
+        return "images/enemies/TankMouse";
     }
-    
+
+
     /**
-     * 绘制坦克老鼠外观
+     * 通过Sprite颜色变化实现装甲效果
+     * @param showArmor 是否显示装甲效果
      */
-    private drawTankMouseAppearance(): void {
-        if (!this._graphics) return;
-        
-        // 绘制坦克老鼠身体（厚重的矩形 + 装甲细节）
-        this._graphics.fillColor = new Color(80, 80, 80, 255);      // 深灰色装甲
-        this._graphics.strokeColor = new Color(50, 50, 50, 255);    // 更深的边框
-        this._graphics.lineWidth = 3;
-        
-        // 主体 - 厚重的矩形
-        this._graphics.roundRect(-18, -12, 36, 24, 4);
-        this._graphics.fill();
-        this._graphics.stroke();
-        
-        // 装甲板细节
-        this._graphics.fillColor = new Color(100, 100, 100, 255);   // 稍亮的装甲细节
-        this._graphics.roundRect(-14, -8, 28, 16, 2);
-        this._graphics.fill();
-        
-        // 装甲纹理线条
-        this._graphics.strokeColor = new Color(120, 120, 120, 255);
-        this._graphics.lineWidth = 1;
-        this._graphics.moveTo(-12, -6);
-        this._graphics.lineTo(12, -6);
-        this._graphics.moveTo(-12, 0);
-        this._graphics.lineTo(12, 0);
-        this._graphics.moveTo(-12, 6);
-        this._graphics.lineTo(12, 6);
-        this._graphics.stroke();
-        
-        // 眼睛 - 小而坚毅
-        this._graphics.fillColor = new Color(255, 0, 0, 255);       // 红色眼睛
-        this._graphics.circle(-6, 3, 2);
-        this._graphics.fill();
-        this._graphics.circle(6, 3, 2);
-        this._graphics.fill();
-        
-        // 履带/脚部
-        this._graphics.fillColor = new Color(60, 60, 60, 255);
-        this._graphics.rect(-16, -16, 8, 4);
-        this._graphics.fill();
-        this._graphics.rect(8, -16, 8, 4);
-        this._graphics.fill();
-        
-        console.log(`${this.unitName}外观创建完成`);
+    private updateArmorAppearance(showArmor: boolean = false): void {
+        const sprite = this.node.getComponent(Sprite);
+        if (!sprite) return;
+
+        if (showArmor) {
+            // 装甲效果时显示稍亮的灰色
+            sprite.color = new Color(120, 120, 120, 255);
+        } else {
+            // 正常时深灰色装甲
+            sprite.color = new Color(80, 80, 80, 255);
+        }
     }
     
     /**
@@ -105,17 +73,21 @@ export class TankMouse extends BaseMouse {
      */
     public takeDamage(damage: number): void {
         if (!this.isAlive) return;
-        
+
         // 护甲减伤：最终伤害 = 原始伤害 - 护甲值（最低为1）
         const actualDamage = Math.max(1, damage - this.armorValue);
-        
+
         this.currentHealth = Math.max(0, this.currentHealth - actualDamage);
+
+        // 更新血条显示
+        this.updateMouseHealthBarDisplay();
+
         this.onTakeDamage(actualDamage);
-        
+
         if (this.currentHealth <= 0) {
             this.die();
         }
-        
+
         console.log(`${this.unitName}护甲减伤: ${damage} → ${actualDamage} 实际伤害`);
     }
     
@@ -131,6 +103,19 @@ export class TankMouse extends BaseMouse {
         
         // 创建护甲防护特效（可选）
         this.createArmorEffect();
+
+        // 显示装甲效果
+        this.updateArmorAppearance(true);
+
+        // 0.2秒后恢复正常颜色
+        tween(this.node)
+            .delay(0.2)
+            .call(() => {
+                if (this.node && this.node.isValid) {
+                    this.updateArmorAppearance(false);
+                }
+            })
+            .start();
     }
     
     /**
@@ -177,5 +162,15 @@ export class TankMouse extends BaseMouse {
         }
         
         console.log(`${this.unitName}死亡，装甲破碎！`);
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 铁甲鼠重用时无需特殊处理，基类会在startMovement时统一初始化移动参数
+     */
+    protected onReuse(): void {
+        // 移除重复的移动参数初始化，避免与基类的startMovement冲突
+        // 基类会在startMovementTowardsCastle()时统一调用initializeMovementBehavior()
+        console.log(`[TankMouse] 🔄 对象池重用，移动参数将在开始移动时初始化`);
     }
 }

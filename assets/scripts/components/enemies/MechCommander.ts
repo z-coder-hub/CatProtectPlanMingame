@@ -1,4 +1,4 @@
-import { _decorator, Color, Graphics, tween, Vec3 } from 'cc';
+import { _decorator, Color, Sprite, tween, Vec3 } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { EnemyCategory, EnemyConfig, EnemyType } from '../../types/GameTypes';
 import { BaseMouse } from './BaseMouse';
@@ -29,7 +29,7 @@ const { ccclass } = _decorator;
  * ### 🏗️ BaseMouse 架构设计
  *
  * **DRY 原则重构架构** - BaseMouse统一管理：
- * - 外观渲染系统：统一的Graphics组件管理和绘制
+ * - 外观渲染系统：统一的Sprite组件管理和显示
  * - 标签系统：统一的名称标签创建和配置（22px大字体）
  * - 血条系统：统一的血条创建、显示和更新
  * - 移动系统：完整的Tween移动系统，支持6种移动模式
@@ -55,8 +55,7 @@ const { ccclass } = _decorator;
  * ✅ 推荐的简洁模式：
  * ```typescript
  * protected initializeMouseVisuals(): void {
- *     this._graphics = this.getGraphicsComponent();
- *     this.drawAppearance();
+ *     this.updateAppearance();
  * }
  * ```
  *
@@ -67,8 +66,7 @@ const { ccclass } = _decorator;
  * }
  *
  * private initializeVisuals(): void {
- *     this._graphics = this.getGraphicsComponent();
- *     this.drawAppearance();
+ *     this.updateAppearance();
  * }
  * ```
  *
@@ -155,179 +153,35 @@ export class MechCommander extends BaseMouse {
         this._zigzagAmplitude = 15 + Math.random() * 20; // 15-35像素的精确摆动
         this._segmentCount = 6 + Math.floor(Math.random() * 3); // 6-8段移动，保持稳定
 
-        console.log(`机械军团长移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
+
+        console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
 
     /**
      * 初始化机械军团长外观
      */
-    protected initializeMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string {
+        return "images/enemies/MechCommander";
+    }
 
-        // 机械色彩 - 银灰色机械风
-        graphics.fillColor = new Color(140, 140, 140, 255);   // 银灰色主体
-        graphics.strokeColor = new Color(100, 100, 100, 255); // 深灰色边框
-        graphics.lineWidth = 3;
-
-        // 机械身体 - 六角形指挥官形状
-        graphics.moveTo(0, -20);
-        graphics.lineTo(15, -10);
-        graphics.lineTo(15, 10);
-        graphics.lineTo(0, 20);
-        graphics.lineTo(-15, 10);
-        graphics.lineTo(-15, -10);
-        graphics.close();
-        graphics.fill();
-        graphics.stroke();
-
-        // 指挥头盔
-        graphics.fillColor = new Color(120, 120, 150, 255);   // 蓝灰色头盔
-        graphics.rect(-12, -25, 24, 15);
-        graphics.fill();
-        graphics.stroke();
-
-        // 机械眼睛 - 红色扫描器
-        graphics.fillColor = new Color(255, 50, 50, 255);
-        graphics.rect(-8, -22, 6, 3);
-        graphics.fill();
-        graphics.rect(2, -22, 6, 3);
-        graphics.fill();
-
-        // 天线/通讯设备
-        graphics.strokeColor = new Color(200, 200, 200, 255);
-        graphics.lineWidth = 2;
-        graphics.moveTo(-5, -25);
-        graphics.lineTo(-5, -35);
-        graphics.stroke();
-        graphics.moveTo(5, -25);
-        graphics.lineTo(5, -35);
-        graphics.stroke();
-
-        // 天线顶部
-        graphics.fillColor = new Color(255, 100, 100, 255);
-        graphics.circle(-5, -35, 2);
-        graphics.fill();
-        graphics.circle(5, -35, 2);
-        graphics.fill();
-
-        // 机械臂/武器系统
-        graphics.fillColor = new Color(110, 110, 110, 255);
-        graphics.rect(-25, -8, 12, 6);
-        graphics.fill();
-        graphics.stroke();
-        graphics.rect(13, -8, 12, 6);
-        graphics.fill();
-        graphics.stroke();
-
-        // 履带/移动系统
-        graphics.fillColor = new Color(80, 80, 80, 255);
-        graphics.rect(-18, 15, 36, 10);
-        graphics.fill();
-        graphics.stroke();
-
-        // 履带齿轮
-        for (let i = 0; i < 6; i++) {
-            const x = -15 + (i * 6);
-            graphics.fillColor = new Color(60, 60, 60, 255);
-            graphics.circle(x, 20, 2);
-            graphics.fill();
-        }
-
-        // 机械装饰线条
-        this.drawMechanicalDetails(graphics);
+    // 实现抽象方法：绘制Graphics外观（没有图片资源，使用Graphics绘制）
+    protected drawEnemyGraphics(_graphics: any): void {
+        // 机械军团长已迁移到Sprite颜色系统
+        this.drawBasicVisuals();
     }
 
     /**
-     * 绘制基础机械外观（不重新获取Graphics组件）
+     * 绘制基础机械外观（使用Sprite颜色代替Graphics）
      */
-    private drawBasicVisuals(graphics: Graphics): void {
+    private drawBasicVisuals(): void {
         // 机械色彩 - 银灰色机械风
-        graphics.fillColor = new Color(140, 140, 140, 255);   // 银灰色主体
-        graphics.strokeColor = new Color(100, 100, 100, 255); // 深灰色边框
-        graphics.lineWidth = 3;
-
-        // 机械身体 - 六角形指挥官形状
-        graphics.moveTo(0, -20);
-        graphics.lineTo(15, -10);
-        graphics.lineTo(15, 10);
-        graphics.lineTo(0, 20);
-        graphics.lineTo(-15, 10);
-        graphics.lineTo(-15, -10);
-        graphics.close();
-        graphics.fill();
-        graphics.stroke();
-
-        // 指挥头盔
-        graphics.fillColor = new Color(120, 120, 150, 255);   // 蓝灰色头盔
-        graphics.rect(-12, -25, 24, 15);
-        graphics.fill();
-        graphics.stroke();
-
-        // 机械眼睛 - 红色扫描器
-        graphics.fillColor = new Color(255, 50, 50, 255);
-        graphics.rect(-8, -22, 6, 3);
-        graphics.fill();
-        graphics.rect(2, -22, 6, 3);
-        graphics.fill();
-
-        // 天线/通讯设备
-        graphics.strokeColor = new Color(200, 200, 200, 255);
-        graphics.lineWidth = 2;
-        graphics.moveTo(-5, -25);
-        graphics.lineTo(-5, -35);
-        graphics.stroke();
-        graphics.moveTo(5, -25);
-        graphics.lineTo(5, -35);
-        graphics.stroke();
-
-        // 天线顶部
-        graphics.fillColor = new Color(255, 100, 100, 255);
-        graphics.circle(-5, -35, 2);
-        graphics.fill();
-        graphics.circle(5, -35, 2);
-        graphics.fill();
-
-        // 履带/移动系统
-        graphics.fillColor = new Color(80, 80, 80, 255);
-        graphics.rect(-18, 15, 36, 10);
-        graphics.fill();
-        graphics.stroke();
-
-        // 履带齿轮
-        for (let i = 0; i < 6; i++) {
-            const x = -15 + (i * 6);
-            graphics.fillColor = new Color(60, 60, 60, 255);
-            graphics.circle(x, 20, 2);
-            graphics.fill();
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(140, 140, 140); // 银灰色主体
         }
     }
 
-    /**
-     * 绘制机械细节
-     */
-    private drawMechanicalDetails(graphics: Graphics): void {
-        graphics.strokeColor = new Color(180, 180, 180, 255);
-        graphics.lineWidth = 1;
-
-        // 机械纹路
-        graphics.moveTo(-12, -5);
-        graphics.lineTo(12, -5);
-        graphics.stroke();
-        graphics.moveTo(-12, 0);
-        graphics.lineTo(12, 0);
-        graphics.stroke();
-        graphics.moveTo(-12, 5);
-        graphics.lineTo(12, 5);
-        graphics.stroke();
-
-        // 机械接缝
-        graphics.moveTo(-15, -10);
-        graphics.lineTo(-15, 10);
-        graphics.stroke();
-        graphics.moveTo(15, -10);
-        graphics.lineTo(15, 10);
-        graphics.stroke();
-    }
 
     /**
      * 更新机械特效和逻辑
@@ -358,35 +212,26 @@ export class MechCommander extends BaseMouse {
     }
 
     /**
-     * 更新机械特效（减少Graphics组件重复访问）
+     * 更新机械特效（改为Sprite颜色变化）
      */
     private updateMechanicalEffect(): void {
-        if (!this._graphics) {
-            this._graphics = this.getGraphicsComponent();
-        }
-        if (!this._graphics) return;
-
         // 重绘基础外观
-        this._graphics.clear();
-        this.drawBasicVisuals(this._graphics);
+        this.drawBasicVisuals();
 
-        // 添加扫描线特效
+        // 添加扫描线特效 - 改为颜色闪烁
         const time = Date.now() / 1000;
-        this._graphics.strokeColor = new Color(100, 255, 100, 150);
-        this._graphics.lineWidth = 2;
+        const flickerIntensity = Math.sin(time * 4) * 0.3 + 0.7;
 
-        const scanY = -15 + (Math.sin(time * 4) + 1) * 15;
-        this._graphics.moveTo(-15, scanY);
-        this._graphics.lineTo(15, scanY);
-        this._graphics.stroke();
-
-        // 数据传输特效
-        this._graphics.fillColor = new Color(100, 200, 255, 100);
-        for (let i = 0; i < 3; i++) {
-            const y = -8 + (i * 8) + Math.sin(time * 2 + i) * 2;
-            this._graphics.rect(-2, y, 4, 2);
-            this._graphics.fill();
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(
+                Math.floor(140 * flickerIntensity),
+                Math.floor(140 * flickerIntensity),
+                Math.floor(140 * flickerIntensity)
+            );
         }
+
+        console.log("机械军团长更新扫描特效");
     }
 
     /**
@@ -431,33 +276,22 @@ export class MechCommander extends BaseMouse {
      * 显示召唤特效
      */
     private showSummonEffect(): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
-
-        // 机械召唤光环
-        graphics.strokeColor = new Color(100, 200, 255, 200);
-        graphics.lineWidth = 3;
-        graphics.circle(0, 0, 40);
-        graphics.stroke();
-
-        // 数据流特效
-        graphics.fillColor = new Color(150, 200, 255, 150);
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * Math.PI) / 4;
-            const x = Math.cos(angle) * 30;
-            const y = Math.sin(angle) * 30;
-            graphics.rect(x - 1, y - 1, 2, 2);
-            graphics.fill();
+        // 机械召唤特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(100, 200, 255); // 蓝色召唤光环色
         }
+        console.log("机械军团长展示召唤特效");
 
         // 1.5秒后恢复正常外观
         tween(this.node)
             .delay(1.5)
             .call(() => {
-                const graphics = this.getGraphicsComponent();
-                if (graphics) {
-                    graphics.clear();
-                    this.initializeMouseVisuals();
+                if (this.node && this.node.isValid) {
+                    const sprite = this.node.getComponent(Sprite);
+                    if (sprite) {
+                        sprite.color = new Color(140, 140, 140); // 恢复银灰色
+                    }
                 }
             })
             .start();
@@ -482,24 +316,22 @@ export class MechCommander extends BaseMouse {
      * 显示修复特效
      */
     private showRepairEffect(): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
+        // 修复特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(100, 255, 100); // 绿色修复光芒
 
-        // 修复光芒
-        graphics.strokeColor = new Color(100, 255, 100, 200);
-        graphics.lineWidth = 2;
-        graphics.circle(0, 0, 25);
-        graphics.stroke();
-
-        // 修复粒子
-        graphics.fillColor = new Color(150, 255, 150, 150);
-        for (let i = 0; i < 6; i++) {
-            const angle = (i * Math.PI) / 3;
-            const x = Math.cos(angle) * 15;
-            const y = Math.sin(angle) * 15;
-            graphics.circle(x, y, 2);
-            graphics.fill();
+            // 短暂闪烁后恢复
+            tween(this.node)
+                .delay(0.5)
+                .call(() => {
+                    if (this.node && this.node.isValid && sprite) {
+                        sprite.color = new Color(140, 140, 140); // 恢复银灰色
+                    }
+                })
+                .start();
         }
+        console.log("机械军团长展示修复特效");
     }
 
     /**
@@ -508,25 +340,20 @@ export class MechCommander extends BaseMouse {
     protected onTakeDamage(_damage: number): void {
         console.log("机械军团长装甲受损，启动应急修复程序！");
 
-        // 应急修复特效
-        const graphics = this.getGraphicsComponent();
-        if (graphics) {
-            // 添加警告特效
-            graphics.strokeColor = new Color(255, 200, 0, 255);
-            graphics.lineWidth = 3;
-            graphics.circle(0, 0, 35);
-            graphics.stroke();
+        // 应急修复特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 200, 0); // 警告黄色
 
-            // 火花特效
-            graphics.fillColor = new Color(255, 150, 50, 200);
-            for (let i = 0; i < 8; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 20 + 15;
-                const x = Math.cos(angle) * distance;
-                const y = Math.sin(angle) * distance;
-                graphics.circle(x, y, 1);
-                graphics.fill();
-            }
+            // 短暂闪烁后恢复
+            tween(this.node)
+                .delay(0.3)
+                .call(() => {
+                    if (this.node && this.node.isValid && sprite) {
+                        sprite.color = new Color(140, 140, 140); // 恢复银灰色
+                    }
+                })
+                .start();
         }
     }
 
@@ -540,43 +367,33 @@ export class MechCommander extends BaseMouse {
     protected onDie(): void {
         console.log("机械军团长系统失控，发生爆炸！");
 
-        // 机械爆炸特效
-        const graphics = this.getGraphicsComponent();
-        if (graphics) {
-            graphics.clear();
-
-            // 爆炸中心
-            graphics.fillColor = new Color(255, 100, 50, 255);
-            graphics.circle(0, 0, 20);
-            graphics.fill();
-
-            // 爆炸碎片
-            graphics.fillColor = new Color(140, 140, 140, 200);
-            for (let i = 0; i < 15; i++) {
-                const angle = (i * Math.PI * 2) / 15;
-                const distance = 25 + (i * 3);
-                const x = Math.cos(angle) * distance;
-                const y = Math.sin(angle) * distance;
-                graphics.rect(x - 2, y - 2, 4, 4);
-                graphics.fill();
-            }
-
-            // 电弧残留
-            graphics.strokeColor = new Color(100, 150, 255, 150);
-            graphics.lineWidth = 2;
-            for (let i = 0; i < 6; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const startX = Math.cos(angle) * 15;
-                const startY = Math.sin(angle) * 15;
-                const endX = Math.cos(angle) * 35;
-                const endY = Math.sin(angle) * 35;
-                graphics.moveTo(startX, startY);
-                graphics.lineTo(endX, endY);
-                graphics.stroke();
-            }
+        // 机械爆炸特效 - 改为Sprite颜色变化
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 100, 50); // 爆炸橙色
         }
 
         // 调用父类死亡处理
         super.onDie();
+    }
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置机械军团长的特殊属性和计时器
+     */
+    protected onReuse(): void {
+        // 重新初始化特殊属性
+        const config = this.getConfig();
+        this.summonCount = config.summonCount || 6;
+        this.summonType = config.summonType || EnemyType.MECH_MOUSE;
+        this.healRate = config.healRate || 20;
+
+        // 🔧 修复：重置所有计时器和状态
+        this.summonCooldown = 0;
+        this.healCooldown = 0;
+        this.spawnedCount = 0;
+        this.mechEffectTimer = 0;
+
+        console.log(`[MechCommander] 🔄 重用时重置机械系统: 召唤=${this.summonCount}, 类型=${this.summonType}, 修复=${this.healRate}, 计时器已重置`);
     }
 }

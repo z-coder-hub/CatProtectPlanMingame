@@ -11,6 +11,7 @@ import { LEVEL_CONFIGS } from '../types/LevelConfigs';
 import { BattleManager } from './BattleManager';
 import { LevelManager } from './LevelManager';
 import { WaveManager } from './WaveManager';
+import { Castle } from '../components/game/Castle';
 
 const { ccclass, property } = _decorator;
 
@@ -18,10 +19,10 @@ const { ccclass, property } = _decorator;
 export class GameManager extends Component {
 
     @property({ tooltip: "城堡生命值" })
-    public castleHealth: number = 100;
+    public castleHealth: number = GAME_CONFIG.castleHealth;
 
     @property({ tooltip: "当前金币数量" })
-    public currentGold: number = 110;  // 与GAME_CONFIG.initialGold保持一致
+    public currentGold: number = GAME_CONFIG.initialGold;
 
     @property({ tooltip: "当前波次" })
     public currentWave: number = 1;
@@ -35,7 +36,7 @@ export class GameManager extends Component {
 
     // 游戏状态
     private _gameState: GameState = GameState.MENU; // 从菜单开始
-    private _maxCastleHealth: number = 100;
+    private _maxCastleHealth: number = GAME_CONFIG.castleHealth;
 
     // 事件回调
     private _eventCallbacks = new Map<keyof GameEvents, Function[]>();
@@ -132,12 +133,12 @@ export class GameManager extends Component {
         // 初始化游戏配置
         this.initializeGameConfig();
 
-        console.log("GameManager初始化完成 - 事件中心模式");
+        // 初始化完成
     }
 
     protected start(): void {
         // 游戏开始时保持菜单状态，等待玩家操作
-        console.log("游戏已加载，等待玩家开始");
+        // 游戏加载完成
     }
 
     protected update(dt: number): void {
@@ -209,7 +210,7 @@ export class GameManager extends Component {
             this._levelManager.node.off('hero-unlocked', this.onHeroUnlocked, this);
         }
 
-        console.log("🧹 事件监听器已清理");
+        // 简化日志：清理完成
     }
 
     // ====================== 事件处理方法 ======================
@@ -220,7 +221,7 @@ export class GameManager extends Component {
     private onEnemyKilled(event: { enemy: any, goldReward: number }): void {
         // 原GameManager业务逻辑：给予金币奖励
         this.AddGold(event.goldReward);
-        console.log(`🎯 事件处理: 敌人被击杀，获得 ${event.goldReward} 金币`);
+        // 简化日志：敌人击杀奖励已在UI中显示
     }
 
 
@@ -230,14 +231,14 @@ export class GameManager extends Component {
     private onWaveStarted(event: { waveNumber: number, levelId: string }): void {
         // 同步当前波次到GameManager
         this.currentWave = event.waveNumber;
-        console.log(`🎯 事件处理: 第 ${event.waveNumber} 波开始`);
+        // 简化日志：波次开始信息已在UI中显示
     }
 
     /**
      * 处理波次敌人清理完成事件
      */
     private onWaveEnemiesCleared(event: { waveNumber: number, levelId: string }): void {
-        console.log(`🎯 事件处理: 第 ${event.waveNumber} 波敌人清理完成`);
+        // 简化日志：波次完成信息已在UI中显示
 
         if (!this._currentLevelConfig) {
             console.error("没有当前关卡配置");
@@ -245,7 +246,7 @@ export class GameManager extends Component {
         }
 
         // 波次完成业务逻辑
-        console.log(`第 ${event.waveNumber} 波完成`);
+        // 简化日志：波次完成信息已在UI中显示
 
         // 每波奖励金币
         this.AddGold(30);
@@ -269,7 +270,7 @@ export class GameManager extends Component {
      * 处理关卡所有波次完成事件
      */
     private onLevelAllWavesCompleted(event: { levelId: string, levelName: string }): void {
-        console.log(`🎯 事件处理: 关卡 ${event.levelName} 所有波次完成！`);
+        // 简化日志：关卡完成信息已在UI中显示
         this.CompleteLevel(true);
     }
 
@@ -277,7 +278,7 @@ export class GameManager extends Component {
      * 处理英雄解锁事件
      */
     private onHeroUnlocked(event: { heroType: any }): void {
-        console.log(`🎯 事件处理: 英雄 ${event.heroType} 已解锁`);
+        // 简化日志：英雄解锁信息已在UI中显示
         // 可以在这里添加UI通知等逻辑
     }
 
@@ -336,6 +337,14 @@ export class GameManager extends Component {
         this.castleHealth = GAME_CONFIG.castleHealth;
         this._maxCastleHealth = GAME_CONFIG.castleHealth;
 
+        // 恢复城堡外观
+        if (this.castleNode) {
+            const castleComponent = this.castleNode.getComponent(Castle);
+            if (castleComponent) {
+                castleComponent.restoreCastleAppearance();
+            }
+        }
+
         // 重置波次
         this.currentWave = 1;
 
@@ -372,11 +381,11 @@ export class GameManager extends Component {
         }
 
         this.setGameState(GameState.BATTLE);
-        console.log(`[GameManager] 战斗开始！当前波次: ${this.currentWave}`);
+        // 简化日志：战斗开始信息已在UI中显示
 
         // 启动波次管理器
         if (this._waveManager) {
-            console.log(`[GameManager] 启动第 ${this.currentWave} 波`);
+            // 简化日志：启动波次信息已在UI中显示
             this._waveManager.StartWave(this.currentWave);
         } else {
             console.error("[GameManager] 未找到WaveManager，无法启动波次");
@@ -392,7 +401,7 @@ export class GameManager extends Component {
 
         // 防止重复处理关卡完成
         if (this._gameState === GameState.VICTORY || this._gameState === GameState.GAME_OVER) {
-            console.log("关卡已经完成处理，忽略重复调用");
+            // 忽略重复调用
             return;
         }
 
@@ -406,10 +415,10 @@ export class GameManager extends Component {
     // 处理关卡胜利
     private handleLevelVictory(): void {
         const levelConfig = this._currentLevelConfig!;
-        console.log(`关卡胜利: ${levelConfig.name}`);
+        // 简化日志：关卡胜利
 
         // 立即处理英雄解锁奖励（确保玩家立即看到解锁的英雄）
-        console.log("🎉 关卡胜利！立即处理英雄解锁奖励...");
+        // 处理英雄解锁奖励
         this.processLevelRewards(levelConfig.rewards);
 
         // 计算完成时间和分数（简化计算）
@@ -444,16 +453,14 @@ export class GameManager extends Component {
         }
     }
 
-    // 计算关卡完成时间（简化实现）
+    // 计算关卡完成时间
     private calculateCompletionTime(): number {
-        // TODO: 实现准确的时间计算
-        const estimatedTime = (this._currentLevelConfig?.estimatedDuration || 5) * 60;
+        const estimatedTime = 5 * 60; // 固定5分钟预期时长
         return estimatedTime * 0.8; // 假设80%时间内完成
     }
 
-    // 计算关卡分数（简化实现）
+    // 计算关卡分数
     private calculateLevelScore(): number {
-        // TODO: 实现复杂的分数计算
         const baseScore = 1000;
         const goldBonus = this.currentGold * 2;
         const healthBonus = this.castleHealth * 10;
@@ -494,20 +501,9 @@ export class GameManager extends Component {
                         console.warn(`英雄解锁失败: ${heroType}`);
                     }
                     break;
-                case RewardType.ACHIEVEMENT:
-                    // TODO: 集成成就系统
-                    console.log(`获得成就: ${reward.value}`);
-                    break;
-                case RewardType.BUFF:
-                    // 处理增益效果
-                    console.log(`获得增益: ${reward.value} - ${reward.description}`);
-                    break;
-                case RewardType.TITLE:
-                    // 处理称号奖励
-                    console.log(`获得称号: ${reward.value} - ${reward.description}`);
-                    break;
                 default:
-                    console.log(`获得未知奖励: ${reward.type} - ${reward.value}`);
+                    // 处理其他类型的奖励（成就、称号等）
+                    console.log(`获得特殊奖励: ${reward.value} - ${reward.description}`);
             }
         }
     }
@@ -549,15 +545,32 @@ export class GameManager extends Component {
 
     // 添加金币
     public AddGold(amount: number): void {
+        const previousGold = this.currentGold;
         this.currentGold += amount;
-        console.log(`获得金币: +${amount}, 当前金币: ${this.currentGold}`);
+        // 简化日志：金币变化已在UI中显示
+
+        // 发出金币变化事件
+        this.emitEvent('gold-changed', {
+            currentGold: this.currentGold,
+            previousGold: previousGold,
+            change: amount
+        });
     }
 
     // 消费金币
     public SpendGold(amount: number): boolean {
         if (this.currentGold >= amount) {
+            const previousGold = this.currentGold;
             this.currentGold -= amount;
-            console.log(`消费金币: -${amount}, 当前金币: ${this.currentGold}`);
+            // 简化日志：金币消费已在UI中显示
+
+            // 发出金币变化事件
+            this.emitEvent('gold-changed', {
+                currentGold: this.currentGold,
+                previousGold: previousGold,
+                change: -amount
+            });
+
             return true;
         }
 

@@ -1,4 +1,4 @@
-import { _decorator, Color, tween } from 'cc';
+import { _decorator, Color, tween, Sprite } from 'cc';
 import { BaseMouse } from './BaseMouse';
 import { EnemyType, EnemyConfig, EnemyCategory } from '../../types/GameTypes';
 
@@ -47,60 +47,19 @@ export class ArmorOverlord extends BaseMouse {
         this._zigzagAmplitude = 5 + Math.random() * 7; // 5-12像素（极小摆动）
         this._segmentCount = 2 + Math.floor(Math.random() * 3); // 2-4段移动（少分段，稳重）
 
+
         console.log(`${this.unitName}移动模式: ${this._movementPattern}, 摆动幅度: ${this._zigzagAmplitude.toFixed(1)}, 分段数: ${this._segmentCount}`);
     }
     
     /**
      * 初始化重甲统领外观
      */
-    protected initializeMouseVisuals(): void {
-        this.initializeArmorOverlordVisuals();
+    // 实现抽象方法：获取敌人图片路径
+    protected getEnemyImagePath(): string {
+        return "images/enemies/ArmorOverlord";
     }
 
-    private initializeArmorOverlordVisuals(): void {
-        const graphics = this.getGraphicsComponent();
-        
-        // 绘制重型装甲外观 - 深灰色的重型坦克
-        graphics.fillColor = new Color(70, 70, 70, 255);    // 深灰色装甲
-        graphics.strokeColor = new Color(50, 50, 50, 255);  // 边框
-        graphics.lineWidth = 3;
-        
-        // 主体装甲 - 矩形坦克形状
-        graphics.roundRect(-25, -20, 50, 40, 5);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 装甲板装饰
-        graphics.fillColor = new Color(90, 90, 90, 255);    // 浅灰色装甲板
-        graphics.rect(-20, -15, 15, 8);
-        graphics.fill();
-        graphics.rect(5, -15, 15, 8);
-        graphics.fill();
-        graphics.rect(-20, 7, 15, 8);
-        graphics.fill();
-        graphics.rect(5, 7, 15, 8);
-        graphics.fill();
-        
-        // 护甲光泽效果
-        graphics.fillColor = new Color(120, 120, 120, 180);  // 半透明高光
-        graphics.rect(-22, -17, 44, 3);
-        graphics.fill();
-        
-        // 履带或重型腿部
-        graphics.fillColor = new Color(40, 40, 40, 255);     // 黑色履带
-        graphics.rect(-25, 20, 50, 8);
-        graphics.fill();
-        graphics.rect(-25, -28, 50, 8);
-        graphics.fill();
-        
-        // 重甲统领标识 - 头顶装甲尖刺
-        graphics.fillColor = new Color(100, 100, 100, 255);
-        graphics.moveTo(0, -25);
-        graphics.lineTo(-8, -35);
-        graphics.lineTo(8, -35);
-        graphics.close();
-        graphics.fill();
-    }
+
     
     /**
      * 护甲减伤处理
@@ -109,13 +68,13 @@ export class ArmorOverlord extends BaseMouse {
         // 护甲减伤计算
         const reducedDamage = Math.max(1, damage - this.armorValue);
         const actualDamage = damage - reducedDamage;
-        
+
         // 显示护甲减伤效果
         if (actualDamage > 0) {
             console.log(`重甲统领护甲减伤: ${actualDamage}点伤害被护甲吸收`);
         }
-        
-        // 护甲光芒效果（被攻击时）
+
+        // 简化的受伤效果
         this.showArmorEffect();
     }
     
@@ -123,100 +82,36 @@ export class ArmorOverlord extends BaseMouse {
      * 显示护甲防护特效
      */
     private showArmorEffect(): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
-        
-        // 添加蓝色护甲光环效果
-        graphics.strokeColor = new Color(100, 150, 255, 200);
-        graphics.lineWidth = 4;
-        graphics.circle(0, 0, 35);
-        graphics.stroke();
-        
+        const sprite = this.node.getComponent(Sprite);
+        if (!sprite) return;
+
+        // 护甲闪蓝效果
+        sprite.color = new Color(100, 150, 255);
+
         // 0.3秒后恢复正常
         tween(this.node)
             .delay(0.3)
             .call(() => {
-                if (this.node && this.node.isValid) {
-                    this.redrawMouseVisuals();
+                if (sprite && this.node.isValid) {
+                    sprite.color = Color.WHITE;
                 }
             })
             .start();
     }
     
-    /**
-     * 重新绘制外观（不重复添加Graphics组件）
-     */
-    private redrawMouseVisuals(): void {
-        const graphics = this.getGraphicsComponent();
-        if (!graphics) return;
-        
-        // 清理现有绘制
-        graphics.clear();
-        
-        // 重新绘制重型装甲外观 - 深灰色的重型坦克
-        graphics.fillColor = new Color(70, 70, 70, 255);    // 深灰色装甲
-        graphics.strokeColor = new Color(50, 50, 50, 255);  // 边框
-        graphics.lineWidth = 3;
-        
-        // 主体装甲 - 矩形坦克形状
-        graphics.roundRect(-25, -20, 50, 40, 5);
-        graphics.fill();
-        graphics.stroke();
-        
-        // 装甲板装饰
-        graphics.fillColor = new Color(90, 90, 90, 255);    // 浅灰色装甲板
-        graphics.rect(-20, -15, 15, 8);
-        graphics.fill();
-        graphics.rect(5, -15, 15, 8);
-        graphics.fill();
-        graphics.rect(-20, 7, 15, 8);
-        graphics.fill();
-        graphics.rect(5, 7, 15, 8);
-        graphics.fill();
-        
-        // 护甲光泽效果
-        graphics.fillColor = new Color(120, 120, 120, 180);  // 半透明高光
-        graphics.rect(-22, -17, 44, 3);
-        graphics.fill();
-        
-        // 履带或重型腿部
-        graphics.fillColor = new Color(40, 40, 40, 255);     // 黑色履带
-        graphics.rect(-25, 20, 50, 8);
-        graphics.fill();
-        graphics.rect(-25, -28, 50, 8);
-        graphics.fill();
-        
-        // 重甲统领标识 - 头顶装甲尖刺
-        graphics.fillColor = new Color(100, 100, 100, 255);
-        graphics.moveTo(0, -25);
-        graphics.lineTo(-8, -35);
-        graphics.lineTo(8, -35);
-        graphics.close();
-        graphics.fill();
-    }
     
     /**
      * 重甲统领特殊死亡效果
      */
     protected onDie(): void {
         console.log("重甲统领被击败！装甲破碎！");
-        
-        // 护甲破碎特效
-        const graphics = this.getGraphicsComponent();
-        if (graphics) {
-            graphics.clear();
-            
-            // 显示破碎装甲片
-            graphics.fillColor = new Color(70, 70, 70, 150);
-            for (let i = 0; i < 8; i++) {
-                const angle = (i * Math.PI) / 4;
-                const x = Math.cos(angle) * 20;
-                const y = Math.sin(angle) * 20;
-                graphics.rect(x - 3, y - 3, 6, 6);
-                graphics.fill();
-            }
+
+        // 简化的死亡效果
+        const sprite = this.node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(70, 70, 70, 150);
         }
-        
+
         // 延迟销毁，展示破碎效果
         tween(this.node)
             .delay(0.5)
@@ -227,5 +122,17 @@ export class ArmorOverlord extends BaseMouse {
             })
             .start();
     }
-    
+
+    /**
+     * 对象池重用时的额外初始化
+     * 重置重甲统领的护甲值
+     */
+    protected onReuse(): void {
+        // 重新初始化护甲值
+        const config = this.getConfig();
+        this.armorValue = config.armorValue || 8;
+
+        console.log(`[ArmorOverlord] 🔄 重用时重置护甲值: ${this.armorValue}`);
+    }
+
 }

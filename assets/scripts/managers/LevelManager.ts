@@ -1,12 +1,44 @@
 import { _decorator, Component } from 'cc';
 import {
-    LevelConfig, LevelCompletionStatus, LevelCompletionRecord,
-    HeroUnlockStatus, HeroUnlockRecord, UnlockCondition, UnlockConditionType,
-    HeroType, RewardType
+    LevelConfig, HeroType, RewardType
 } from '../types/GameTypes';
 import { LEVEL_CONFIGS } from '../types/LevelConfigs';
 
 const { ccclass } = _decorator;
+
+// 简化的本地类型定义
+enum LevelCompletionStatus {
+    LOCKED = "locked",
+    AVAILABLE = "available",
+    COMPLETED = "completed",
+    PERFECT = "perfect"
+}
+
+interface LevelCompletionRecord {
+    levelId: string;
+    status: LevelCompletionStatus;
+    bestTime?: number;
+    highScore?: number;
+    completionCount: number;
+    starsEarned: number;
+    firstCompletionDate?: Date;
+    lastPlayedDate?: Date;
+}
+
+enum HeroUnlockStatus {
+    LOCKED = "locked",
+    UNLOCKED = "unlocked"
+}
+
+interface HeroUnlockRecord {
+    heroType: HeroType;
+    status: HeroUnlockStatus;
+    unlockDate?: Date;
+    level: number;
+    experience: number;
+    totalUsageCount: number;
+    totalKillCount: number;
+}
 
 /**
  * 关卡管理器
@@ -98,22 +130,8 @@ export class LevelManager extends Component {
         });
 
         console.log(`英雄解锁状态初始化完成，默认解锁: ${defaultUnlockedHeroes.length} 个英雄`);
-        
-        // 输出初始状态
-        this.debugHeroUnlockStatus("初始化完成");
     }
 
-    /**
-     * 调试用：输出英雄解锁状态
-     */
-    private debugHeroUnlockStatus(context: string): void {
-        console.log(`🔍 [${context}] 英雄解锁状态详情:`);
-        const heroRecordEntries = Object.keys(this._heroRecords).map(key => [key, this._heroRecords[key as HeroType]]);
-        heroRecordEntries.forEach(([type, record]: [string, HeroUnlockRecord]) => {
-            const status = record.status === HeroUnlockStatus.UNLOCKED ? '✅' : '🔒';
-            console.log(`  ${status} ${type}: ${record.status}`);
-        });
-    }
 
     /**
      * 初始化关卡记录
@@ -142,9 +160,14 @@ export class LevelManager extends Component {
             return LevelCompletionStatus.AVAILABLE;
         }
 
-        // 检查解锁条件
-        const canUnlock = this.CheckUnlockConditions(level.unlockConditions);
-        return canUnlock ? LevelCompletionStatus.AVAILABLE : LevelCompletionStatus.LOCKED;
+        // 简化解锁逻辑：按顺序解锁
+        const levelIndex = parseInt(level.id) - 1;
+        if (levelIndex === 0) return LevelCompletionStatus.AVAILABLE; // 第一关总是可用
+
+        // 检查前一关是否完成
+        const prevLevelId = (levelIndex).toString();
+        const prevRecord = this._levelRecords[prevLevelId];
+        return (prevRecord && prevRecord.status === LevelCompletionStatus.COMPLETED) ? LevelCompletionStatus.AVAILABLE : LevelCompletionStatus.LOCKED;
     }
 
     // ====================== 关卡状态查询 ======================
@@ -273,7 +296,7 @@ export class LevelManager extends Component {
         if (!record || !levelConfig) return;
 
         // 简单的完美完成判定（可以根据需要扩展）
-        const isPerfect = completionTime <= (levelConfig.estimatedDuration * 60 * 0.8); // 在预期时间80%内完成
+        const isPerfect = completionTime <= (5 * 60 * 0.8); // 在预期5分钟时间80%内完成
         
         if (isPerfect && record.status !== LevelCompletionStatus.PERFECT) {
             record.status = LevelCompletionStatus.PERFECT;
@@ -296,38 +319,11 @@ export class LevelManager extends Component {
     // ====================== 解锁条件检查 ======================
 
     /**
-     * 检查解锁条件
+     * 检查解锁条件 (简化版)
      */
-    public CheckUnlockConditions(conditions: UnlockCondition[]): boolean {
-        if (!conditions || conditions.length === 0) {
-            return true;
-        }
-
-        return conditions.every(condition => {
-            switch (condition.type) {
-                case UnlockConditionType.COMPLETE_LEVEL:
-                    const levelStatus = this.GetLevelStatus(condition.targetId);
-                    return levelStatus === LevelCompletionStatus.COMPLETED || 
-                           levelStatus === LevelCompletionStatus.PERFECT;
-                
-                case UnlockConditionType.COMPLETE_WORLD:
-                    // 线性游戏模式下不支持世界解锁条件
-                    console.warn("线性模式不支持世界解锁条件");
-                    return false;
-                
-                case UnlockConditionType.HERO_UNLOCK:
-                    return this.IsHeroUnlocked(condition.targetId as HeroType);
-                
-                case UnlockConditionType.ACHIEVEMENT:
-                    // TODO: 集成成就系统
-                    console.log(`成就解锁条件检查: ${condition.targetId}`);
-                    return false;
-                
-                default:
-                    console.warn(`未知的解锁条件类型: ${condition.type}`);
-                    return false;
-            }
-        });
+    public CheckUnlockConditions(_conditions?: any[]): boolean {
+        // 简化：总是返回true，使用基于关卡顺序的解锁逻辑
+        return true;
     }
 
 
@@ -340,7 +336,7 @@ export class LevelManager extends Component {
         allLevels.forEach(level => {
             const currentStatus = this.GetLevelStatus(level.id);
             if (currentStatus === LevelCompletionStatus.LOCKED) {
-                const canUnlock = this.CheckUnlockConditions(level.unlockConditions);
+                const canUnlock = true; // 简化解锁逻辑
                 if (canUnlock) {
                     this._levelRecords[level.id].status = LevelCompletionStatus.AVAILABLE;
                     console.log(`解锁新关卡: ${level.name} (${level.id})`);
@@ -410,7 +406,7 @@ export class LevelManager extends Component {
             console.log(`🔍 验证解锁状态: ${this._heroRecords[heroType].status}`);
             
             // 输出解锁后的完整状态
-            this.debugHeroUnlockStatus(`解锁${heroType}后`);
+            console.log(`🔓 英雄 ${heroType} 已解锁`);
             return true;
         } else {
             console.log(`ℹ️ 英雄已经解锁: ${heroType} (状态: ${record.status})`);
@@ -469,36 +465,4 @@ export class LevelManager extends Component {
     // ====================== 调试和工具方法 ======================
 
 
-    /**
-     * 获取调试信息
-     */
-    public GetDebugInfo(): {
-        totalLevels: number;
-        unlockedLevels: number;
-        completedLevels: number;
-        unlockedWorlds: number;
-        unlockedHeroes: number;
-    } {
-        const allLevels = LEVEL_CONFIGS.getAllLevels();
-        const unlockedLevels = allLevels.filter(level => {
-            const status = this.GetLevelStatus(level.id);
-            return status !== LevelCompletionStatus.LOCKED;
-        }).length;
-        
-        const completedLevels = allLevels.filter(level => {
-            const status = this.GetLevelStatus(level.id);
-            return status === LevelCompletionStatus.COMPLETED || 
-                   status === LevelCompletionStatus.PERFECT;
-        }).length;
-
-        const unlockedHeroes = this.GetUnlockedHeroes().length;
-
-        return {
-            totalLevels: allLevels.length,
-            unlockedLevels,
-            completedLevels,
-            unlockedWorlds: 0, // 线性模式下不使用世界概念
-            unlockedHeroes
-        };
-    }
 }

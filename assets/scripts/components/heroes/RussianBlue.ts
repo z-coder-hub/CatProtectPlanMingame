@@ -25,72 +25,12 @@ export class RussianBlue extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.initializeVisuals();
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
     
     // 继承父类start()方法，无需重写
     
     
-    private initializeVisuals(): void {
-        // 使用基类BaseHero的_graphics属性
-        // this._graphics由BaseHero管理
-        
-        this.drawRussianBlueAppearance();
-    }
-    
-    private drawRussianBlueAppearance(): void {
-        const graphics = this.getGraphics();
-        if (!graphics) return;
-        
-        graphics.clear();
-        
-        // 绘制俄罗斯蓝猫刺客身体（深蓝色星形）
-        graphics.fillColor = new Color(25, 25, 112); // 午夜蓝色
-        // 八角星形，更锋利的造型
-        const points = 8;
-        const outerRadius = 18;
-        const innerRadius = 8;
-        
-        graphics.moveTo(outerRadius, 0);
-        for (let i = 0; i < points; i++) {
-            const outerAngle = (i * 2 * Math.PI) / points;
-            const innerAngle = ((i + 0.5) * 2 * Math.PI) / points;
-            
-            const outerX = outerRadius * Math.cos(outerAngle);
-            const outerY = outerRadius * Math.sin(outerAngle);
-            const innerX = innerRadius * Math.cos(innerAngle);
-            const innerY = innerRadius * Math.sin(innerAngle);
-            
-            graphics.lineTo(outerX, outerY);
-            graphics.lineTo(innerX, innerY);
-        }
-        graphics.close();
-        graphics.fill();
-        
-        // 刺客面具（黑色）
-        graphics.fillColor = new Color(0, 0, 0);
-        graphics.rect(-8, -12, 16, 6);
-        graphics.fill();
-        
-        // 暗影刃（紫色双刃）
-        graphics.strokeColor = new Color(75, 0, 130);
-        graphics.lineWidth = 3;
-        // 左刃
-        graphics.moveTo(-20, -3);
-        graphics.lineTo(-12, 0);
-        graphics.lineTo(-20, 3);
-        // 右刃
-        graphics.moveTo(20, -3);
-        graphics.lineTo(12, 0);
-        graphics.lineTo(20, 3);
-        graphics.stroke();
-        
-        // 暗影气场（半透明紫色）
-        graphics.strokeColor = new Color(75, 0, 130, 100);
-        graphics.lineWidth = 1;
-        graphics.circle(0, 0, 30);
-        graphics.stroke();
-    }
     
     // 目标分配由 BattleManager 统一处理
     
@@ -136,11 +76,17 @@ export class RussianBlue extends BaseHero {
     // 重写标签配置，使用完整英雄名称
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "俄罗斯蓝猫刺客",
+            text: this.unitName || "蓝猫刺客",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,
             size: { width: 140, height: 24 }  // 增加宽度以容纳完整名称
         };
     }
+
+    // 实现BaseHero的抽象方法 - 获取placed图片路径（目前无美术资源）
+    protected getPlacedImagePath(): string | null {
+        return "images/placed/RussianBlue_placed";
+    }
+
 }

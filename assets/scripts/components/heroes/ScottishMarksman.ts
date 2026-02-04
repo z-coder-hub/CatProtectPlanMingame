@@ -11,7 +11,6 @@ const { ccclass } = _decorator;
 export class ScottishMarksman extends BaseHero {
     
     public readonly heroType: HeroType = HeroType.SCOTTISH_MARKSMAN;
-    private _multiTargets: Node[] = [];
     
     // 实现BaseHero的抽象方法
     protected initializeHeroStats(): void {
@@ -27,48 +26,7 @@ export class ScottishMarksman extends BaseHero {
     
     // 实现BaseHero的抽象方法
     protected initializeHeroVisuals(): void {
-        this.drawScottishMarksmanAppearance();
-    }
-    
-    protected update(dt: number): void {
-        super.update(dt);
-        
-        // 多重锁定逻辑会在攻击时处理
-    }
-    
-    private drawScottishMarksmanAppearance(): void {
-        const graphics = this.getGraphics();
-        if (!graphics) return;
-        
-        graphics.clear();
-        
-        // 绘制苏格兰折耳猫身体（深橙色圆形）
-        graphics.fillColor = new Color(255, 165, 0); // 深橙色
-        graphics.circle(0, 0, 16);
-        graphics.fill();
-        
-        // 射手帽子（绿色）
-        graphics.fillColor = new Color(34, 139, 34);
-        graphics.rect(-12, -20, 24, 8);
-        graphics.fill();
-        
-        // 弓箭标识（棕色弓）
-        graphics.strokeColor = new Color(139, 69, 19);
-        graphics.lineWidth = 3;
-        graphics.moveTo(-18, -5);
-        graphics.quadraticCurveTo(-22, -10, -18, -15);
-        graphics.stroke();
-        
-        // 多重锁定准星
-        graphics.strokeColor = new Color(255, 0, 0, 100);
-        graphics.lineWidth = 1;
-        for (let i = 0; i < 3; i++) {
-            const angle = (i * 120) * Math.PI / 180;
-            const x = Math.cos(angle) * 40;
-            const y = Math.sin(angle) * 40;
-            graphics.circle(x, y, 8);
-        }
-        graphics.stroke();
+        // 外观初始化由基类统一处理，子类可在此添加特殊初始化
     }
     
     protected onAttack(target: Node): void {
@@ -137,11 +95,17 @@ export class ScottishMarksman extends BaseHero {
     // 重写标签配置
     protected getHeroLabelConfig() {
         return {
-            text: this.unitName || "苏格兰折耳猫射手",
+            text: this.unitName || "折耳射手",
             fontSize: 18,
             color: Color.WHITE,
             yOffset: 35,
             size: { width: 160, height: 24 }
         };
     }
+
+    // 实现BaseHero的抽象方法 - 获取placed图片路径（目前无美术资源）
+    protected getPlacedImagePath(): string | null {
+        return "images/placed/ScottishMarksman_placed";
+    }
+
 }
