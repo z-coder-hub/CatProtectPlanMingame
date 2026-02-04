@@ -24,19 +24,15 @@
 
 <div align="center">
 
-| Battle with Armored Mouse | Boss Battle - Giant Mouse |
+| Gameplay Scene 1 | Gameplay Scene 2 |
 |:---:|:---:|
-| ![Battle Scene 1](docs/screenshots/gameplay-armored-mouse.png) | ![Battle Scene 2](docs/screenshots/gameplay-boss-giant.png) |
-| *Deploy heroes to fight armored mice* | *Epic boss battle with giant mouse* |
+| ![Gameplay 1](docs/screenshots/gameplay-armored-mouse.png) | ![Gameplay 2](docs/screenshots/gameplay-boss-giant.png) |
+| *Tower defense battle in progress* | *Heroes defending the castle* |
 
-| Early Wave Combat | Hero Selection |
+| Gameplay Scene 3 | Gameplay Scene 4 |
 |:---:|:---:|
-| ![Battle Scene 3](docs/screenshots/gameplay-early-waves.png) | ![Hero Selection](docs/screenshots/gameplay-hero-selection.png) |
-| *Basic enemies - mice and speed rats* | *Choose your heroes strategically* |
-
-</div>
-
-<div align="center">
+| ![Gameplay 3](docs/screenshots/gameplay-early-waves.png) | ![Gameplay 4](docs/screenshots/gameplay-hero-selection.png) |
+| *Strategic hero deployment* | *Wave-based combat system* |
 
 ### 🎮 Try it Now!
 
@@ -173,19 +169,15 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 <div align="center">
 
-| 对战钢甲鼠 | BOSS战：巨鼠 |
+| 游戏场景 1 | 游戏场景 2 |
 |:---:|:---:|
-| ![战斗场景1](docs/screenshots/gameplay-armored-mouse.png) | ![战斗场景2](docs/screenshots/gameplay-boss-giant.png) |
-| *部署英雄对抗钢甲鼠群* | *史诗级巨鼠BOSS战* |
+| ![游戏场景1](docs/screenshots/gameplay-armored-mouse.png) | ![游戏场景2](docs/screenshots/gameplay-boss-giant.png) |
+| *塔防战斗进行中* | *英雄守卫城堡* |
 
-| 早期波次战斗 | 英雄选择 |
+| 游戏场景 3 | 游戏场景 4 |
 |:---:|:---:|
-| ![战斗场景3](docs/screenshots/gameplay-early-waves.png) | ![英雄选择](docs/screenshots/gameplay-hero-selection.png) |
-| *基础敌人 - 小老鼠和疾风鼠* | *策略性选择你的英雄* |
-
-</div>
-
-<div align="center">
+| ![游戏场景3](docs/screenshots/gameplay-early-waves.png) | ![游戏场景4](docs/screenshots/gameplay-hero-selection.png) |
+| *策略性英雄部署* | *波次战斗系统* |
 
 ### 🎮 立即试玩！
 
