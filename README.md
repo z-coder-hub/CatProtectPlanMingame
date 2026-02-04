@@ -20,6 +20,32 @@
 - **Unified Projectile System** - All heroes attack using projectiles (bullets, magic missiles, shockwaves)
 - **Pure Tower Defense Mechanics** - Heroes never die, enemies never attack heroes
 
+### 📸 Game Screenshots
+
+<div align="center">
+
+| Battle with Armored Mouse | Boss Battle - Giant Mouse |
+|:---:|:---:|
+| ![Battle Scene 1](docs/screenshots/gameplay-armored-mouse.png) | ![Battle Scene 2](docs/screenshots/gameplay-boss-giant.png) |
+| *Deploy heroes to fight armored mice* | *Epic boss battle with giant mouse* |
+
+| Early Wave Combat | Hero Selection |
+|:---:|:---:|
+| ![Battle Scene 3](docs/screenshots/gameplay-early-waves.png) | ![Hero Selection](docs/screenshots/gameplay-hero-selection.png) |
+| *Basic enemies - mice and speed rats* | *Choose your heroes strategically* |
+
+</div>
+
+<div align="center">
+
+### 🎮 Try it Now!
+
+<img src="docs/screenshots/qrcode-minigame.png" width="200" alt="WeChat Mini Program QR Code">
+
+**Scan to play on WeChat Mini Program**
+
+</div>
+
 ### 🚀 Quick Start
 
 #### Prerequisites
@@ -142,6 +168,32 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 - **10关渐进解锁系统** - 前3关解锁所有英雄，后7关面对独特BOSS
 - **统一投射物系统** - 所有英雄都使用投射物攻击（子弹、魔法弹、冲击波）
 - **纯塔防机制** - 英雄永不死亡，敌人永不攻击英雄
+
+### 📸 游戏截图
+
+<div align="center">
+
+| 对战钢甲鼠 | BOSS战：巨鼠 |
+|:---:|:---:|
+| ![战斗场景1](docs/screenshots/gameplay-armored-mouse.png) | ![战斗场景2](docs/screenshots/gameplay-boss-giant.png) |
+| *部署英雄对抗钢甲鼠群* | *史诗级巨鼠BOSS战* |
+
+| 早期波次战斗 | 英雄选择 |
+|:---:|:---:|
+| ![战斗场景3](docs/screenshots/gameplay-early-waves.png) | ![英雄选择](docs/screenshots/gameplay-hero-selection.png) |
+| *基础敌人 - 小老鼠和疾风鼠* | *策略性选择你的英雄* |
+
+</div>
+
+<div align="center">
+
+### 🎮 立即试玩！
+
+<img src="docs/screenshots/qrcode-minigame.png" width="200" alt="微信小程序二维码">
+
+**扫码体验微信小程序**
+
+</div>
 
 ### 🚀 快速开始
 
