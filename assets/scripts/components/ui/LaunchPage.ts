@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, EventTouch, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Widget, resources } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, Label, Node, Sprite, SpriteFrame, Tween, tween, UIOpacity, UITransform, Vec3, Widget, resources } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { GameState } from '../../types/GameTypes';
 import { UIHelper } from '../../utils/UIHelper';
@@ -14,10 +14,7 @@ const BADGE_TOP = 24;                     // 适龄标识距顶
 const BADGE_RIGHT = 24;                   // 适龄标识距右
 const TITLE_WIDTH = 560;                  // 像素标题位图宽（源图640x160等比缩小）
 const TITLE_HEIGHT = 140;                 // 像素标题位图高（等比 560/640*160）
-const TITLE_Y = 150;                      // 标题中心y（中部偏上）
-const SUBTITLE_WIDTH = 520;               // 副标题宽
-const SUBTITLE_HEIGHT = 30;               // 副标题高
-const SUBTITLE_Y = 40;                    // 副标题中心y（标题下方约25px）
+const TITLE_Y = 120;                      // 标题中心y（中部偏上；去掉副标题后微调下移补位）
 const HINT_Y = -140;                      // "点击任意启动"提示y
 const ADVICE_PANEL_WIDTH = 620;           // 健康忠告面板宽
 const ADVICE_PANEL_HEIGHT = 150;          // 健康忠告面板高
@@ -29,7 +26,6 @@ const DIALOG_HEIGHT = 780;                // 适龄提示弹窗高
 // 颜色常量
 const COLOR_BACKGROUND = new Color(18, 26, 42, 255);      // 启动页深蓝黑背景
 const COLOR_GOLD = new Color(255, 200, 60, 255);          // 金色边框/标题
-const COLOR_SUBTITLE = new Color(150, 160, 180, 255);     // 副标题灰色
 const COLOR_HINT = new Color(255, 215, 0, 255);           // 提示金色
 const COLOR_PANEL_FILL = new Color(16, 20, 34, 210);      // 健康忠告面板半透明深色
 const COLOR_BODY_TEXT = new Color(255, 255, 255, 255);    // 正文白色
@@ -70,6 +66,7 @@ export class LaunchPage extends Component {
     private _ageBadgeNode: Node | null = null;   // 适龄标识节点
     private _dialogNode: Node | null = null;     // 适龄提示弹窗节点
     private _maskNode: Node | null = null;       // 弹窗遮罩节点
+    private _hintNode: Node | null = null;       // "点击任意处启动游戏"提示节点（呼吸动效）
 
     // 状态
     private _isStarting: boolean = false;        // 防止重复启动
@@ -154,7 +151,7 @@ export class LaunchPage extends Component {
         this._ageBadgeNode = badgeNode;
     }
 
-    // ========== 2. 像素风标题位图 + 副标题 ==========
+    // ========== 2. 像素风标题位图 ==========
 
     private createTitleSprite(): void {
         const titleNode = new Node("TitleSprite");
@@ -183,25 +180,6 @@ export class LaunchPage extends Component {
                 sprite.spriteFrame = spriteFrame;
             }
         });
-
-        // 副标题（标题下方）
-        const subNode = new Node("SubTitleLabel");
-        subNode.parent = this.node;
-
-        const subTransform = subNode.addComponent(UITransform);
-        subTransform.setContentSize(SUBTITLE_WIDTH, SUBTITLE_HEIGHT);
-
-        // 水平居中 + 垂直居中偏移（标题下方）
-        const subWidget = subNode.addComponent(Widget);
-        subWidget.isAlignHorizontalCenter = true;
-        subWidget.isAlignVerticalCenter = true;
-        subWidget.verticalCenter = SUBTITLE_Y;
-        subWidget.updateAlignment();
-
-        const subLabel = subNode.addComponent(Label);
-        subLabel.string = "CAT PROTECT PLAN";
-        subLabel.fontSize = 20;
-        subLabel.color = COLOR_SUBTITLE;
     }
 
     // ========== 3. "点击任意启动"提示 ==========
@@ -209,6 +187,7 @@ export class LaunchPage extends Component {
     private createStartHint(): void {
         const hintNode = new Node("StartHint");
         hintNode.parent = this.node;
+        this._hintNode = hintNode;
 
         const transform = hintNode.addComponent(UITransform);
         transform.setContentSize(400, 50);
@@ -233,6 +212,24 @@ export class LaunchPage extends Component {
         label.string = "点击任意处启动游戏";
         label.fontSize = 30;
         label.color = COLOR_HINT;
+
+        // 呼吸脉冲动效：缩放 1↔1.06 + 透明度 255↔175，周期约1.2s，循环播放
+        // 两条tween并行（scale作用于节点、opacity作用于UIOpacity组件），合并为单条
+        // repeatForever链注册在hintNode上，Tween.stopAllByTarget(hintNode)即可整体停止
+        const hintOpacity = hintNode.addComponent(UIOpacity);
+        hintOpacity.opacity = 255;
+
+        const scalePulse = tween(hintNode)
+            .to(0.6, { scale: new Vec3(1.06, 1.06, 1) })
+            .to(0.6, { scale: new Vec3(1, 1, 1) });
+        const opacityPulse = tween(hintOpacity)
+            .to(0.6, { opacity: 175 })
+            .to(0.6, { opacity: 255 });
+
+        tween(hintNode)
+            .parallel(scalePulse, opacityPulse)
+            .repeatForever()
+            .start();
     }
 
     /**
@@ -528,6 +525,11 @@ export class LaunchPage extends Component {
         // 卸载根节点触摸监听
         this.node.off(Node.EventType.TOUCH_END, this.onRootTouchEnd, this);
 
+        // 停止"点击任意处启动游戏"呼吸动效
+        if (this._hintNode && this._hintNode.isValid) {
+            Tween.stopAllByTarget(this._hintNode);
+        }
+
         // 卸载适龄标识触摸监听
         if (this._ageBadgeNode && this._ageBadgeNode.isValid) {
             this._ageBadgeNode.off(Node.EventType.TOUCH_END, this.onAgeBadgeTouchEnd, this);
@@ -553,8 +555,13 @@ export class LaunchPage extends Component {
         if (this._dialogNode && this._dialogNode.isValid) {
             this._dialogNode.destroy();
         }
+        // 停止"点击任意处启动游戏"呼吸动效
+        if (this._hintNode && this._hintNode.isValid) {
+            Tween.stopAllByTarget(this._hintNode);
+        }
         this._ageBadgeNode = null;
         this._dialogNode = null;
         this._maskNode = null;
+        this._hintNode = null;
     }
 }
