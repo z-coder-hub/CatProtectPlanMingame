@@ -1,0 +1,78 @@
+{
+  "name": "launch-page-svg-team",
+  "id": "launch-page-svg-team",
+  "description": "启动页视觉调整（第3轮）：①去掉副标题\"CAT PROTECT PLAN\" ②「柒婳爱趣玩儿」改为通过SVG主文件生成像素风字体位图（Edge无头模式栅格化+最近邻放大）③给\"点击任意处启动游戏\"添加动效（呼吸脉冲）。合规要素（适龄标识/健康游戏忠告/版权/点击启动）保持不变。项目：Cocos Creator 3.8.6，720x1280，分支feature/launch-page-svg。",
+  "captainSessionId": "session-64a2173c-4a05-439e-99cb-5d2306ecc4f8",
+  "createdAt": 1787815505420,
+  "members": [
+    {
+      "id": "934e6b68-a1c0-46a2-bd9d-546ad495d989",
+      "name": "ui-engineer",
+      "role": "Cocos Creator TypeScript UI工程师",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787815516977,
+      "status": "removed"
+    },
+    {
+      "id": "0144c097-6cb5-4057-8271-b6080fbfc5d6",
+      "name": "reviewer",
+      "role": "代码审查与合规检查员",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787815517040,
+      "status": "removed"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "subject": "SVG主文件+Edge栅格化生成像素标题PNG",
+      "description": "把「柒婳爱趣玩儿」像素风标题改为「SVG主文件 → 栅格化 → 最近邻放大」的生成管线。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\n\n【背景】现有 tools\\gen_title_pixel.ps1 直接用 System.Drawing 画字生成 assets\\resources\\images\\ui\\game_title_pixel.png（640x160，6819字节）。用户要求改为\"通过SVG的形式生成像素风格字体\"——即：先写一个可维护的 SVG 主文件（像项目里 tools\\game_logo.svg 那样），再从 SVG 栅格化出像素风 PNG。\n\n【本机环境】\n- 无 Inkscape/ImageMagick/Chrome；可用工具是 **Microsoft Edge 无头模式**：C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe\n- Edge 无头截图用法示例（PowerShell）：\n  & 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe' --headless --disable-gpu --screenshot='out.png' --window-size=640,160 --default-background-color=00000000 'file:///C:/path/to/game_title_pixel.svg'\n  （--default-background-color=00000000 得到透明背景；若该参数不被识别则截图背景为白色，需改用其他透明处理，见下）\n\n【产出1：tools\\game_title_pixel.svg（SVG主文件，纯手写可维护）】\n- 含 XML 声明 <?xml version=\"1.0\" encoding=\"UTF-8\"?>，SVG 文件用 UTF-8 编码（SVG 声明自带编码，中文字符直接写没问题，与 .ps1 的 ASCII 约束无关）\n- viewBox 建议 0 0 160 40（小尺寸——小字号+硬边才出像素感），含文字：\n  <text x=\"80\" y=\"30\" text-anchor=\"middle\" font-family=\"Microsoft YaHei\" font-weight=\"bold\" font-size=\"24\" fill=\"#FFFFFF\" shape-rendering=\"crispEdges\" paint-order=\"stroke\" stroke=\"#281E3C\" stroke-width=\"1\">柒婳爱趣玩儿</text>\n  （paint-order=\"stroke\" 让深色描边垫在白色填充下面；shape-rendering=\"crispEdges\" 关闭抗锯齿→硬边像素感；字号/描边可按效果微调）\n- 深色描边 #281E3C 与启动页原标题描边色(40,30,60)一致\n\n【产出2：tools\\gen_title_pixel_svg.ps1（生成脚本）】\n- 先检查 msedge.exe 路径存在，用 Edge 无头把 SVG 截成小尺寸 PNG（如 160x40）\n- 再用 System.Drawing 最近邻放大 4 倍（InterpolationMode.NearestNeighbor + PixelOffsetMode.Half，无平滑）→ 640x160\n- 覆盖保存 assets\\resources\\images\\ui\\game_title_pixel.png\n- 脚本保持纯 ASCII（注释英文），SVG路径/输出路径用变量\n- 若 Edge 截图背景不是透明（--default-background-color 不生效），改为：截图后用小尺寸 PNG 的 alpha 通道数据重建（读像素，白色背景则把纯白像素置为透明）——但优先尝试 --default-background-color=00000000\n- 脚本要能重复运行（幂等）\n\n【产出3：运行验证】\n- 运行脚本生成新的 game_title_pixel.png，用 PowerShell 验证：文件存在、尺寸 640x160、字节>0\n- 检查像素化：读几个像素确认边缘是 0↔255 硬过渡（无渐变）\n- 报告：SVG 完整内容、脚本路径、Edge 截图参数是否成功、最终PNG尺寸/字节数\n- 旧脚本 tools\\gen_title_pixel.ps1 保留不删（新管线与其并存，注明主文件是SVG版）；不动其他文件、不写.meta",
+      "status": "completed",
+      "assignee": "ui-engineer",
+      "dependencies": [],
+      "attempt": 1,
+      "createdAt": 1787815530872,
+      "updatedAt": 1787817076201,
+      "attemptId": "ce272076-7773-4789-8b06-97f6d02094a1",
+      "reassigning": false,
+      "output": "SVG主文件管线完成。产出：①tools/game_title_pixel.svg（SVG主文件，UTF-8无BOM，XML声明，viewBox 0 0 160 40，text元素：柒婳爱趣玩儿，Microsoft YaHei bold 24px，白色填充+#281E3C 1px描边，paint-order=\"stroke\"描边垫底，shape-rendering=\"crispEdges\"硬边，y=28居中微调）；②tools/gen_title_pixel_svg.ps1（纯ASCII脚本，Edge无头160x40截图→posterize三色(透明/白/#281E3C)→System.Drawing最近邻×4放大→640x160覆盖保存，幂等）；③assets\\resources\\images\\ui\\game_title_pixel.png 已重新生成：640x160，8452字节（原6819），透明背景（--default-background-color=00000000 生效，角落ARGB 0,0,0,0），恰好3种颜色，0个软边像素（全部0↔255硬过渡），所有透明度跳变都在4px块边界（最近邻干净），四边留白对称32px完美居中。\n\n关键环境发现（重要，影响后续任务）：本机Edge无头截图**不稳定**（渲染进程约50%概率挂起不写文件，非崩溃，事件日志无记录），脚本已内置重试循环（最多4次×25秒轮询PNG文件而非等进程退出）解决；`--no-first-run`/`--no-default-browser-check` 两个flag会导致Edge无头挂起（Edge特有坑，必须去掉）；PS 5.1对原生命令`2>$null`管道会因stderr句柄继承而挂起（改用Start-Process）；孤儿进程清理用父PID树+唯一temp token精确匹配，不会误杀用户Edge（已实测验证）。\n\n视觉对比：旧GDI+版（84px字，填充率25.6%）vs新SVG版（96px等效字，填充率39.9%）——新标题更粗更密，6个字描边相接，更像素风；如需还原旧版字距可在SVG主文件调font-size/letter-spacing后重跑脚本。旧脚本gen_title_pixel.ps1保留未动（注明SVG版为主管线），未改其他文件、未写.meta。"
+    },
+    {
+      "id": "t2",
+      "subject": "LaunchPage：去CAT PROTECT PLAN副标题+启动提示加呼吸动效",
+      "description": "修改启动页组件 LaunchPage.ts，实现两个改动。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame，文件：assets\\scripts\\components\\ui\\LaunchPage.ts（当前560行，先读一遍再改）\n\n【改动1：去掉副标题 \"CAT PROTECT PLAN\"】\n- 删除 createTitleSprite() 中创建 SubTitleLabel 的整段代码（subNode/SubTitleLabel 及其 Widget/Label/UITransform）\n- 删除不再使用的常量 SUBTITLE_WIDTH/SUBTITLE_HEIGHT/SUBTITLE_Y 和 COLOR_SUBTITLE（若没有其他地方用）\n- 标题 TitleSprite 保持居中偏上；去掉副标题后若觉得标题位置略高可把 TITLE_Y 从 150 微调到约 120（可选，保持美观即可，不要影响其他元素）\n\n【改动2：给「点击任意处启动游戏」加动效】\n- StartHint 节点（含左右三角箭头装饰）添加呼吸脉冲动效：缩放 1↔1.06 + 透明度 255↔175，周期约 1.2s，repeatForever 循环\n- 实现方式（Cocos 标准做法）：\n  - import 增加 tween、UIOpacity、Vec3（从 'cc'）\n  - hintNode.addComponent(UIOpacity) 用于透明度\n  - tween(hintNode).repeatForever(tween(hintNode).to(0.6, { scale: new Vec3(1.06, 1.06, 1) }).to(0.6, { scale: new Vec3(1, 1, 1) })) 以及 opacity 类似（可用两个 tween 或并行，选择简洁清晰的方式）\n  - 保存 hintNode 引用到私有属性 _hintNode\n- 清理：在 destroyLaunchPage() 和 onDestroy() 中用 Tween.stopAllByTarget(hintNode) 停止动效（项目规范：销毁前停止动画）；注意 import Tween\n- 若担心 scale 与 Widget 冲突：StartHint 用 Widget 定位，scale 动画不影响 Widget 对齐（Widget 只管 position/size），可行\n\n【工程约束】\n- 无 Mask、无 setTimeout、无 any、无未使用 import/常量/变量；命名规范不变\n- tween 属游戏逻辑动画（允许）；不要在 UI 初始化用延迟\n- 改完 npx tsc --noEmit --skipLibCheck 必须 exit 0\n\n【交付】报告：删除了哪些代码/常量、动效实现方式（tween 写法）、_hintNode 清理位置、tsc 结果。只改 LaunchPage.ts 一个文件。",
+      "status": "completed",
+      "assignee": "ui-engineer",
+      "dependencies": [
+        "t1"
+      ],
+      "attempt": 1,
+      "createdAt": 1787815530897,
+      "updatedAt": 1787817207370,
+      "attemptId": "9d5d3c9c-62e5-4755-b971-d6d0286d2d4b",
+      "reassigning": false,
+      "output": "LaunchPage.ts 两处改动完成，tsc 通过（exit 0）。只改了 assets\\scripts\\components\\ui\\LaunchPage.ts 一个文件。\n\n【改动1：去掉副标题 CAT PROTECT PLAN】\n- 删除 createTitleSprite() 中整段副标题创建代码（subNode/SubTitleLabel + 其 UITransform/Widget/Label，约19行）\n- 删除常量 SUBTITLE_WIDTH、SUBTITLE_HEIGHT、SUBTITLE_Y（布局区）和 COLOR_SUBTITLE（颜色区）——确认全文件无其他引用\n- 标题 TITLE_Y 从 150 微调至 120（去掉副标题后下移补位，保持居中偏上；不影响其他元素）\n- 区块注释同步改为 \"2. 像素风标题位图\"\n\n【改动2：点击提示呼吸动效】\n- import 增加 Tween、tween、UIOpacity、Vec3（均实际使用）\n- 新增私有属性 _hintNode，createStartHint() 中保存 hintNode 引用并 addComponent(UIOpacity)（初始255）\n- 动效实现（并行tween，简洁清晰）：scalePulse = tween(hintNode).to(0.6,{scale:Vec3(1.06,1.06,1)}).to(0.6,{scale:Vec3(1,1,1)})；opacityPulse = tween(hintOpacity).to(0.6,{opacity:175}).to(0.6,{opacity:255})；再 tween(hintNode).parallel(scalePulse,opacityPulse).repeatForever().start() —— 周期1.2s、缩放1↔1.06、透明度255↔175、同步呼吸。两条内层tween被parallel消费后仅外层链注册在hintNode上，故 Tween.stopAllByTarget(hintNode) 一处即可整体停止。\n- 清理：destroyLaunchPage() 和 onDestroy() 中均有 if (_hintNode && _hintNode.isValid) Tween.stopAllByTarget(_hintNode)；onDestroy 末尾 _hintNode = null\n- 无 Mask、无 setTimeout、无 any、无未使用 import/常量/变量；命名规范不变\n\n【验证】npx tsc --noEmit --skipLibCheck → exit 0；grep 确认无 SUBTITLE/CAT PROTECT 残留引用。"
+    },
+    {
+      "id": "t3",
+      "subject": "审查第3轮启动页调整与合规回归",
+      "description": "对启动页第3轮视觉调整做代码审查与合规回归。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\n\n【审查文件】\n1. assets\\scripts\\components\\ui\\LaunchPage.ts（本轮修改）\n2. tools\\game_title_pixel.svg（新SVG主文件）\n3. tools\\gen_title_pixel_svg.ps1（新生成脚本）\n4. assets\\resources\\images\\ui\\game_title_pixel.png（重新生成）\n\n【本轮改动验收】\nA. \"CAT PROTECT PLAN\" 副标题已彻底移除（无 SubTitleLabel 节点/SUBTITLE_* 常量/COLOR_SUBTITLE 残留）\nB. 标题仍正常显示像素位图 Sprite（images/ui/game_title_pixel/spriteFrame），加载路径未变\nC. 「点击任意处启动游戏」有呼吸动效（tween repeatForever，缩放/透明度脉冲），且 onDestroy/destroyLaunchPage 中 Tween.stopAllByTarget 停止动效、无泄漏\nD. SVG 主文件存在且内容正确（含中文「柒婳爱趣玩儿」、crispEdges、paint-order stroke 描边）；gen_title_pixel_svg.ps1 为纯 ASCII、用 Edge 无头截图+最近邻放大、幂等可重复运行；新 PNG 尺寸 640x160 非空\n\n【合规回归（必须仍然通过）】\n1. 适龄标识右上角 110x138≥72px、三节说明弹窗、点击不触发启动\n2. 健康游戏忠告底部 56 字逐字一致\n3. 版权「著作权人：刘雨　软著登记号：2025SA0165472」在忠告下方\n4. 点击任意处启动（适龄标识除外）、弹窗遮罩只关弹窗\n\n【代码规范】\n- 无 Mask、无 setTimeout、无 any、无未用 import/常量/变量（重点查 tween/UIOpacity/Vec3 是否真被使用、SUBTITLE 相关是否删净）、无 debug 开关\n- tween 只用于游戏逻辑动画（非UI初始化延迟）\n- onDestroy 事件与 tween 清理完整\n- tsc：npx tsc --noEmit --skipLibCheck exit 0\n\n【像素PNG目检】\n- 读取 game_title_pixel.png 检查是否为像素化硬边效果（可用 PowerShell 读像素确认无渐变）且文字可辨认为「柒婳爱趣玩儿」\n\n交付：逐项 A-D、1-4、规范项、tsc、PNG 检查结论，给\"通过/需修复\"。问题报告文件+行号，不改代码。",
+      "status": "completed",
+      "assignee": "reviewer",
+      "dependencies": [
+        "t2"
+      ],
+      "attempt": 3,
+      "createdAt": 1787815537386,
+      "updatedAt": 1787817761939,
+      "reassigning": false,
+      "attemptId": "f0bea4d6-39a7-4a88-b96a-cff195a12a00",
+      "output": "审查完成：总体结论【通过】（含 1 项流程性修复项：PNG 已重生成但 .meta/library 未重新导入）。\n\nA. 副标题移除 — 通过。LaunchPage.ts 无 SubTitleLabel 节点/SUBTITLE_* 常量/COLOR_SUBTITLE（diff 确认删除，TITLE_Y 150→120 补位）；全项目 grep 无 \"CAT PROTECT\"；GameManager.ts:664 的 SubTitle 是复活弹窗副标题，与本轮无关。\n\nB. 标题位图 — 通过（附条件）。加载路径 images/ui/game_title_pixel/spriteFrame 未变（LaunchPage.ts:174），meta 含 spriteFrame 子资源。⚠️ 修复项：game_title_pixel.png.meta（mtime 15:35:23）与 library 未随新 PNG（15:58:23，8567B）重新导入；meta trim 576x96@32,40 vs 实际内容 615x90@12,35，运行时按旧 trim 会错位/裁剪。需在 Cocos Creator 中重新导入资源并提交更新后的 meta；建议同时将 texture userData minfilter/magfilter 由 linear 改为 nearest 保持像素硬边（非阻断）。\n\nC. 呼吸动效 — 通过。LaunchPage.ts:216-232：UIOpacity + scale 1↔1.06 + opacity 255↔175，parallel+repeatForever；destroyLaunchPage(:530) 与 onDestroy(:560) 均有 Tween.stopAllByTarget(hintNode)。已核对 CC 3.8.6 引擎源码（tween.ts _wrappedParallel/start/stopAllByTarget→removeAllActionsFromTarget）：parallel 子动作合并进单一 Spawn 链注册于 hintNode，stopAllByTarget 整链移除，无泄漏。\n\nD. SVG/PS1/PNG — 通过。SVG v2（213x48）含「柒婳爱趣玩儿」、shape-rendering=\"crispEdges\"、paint-order=\"stroke\" stroke=#281E3C（:16）；PS1 纯 ASCII（0 非 ASCII 字节）、Edge 无头截图（msedge.exe 存在）+ 3 色 posterize + 最近邻 x3 居中 640x160、幂等可重跑（含 Edge 重试与进程清理）；PNG 640x160、8567B 非空、恰好 3 色（透明/白/描边 40,30,60）、硬边（alpha 无中间值 mid=0）、描边存在。首字与 GDI+ 参考渲染「柒」结构比对一致（氵+木+七；早前 OCR 读\"粲\"为像素字体误读，已排除粲）。\n\n合规 1-4 — 全部通过：①适龄 110x138≥72（:12,:123-124）、三节弹窗（DIALOG_SECTIONS×3）、badge 点击 propagationStopped 不触发启动（:336）；②忠告 56 字逐字一致（:40，程序校验长度 56、与标准串精确相等）；③版权文案逐字一致（:327），位于忠告下方（bottom 120<170）；④根节点 TOUCH_END 启动（:83,:498-519，badge 除外），弹窗遮罩只关弹窗（:480）。\n\n代码规范 — 通过：无 Mask 组件（DialogMask 为 Graphics 绘制，非 cc.Mask）、无 setTimeout、无 any、无 debug 开关、无未用 import（tween/Tween/UIOpacity/Vec3 均真实使用）、tween 仅用于游戏逻辑动画；面板边框单路径 fill+stroke（:279-281,:411-413）符合\"只需 fill、stroke\"要求；onDestroy/destroyLaunchPage 事件与 tween 清理完整。tsc --noEmit --skipLibCheck 退出码 0。\n\n注意：审查期间 SVG/PS1/PNG 仍在被修改（SVG 320x80→213x48、PS1 scale 2→3、PNG 两次重生成 8659→8567B），以上结论基于约 15:59 的工作区状态；建议 ui-engineer 完成最终生成并重新导入资源后做一次终检。"
+    }
+  ],
+  "taskSeq": 3
+}

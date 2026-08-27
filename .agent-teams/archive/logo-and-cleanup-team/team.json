@@ -1,0 +1,77 @@
+{
+  "name": "logo-and-cleanup-team",
+  "id": "logo-and-cleanup-team",
+  "description": "任务1：把启动页Logo替换为 C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\logo.png（新logo）；任务2：检查 assets/textures 中哪些图片未被应用，未应用的删除图片及对应 .meta 文件。",
+  "captainSessionId": "session-46094f09-18ee-48d5-b421-d624bf22a2a9",
+  "createdAt": 1787814011984,
+  "members": [
+    {
+      "id": "1914376d-5372-4e01-9853-f5a1a3dfec35",
+      "name": "engineer",
+      "role": "engineer",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787814109431,
+      "status": "removed"
+    },
+    {
+      "id": "7b325c9a-836d-4694-b779-77c8014b7347",
+      "name": "reviewer",
+      "role": "reviewer",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787814109442,
+      "status": "removed"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "subject": "替换启动页Logo为新logo.png",
+      "description": "任务：把启动页Logo替换为新logo。\n\n【背景】启动页 LaunchPage（assets/scripts/components/ui/LaunchPage.ts 第182行）运行时通过 resources.load(\"images/ui/game_logo/spriteFrame\") 加载启动页Logo，对应文件是 assets/resources/images/ui/game_logo.png（当前512x512，86614字节）。用户提供新logo：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\logo.png（1024x1024，48144字节，方形像素风Logo，深蓝实底）。\n\n【做法】（只动文件，不改代码）\n1. 用 PowerShell 把 C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\logo.png 复制覆盖到 CatProtectPlanMingame\\assets\\resources\\images\\ui\\game_logo.png（保留文件名和 .meta 不变，uuid 不变，Cocos 下次打开会自动重新导入）。\n   PowerShell: Copy-Item 'C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\logo.png' 'C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\\assets\\resources\\images\\ui\\game_logo.png' -Force\n2. 不要修改 LaunchPage.ts 及其它任何代码（新Logo为1024x1024方形，当前 UITransform 220x220 + Sprite CUSTOM 尺寸模式渲染无问题，不需要代码改动）。\n3. 验证：\n   - 用 PowerShell 确认目标文件大小=48144字节、尺寸1024x1024（可用 Add-Type -AssemblyName System.Drawing 读尺寸）；\n   - 确认 assets/resources/images/ui/game_logo.png.meta 未被改动（内容与之前一致，uuid 保持）；\n   - 确认 LaunchPage.ts 未改动（git diff 该文件应为空）。\n\n完成后输出：复制前后的文件信息（大小/尺寸）、.meta 是否保持不变、git diff 结论。",
+      "status": "completed",
+      "assignee": "engineer",
+      "dependencies": [],
+      "attempt": 1,
+      "createdAt": 1787814119303,
+      "updatedAt": 1787814148090,
+      "attemptId": "9be80c4e-82cc-4c53-a5ea-d3ee75679484",
+      "reassigning": false,
+      "output": "已完成启动页Logo替换。复制前：目标 game_logo.png = 512x512 / 86614字节；复制后：= 1024x1024 / 48144字节（与新logo.png完全一致，LastWriteTime 同步为 2026/8/27 14:55:57）。.meta 未改动：SHA256 前后均为 A1239A88275F1F9E208158A7A8A98EEB8FBE3E78483476F0E6A8F141C2864962，uuid 41c0dc06-5f05-4c40-a438-a530e0f42c7f 保持不变，git diff 该 .meta 为空。LaunchPage.ts 未改动：git diff 为空。git status 中仅有预期的 M assets/resources/images/ui/game_logo.png（其余改动为任务外既有内容，未触碰）。未修改任何代码。"
+    },
+    {
+      "id": "t2",
+      "subject": "审计并删除assets/textures未应用图片",
+      "description": "任务：审计并删除 assets/textures 中未被应用的图片及对应 .meta 文件。\n\n【背景】assets/textures/ 下有9张图片（均非 resources 目录，运行时无法通过 resources.load 加载）：\nbg.jpg、orange_cat_idle_01.png、orange_cat_idle_02.png、orange_cat_idle_03.png、orange_cat_idle_04.png、game_logo.png、game_logo_1024.png、game_logo_square.png、game_logo_square_1024.png（每张都有同名 .meta）。\n\n【已完成的审计证据（请复核）】\n1. uuid 引用：从每张图片的 .meta 提取 uuid（bg.jpg=>f819b57f-3ae6-4dd5-a870-672a033246a3, game_logo.png=>5b20d953-d79e-4bff-b4fe-f866c93bca0c, game_logo_1024.png=>807c5806-d86a-46e6-a006-bf978628a21d, game_logo_square.png=>35830587-6c71-460b-b1a7-28d3d7ac90e8, game_logo_square_1024.png=>0cf62598-8c40-4255-aa9f-444fe15ac904, orange_cat_idle_01=>4d5fefd4-52d6-44fc-8f04-c169bd2a65f1, 02=>1d775e56-cc1b-48db-8fbe-1511742c2971, 03=>ed95daec-29f6-42a0-ae8d-92085c86858c, 04=>eabc24c6-f756-4884-b734-954573484c42）。全仓库（含 assets/scene.scene、全部 .ts）grep 这些 uuid 无任何引用。\n2. 文件名引用：grep \"orange_cat_idle|game_logo|bg.jpg\" 全仓库——仅在 tools/gen_logo.ps1、tools/gen_logo_square.ps1、tools/game_logo.svg（生成工具，是\"产出\"这些文件的脚本，不是游戏引用）和 LaunchPage.ts 第182行（加载的是 resources 目录下的 images/ui/game_logo，非 textures 目录）出现。\n3. 场景：assets/scene.scene 仅含 scene/Canvas/Camera 节点，无任何纹理引用。项目为纯代码驱动。\n4. 结论：9张图片全部未被应用。\n\n【做法】\n1. 用 grep 工具复核上述引用检查（uuid 与文件名），确认无遗漏引用。\n2. 删除这9张图片及对应的9个 .meta 文件（共18个文件）。用 PowerShell Remove-Item 删除。\n3. 不要删除 assets/textures 目录本身及其 textures.meta（保持目录与文件夹meta）。\n4. 不要动 tools/ 目录下的生成脚本和svg（用户未要求）。\n5. 删除后用 git status 确认删除清单：应恰好是这18个文件。\n\n完成后输出：复核结论、删除的文件清单（18个）、git status 结果。",
+      "status": "completed",
+      "assignee": "engineer",
+      "dependencies": [],
+      "attempt": 1,
+      "createdAt": 1787814119327,
+      "updatedAt": 1787814235059,
+      "attemptId": "9ca64b31-0763-4749-83df-9a579927767c",
+      "reassigning": false,
+      "output": "复核与删除完成。复核：9个uuid（与任务描述逐一一致）在仓库288个文件中仅出现在各自 .meta 自引用中，无任何其他引用；文件名引用仅存在于 tools/ 生成脚本与 svg（工具产物）及 LaunchPage.ts 第182行（加载的是 resources/images/ui/game_logo，非 textures 目录）；scene.scene 无纹理引用；.ts 中无 \"textures/\" 路径引用。删除：9张图片+9个.meta共18个文件已用 Remove-Item 删除，assets/textures 目录与 textures.meta（169字节）保留，tools/ 未动。git status：D assets/textures/bg.jpg、D orange_cat_idle_01/02/03/04.png 共5个跟踪文件删除（4个 game_logo*.png 原为未跟踪文件，9个 .meta 被 .gitignore 忽略，故不显示在 git status 中属正常；物理删除已由目录清空验证）。"
+    },
+    {
+      "id": "t3",
+      "subject": "审查Logo替换与图片清理",
+      "description": "审查 t1（替换启动页Logo）与 t2（删除assets/textures未应用图片）。\n\n【t1 审查项】\n1. assets/resources/images/ui/game_logo.png 现在应是新logo：用 PowerShell 确认尺寸1024x1024、大小48144字节（与 C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\logo.png 一致，可用 Get-FileHash 对比哈希）。\n2. assets/resources/images/ui/game_logo.png.meta 未被改动（uuid 保持原值，git diff 无该文件）。\n3. LaunchPage.ts 及任何代码未改动（git diff 确认仅 resources 图片文件变化）。\n4. 运行时路径不受影响：LaunchPage.ts 第182行仍加载 images/ui/game_logo/spriteFrame。\n\n【t2 审查项】\n1. git status 确认删除清单恰好是 18 个文件：assets/textures 下 bg.jpg、orange_cat_idle_01~04.png、game_logo.png、game_logo_1024.png、game_logo_square.png、game_logo_square_1024.png 各图片及同名 .meta。\n2. 复核无引用：grep 全仓库（含 scene.scene、脚本、其它meta）这9个uuid与文件名（orange_cat_idle/game_logo/bg.jpg），确认除已删除文件外无任何残留引用；注意 tools/gen_logo*.ps1 与 tools/game_logo.svg 只是生成脚本，允许保留。\n3. assets/textures 目录本身与 textures.meta 保留，未误删。\n4. 未误删 resources 目录下任何图片（尤其确认 resources/images/ui/game_logo.png 仍在）。\n\n【通用】运行 npx tsc --noEmit --skipLibCheck（工作目录 C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame）确认类型检查通过。\n\n输出：逐项结论，问题给行号/文件，全部通过则明确\"审查通过\"。",
+      "status": "completed",
+      "assignee": "reviewer",
+      "dependencies": [
+        "t1",
+        "t2"
+      ],
+      "attempt": 1,
+      "createdAt": 1787814124593,
+      "updatedAt": 1787814371688,
+      "attemptId": "9c1c9a64-697a-4c52-9b14-9286f3f27b61",
+      "reassigning": false,
+      "output": "审查通过（含1处任务描述与仓库实际状态的差异说明）。\n\n【t1 Logo替换】\n1. ✅ game_logo.png = 1024x1024、48144 字节，SHA256 与源 logo.png 完全一致 (C75033E032E404C4965DB7421C2C77B880808106080D9BBF5E8D0731F60D96A8)。\n2. ✅ meta 未改动（uuid 保持 41c0dc06-5f05-4c40-a438-a530e0f42c7f）。注：全仓库 0 个 .meta 被 git 跟踪，无法用 git diff 直接证明；改用 library/.assets-data.json 缓存交叉验证 uuid 一致，且 meta 中 rawWidth/rawHeight 仍为旧值 512（未被重新导入），证明 meta 文件原样保留。\n3. ✅ 代码零改动：git diff --stat -- assets/scripts 为空，scene.scene 无 diff。git status 仅有的 tracked 改动是 game_logo.png 与 .agent-teams/retired-members.json（团队管理文件，非代码）。\n4. ✅ LaunchPage.ts:182 仍加载 \"images/ui/game_logo/spriteFrame\"，运行时按路径加载，不受 uuid 影响。\n\n【t2 图片清理】\n1. ⚠️ 部分通过（任务描述与实际仓库差异）：git status 仅显示 5 个 tracked 删除（bg.jpg + orange_cat_idle_01~04.png）。game_logo.png、game_logo_1024.png、game_logo_square.png、game_logo_square_1024.png 及全部 9 个 .meta 从未被 git 跟踪，git 无法显示。磁盘层面验证：library/.assets-data.json 确认 9 张图片均存在过，assets/textures 目录当前为空 → 18 个文件（9 图 + 9 meta）确已全部删除。\n2. ✅ 零引用残留：9 个 uuid 在 assets 内 grep 零匹配；orange_cat_idle、bg.jpg 全仓库零匹配；game_logo 仅 LaunchPage.ts:182（合法的 resources 加载）；scene.scene 无 textures 引用；tools/gen_logo*.ps1 与 tools/game_logo*.svg 仅为生成脚本（注释提及输出路径），按任务允许保留。\n3. ✅ assets/textures 目录与 textures.meta 均保留。\n4. ✅ resources 无误删：images/ui 下 age_rating_8plus.png、game_logo.png 均在，git status 无 resources 删除项。\n\n【通用】✅ npx tsc --noEmit --skipLibCheck 通过，exit code 0（分支 feat/launch-logo-cleanup）。\n\n结论：t1、t2 实现正确，审查通过。"
+    }
+  ],
+  "taskSeq": 3
+}

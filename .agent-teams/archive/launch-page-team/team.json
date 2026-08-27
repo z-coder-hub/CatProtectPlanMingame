@@ -1,0 +1,93 @@
+{
+  "name": "launch-page-team",
+  "id": "launch-page-team",
+  "description": "为vivo小游戏「柒婳爱趣玩儿」(Cocos Creator 3.8.6项目 CatProtectPlanMingame) 新增合规启动页：适龄标识(8+，右上角，点击弹窗说明)、健康游戏忠告(底部全文登载)、著作权人/软著登记号信息，以及\"点击任意启动\"。依据《vivo小游戏启动页审核整改任务文档.md》。",
+  "captainSessionId": "session-64a2173c-4a05-439e-99cb-5d2306ecc4f8",
+  "createdAt": 1787812303092,
+  "members": [
+    {
+      "id": "6d092519-e849-4cd8-bcd7-a9690e08ae5e",
+      "name": "ui-engineer",
+      "role": "Cocos Creator TypeScript UI工程师",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787812305995,
+      "status": "removed"
+    },
+    {
+      "id": "709e368e-b58f-448f-a185-0af0c985538b",
+      "name": "reviewer",
+      "role": "代码审查与合规检查员",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787812306013,
+      "status": "removed"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "subject": "准备启动页资源（适龄标识+游戏Logo）",
+      "description": "把两个图片资源复制到 Cocos 的 resources 目录，供运行时 resources.load 加载。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\n\n要复制的文件（用 PowerShell 的 Copy-Item，或直接读二进制再写）：\n1. C:\\Users\\Administrator\\Desktop\\vivo\\适龄提示_8+_透明.png （官方CADPA 8+适龄标识，透明背景，1317x1659）→ 复制为项目内 assets\\resources\\images\\ui\\age_rating_8plus.png\n2. 项目内已有素材 assets\\textures\\game_logo.png （猫咪城堡圆形Logo）→ 复制为 assets\\resources\\images\\ui\\game_logo.png\n\n要求：\n- 创建目录 assets\\resources\\images\\ui\\（如果不存在）\n- 不手工写 .meta 文件——Cocos Creator 编辑器下次打开时会自动生成，这是本项目的常规做法\n- 复制完成后用 PowerShell 验证两个目标文件存在且非空（字节数>0），报告文件路径和大小\n- 不要修改其他任何文件",
+      "status": "completed",
+      "assignee": "ui-engineer",
+      "dependencies": [],
+      "attempt": 1,
+      "createdAt": 1787812328113,
+      "updatedAt": 1787812342913,
+      "attemptId": "d7049e43-07a9-4616-aee0-e66c9942a6f6",
+      "reassigning": false,
+      "output": "启动页资源复制完成：\n1. assets\\resources\\images\\ui\\age_rating_8plus.png — 76819 字节（来源：C:\\Users\\Administrator\\Desktop\\vivo\\适龄提示_8+_透明.png，官方CADPA 8+适龄标识，透明背景）\n2. assets\\resources\\images\\ui\\game_logo.png — 86614 字节（来源：项目内 assets\\textures\\game_logo.png）\n\n- 已创建目录 assets\\resources\\images\\ui\\\n- 未手工写 .meta 文件（由 Cocos Creator 编辑器下次打开自动生成）\n- 已验证两个目标文件存在且非空（字节数>0）\n- 未修改其他任何文件（git status 确认仅新增 ui 目录）\n\n运行时加载路径建议：resources.load(\"images/ui/age_rating_8plus/spriteFrame\") 和 resources.load(\"images/ui/game_logo/spriteFrame\")"
+    },
+    {
+      "id": "t2",
+      "subject": "实现 LaunchPage 启动页组件",
+      "description": "在 Cocos Creator 3.8.6 项目中实现启动页组件。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame。创建文件 assets\\scripts\\components\\ui\\LaunchPage.ts（放在 components\\ui\\ 目录，与 GameHUD.ts 同级）。\n\n【需求背景】vivo小游戏审核整改：启动页必须包含①适龄标识8+（右上角，点击弹窗说明）②健康游戏忠告（底部全文登载，文案一个字不能错）③著作权人/软著登记号④点击任意处启动游戏。设计分辨率720x1280（竖屏）。\n\n【关键工程约束 - 必须遵守项目CLAUDE.md规范】\n- 禁止使用 Mask 组件（本任务只用 Graphics 画背景/边框）\n- UI初始化阶段禁止 setTimeout/scheduleOnce 延迟\n- 面板边框画法：用单一路径 rect 后依次 graphics.fill() 再 graphics.stroke()（不要重复rect）\n- 布局优先用 Widget 组件而非手动 setPosition（顶部/底部元素用Widget，中央元素可用Widget居中）\n- 命名规范：类名 PascalCase，公共方法大写开头（CreateXxx），私有方法小写开头（createXxx），私有属性下划线前缀（_xxx），常量 UPPER_SNAKE_CASE\n- 不要 any 类型、不要未使用导入、不要 debug 开关\n- 资源加载用 resources.load(\"images/ui/age_rating_8plus/spriteFrame\", SpriteFrame, cb)（与 GameBootstrap.ts 里加载背景图的方式一致：resources.load(\"images/backgroup/spriteFrame\", ...)）\n\n【组件结构设计】\n类 LaunchPage extends Component，onLoad 中构建全部 UI（挂到 Canvas 下，self.node.parent 是 Canvas）。单例不需要。\n\n根节点：本组件 node 上添加 UITransform，contentSize 设为 720x1280（设计分辨率），位置(0,0)。再添加 Widget 全屏对齐（isAlignTop/Bottom/Left/Right 全true，上下左右0），updateAlignment()。添加 Graphics 画不透明深色背景（建议深蓝黑，如 Color(18, 26, 42, 255)），全屏矩形 fill。\n\n布局自上而下（y 以根节点中心为原点，顶部 y≈+640，底部 y≈-640）：\n1. 适龄标识（右上角）：Sprite 节点 \"AgeRatingBadge\"，加载 age_rating_8plus 的 spriteFrame；UITransform contentSize 约 110x138（源图 1317x1659 竖版，保持比例）；Widget 右上角对齐（isAlignTop+isAlignRight，top=24, right=24），必须 ≥ 屏幕最小边720的1/10（72px）。节点上注册 Node.EventType.TOUCH_END 监听 → 打开适龄提示弹窗，回调里 event.propagationStopped = true 阻止冒泡（否则会触发根节点\"点击启动\"）。\n2. 游戏Logo（中部偏上）：Sprite 节点 \"GameLogo\"，加载 game_logo 的 spriteFrame，尺寸约 220x220，居中（Widget水平居中+垂直居中，或固定位置 y≈+220）。\n3. 游戏名称\"柒婳爱趣玩儿\"（Logo下方）：Label，fontSize 64，bold，白色，enableOutline=true（outlineWidth 3，深色 outlineColor），enableShadow=true（shadowOffset (3,-3)，深色）。其下方小字 \"CAT PROTECT PLAN\" fontSize 20 灰色。名称区域用 Graphics 画一个像素风横幅边框（用带阶梯角的矩形路径，fill+stroke 同路径）：比如在名称 Label 外圈包一个 Panel 节点，UITransform 约 560x150，Graphics 画阶梯角边框（角上各缩进一个 step，如 step=12），金色边框/深色填充。游戏名整体 y≈+60。\n4. \"点击任意启动\"提示（中部偏下）：Label，fontSize 30，亮色（如 Color(255, 215, 0) 金色），文案\"点击任意处启动游戏\"，y≈-140。可用 Graphics 在文字左右各画一个小三角/箭头装饰（可选）。\n5. 健康游戏忠告面板（底部）：Panel 节点 \"HealthAdvicePanel\"，UITransform 约 620x150，Widget 底部对齐（isAlignBottom+isAlignHorizontalCenter，bottom≈170）。Graphics 画半透明深色底 + 金色边框（单路径 fill+stroke）。内部：\n   - 标题 Label \"健康游戏忠告\" fontSize 22 bold 金色，位于面板上部\n   - 正文 Label：文案必须逐字照抄（含标点）：\"抵制不良游戏，拒绝盗版游戏。注意自我保护，谨防受骗上当。适度游戏益脑，沉迷游戏伤身。合理安排时间，享受健康生活。\" fontSize 16，白色，overflow=Label.Overflow.SHRINK，UITransform 宽约 560 自动换行，位于标题下方\n6. 版权信息（忠告面板下方）：Label 一行两段：\"著作权人：刘雨　软著登记号：2025SA0165472\"（中间可加空格分隔），fontSize 16，浅灰色，Widget 底部对齐 bottom≈120。（任务文档3.3：著作权人刘雨、软著登记证号2025SA0165472，字体与忠告一致）\n\n【适龄提示弹窗】\n点击适龄标识打开弹窗（挂在 Canvas 下，setSiblingIndex(99999) 置顶）：\n- 全屏半透明遮罩节点（Graphics 画 Color(0,0,0,200) 全屏），注册 TOUCH_END → 关闭弹窗并 event.propagationStopped=true\n- 中央面板节点，UITransform 约 640x780，居中；Graphics 画深色底（Color(30,34,50,255)）+ 亮色边框（单路径 fill+stroke）\n- 标题 \"适龄提示\" fontSize 36 bold 白色 顶部 y≈+320\n- 内容用 3 个区块（每块：小节标题 fontSize 22 bold 金色 + 正文 fontSize 20 白色 overflow SHRINK 宽约560）：\n  区块1 标题\"一、游戏概况\" 正文：\"本游戏为猫咪城堡题材的策略塔防类休闲小游戏，画风可爱、玩法轻松，无暴力血腥及恐怖内容，适合年满8周岁及以上的玩家。建议未成年玩家在家长监护和指导下使用本游戏，合理安排游戏时间。\"\n  区块2 标题\"二、游戏内容\" 正文：\"游戏以守护城堡为主题：玩家通过部署不同类型的猫咪英雄，抵御鼠群入侵，保卫城堡。游戏包含英雄部署、波次防守、关卡挑战等核心玩法，无剧情社交、无文字聊天，单机可玩。\"\n  区块3 标题\"三、未成年人保护\" 正文：\"按照国家相关规定，游戏用户需进行实名认证，未实名认证用户无法进入游戏。未成年人将受防沉迷系统时长限制（法定节假日每日不超过3小时，其他时间每日不超过1.5小时，22时至次日8时无法登录），充值亦受严格限制（8-16周岁单次不超过50元、月累计不超过200元；16-18周岁单次不超过100元、月累计不超过400元）。\"\n- 底部按钮\"我知道了\"（约200x64，绿色底白字，用 Button 组件+UIHelper.DrawButtonBackground 或 Graphics 自绘，TOUCH_END 或 Button.EventType.CLICK → 关闭弹窗）\n\n【启动逻辑】\n根节点注册 Node.EventType.TOUCH_END 监听 → 启动游戏：\nconst gm = GameManager.instance; gm.StartGame(); 然后（与GameHUD的MENU按钮一致）在组件的 scheduleOnce 中 0.1 秒后 if (gm.gameState === GameState.DEPLOYMENT) gm.StartBattle(); 最后销毁本节点 this.node.destroy()（先卸载 touch 监听）。\n注意：弹窗打开期间，点击应只关闭弹窗，不能启动游戏——弹窗遮罩的 TOUCH_END 要 propagationStopped=true。\n在 onDestroy 中清理所有注册的节点监听（node.off）。\n\n【可参考的现有代码】\n- assets\\scripts\\utils\\UIHelper.ts（SetupCenterWidget/SetupBottomAlignWidget/CreatePanelWithBackground/CreateButton 等，可直接 import 复用）\n- assets\\scripts\\components\\ui\\GameHUD.ts（Button/Button.EventType.CLICK 用法、UIHelper 用法）\n- assets\\scripts\\systems\\GameBootstrap.ts（resources.load 图片用法、find(\"Canvas\")）\n- GameManager 单例：GameManager.instance，方法 StartGame()/StartBattle()/gameState，import 自 ../managers/GameManager\n- UIHelper.CreatePanelWithBackground 画面板：addComponent(Graphics)，fillColor，rect(-w/2,-h/2,w,h)，fill()，stroke()\n- Widget 用后必须调用 widget.updateAlignment()\n\n【交付】完成 LaunchPage.ts 的编写（不要动其他文件），自查：无语法错误、无未使用导入、无 any、无 setTimeout、无 Mask。最后报告：文件路径、创建了哪些节点、启动/弹窗交互如何实现。",
+      "status": "completed",
+      "assignee": "ui-engineer",
+      "dependencies": [],
+      "attempt": 1,
+      "createdAt": 1787812328148,
+      "updatedAt": 1787812713426,
+      "attemptId": "b6b2a60a-24cf-468a-a99c-3d3fc6794637",
+      "reassigning": false,
+      "output": "LaunchPage.ts 启动页组件已完成，TypeScript 类型检查通过（npx tsc --noEmit --skipLibCheck，exit 0）。\n\n文件：assets\\scripts\\components\\ui\\LaunchPage.ts（611行，@ccclass('LaunchPage') extends Component，挂到 Canvas 下）\n\n创建的节点（自上而下）：\n1. 根节点：UITransform 720x1280 + 全屏 Widget + Graphics 深蓝黑背景(Color 18,26,42)\n2. AgeRatingBadge：适龄标识 110x138（≥720/10=72），Widget 右上角(top=24,right=24)，resources.load(\"images/ui/age_rating_8plus/spriteFrame\")，TOUCH_END→弹窗+propagationStopped\n3. GameLogo：220x220，Widget 居中偏移 y=240，加载 images/ui/game_logo\n4. NameBanner：560x150 像素风阶梯角横幅（step=12，单路径 moveTo/lineTo→close→fill→stroke），金色边框深色填充；内含\"柒婳爱趣玩儿\"(64px bold，outline 3px + shadow(3,-3)) 和 \"CAT PROTECT PLAN\"(20px 灰)\n5. StartHint：\"点击任意处启动游戏\" 30px 金色 + 左右像素风三角箭头装饰，y=-140\n6. HealthAdvicePanel：620x150 底部对齐(bottom=170)，半透明深底+金色边框（单路径 rect→fill→stroke）；标题\"健康游戏忠告\"(22px bold 金) + 正文全文照抄(16px，Overflow.SHRINK，560宽)\n7. CopyrightLabel：著作权人：刘雨　软著登记号：2025SA0165472，16px 浅灰，底部对齐(bottom=120)\n\n适龄提示弹窗（挂 Canvas 下 setSiblingIndex(99999)）：\n- 全屏半透明遮罩(Color 0,0,0,200) TOUCH_END→关闭+propagationStopped\n- 中央面板 640x780：深色底(Color 30,34,50)+亮蓝边框(单路径 fill+stroke)；标题\"适龄提示\"36px bold；3个内容区块（一、游戏概况/二、游戏内容/三、未成年人保护，各含22px金色小节标题+20px正文 SHRINK 560宽）；底部\"我知道了\"按钮(200x64 绿底白字，UIHelper.CreateButton→Button.EventType.CLICK→关闭)\n\n启动逻辑：根节点 TOUCH_END→GameManager.instance.StartGame()，scheduleOnce 0.1s 后若 gameState===DEPLOYMENT 则 StartBattle()，然后 destroyLaunchPage()（先 off 根节点和适龄标识监听，再销毁节点+弹窗）。onDestroy 中清理全部监听。\n\n工程约束自查：无 Mask 组件（遮罩用 Graphics 全屏矩形）、无 setTimeout（仅游戏逻辑 scheduleOnce 与 GameHUD 一致）、所有边框单路径 fill+stroke、布局全部用 Widget（updateAlignment 均调用）、命名规范符合（PascalCase 类/公共方法大写/私有下划线/常量 UPPER_SNAKE）、无 any、无未使用导入、无 debug 开关、无重复 rect。"
+    },
+    {
+      "id": "t3",
+      "subject": "集成LaunchPage到GameBootstrap启动流程",
+      "description": "把 LaunchPage 集成进游戏启动流程。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\n\n修改文件：assets\\scripts\\systems\\GameBootstrap.ts（唯一要改的文件）\n\n改动方式：\n1. 文件顶部 import 区（第2行附近，GameHUD/HeroSelectionPanel 的 import 之后）新增：import { LaunchPage } from '../components/ui/LaunchPage';\n2. 在 createGameUI() 方法末尾（创建 Castle 之后、this.log(\"游戏界面创建完成\") 之前）新增：\n   // 创建启动页（置顶显示，点击任意处启动游戏，含适龄标识/健康游戏忠告/版权信息）\n   const launchNode = new Node(\"LaunchPage\");\n   launchNode.parent = this._canvasNode;\n   launchNode.addComponent(LaunchPage);\n   并在 launchNode 上调用 setSiblingIndex(99999) 确保最上层。\n3. 不要改动其他任何逻辑（背景、管理器、HUD 创建顺序保持不变）。LaunchPage 组件内部会自己找 Canvas 并管理自己的层级。\n\n注意：\n- 严格保持现有代码风格（注释用 //，与周围一致）\n- 不要使用 any、不要引入未使用 import、不要加 debug 开关\n- 改完通读一遍整个文件确认没有破坏结构（大括号配对、方法边界）\n\n交付：报告修改后的关键代码片段 + 确认改动范围（只动了 GameBootstrap.ts 一个文件）。",
+      "status": "completed",
+      "assignee": "ui-engineer",
+      "dependencies": [
+        "t2"
+      ],
+      "attempt": 1,
+      "createdAt": 1787812339224,
+      "updatedAt": 1787812792771,
+      "attemptId": "37cdb6f8-8588-48b4-8229-91c32ef086c7",
+      "reassigning": false,
+      "output": "LaunchPage 集成完成，TypeScript 类型检查通过（npx tsc --noEmit --skipLibCheck，exit 0）。\n\n修改文件：assets\\scripts\\systems\\GameBootstrap.ts（唯一修改的文件，git status 确认 M 状态仅此一个）\n\n改动1 — import（第4行）：\nimport { LaunchPage } from '../components/ui/LaunchPage';\n\n改动2 — createGameUI() 末尾（Castle 创建之后）新增：\n// 创建启动页（置顶显示，点击任意处启动游戏，含适龄标识/健康游戏忠告/版权信息）\nconst launchNode = new Node(\"LaunchPage\");\nlaunchNode.parent = this._canvasNode;\nlaunchNode.addComponent(LaunchPage);\nlaunchNode.setSiblingIndex(99999);\nthis.log(\"LaunchPage创建完成\");\n\n背景、管理器、HUD 创建顺序均未改动。全文件通读确认结构完整（大括号配对、方法边界正常）。GameManager 在 createGameManagers() 阶段先于 createGameUI() 创建，因此启动页点击时 GameManager.instance 必然可用。"
+    },
+    {
+      "id": "t4",
+      "subject": "启动页代码审查与合规验证",
+      "description": "对启动页整改任务做最终代码审查与合规验证。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\n\n需要审查的文件：\n1. assets\\scripts\\components\\ui\\LaunchPage.ts（新增）\n2. assets\\scripts\\systems\\GameBootstrap.ts（集成改动）\n3. assets\\resources\\images\\ui\\ 下应有 age_rating_8plus.png 和 game_logo.png（资源准备）\n\n【合规清单 - 逐项核对并报告】（依据《vivo小游戏启动页审核整改任务文档.md》）\nA. 适龄标识：右上角、游戏名称附近、不遮挡、与背景明显区分；最小边长 ≥ 屏幕最小边720的1/10=72px；点击弹窗且弹窗含三类说明（①游戏概括描述②游戏内容描述③实名认证+未成年人充值限制+时长限制）；点击适龄标识不得触发\"启动游戏\"\nB. 健康游戏忠告：位于底部显著位置；标题+正文逐字核对（含标点），正文必须是：\"抵制不良游戏，拒绝盗版游戏。注意自我保护，谨防受骗上当。适度游戏益脑，沉迷游戏伤身。合理安排时间，享受健康生活。\"（用 grep 或读文件逐一比对，不允许任何增删改字）\nC. 版权信息：著作权人\"刘雨\"、软著登记证号\"2025SA0165472\" 出现在忠告下方，字体与忠告一致\nD. 点击任意处启动游戏（适龄标识除外）；点击弹窗遮罩只关闭弹窗不启动游戏\nE. 启动页整体适配设计分辨率720x1280，文字清晰不被拉伸\n\n【代码规范清单】（项目CLAUDE.md）\n1. 无 Mask 组件、无 setTimeout/scheduleOnce 用于UI初始化、无 debug 开关、无 any、无未使用 import/变量\n2. 面板边框用单路径 fill+stroke（不重复rect）；Graphics 用 close() 而非 closePath()\n3. Widget 使用后调用 updateAlignment()；布局优先 Widget 而非手动 setPosition\n4. 命名规范：公共方法大写开头、私有方法小写开头、私有属性_前缀、常量UPPER_SNAKE_CASE；TSDoc注释公共方法\n5. 事件清理：onDestroy 中 off 掉所有 node.on 监听；节点销毁前 isValid 检查\n6. GameBootstrap.ts 改动最小化（只加了import+LaunchPage创建），不破坏原有初始化顺序\n\n【可执行验证】\n- 若有 node_modules/typescript，可尝试：npx tsc --noEmit -p tsconfig.json（在项目根目录运行，可能因 cocos 类型缺失报错，报错可接受但要判断是否为本次改动引入）\n- 用 grep 检查：LaunchPage.ts 中是否出现 setTimeout、scheduleOnce、Mask、closePath、any\n\n交付：逐项报告 A-F 和 1-6 的核对结果（通过/问题+行号），给出\"通过/需修复\"结论。发现问题要明确指出文件和行号，不要自行修改代码（如需修改请回报给队长）。",
+      "status": "completed",
+      "assignee": "reviewer",
+      "dependencies": [
+        "t2",
+        "t3"
+      ],
+      "attempt": 1,
+      "createdAt": 1787812339230,
+      "updatedAt": 1787812949643,
+      "attemptId": "9c692d31-5f14-4f13-8831-6afec5cbeda8",
+      "reassigning": false,
+      "output": "结论：通过（PASS），附 1 个环境注意事项。\n\n【合规清单 A-F】\nA. 适龄标识 ✅：右上角（Widget top=24/right=24，LaunchPage.ts L135-140）；尺寸110x138，最小边110≥72（720/10）；弹窗含三类说明（L51-64：一、游戏概况含类型/适用年龄/家长监护建议；二、游戏内容含玩法/无社交；三、未成年人保护含实名认证+充值限制+时长限制）；点击弹窗用 propagationStopped=true（L390）且弹窗为Canvas兄弟节点不冒泡，不触发启动游戏。\nB. 健康游戏忠告 ✅：底部面板（Widget isAlignBottom, bottom=170，L322-326）；标题+正文经PowerShell逐字（含标点）字节比对 EXACT_MATCH=True，56/56字符完全一致（L48）。\nC. 版权信息 ✅：\"著作权人：刘雨　软著登记号：2025SA0165472\"（L381），位于忠告面板下方（bottom=120），字体16px与忠告正文16px一致。\nD. 点击启动 ✅：根节点TOUCH_END→StartGame（L552-563），_isStarting防重复；适龄标识除外；遮罩点击仅closeAgeDialog（L533-536），弹窗挂Canvas下不冒泡到启动页根节点，不会启动游戏。\nE. 适配720x1280 ✅：settings/v2/packages/project.json designResolution=720x1280；代码常量一致；全部Widget对齐；sprite CUSTOM尺寸与原图比例一致（badge 1317x1659→110x138偏差0.4%可忽略；logo 512x512→220x220等比）；忠告正文SHRINK缩放不拉伸。\n\n【代码规范 1-6】\n1. ✅ 无Mask组件（\"DialogMask\"仅为节点名，遮罩用Graphics绘制）；无setTimeout；scheduleOnce仅1处（L566）用于启动流程延迟，与GameHUD.ts L481-483的MENU按钮流程完全一致（游戏逻辑延迟，非UI初始化，合规）；无debug开关；无any；13个import全部被使用。\n2. ✅ 面板边框均单路径fill+stroke（横幅L216-226阶梯角close+fill+stroke；忠告面板L333-335单rect；弹窗L465-467单rect）；全部用close()，无closePath。\n3. ✅ 所有Widget配置后均调用updateAlignment()（9处：L112/140/176/207/272/326/378/429/458）；setPosition仅用于Widget容器内子元素相对定位。\n4. ✅ 私有方法小写开头、私有属性_前缀、常量UPPER_SNAKE_CASE；类级JSDoc（L66-69）。\n5. ✅ 事件清理完整：onDestroy（L595-610）off根节点+适龄标识+遮罩3处监听并销毁弹窗；destroyLaunchPage（L578-593）先off后destroy；所有destroy前isValid检查。\n6. ✅ GameBootstrap改动最小化：git diff HEAD仅+8行（1行import L4 + 7行创建L305-310，追加在createGameUI末尾），不破坏原初始化顺序。\n\n【可执行验证】\n- npx tsc --noEmit -p tsconfig.json：exit 0，零输出，全项目（含两个改动文件）编译通过，无本次改动引入的类型错误。\n- grep验证：LaunchPage.ts无setTimeout/closePath/any/debug；\"Mask\"仅匹配节点名。\n\n【⚠️ 环境注意事项（需队长知悉，非代码缺陷）】\nassets/resources/images/ui/ 下 age_rating_8plus.png(1317x1659) 和 game_logo.png(512x512) 均无 .meta 文件——Cocos Creator尚未导入。需用编辑器打开项目一次自动生成.meta并导入，否则运行时 resources.load(\"images/ui/age_rating_8plus/spriteFrame\") 会加载失败（代码已做err回退，仅console.error不会崩溃）。另外建议打包前在编辑器确认两张图片导入正常。"
+    }
+  ],
+  "taskSeq": 4
+}

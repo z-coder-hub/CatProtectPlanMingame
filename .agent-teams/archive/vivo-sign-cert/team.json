@@ -1,0 +1,36 @@
+{
+  "name": "vivo-sign-cert",
+  "id": "vivo-sign-cert",
+  "description": "生成一份用于 vivo 小游戏构建签名的 certificate.pem 与 private.pem，并放置到项目的 sign/release 目录中。",
+  "captainSessionId": "session-be25c381-79d0-4f1a-b41e-84f0d667a310",
+  "createdAt": 1787807109697,
+  "members": [
+    {
+      "id": "587e4676-e364-4f88-8df8-82220a3334b1",
+      "name": "cert-engineer",
+      "role": "engineer",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787807710337,
+      "status": "removed"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "subject": "生成 vivo release 签名证书到 sign/release",
+      "description": "目标：在项目根目录生成 vivo 小游戏 release 签名证书文件：\n- C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\\sign\\release\\certificate.pem\n- C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\\sign\\release\\private.pem\n\n背景（已由队长核实）：\n- 机器上无 openssl、无 pwsh7、无 dotnet，但 node v24 可用；\n- 工作区根目录已备好两个已验证的脚本（队长已在本机测试通过）：\n  1) _tmp_gen_forge.js —— 用 _tmp_forge/node_modules/node-forge 生成 RSA 2048 密钥对 + SHA-256 自签名 X.509 证书，私钥导出为 PKCS#8 PEM（BEGIN PRIVATE KEY，与 Cocos 自带样例格式一致），证书有效期 10 年，subject CN=CatProtectPlanMingame,O=CatProtectPlanMingame,C=CN；\n  2) _tmp_verify_cert.js —— 用 node:crypto 校验两个 PEM 可解析且证书公钥与私钥匹配。\n\n执行步骤（每条命令的 workdir 均为项目根目录）：\n1) 先确认 sign/release 目录当前不存在或为空：可在 PowerShell 里运行 Get-ChildItem sign -Recurse -ErrorAction SilentlyContinue（若已存在旧文件，不要删除，先汇报）。\n2) 运行：node _tmp_gen_forge.js \"sign/release\"\n   预期输出：OK: wrote certificate.pem / private.pem to ...sign\\release\n3) 运行：node _tmp_verify_cert.js \"sign/release\"\n   预期输出包含：key type: rsa 2048 bit；cert public key matches private key: true；OK: valid matching PEM pair。\n4) 用 read 工具读取 sign\\release\\private.pem 和 certificate.pem 前几行，确认头部分别是 -----BEGIN PRIVATE KEY----- 与 -----BEGIN CERTIFICATE-----（若已是这样，说明格式正确）。\n\n硬性约束：\n- 只允许创建 sign\\release 下的这两个文件；禁止修改或删除工作区内任何其他文件（尤其禁止改动 profiles\\v2\\packages\\vivo-mini-game.json、settings\\、build\\、_tmp_* 脚本和 _tmp_forge）。\n- 不要安装任何新依赖、不要联网下载、不要尝试其他生成方式。\n- 若第 2/3 步报错，把完整报错原文写进任务输出并标记 failed，不要擅自绕过。\n\n完成时在任务输出里报告：两个文件的绝对路径、文件字节大小、_tmp_verify_cert.js 的完整输出（key type、有效期、match 结果）。",
+      "status": "completed",
+      "assignee": "cert-engineer",
+      "dependencies": [],
+      "attempt": 1,
+      "createdAt": 1787807710348,
+      "updatedAt": 1787807745083,
+      "attemptId": "5848298c-8055-4e17-b2eb-b9c94ccfe16e",
+      "reassigning": false,
+      "output": "vivo release 签名证书已生成并校验通过。\n\n生成文件（绝对路径）：\n- C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\\sign\\release\\certificate.pem（1250 字节，21 行，首行 -----BEGIN CERTIFICATE-----）\n- C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\\sign\\release\\private.pem（1732 字节，28 行，首行 -----BEGIN PRIVATE KEY-----，即 PKCS#8 格式，与 Cocos 自带样例一致）\n\n生成前检查：根目录 sign 目录原本不存在（无旧文件，无需删除），仅确认了 _tmp_gen_forge.js / _tmp_verify_cert.js / _tmp_forge\\node_modules\\node-forge 存在。\n\n_tmp_verify_cert.js 完整输出：\nkey type      : rsa 2048 bit\ncert subject  : CN=CatProtectPlanMingame\nO=CatProtectPlanMingame\nC=CN\ncert issuer   : CN=CatProtectPlanMingame\nO=CatProtectPlanMingame\nC=CN\nvalid from    : Aug 26 05:15:34 2026 GMT\nvalid to      : Aug 24 05:15:34 2036 GMT\ncert public key matches private key: true\nOK: valid matching PEM pair\n\n即：RSA 2048 位、SHA-256 自签名、有效期 10 年（2026-08-26 ~ 2036-08-24）、证书公钥与私钥匹配。硬性约束全部满足：仅创建 sign\\release 下两个文件，未改动/删除工作区内任何其他文件，未安装依赖、未联网、未使用其他生成方式。"
+    }
+  ],
+  "taskSeq": 1
+}

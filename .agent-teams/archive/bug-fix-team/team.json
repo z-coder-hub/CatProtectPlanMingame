@@ -1,0 +1,62 @@
+{
+  "name": "bug-fix-team",
+  "id": "bug-fix-team",
+  "description": "修复两个bug：1) 被锁的小猫每次点击会放大，点击被锁小猫不应改变盒子大小；2) 最下方小猫区域触发广告逻辑错误，应改为点击被锁小猫时调用广告，而不是滑动选择小猫时调用广告",
+  "captainSessionId": "session-46094f09-18ee-48d5-b421-d624bf22a2a9",
+  "createdAt": 1787808178128,
+  "members": [
+    {
+      "id": "972c558c-2e74-4b93-8e90-0aee1e238972",
+      "name": "engineer",
+      "role": "engineer",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787808280360,
+      "status": "removed"
+    },
+    {
+      "id": "fb230485-9b80-4134-86b7-a551bc539824",
+      "name": "reviewer",
+      "role": "reviewer",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787808280371,
+      "status": "removed"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "subject": "修复被锁小猫点击放大 + 广告触发时机两个bug",
+      "description": "文件：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\\assets\\scripts\\components\\ui\\HeroSelectionPanel.ts（已存在未提交的广告解锁功能代码，在此基础上修改）\n\n背景：这是一个 Cocos Creator 3.8.6 + TypeScript 严格模式项目。本会话要修两个 bug：\n\n【Bug 1】被锁的小猫每点一次会放大一点。\n根因：showLockedHeroEffect()（约1665行）用 scale 做摇摆动画：setScale(orig*1.1) → 0.1s后 orig*0.95 → 0.2s后恢复 orig。当点击在 0.2s 内重叠时，第二次点击捕获到的 originalScale 是中间值，动画结束后停在错误缩放值，越点越大。\n修复要求：被锁小猫点击后【不得改变盒子大小（scale）】。把 showLockedHeroEffect() 改为只做不改变缩放的效果，例如 UIOpacity 透明度闪烁（读取/添加 UIOpacity 组件，短暂降低透明度后恢复，用 this.scheduleOnce 恢复，禁止用 setTimeout；恢复时间建议 0.15s）。保持方法名与调用点不变（有4个调用点）。UIOpacity 已在文件顶部 import 中。\n\n【Bug 2】最下方小猫区域广告触发逻辑错误：现在 onHeroButtonTouchStart()（约1456行）在 TOUCH_START 时对未解锁英雄立即调用 tryUnlockHeroViaAd()，导致用户只是滑动列表（手指起始落在被锁小猫上）也会弹广告。\n修复要求：点击被锁小猫才调广告，滑动不调。\n实现方案（必须按此实现）：\n1. 在类中新增字段：private _pendingLockedTap: { heroType: HeroType; startX: number; startY: number } | null = null;\n2. 新增常量：private static readonly LOCKED_TAP_THRESHOLD: number = 15;（滑动距离超过该值视为滑动）\n3. onHeroButtonTouchStart() 中，未解锁分支不再直接调用 tryUnlockHeroViaAd()，改为记录触摸起点：const startLocation = event.getUIStartLocation(); this._pendingLockedTap = { heroType, startX: startLocation.x, startY: startLocation.y }; 然后 return。\n4. onHeroButtonTouchMove() 开头新增：若 this._pendingLockedTap 非空，用 event.getUILocation() 与记录的起点计算距离，若距离 > LOCKED_TAP_THRESHOLD 则 this._pendingLockedTap = null（滑动取消广告）并 return；否则直接 return（锁定英雄不参与拖拽）。\n5. setupHeroButtonEvents() 中 TOUCH_END 与 TOUCH_CANCEL 的回调改为把 heroType、buttonNode 传给 onHeroButtonTouchCancelOrEnd(heroType, buttonNode, event)。\n6. onHeroButtonTouchCancelOrEnd(heroType, buttonNode, event) 开头新增：若 this._pendingLockedTap 非空 → 取出并置空；用 event.getUILocation() 与记录起点算距离；距离 > LOCKED_TAP_THRESHOLD 则不触发（记日志），否则调用 this.tryUnlockHeroViaAd(pending.heroType, buttonNode) 并 return。（TOUCH_CANCEL 的情况：在 setupHeroButtonEvents 的 TOUCH_CANCEL 回调中只清空 this._pendingLockedTap = null，不触发广告。）\n7. 原 onHeroButtonTouchCancelOrEnd 中拖拽完成逻辑（if (this._isDragging) finishHeroDrag）保持不变，放在 pending 检查之后。\n\n约束：\n- 不改变已解锁英雄的拖拽/部署/金币不足逻辑；showInsufficientFundsEffect 不要动。\n- 不引入 setTimeout；恢复效果用 this.scheduleOnce。\n- 保持代码风格：公共方法大写开头、私有方法小写开头、日志 console.log 中文。\n- 修改后用 read 工具通读一遍改动区域确认无误。\n\n完成后输出：修改后的关键代码段（showLockedHeroEffect、onHeroButtonTouchStart、onHeroButtonTouchMove、onHeroButtonTouchCancelOrEnd、setupHeroButtonEvents）以及修改说明。",
+      "status": "completed",
+      "dependencies": [],
+      "attempt": 2,
+      "createdAt": 1787808289080,
+      "updatedAt": 1787808372381,
+      "assignee": "engineer",
+      "reassigning": false,
+      "attemptId": "fbedf8b1-a8ef-46f6-99ca-ac08166c2d26",
+      "output": "两个bug已修复（HeroSelectionPanel.ts）：\n\n【Bug1 被锁小猫点击放大】showLockedHeroEffect() 不再修改 scale，改为 UIOpacity 透明度闪烁：读取/添加 UIOpacity 组件，保存原始透明度，降到60后 this.scheduleOnce 0.15s 恢复。方法名与5个调用点均保持不变。不再有 scale 中间值累积问题。\n\n【Bug2 广告触发时机】广告不再在 TOUCH_START 时立即弹出，改为\"点击判定\"：\n- 新增字段 _pendingLockedTap 与常量 LOCKED_TAP_THRESHOLD=15；\n- TOUCH_START 未解锁分支只记录触摸起点；\n- TOUCH_MOVE 中若滑动距离>15 则清空候选（滑动不弹广告），锁定英雄不参与拖拽；\n- TOUCH_END 时若距离<=15（判定为点击）才调用 tryUnlockHeroViaAd；\n- TOUCH_CANCEL 只清空候选，不触发广告；\n- 原拖拽完成逻辑（finishHeroDrag）保留在 pending 检查之后，未解锁英雄的拖拽/金币不足逻辑未改动。\n\n已用 read 通读改动区域确认无误，npx tsc --noEmit --skipLibCheck 无错误。"
+    },
+    {
+      "id": "t2",
+      "subject": "审查两个bug修复代码",
+      "description": "代码审查任务：审查 engineer 在 assets/scripts/components/ui/HeroSelectionPanel.ts 中完成的两个 bug 修复（t1）。请用 read 工具读取该文件并重点核对：\n\n1. Bug1 修复：showLockedHeroEffect() 不得再调用 setScale 改变按钮大小；应改为不改变缩放的反馈（如 UIOpacity 透明度闪烁），且用 scheduleOnce（禁止 setTimeout）。确认 4 个调用点签名未破坏。\n2. Bug2 修复：广告触发必须延迟到\"点击判定\"：\n   - _pendingLockedTap 字段存在且正确记录 TOUCH_START 起点；\n   - onHeroButtonTouchMove 中滑动距离超过 LOCKED_TAP_THRESHOLD 时清空 _pendingLockedTap 且不弹广告；\n   - TOUCH_CANCEL 只清空不弹广告；\n   - TOUCH_END 时仅当距离 <= 阈值才调用 tryUnlockHeroViaAd；\n   - 已解锁英雄的拖拽/部署/金币不足逻辑未被改动；showInsufficientFundsEffect 未被改动。\n3. 代码风格符合 CLAUDE.md：无 setTimeout、无 any 滥用、私有方法小写开头、公共方法大写开头、import 无未使用项。\n4. 检查是否还有其它会改变被锁小猫 scale 的代码路径（如 showInsufficientFundsEffect 是否被锁定英雄路径调用——应该不会被调用）。\n\n输出：逐项核对结果（通过/问题点），若有问题明确指出行号和修复建议。若全部通过，明确说\"审查通过\"。",
+      "status": "completed",
+      "assignee": "reviewer",
+      "dependencies": [
+        "t1"
+      ],
+      "attempt": 1,
+      "createdAt": 1787808294340,
+      "updatedAt": 1787808466407,
+      "attemptId": "a101e0ee-c3f0-4d6f-b7bd-52a1d6338171",
+      "reassigning": false,
+      "output": "审查通过 ✅（HeroSelectionPanel.ts，1728行）\n\n【1. Bug1 修复 — showLockedHeroEffect】通过\n- 1705-1726行：不再有任何 setScale 调用；改为 UIOpacity 透明度闪烁（getComponent/加组件 → opacity=60 → scheduleOnce 0.15s 恢复 originalOpacity），恢复回调有 opacity.node.isValid 保护\n- 无 setTimeout（文件中仅 1693/1720 两处注释提到）\n- 方法签名 (buttonNode: Node) 未变；实际调用点共 5 处（1520/1527/1549/1562/1572，任务说明写 4 处，实际 5 处全部完好）\n- 无累积漂移：恢复目标是捕获的 originalOpacity 常量，连点不会像旧 scale 逻辑那样越点越大\n\n【2. Bug2 修复 — 广告触发时机】通过\n- 41行 _pendingLockedTap 字段类型正确（{heroType, startX, startY} | null）；43行 LOCKED_TAP_THRESHOLD=15 static readonly\n- TOUCH_START 锁定分支（1462-1467）只记录 event.getUIStartLocation() 起点，不再直接弹广告\n- TOUCH_MOVE（1613-1624）：pending 非空时用 getUILocation 算距离，>15 清空并记日志；锁定英雄一律 return 不参与拖拽\n- TOUCH_CANCEL（1441-1446）：先 _pendingLockedTap=null 再进 handler → pending 分支跳过 → 不弹广告 ✓\n- TOUCH_END → onHeroButtonTouchCancelOrEnd（1656-1674）：pending 取出置空，距离 ≤15 才 tryUnlockHeroViaAd(pending.heroType, buttonNode)，>15 仅记日志\n- 拖拽完成逻辑 finishHeroDrag 保留在 pending 检查之后；已解锁英雄金币不足→showInsufficientFundsEffect（1689-1699 原样未改）及拖拽流程均未改动\n\n【3. 代码风格】通过\n- 无 setTimeout（代码中）、无新增 any（801行 heroConfig: any 为历史遗留，非本次改动引入，建议后续清理）\n- 私有方法小写开头、常量 UPPER_SNAKE_CASE、_pendingLockedTap 下划线前缀、中文日志\n- import 全部被使用；Mask 已从 import 移除且全文无残留引用\n\n【4. 其他会改变被锁小猫 scale 的路径】通过\n- setScale 仅存在于 showInsufficientFundsEffect（1690-1696），只在\"已解锁但金币不足\"分支（1474）调用；锁定英雄在 1467 行提前 return，不会触达；无其他 setScale\n\n【5. 附带合规改动（与工作区指令一致）】\n- 移除 ScrollView View 节点的 Mask 组件及 import（符合\"不要使用mask组件\"）\n- drawHeroButtonBackground 改为单一路径 fill+stroke（990-996行：一次 rect 后 fill() + stroke()，符合\"不需要重复 rect，只需 fill，stroke\"）\n\n【验证】npx tsc --noEmit --skipLibCheck 通过（exit 0）\n\n结论：两个 bug 修复正确、实现与任务要求逐项吻合，未发现破坏性改动。仅记录一条非阻塞建议：801 行 heroConfig: any 可后续替换为具体配置类型。"
+    }
+  ],
+  "taskSeq": 2
+}

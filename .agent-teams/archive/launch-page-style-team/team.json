@@ -1,0 +1,78 @@
+{
+  "name": "launch-page-style-team",
+  "id": "launch-page-style-team",
+  "description": "启动页视觉调整（第2轮）：①不显示游戏Logo ②去掉「柒婳爱趣玩儿」的边框/横幅 ③把标题「柒婳爱趣玩儿」改成像素风格（生成像素字位图资源并用Sprite显示）。保留适龄标识/健康游戏忠告/版权信息/点击任意启动等合规要素不变。项目：Cocos Creator 3.8.6，设计分辨率720x1280，分支feature/launch-page-pixel。",
+  "captainSessionId": "session-64a2173c-4a05-439e-99cb-5d2306ecc4f8",
+  "createdAt": 1787814717850,
+  "members": [
+    {
+      "id": "55ae75ba-63d7-46e0-bfc3-d1cad6667edf",
+      "name": "ui-engineer",
+      "role": "Cocos Creator TypeScript UI工程师",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787814720138,
+      "status": "removed"
+    },
+    {
+      "id": "5bb46009-426d-4b6f-af5d-a8ab6ef213e5",
+      "name": "reviewer",
+      "role": "代码审查与合规检查员",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787814720150,
+      "status": "removed"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "subject": "生成像素风标题位图game_title_pixel.png",
+      "description": "生成「柒婳爱趣玩儿」的像素风格标题位图。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\n\n【背景】项目已有 tools\\gen_logo.ps1（System.Drawing 生成游戏Logo的先例，输出 assets\\textures\\game_logo.png）。本次要为启动页标题生成一张像素风中文位图，输出到 assets\\resources\\images\\ui\\game_title_pixel.png（供运行时 resources.load 加载）。\n\n【关键：PowerShell脚本编码约束】\ngen_logo.ps1 顶部注释明确警告：本机 PS 宿主按 ANSI/GBK 读取脚本，UTF-8 多字节字符若出现在换行前会吞掉换行导致脚本损坏。因此：\n- 新脚本 tools\\gen_title_pixel.ps1 必须保持纯 ASCII（注释/变量全英文），不要出现任何中文字符\n- \"柒婳爱趣玩儿\" 用 Unicode 码点拼：柒=0x67D2 婳=0x5A73 爱=0x7231 趣=0x8DA3 玩=0x73A9 儿=0x513F，写成：\n  $title = -join ([char]0x67D2,[char]0x5A73,[char]0x7231,[char]0x8DA3,[char]0x73A9,[char]0x513F)\n- 字体用 \"Microsoft YaHei\"（ASCII 名称，Windows 自带，支持中文）\n\n【像素风格渲染方案（任选其一，保证最终效果是\"像素风\"）】\n方案A（推荐，最简单）：直接用 System.Drawing 以小字号+单比特渲染，得到天然像素化字形：\n- Graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::SingleBitPerPixelGridFit\n- 画布约 640x160（6个字），字体 \"Microsoft YaHei\" Bold，字号约 78-90px（确保清晰）\n- 文字白色，可先画 4 个偏移1px的深色底（暗色轮廓，增强像素感），再画白色主体\n- 直接保存 PNG（透明背景）\n方案B：大字渲染后最近邻降采样 + 二值化（更\"像素画\"但复杂，非必需）\n任选方案A即可；若A效果不够像素化，再尝试B。\n\n【输出】\n- 保存到 assets\\resources\\images\\ui\\game_title_pixel.png（透明背景，白色+暗色描边的像素风「柒婳爱趣玩儿」）\n- 运行脚本生成后，用 PowerShell 验证文件存在且字节数>0，报告文件路径、尺寸（用 System.Drawing.Bitmap 读 Width/Height）、字节数\n- 不要手工写 .meta（编辑器自动生成）\n- 报告里给出脚本的完整路径和生成的关键参数（字号/画布尺寸/渲染方式）\n- 不要修改其他任何文件",
+      "status": "completed",
+      "assignee": "ui-engineer",
+      "dependencies": [],
+      "attempt": 1,
+      "createdAt": 1787814733505,
+      "updatedAt": 1787814910124,
+      "attemptId": "56033b44-78a5-4d6d-9eb8-3e8f5352be78",
+      "reassigning": false,
+      "output": "已生成像素风标题位图 assets/resources/images/ui/game_title_pixel.png（640x160，6819字节，透明背景）。\n\n生成脚本：tools/gen_title_pixel.ps1（纯ASCII，无任何中文字符，符合ANSI/GBK宿主编码约束；标题用Unicode码点拼接：柒=0x67D2 婳=0x5A73 爱=0x7231 趣=0x8DA3 玩=0x73A9 儿=0x513F）。\n\n关键参数：\n- 渲染方式：方案A，System.Drawing + TextRenderingHint=SingleBitPerPixelGridFit（单比特栅格，无抗锯齿→天然像素化硬边字形）\n- 字体：Microsoft YaHei Bold，字号84px\n- 画布：640x160（6字居中）\n- 颜色：白色主体(255,255,255) + 1px暗紫描边(40,30,60)（与原标题描边色一致，适配深蓝黑背景18,26,42）\n- 描边方式：4个偏移1px的暗色pass + 白色主pass（填充路径，无额外边框）\n\n验证结果：\n- 文件存在，字节数6819 > 0\n- System.Drawing.Bitmap读取：Width=640, Height=160\n- 四角alpha=0（透明背景），中部扫描线所有边缘过渡均为0↔255硬边（无渐变，确认像素化）\n- 采样统计：不透明像素6533（白色5486/暗色1047）\n- 未手工写.meta（留给编辑器自动生成）\n- 未修改其他任何文件（git status仅新增PNG；tools/目录为未跟踪新脚本）"
+    },
+    {
+      "id": "t2",
+      "subject": "修改LaunchPage：去Logo、去边框、标题改像素Sprite",
+      "description": "修改启动页组件 LaunchPage.ts，实现三个视觉改动。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame，文件：assets\\scripts\\components\\ui\\LaunchPage.ts（现有611行，先读一遍再改）\n\n【改动需求】\n1. 不显示游戏Logo：删除 createGameLogo() 方法的调用和实现，以及 GameLogo 相关代码（resources.load game_logo 的部分）。启动页不再显示任何 Logo 图片。\n2. 「柒婳爱趣玩儿」不要边框：删除 createNameBanner() 中 Graphics 像素风阶梯角边框的绘制（moveTo/lineTo/close/fill/stroke 那段），名称区域不再有任何背景框/边框。保留名称文字本身。\n3. 标题改成像素风格：把「柒婳爱趣玩儿」的 Label 文字替换为像素风标题位图 Sprite——resources.load(\"images/ui/game_title_pixel/spriteFrame\", SpriteFrame, ...) 加载 t1 生成的 game_title_pixel.png，用 Sprite（type=SIMPLE, sizeMode=CUSTOM）显示。节点名可保留 NameBanner 或改名 TitleSprite，尺寸约 560x140（保持位图比例，位图是 640x160 左右，等比缩小到 560 宽 → 高约140）。\n\n【布局调整建议】（去掉Logo和边框后重新安排，保持整体美观）\n- 标题Sprite居中：Widget水平居中+垂直居中偏移，verticalCenter 约 +150（原来Logo在+240、横幅在+60，去掉两者后标题放在中部偏上）\n- 「CAT PROTECT PLAN」副标题Label保留，放在标题Sprite下方（标题中心+150 → 副标题约 +40 或相对标题下方25px）\n- 「点击任意处启动游戏」提示保持 y=-140 不动\n- 适龄标识/健康忠告面板/版权信息完全不动\n\n【工程约束（必须遵守）】\n- 删除不再使用的常量（如 LOGO_SIZE/LOGO_Y/BANNER_WIDTH/BANNER_HEIGHT/BANNER_STEP/BANNER_Y、COLOR_BANNER_FILL/COLOR_NAME_TEXT/COLOR_NAME_OUTLINE/COLOR_NAME_SHADOW/COLOR_SUBTITLE 等不再使用的定义）和不再使用的 import（如 Vec2 若不再用、Sprite 若已用则保留）\n- 无 Mask、无 setTimeout、无 any、无未使用导入/变量、命名规范不变\n- Label 方式删除后，注意 label.enableOutline/shadow 相关代码一并删除；如果 Sprite 仍被适龄标识用到，Sprite/SpriteFrame import 保留\n- 改完运行 npx tsc --noEmit --skipLibCheck 确认 exit 0\n\n【交付】报告：修改了哪些方法/常量/import、最终标题区域结构（节点名、Sprite尺寸、位置）、tsc结果。不要改其他文件。",
+      "status": "completed",
+      "assignee": "ui-engineer",
+      "dependencies": [
+        "t1"
+      ],
+      "attempt": 1,
+      "createdAt": 1787814733536,
+      "updatedAt": 1787815008668,
+      "attemptId": "80bca0b2-ff5a-46e7-b3d0-46ca3e897404",
+      "reassigning": false,
+      "output": "已完成 LaunchPage.ts 三个视觉改动（611行→560行，+35/-86）。\n\n【改动明细】\n1. 去Logo：删除 createGameLogo() 方法及其 onLoad 调用，移除 GameLogo 节点/资源加载（game_logo 相关全部删除）。\n2. 去边框：删除 createNameBanner() 中 Graphics 像素风阶梯角边框绘制（moveTo/lineTo/close/fill/stroke 段），名称区域无任何背景框。\n3. 标题像素化：createNameBanner() 整体重写为 createTitleSprite()，Label「柒婳爱趣玩儿」替换为 resources.load(\"images/ui/game_title_pixel/spriteFrame\", SpriteFrame) 加载的 Sprite（type=SIMPLE, sizeMode=CUSTOM），节点名 TitleSprite，尺寸 560x140（640x160 等比）。\n\n【清理】\n- 删除常量：LOGO_SIZE/LOGO_Y/BANNER_WIDTH/BANNER_HEIGHT/BANNER_STEP/BANNER_Y/COLOR_BANNER_FILL/COLOR_NAME_TEXT/COLOR_NAME_OUTLINE/COLOR_NAME_SHADOW\n- 新增常量：TITLE_WIDTH=560/TITLE_HEIGHT=140/TITLE_Y=150/SUBTITLE_WIDTH=520/SUBTITLE_HEIGHT=30/SUBTITLE_Y=40\n- import 移除 Vec2（仅旧 Label 阴影用）；Sprite/SpriteFrame/Label/Graphics 均保留（适龄标识/副标题/忠告面板仍在使用）\n- 区块注释重编号 1-5；Label 的 enableOutline/shadow/outlineWidth/shadowOffset 相关代码全部删除\n\n【最终标题区域结构】\n- TitleSprite 节点：Sprite(SIMPLE/CUSTOM) 560x140，Widget 水平居中 + 垂直居中 verticalCenter=+150\n- SubTitleLabel 节点（兄弟节点）：Label \"CAT PROTECT PLAN\" 20px，垂直居中 verticalCenter=+40（标题下方约25px）\n- StartHint y=-140 不动；适龄标识/健康忠告面板/版权信息完全未动\n\n【验证】\n- npx tsc --noEmit --skipLibCheck 退出码 0\n- grep 确认无残留引用（LOGO_/BANNER/createGameLogo/createNameBanner/Vec2/COLOR_NAME_/game_logo 均无匹配）\n- git status 仅修改 LaunchPage.ts 一个文件，未改其他文件"
+    },
+    {
+      "id": "t3",
+      "subject": "审查启动页视觉调整与合规回归",
+      "description": "对启动页视觉调整（第2轮）做代码审查与合规验证。项目根目录：C:\\Users\\Administrator\\Desktop\\vivo\\柒婳爱趣玩儿\\CatProtectPlanMingame\n\n【审查文件】\n1. assets\\scripts\\components\\ui\\LaunchPage.ts（本轮修改）\n2. assets\\resources\\images\\ui\\game_title_pixel.png（新生成的像素标题位图，t1产出）\n3. tools\\gen_title_pixel.ps1（新工具脚本，t1产出）\n\n【本轮改动验收】\nA. 启动页不再显示游戏Logo（无 GameLogo 节点/代码残留，无 game_logo.png 的 resources.load 调用）\nB. 「柒婳爱趣玩儿」无边框（无 Graphics 阶梯角/矩形边框绘制残留，无 BANNER_* 边框相关常量残留）\nC. 标题为像素风格位图 Sprite（加载 images/ui/game_title_pixel/spriteFrame），标题显示正常，无 Label 形式残留（检查是否有未用的 Label/outline/shadow 代码）\nD. 布局合理：标题居中偏上，副标题CAT PROTECT PLAN在其下方，点击提示y=-140不变，无元素重叠遮挡\n\n【合规回归检查（必须仍然通过）】\n1. 适龄标识：仍在右上角、尺寸110x138≥72px、点击弹窗含三类说明、点击不触发启动\n2. 健康游戏忠告：底部、56字全文逐字一致（用grep或读文件核对 HEALTH_ADVICE_TEXT）\n3. 版权信息：「著作权人：刘雨　软著登记号：2025SA0165472」仍在忠告下方\n4. 点击任意处启动（适龄标识除外）、弹窗遮罩点击只关闭弹窗\n\n【代码规范】\n- 无 Mask、无 setTimeout、无 any、无未使用 import/变量/常量（重点检查删除Logo和边框后遗留的废弃常量、废弃的 Vec2 import 等）、无 debug 开关\n- onDestroy 事件清理完整、isValid 检查\n- tsc：npx tsc --noEmit --skipLibCheck 应 exit 0\n\n【工具脚本检查】\n- tools\\gen_title_pixel.ps1 应为纯ASCII（无中文字符，中文用[char]0xXXXX码点），与 gen_logo.ps1 的编码约定一致\n- 生成的 game_title_pixel.png 存在且非空\n\n交付：逐项 A-D、1-4、规范项、tsc 结果，给\"通过/需修复\"结论。发现问题报告文件+行号，不要自行改代码。",
+      "status": "completed",
+      "assignee": "reviewer",
+      "dependencies": [
+        "t2"
+      ],
+      "attempt": 1,
+      "createdAt": 1787814740092,
+      "updatedAt": 1787815126294,
+      "attemptId": "2068c401-4330-471c-8505-131fe4204f7f",
+      "reassigning": false,
+      "output": "审查结论：通过（含1项必做注意事项、1项可选清理建议）\n\n【A 去掉Logo】通过\n- LaunchPage.ts 无 GameLogo 节点/代码；全 assets/scripts 无 game_logo 引用；.scene/.prefab/.json 亦无引用\n- 注意（可选清理）：assets/resources/images/ui/game_logo.png(48KB) 仍残留为死资产，会打进 resources 包，建议后续清理删除\n\n【B 标题无边框】通过\n- 标题为 Sprite，无 Graphics 阶梯角/矩形边框绘制；无 BANNER_* 常量（grep banner/阶梯 全库无命中）\n- 仅剩的 stroke() 在健康忠告面板(L282-284)与弹窗面板(L414-416)，均为单路径 fill+stroke，符合面板边框约定\n\n【C 像素标题位图】通过（附1项必做注意事项）\n- L177 加载 images/ui/game_title_pixel/spriteFrame，Sprite SIMPLE+CUSTOM 560x140；标题无 Label/outline/shadow 残留，副标题 CAT PROTECT PLAN 为 Label 属预期\n- game_title_pixel.png 存在 6819B 非空；OCR 确认为「柒婳爱趣玩儿」白字+深色描边像素风\n- ⚠️ 注意事项：game_title_pixel.png.meta 缺失（磁盘无此文件，git 显示 PNG 未跟踪）。Cocos Creator 3.8.6 需在编辑器中打开项目自动生成 .meta 并导入纹理后，resources.load(\".../spriteFrame\") 才能成功（代码 L179 有失败日志路径）。须执行该步骤并提交 .meta（与 age_rating_8plus.png.meta 等已提交约定一致），否则标题运行时不显示\n\n【D 布局】通过\n- 标题垂直中心 y=150（居中偏上，占 y80~220）；副标题 y=40（标题下 25px）；提示 y=-140 不变；忠告面板底 170（占-470~-320）、版权底 120（-535~-475）在忠告下方；各元素无重叠遮挡\n\n【合规 1-4】全部通过\n1. 适龄标识：右上角(top/right=24)、110x138≥72px、点击弹窗含三节说明（游戏概况/游戏内容/未成年人保护）、propagationStopped=true 不触发启动\n2. 健康忠告：底部面板，HEALTH_ADVICE_TEXT 与标准 56 字逐字一致（48汉字+8标点，已程序计数验证）\n3. 版权：L330「著作权人：刘雨　软著登记号：2025SA0165472」位于忠告面板下方\n4. 点击任意处启动（根节点 TOUCH_END→StartGame+StartBattle）；遮罩点击仅关弹窗\n\n【代码规范】通过\n- 无 Mask 组件（遮罩为 Graphics fill）、无 setTimeout（scheduleOnce 0.1s 属启动流程游戏逻辑，允许）、无 any、无 debug 开关\n- 全部 12 个 cc 导入均被使用，无 Vec2 等废弃导入；颜色/布局常量全部被引用；无未用变量\n- onDestroy 完整清理（root/适龄标识/遮罩监听 off、弹窗 destroy、引用置空），destroyLaunchPage 先卸载监听再销毁；isValid 检查齐全\n\n【工具脚本】通过\n- gen_title_pixel.ps1 纯 ASCII（字节级验证 0 个非 ASCII），标题用 [char]0x67D2/0x5A73/0x7231/0x8DA3/0x73A9/0x513F 码点拼出「柒婳爱趣玩儿」（码点逐一正确），与 gen_logo.ps1 ASCII 约定一致；输出 PNG 存在且非空\n\n【tsc】通过：npx tsc --noEmit --skipLibCheck → exit 0 无错误"
+    }
+  ],
+  "taskSeq": 3
+}

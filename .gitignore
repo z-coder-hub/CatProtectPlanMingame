@@ -44,6 +44,11 @@ article*.md
 *.local.json
 
 #//////////////////////////
+# Release signing keys (never commit private keys)
+#//////////////////////////
+sign/
+
+#//////////////////////////
 # Development Tools
 #//////////////////////////
 Claude-Code-Development-Kit/
