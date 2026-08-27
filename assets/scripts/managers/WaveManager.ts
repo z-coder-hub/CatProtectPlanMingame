@@ -365,7 +365,10 @@ export class WaveManager extends Component {
     // 重置波次管理器
     public ResetWaves(): void {
         this._currentWaveIndex = 0;
-        this._waveState = WaveState.WAITING;
+        // 重置后不自动开始波次：启动页/菜单/部署阶段（非战斗状态）不得自动生成老鼠。
+        // 自动开始只由 PrepareNextWave()（波次间等待）显式武装为 WAITING 后触发；
+        // 各战斗入口（StartBattle/RestartGame后的用户操作等）都会显式调用 StartWave()。
+        this._waveState = WaveState.STOPPED;
         this._enemySpawnQueue = [];
         this._waveTimer = 0;
         this._prepareTimer = 0;
