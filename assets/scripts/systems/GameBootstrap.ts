@@ -1,6 +1,7 @@
 import { _decorator, Component, find, Node, Sprite, UITransform, Widget, resources, SpriteFrame, Color, Graphics } from 'cc';
 import { GameHUD } from '../components/ui/GameHUD';
 import { HeroSelectionPanel } from '../components/ui/HeroSelectionPanel';
+import { LaunchPage } from '../components/ui/LaunchPage';
 import { GridDeploymentSystem } from './GridDeploymentSystem';
 // 导入管理器类以实现类型安全的组件添加
 import { BattleManager } from '../managers/BattleManager';
@@ -300,6 +301,13 @@ export class GameBootstrap extends Component {
         castleNode.parent = this._canvasNode;
         castleNode.addComponent(Castle);
         this.log("Castle创建完成");
+
+        // 创建启动页（置顶显示，点击任意处启动游戏，含适龄标识/健康游戏忠告/版权信息）
+        const launchNode = new Node("LaunchPage");
+        launchNode.parent = this._canvasNode;
+        launchNode.addComponent(LaunchPage);
+        launchNode.setSiblingIndex(99999);
+        this.log("LaunchPage创建完成");
 
         this.log("游戏界面创建完成");
     }
