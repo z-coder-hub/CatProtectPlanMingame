@@ -1,0 +1,88 @@
+{
+  "name": "local-preview-500-fix",
+  "id": "local-preview-500-fix",
+  "description": "修复本地 Cocos Creator 预览（localhost:7456）脚本加载失败问题。现象：预览报 SystemJS Error#3，多个 chunk（d2/36/38/b3/49/98，均为 Creator 内置渲染管线脚本 builtin-pipeline*.ts、debug-view-runtime-control.ts）加载返回 HTTP 500。根因：temp/programming/packer-driver/targets/preview 被 Kurenai headless 构建产物污染——import-map.json 的 cc/prerequisite-imports 指向 Kurenai mini-packer chunk（93/6d），而 Creator 内置 chunk 只有 .js.map 没有 .js，project.log 报 ENOENT。目标：清除被污染的编译产物、恢复 Creator 原生编译状态，让本地 Creator 预览恢复正常。不使用 Kurenai 插件。",
+  "captainSessionId": "session-c21c5a2a-03a1-4c21-8d0b-f6c45fc4608a",
+  "createdAt": 1787734035727,
+  "members": [
+    {
+      "id": "f0553b72-306d-47c2-9b8f-fe34112b721c",
+      "name": "engineer",
+      "role": "engineer",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787734037690,
+      "status": "removed"
+    },
+    {
+      "id": "8805b0ff-91f0-4e51-a9f8-4636f42edfcf",
+      "name": "verifier",
+      "role": "verifier",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787734037704,
+      "status": "removed"
+    },
+    {
+      "id": "bf0a705a-a4db-4fb3-ba1c-f6f8e493d3bb",
+      "name": "reviewer",
+      "role": "reviewer",
+      "provider": "deepseek-modlens",
+      "model": "deepseek-v4-flash",
+      "reasoningEffort": "high",
+      "joinedAt": 1787734037715,
+      "status": "removed"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "subject": "清除被 Kurenai 污染的 preview 编译产物",
+      "description": "清理被 Kurenai headless 构建污染的本地预览编译产物。背景：本地 Cocos Creator 预览（localhost:7456）报 SystemJS Error#3，多个 Creator 内置渲染管线 chunk（d2/36/38/b3/49/98，对应 builtin-pipeline*.ts、debug-view-runtime-control.ts）加载 500/ENOENT。根因：temp/programming/packer-driver/targets/preview 目录的 import-map.json 被 Kurenai 重写（cc/prerequisite-imports 指向 Kurenai mini chunk 93/6d，时间戳 16:40），而 Creator 内置 chunk 只有 .js.map 没有 .js（15:35 的旧产物残留），导致 SystemJS 加载失败。\n\n请执行：\n1. 检查 temp/programming/packer-driver/targets/ 下目录：preview、preview-mini、editor。\n2. 删除 preview 和 preview-mini 两个目录（Kurenai 产物/污染产物；本地 Creator 会在下次编译时重新生成完整的 preview target）。若文件被运行中的 Creator 锁定导致删除失败，重试并报告哪些文件删不掉。注意：不要动 targets/editor（那是 Creator 的编辑器 bundle）；不要动 assets/ 和 library/（资源 meta 修复已生效且正确）。\n3. 删除后确认 temp/programming/packer-driver/targets/ 下不再存在 preview/preview-mini（或仅剩 editor）。\n4. 同时检查 temp/programming/packer-driver/targets 之外是否还有 Kurenai 残留（如 temp/programming/packer-driver/targets 根下的临时文件），如有可疑文件列出即可，不删除不确定的东西。\n5. 完成后运行一次 `git status` 确认没有意外改动 assets/（.meta 是 gitignored，正常不会显示）。\n\n完成后报告：删除结果（成功/失败明细）、targets 目录现状、git status 结果。",
+      "status": "completed",
+      "assignee": "engineer",
+      "dependencies": [],
+      "attempt": 1,
+      "createdAt": 1787734061928,
+      "updatedAt": 1787734094016,
+      "attemptId": "5673a3bd-06d7-4cef-935e-662df11f893e",
+      "reassigning": false,
+      "output": "删除成功：preview 和 preview-mini 两个目录均已删除（无文件锁定失败）。targets/ 现状：仅剩 editor。残留检查：temp/programming/preview/systemjs（15:34，Creator 原生 scaffolding，非 Kurenai）、temp/programming/custom-macro.js（标准空 System.register stub，非 Kurenai）；temp 下无任何 kurenai/mini 命名文件。git status：无意外改动，temp/ 被 gitignore 不显示；M 的 assets/scene.scene 与 settings/v2/* 为先前已有改动，.meta 均被 gitignore（符合预期）。"
+    },
+    {
+      "id": "t2",
+      "subject": "验证清理结果并给出本地重建指引",
+      "description": "验证 t1 清理后本地 Cocos Creator 预览环境是否恢复正常。前置：engineer 已删除被 Kurenai 污染的 temp/programming/packer-driver/targets/preview 和 preview-mini。\n\n请执行（不使用 Kurenai 插件，纯文件系统验证）：\n1. 确认 temp/programming/packer-driver/targets/ 下 preview/preview-mini 已不存在或仅剩 editor 目录；列出 targets 目录现状。\n2. 确认 assets/ 与 library/ 未被误改：抽查 assets/resources/images/enemies/BasicMouse.png.meta 的 userData.type 仍为 \"sprite-frame\"（上轮资源修复的成果不能丢）；git status 应无 assets 相关改动（.meta gitignored）。\n3. 检查本地 Creator 是否会重建：说明下次打开 Creator 时会重新生成 preview target。若用户本地 Creator 正在运行（temp/logs/project.log 有活动），提示用户需要关闭并重新打开项目（或重启预览）才能触发重新编译——这是给用户的最终操作指引，写清楚步骤。\n4. 可选：若本地 7456 端口仍在监听，确认那是本地 Creator 的预览服务（非 Kurenai 7460/7461），无需我们处理。\n\n完成后报告：targets 目录现状、meta 抽查结果、给用户的重建操作指引。",
+      "status": "completed",
+      "assignee": "verifier",
+      "dependencies": [
+        "t1"
+      ],
+      "attempt": 1,
+      "createdAt": 1787734071440,
+      "updatedAt": 1787734184627,
+      "attemptId": "2391f120-89f1-4901-8eac-7a276c4edeab",
+      "reassigning": false,
+      "output": "t2 验证完成，全部通过。1) targets 现状：temp/programming/packer-driver/targets/ 仅剩 editor（16:40:44），preview/preview-mini 均已不存在。editor target 完全健康：64 个 .js + 64 个 .js.map（1:1，无孤儿 .map），import-map.json 指向的 8 个关键 chunk（cc 引擎入口 93/6d + builtin-pipeline d2/b3/36/38/98/49）全部有实体 .js（3-67KB）。temp 下无任何 kurenai 引用残留（文件名与内容均扫描）。附带发现：93/6d 前缀在健康 editor target 中也存在（Creator 原生 cc/prerequisite-imports chunk 哈希），说明问题本质是 preview target 的 .js 缺失（只有 .js.map）而非 93/6d 本身是 Kurenai 签名；清理 preview/preview-mini 的决定正确且已彻底。2) assets/library 未被误改：BasicMouse.png.meta userData.type = \"sprite-frame\"（第130行）✅，spriteFrame subMeta f9941 完整；git status 无 assets/*.meta 改动（*.meta 在 .gitignore 第11行）；唯一的 `M assets/scene.scene` 是预存改动（仅场景根节点 _id 变化，1 行 diff，与本次清理无关，temp/library 均在 .gitignore 第5/6行）。3) 本地 Creator 正在运行（pid 2612，16:40:31 启动，7456 监听中），project.log 最后写入 16:40:56 且记录 ENOENT 错误——当前会话仍持有已删除 preview 的损坏状态，用户必须重启 Creator 触发重建。4) 7456 = CocosCreator.exe 本地预览服务（非 Kurenai，7460/7461 未监听），无需处理。给用户的重建指引见消息。"
+    },
+    {
+      "id": "t3",
+      "subject": "审查清理安全性及残留",
+      "description": "审查本次修复的完整性和安全性，确保没有遗漏或误伤。前置：engineer 已清理 preview 编译产物。\n\n请执行：\n1. 审查 temp/ 下是否还有其它 Kurenai 相关残留可能干扰本地 Creator：例如 temp/programming/packer-driver/targets/ 下除了 editor 是否干净；temp/asset-db、temp/declarations 是否有异常（列出即可，不删除不确定内容）。\n2. 审查 assets/scripts 下是否有 Kurenai 调试残留（如 headless 相关的注入代码、verify 脚本引用），确认游戏源码干净（grep \"headless|Kurenai|kurenai|7460|7461\" assets/scripts 应无命中或仅注释）。\n3. 审查 library/ 是否被 Kurenai importer 重写但内容与 meta 一致：抽查 2-3 个 spriteFrame library JSON（如 library/4f/4f42a456...@f9941.json）格式正确、__type__ 为 cc.SpriteFrame。\n4. 给出结论：本次修复（清污染产物 + 上轮 meta 修复）组合是否足以让本地 Creator 恢复正常预览；有无需要用户手动操作的事项（如关闭重开项目）。\n\n完成后报告：temp 审查结果、assets 源码审查结果、library 抽查结果、最终结论。",
+      "status": "completed",
+      "assignee": "reviewer",
+      "dependencies": [
+        "t1"
+      ],
+      "attempt": 1,
+      "createdAt": 1787734071447,
+      "updatedAt": 1787734269601,
+      "attemptId": "44f119b6-caf0-45f2-aa34-d2af295a235d",
+      "reassigning": false,
+      "output": "审查完成，结论：本次修复组合足以恢复本地 Creator 预览，无遗漏、无误伤。\n\n【1. temp 审查】\n- temp/programming/packer-driver/targets/ 现仅剩 editor（被污染的 preview 已彻底清除）。✓\n- editor target 为纯原生 Creator 产物：import-map.json 63 imports/63 scopes，63 个 chunk 文件全部存在（缺失 0），64 个 .js 与 64 个 .js.map 成对齐全；抽查 chunk 93（cc 入口）为标准 System.register 模块，非 Kurenai mini-packer。cc→chunks/93/…、prerequisite-imports→chunks/6d/… 均正常指向真实 .js（此前 ENOENT 的 d2/36/38/98/49/b3 等 builtin-pipeline chunk 均已有 .js+.map）。\n- temp/asset-db：17 个文件，全部为 Creator 标准 internal 资源（effect.bin、默认贴图/primitive），无异常。\n- temp/declarations：标准 4 个 .d.ts（cc.d.ts/cc.env.d.ts/cc.custom-macro.d.ts/jsb.d.ts），正常。\n- temp/programming/preview/systemjs/system.js 为 Creator 预览标准 SystemJS 运行时，非残留。\n- 全 temp 配置/JSON/d.ts 中 kurenai|headless|7460|7461 零命中。✓\n\n【2. assets/scripts 源码审查】\n- grep \"kurenai|Kurenai|headless|7460|7461\" assets/scripts → 0 命中。游戏源码干净，无 Kurenai 注入/verify 残留。✓\n\n【3. library 抽查】\n- library/4f/4f42a456…@f9941.json：JSON 格式正确，__type__ 为 cc.SpriteFrame，rect 33x45、pixelsToUnit 100、pivot 0.5、meshType 0、vertices/uv 与 assets/resources/images/enemies/BasicMouse.png.meta 的 subMeta f9941 完全一致；texture 引用 @6c48a 正确。\n- @6c48a.json 为 cc.Texture2D（mipmaps 引用基 uuid）；基 .json 为 cc.ImageAsset（fmt 0/w 0/h 0，库内 .png 原图并存，属正常描述格式）。\n- library 内 0 个 .js 文件、kurenai/headless/7460/7461 零命中，无 importer 重写与 meta 不一致迹象。✓\n\n【4. 上轮 meta 修复复核（关键）】\n- assets/scene.scene.meta uuid=c1af4dbe-…，scene.scene 内部 _id 已从 4224e4a5-… 改为 c1af4dbe-…，对齐。✓\n- assets/scripts/GameScene.ts.meta uuid 已恢复为 842997cd-7734-456e-8d87-607cc8bc57ec（即 DIAGNOSIS 文档所述被改坏前的原值），scene 中序列化的类引用 84299fNdzRFbo2HYHzIvFfs 恰为该 uuid 的压缩形式 → 引用一致，\"Can not find class\" 根因消除。✓\n\n【最终结论】\n清污染产物（删 preview target）+ 上轮 meta 修复（恢复 GameScene uuid、对齐 scene _id）组合完整覆盖了两个故障层：SystemJS Error#3/HTTP500（缺 chunk .js）与缺失类（uuid 失配）。本地 Creator 重新打开项目并启动预览时，会以原生方式重建 temp/programming/packer-driver/targets/preview，编辑器侧 import-map 已全部指向真实文件，无需 Kurenai。\n\n【用户手动操作】\n1. 当前仅有 CocosDashboard 进程，Creator 编辑器未打开：直接打开项目并点预览即可（将触发 preview target 原生重建）。若编辑器已打开过，建议关闭项目重开以强制重新导入变更的 meta。\n2. 可选清理：项目根目录 untracked 的 DIAGNOSIS_missing_class.md（上轮诊断留档，不影响预览，可删）。\n3. 无需改动 temp/asset-db、temp/declarations、library/（均一致正常）。"
+    }
+  ],
+  "taskSeq": 3
+}
