@@ -10,6 +10,7 @@ import { LevelManager } from '../managers/LevelManager';
 import { Castle } from '../components/game/Castle';
 import { ProjectileSystem } from '../projectiles/ProjectileSystem';
 import { EnemyPoolManager } from './EnemyPoolManager';
+import { AdManager } from '../ad/AdManager';
 
 const { ccclass, property } = _decorator;
 
@@ -112,6 +113,11 @@ export class GameBootstrap extends Component {
     // 创建基础系统
     private createBasicSystems(): void {
         if (!this._canvasNode) return;
+
+        // 创建AdManager（若GameScene已通过懒加载提前创建，onLoad中的重复实例保护会自动销毁本节点）
+        const adNode = new Node("AdManager");
+        adNode.parent = this._canvasNode;
+        adNode.addComponent(AdManager);
 
         // 首先创建游戏背景
         this.createGameBackground();

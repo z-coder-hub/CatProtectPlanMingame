@@ -1,4 +1,4 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Color, Component, Graphics, Label, Node, UITransform, find } from 'cc';
 import { GAME_CONFIG } from '../types/GameConstants';
 import {
     GameEvents,
@@ -12,6 +12,11 @@ import { BattleManager } from './BattleManager';
 import { LevelManager } from './LevelManager';
 import { WaveManager } from './WaveManager';
 import { Castle } from '../components/game/Castle';
+import { AdManager } from '../ad/AdManager';
+import { UIHelper } from '../utils/UIHelper';
+
+// vivo小游戏全局对象（浏览器调试环境不存在）
+declare const qg: any;
 
 const { ccclass, property } = _decorator;
 
@@ -55,6 +60,10 @@ export class GameManager extends Component {
     private _stateTransitionTimer: number = 0;
     private _pendingStateTransition: GameState | null = null;
     private _stateTransitionDelay: number = 3.0; // 3秒延迟
+
+    // 城堡复活相关
+    private _reviveDialog: Node | null = null;      // 复活确认弹窗节点
+    private _isReviveAdShowing: boolean = false;    // 复活弹窗/激励视频展示中标志，防止重复触发
 
     // 获取游戏状态
     public get gameState(): GameState {
@@ -327,6 +336,18 @@ export class GameManager extends Component {
         this.setGameState(GameState.MENU);
     }
 
+    /**
+     * 退出游戏（先展示原生盒子广告，用户关闭或展示失败后退出）
+     * 供UI调用（目前可能没有退出按钮，但预留接口）
+     */
+    public ExitGame(): void {
+        AdManager.instance?.showExitBoxAd(() => {
+            if (typeof qg !== 'undefined' && qg.exitApplication) {
+                qg.exitApplication();
+            }
+        });
+    }
+
 
     // 应用关卡配置
     private applyLevelConfig(config: LevelConfig): void {
@@ -580,13 +601,214 @@ export class GameManager extends Component {
 
     // 城堡受伤
     public CastleTakeDamage(damage: number): void {
+        // 复活弹窗/激励视频展示中：血量保持为0，不重复扣血、不重复触发
+        if (this._isReviveAdShowing) return;
+
         this.castleHealth = Math.max(0, this.castleHealth - damage);
         console.log(`城堡受到伤害: ${damage}, 剩余血量: ${this.castleHealth}`);
 
         // 检查游戏失败
         if (this.castleHealth <= 0) {
-            this.CompleteLevel(false);
+            this.handleCastleDestroyed();
         }
+    }
+
+    /**
+     * 城堡被摧毁时的处理 - 弹出复活确认弹窗，通过激励视频复活
+     */
+    private handleCastleDestroyed(): void {
+        // 防止重复调用（已在失败流程或弹窗展示中）
+        if (this._gameState === GameState.GAME_OVER || this._isReviveAdShowing) return;
+        if (this._reviveDialog && this._reviveDialog.isValid) return;
+
+        console.log("🏰 城堡血量归零，弹出复活确认弹窗");
+        this._isReviveAdShowing = true;
+        this.showReviveDialog();
+    }
+
+    /**
+     * 展示复活确认弹窗（看视频复活 / 放弃）
+     */
+    private showReviveDialog(): void {
+        const canvasNode = find('Canvas');
+        if (!canvasNode) {
+            console.error("无法获取Canvas节点，直接走失败流程");
+            this._isReviveAdShowing = false;
+            this.CompleteLevel(false);
+            return;
+        }
+
+        const dialogNode = new Node("ReviveDialog");
+        dialogNode.parent = canvasNode;
+        dialogNode.setSiblingIndex(99999); // 置顶显示
+
+        // 居中布局
+        UIHelper.SetupCenterWidget(dialogNode, 560, 360);
+
+        // 半透明背景遮罩（Graphics绘制，不使用Mask组件）
+        const bgGraphics = UIHelper.CreatePanelWithBackground(dialogNode, new Color(0, 0, 0, 220));
+        bgGraphics.strokeColor = new Color(150, 150, 150, 200);
+        bgGraphics.lineWidth = 2;
+        bgGraphics.stroke();
+
+        // 标题
+        const titleNode = new Node("Title");
+        titleNode.parent = dialogNode;
+        titleNode.setPosition(0, 100);
+        const titleLabel = titleNode.addComponent(Label);
+        titleLabel.string = "城堡被摧毁！";
+        titleLabel.fontSize = 48;
+        titleLabel.color = new Color(255, 90, 90);
+
+        // 副标题
+        const subTitleNode = new Node("SubTitle");
+        subTitleNode.parent = dialogNode;
+        subTitleNode.setPosition(0, 40);
+        const subLabel = subTitleNode.addComponent(Label);
+        subLabel.string = "观看视频立即复活，继续战斗！";
+        subLabel.fontSize = 26;
+        subLabel.color = new Color(255, 255, 255);
+
+        // 按钮容器
+        const buttonContainer = new Node("ButtonContainer");
+        buttonContainer.parent = dialogNode;
+        buttonContainer.setPosition(0, -80);
+        UIHelper.SetupCenterWidget(buttonContainer, 480, 100);
+
+        // 两个按钮：看视频复活（绿色） / 放弃（红色）
+        const reviveButtons = UIHelper.CreateEqualWidthButtons(
+            ["看视频复活", "放弃"],
+            buttonContainer,
+            0.7,
+            20,
+            new Color(80, 160, 80),
+            [
+                () => this.onReviveAdButtonClicked(),
+                () => this.onReviveCancelButtonClicked()
+            ],
+            this
+        );
+
+        // 重绘「放弃」按钮背景为红色，与「看视频复活」区分
+        if (reviveButtons.length > 1) {
+            const abandonButton = reviveButtons[1];
+            const abandonGraphics = abandonButton.getComponent(Graphics);
+            const abandonTransform = abandonButton.getComponent(UITransform);
+            if (abandonGraphics && abandonTransform) {
+                UIHelper.DrawButtonBackground(abandonGraphics, abandonTransform.width, abandonTransform.height, new Color(160, 70, 70));
+            }
+        }
+
+        this._reviveDialog = dialogNode;
+        console.log("复活确认弹窗已展示");
+    }
+
+    /**
+     * 点击「看视频复活」按钮 - 调用激励视频广告
+     */
+    private onReviveAdButtonClicked(): void {
+        const adManager = AdManager.instance;
+        if (!adManager) {
+            console.error("AdManager不可用，直接走失败流程");
+            this.closeReviveDialog();
+            this.CompleteLevel(false);
+            return;
+        }
+
+        adManager.showRewardedAd(
+            () => this.onReviveAdComplete(),
+            () => this.onReviveAdCancel()
+        );
+    }
+
+    /**
+     * 激励视频完整看完 - 复活城堡
+     */
+    private onReviveAdComplete(): void {
+        console.log("✅ 激励视频完整看完，城堡复活！");
+        this.closeReviveDialog();
+        this.reviveCastle();
+    }
+
+    /**
+     * 激励视频取消/没看完 - 正常走游戏失败逻辑
+     */
+    private onReviveAdCancel(): void {
+        console.log("❌ 激励视频取消/没看完，走失败流程");
+        this.closeReviveDialog();
+        this.CompleteLevel(false);
+    }
+
+    /**
+     * 点击「放弃」按钮 - 直接走游戏失败逻辑
+     */
+    private onReviveCancelButtonClicked(): void {
+        console.log("放弃复活，走失败流程");
+        this.closeReviveDialog();
+        this.CompleteLevel(false);
+    }
+
+    /**
+     * 关闭复活确认弹窗
+     */
+    private closeReviveDialog(): void {
+        this._isReviveAdShowing = false;
+        if (this._reviveDialog && this._reviveDialog.isValid) {
+            this._reviveDialog.destroy();
+        }
+        this._reviveDialog = null;
+    }
+
+    /**
+     * 城堡复活 - 恢复满血继续游戏
+     */
+    private reviveCastle(): void {
+        this.castleHealth = this._maxCastleHealth;
+        console.log("🏰 城堡复活！血量已恢复满！");
+
+        // 恢复城堡外观
+        if (this.castleNode) {
+            const castleComponent = this.castleNode.getComponent(Castle);
+            if (castleComponent) {
+                castleComponent.restoreCastleAppearance();
+            }
+        }
+
+        // 复活成功提示
+        this.showReviveSuccessTip();
+    }
+
+    /**
+     * 复活成功提示（简短Label提示）
+     */
+    private showReviveSuccessTip(): void {
+        const canvasNode = find('Canvas');
+        if (!canvasNode) return;
+
+        const tipNode = new Node("ReviveSuccessTip");
+        tipNode.parent = canvasNode;
+        tipNode.setSiblingIndex(99998);
+
+        UIHelper.SetupCenterWidget(tipNode, 420, 80);
+
+        const tipBg = UIHelper.CreatePanelWithBackground(tipNode, new Color(0, 90, 0, 220));
+        tipBg.strokeColor = new Color(100, 220, 100, 220);
+        tipBg.lineWidth = 2;
+        tipBg.stroke();
+
+        const tipLabelNode = new Node("TipLabel");
+        tipLabelNode.parent = tipNode;
+        const tipLabel = tipLabelNode.addComponent(Label);
+        tipLabel.string = "🎉 复活成功！城堡恢复满血！";
+        tipLabel.fontSize = 28;
+        tipLabel.color = new Color(150, 255, 150);
+
+        // 游戏逻辑中的定时消失效果（非UI初始化，允许使用）
+        this.scheduleOnce(() => {
+            if (tipNode && tipNode.isValid) {
+                tipNode.destroy();
+            }
+        }, 1.5);
     }
 
 

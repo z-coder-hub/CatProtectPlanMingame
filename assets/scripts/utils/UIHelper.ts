@@ -90,14 +90,19 @@ export class UIHelper {
      */
     static CreatePanelWithBackground(node: Node, color: Color): Graphics {
         const graphics = node.addComponent(Graphics);
+        
         graphics.fillColor = color;
         
         const transform = node.getComponent(UITransform);
         if (transform) {
             const width = transform.width;
             const height = transform.height;
+            // 使用单一路径同时绘制填充和描边边框，避免重复rect调用
+            graphics.strokeColor = new Color(255, 255, 255);
+            graphics.lineWidth = 1;
             graphics.rect(-width / 2, -height / 2, width, height);
-            graphics.fill();
+            graphics.fill();  // 填充路径
+            graphics.stroke(); // 描边同一路径
         }
         
         return graphics;
@@ -108,14 +113,15 @@ export class UIHelper {
      */
     static CreateCircleIcon(node: Node, radius: number, fillColor: Color, strokeColor: Color, lineWidth: number = 2): Graphics {
         const graphics = node.addComponent(Graphics);
-        graphics.fillColor = fillColor;
-        graphics.circle(0, 0, radius);
-        graphics.fill();
         
+        graphics.fillColor = fillColor;
         graphics.strokeColor = strokeColor;
         graphics.lineWidth = lineWidth;
+        
+        // 使用单一路径同时绘制圆形填充和描边
         graphics.circle(0, 0, radius);
-        graphics.stroke();
+        graphics.fill();  // 填充路径
+        graphics.stroke(); // 描边同一路径
         
         return graphics;
     }
@@ -125,14 +131,16 @@ export class UIHelper {
      */
     static DrawButtonBackground(graphics: Graphics, width: number, height: number, color: Color): void {
         graphics.clear();
+        
+        // 使用单一路径同时绘制填充和描边，避免重复rect调用
         graphics.fillColor = color;
-        graphics.rect(-width / 2, -height / 2, width, height);
-        graphics.fill();
-
         graphics.strokeColor = new Color(255, 255, 255);
         graphics.lineWidth = 1;
+        
+        // 开始路径，绘制矩形
         graphics.rect(-width / 2, -height / 2, width, height);
-        graphics.stroke();
+        graphics.fill();  // 填充路径
+        graphics.stroke(); // 描边同一路径
     }
 
     /**

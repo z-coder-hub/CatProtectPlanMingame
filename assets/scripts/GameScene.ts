@@ -1,5 +1,6 @@
 import { _decorator, Component, Node } from 'cc';
 import { GameBootstrap } from './systems/GameBootstrap';
+import { AdManager } from './ad/AdManager';
 
 const { ccclass, property } = _decorator;
 
@@ -15,6 +16,9 @@ export class GameScene extends Component {
     
     protected onLoad(): void {
         console.log("=== 猫咪城堡防御游戏启动 ===");
+
+        // 开屏广告：在创建GameBootstrap之前尽早展示（AdManager尚未创建时安全跳过）
+        AdManager.instance?.showSplashAd();
 
         // 如果没有指定GameBootstrap，自动创建
         if (!this.gameBootstrap) {

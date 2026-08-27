@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, EventTouch, Graphics, Label, Mask, Node, resources, ScrollView, Sprite, SpriteFrame, UIOpacity, UITransform, Vec3, Widget } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, Label, Node, resources, ScrollView, Sprite, SpriteFrame, UIOpacity, UITransform, Vec3, Widget } from 'cc';
 import { BattleManager } from '../../managers/BattleManager';
 import { GameManager } from '../../managers/GameManager';
 import { LevelManager } from '../../managers/LevelManager';
@@ -6,6 +6,7 @@ import { GridDeploymentSystem } from '../../systems/GridDeploymentSystem';
 import { HeroFactory } from '../../systems/HeroFactory';
 import { HeroType } from '../../types/GameTypes';
 import { UIHelper } from '../../utils/UIHelper';
+import { AdManager } from '../../ad/AdManager';
 
 const { ccclass } = _decorator;
 
@@ -33,6 +34,13 @@ export class HeroSelectionPanel extends Component {
 
     // 缓存上次的解锁状态，用于检测变化
     private _lastUnlockedHeroes: Set<HeroType> = new Set();
+
+    // 广告解锁相关
+    private _isUnlockAdShowing: boolean = false;    // 激励视频展示中标志，防止连点重复弹广告
+    // 锁定英雄触摸起点记录（用于区分点击与滑动，仅点击时触发广告解锁）
+    private _pendingLockedTap: { heroType: HeroType; startX: number; startY: number } | null = null;
+    // 锁定英雄点击判定阈值（滑动距离超过该值视为滑动而非点击）
+    private static readonly LOCKED_TAP_THRESHOLD: number = 15;
 
     // ========== 生命周期方法 ==========
 
@@ -682,14 +690,11 @@ export class HeroSelectionPanel extends Component {
         scrollView.inertia = true;
         scrollView.brake = 0.6;
 
-        // 创建View节点（带遮罩）
+        // 创建View节点（不使用遮罩）
         const viewNode = new Node('View');
         viewNode.parent = scrollViewNode;
         const viewTransform = viewNode.addComponent(UITransform);
         viewTransform.setContentSize(panelTransform.width - 36, panelTransform.height);
-
-        const mask = viewNode.addComponent(Mask);
-        mask.type = Mask.Type.GRAPHICS_RECT;
 
         // 创建Content节点
         const contentNode = new Node("Content");
@@ -970,10 +975,6 @@ export class HeroSelectionPanel extends Component {
             bgColor = new Color(70, 70, 70, 200); // 普通：深灰色
         }
 
-        graphics.fillColor = bgColor;
-        graphics.rect(-width / 2, -height / 2, width, height);
-        graphics.fill();
-
         // 边框
         let borderColor: Color;
         if (!isUnlocked) {
@@ -986,10 +987,13 @@ export class HeroSelectionPanel extends Component {
             borderColor = new Color(150, 150, 150); // 普通：浅灰色边框
         }
 
+        // 使用单一路径同时绘制填充和描边，避免重复rect调用
+        graphics.fillColor = bgColor;
         graphics.strokeColor = borderColor;
         graphics.lineWidth = isSelected ? 3 : 2;
         graphics.rect(-width / 2, -height / 2, width, height);
-        graphics.stroke();
+        graphics.fill();  // 填充路径
+        graphics.stroke(); // 描边同一路径
 
         // 如果未解锁，添加锁定图标
         if (!isUnlocked) {
@@ -1436,13 +1440,15 @@ export class HeroSelectionPanel extends Component {
 
         buttonNode.on(Node.EventType.TOUCH_CANCEL, (event: EventTouch) => {
             console.log(`🟡 触摸取消: ${heroType}, event: ${event.getLocation()}`);
-            this.onHeroButtonTouchCancelOrEnd(event)
+            // 触摸被系统取消：只清空锁定英雄点击候选，不触发广告解锁
+            this._pendingLockedTap = null;
+            this.onHeroButtonTouchCancelOrEnd(heroType, buttonNode, event);
         }, this);
 
 
         buttonNode.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
             console.log(`🟡 触摸结束: ${heroType}, event: ${event.getLocation()}`);
-            this.onHeroButtonTouchCancelOrEnd(event)
+            this.onHeroButtonTouchCancelOrEnd(heroType, buttonNode, event);
         }, this);
     }
 
@@ -1455,7 +1461,9 @@ export class HeroSelectionPanel extends Component {
         // 检查英雄是否已解锁
         if (!this.IsHeroUnlocked(heroType)) {
             console.log(`❌ 英雄 ${heroType} 尚未解锁`);
-            this.showLockedHeroEffect(buttonNode);
+            // 记录触摸起点，仅在结束触摸时判定为点击（未滑动）才触发广告解锁
+            const startLocation = event.getUIStartLocation();
+            this._pendingLockedTap = { heroType, startX: startLocation.x, startY: startLocation.y };
             return;
         }
 
@@ -1475,9 +1483,146 @@ export class HeroSelectionPanel extends Component {
     }
 
     /**
+     * 检查英雄是否满足广告解锁前置条件
+     * 按 getAllHeroTypes() 解锁链顺序，前一个猫咪必须已解锁
+     */
+    private canUnlockHero(heroType: HeroType): boolean {
+        const allHeroes = this.getAllHeroTypes();
+        const heroIndex = allHeroes.indexOf(heroType);
+
+        // 第一个英雄（橘猫）默认解锁，无需广告解锁
+        if (heroIndex <= 0) {
+            console.log(`ℹ️ 英雄 ${heroType} 为默认解锁英雄，无需广告解锁`);
+            return false;
+        }
+
+        // 检查前一个猫咪是否已解锁
+        const prevHeroType = allHeroes[heroIndex - 1];
+        const prevUnlocked = this.IsHeroUnlocked(prevHeroType);
+        if (!prevUnlocked) {
+            console.log(`❌ 前置英雄 ${prevHeroType} 未解锁，无法通过广告解锁 ${heroType}`);
+        }
+        return prevUnlocked;
+    }
+
+    /**
+     * 尝试通过激励视频广告解锁英雄
+     */
+    private tryUnlockHeroViaAd(heroType: HeroType, buttonNode: Node): void {
+        // 防连点：激励视频展示中不重复触发
+        if (this._isUnlockAdShowing) {
+            console.log("⚠️ 激励视频展示中，忽略重复点击");
+            return;
+        }
+
+        // 检查前置解锁条件
+        if (!this.canUnlockHero(heroType)) {
+            this.showLockedHeroEffect(buttonNode);
+            return;
+        }
+
+        const adManager = AdManager.instance;
+        if (!adManager) {
+            console.error("AdManager不可用，无法通过广告解锁");
+            this.showLockedHeroEffect(buttonNode);
+            return;
+        }
+
+        console.log(`📺 点击锁定英雄 ${heroType}，调用激励视频解锁`);
+        this._isUnlockAdShowing = true;
+
+        adManager.showRewardedAd(
+            () => this.onUnlockAdComplete(heroType, buttonNode),
+            () => this.onUnlockAdCancel(buttonNode)
+        );
+    }
+
+    /**
+     * 激励视频完整看完 - 解锁英雄并刷新面板
+     */
+    private onUnlockAdComplete(heroType: HeroType, buttonNode: Node): void {
+        console.log(`✅ 激励视频完整看完，解锁英雄: ${heroType}`);
+        this._isUnlockAdShowing = false;
+
+        if (!this._levelManager) {
+            console.error("LevelManager不可用，无法解锁英雄");
+            this.showLockedHeroEffect(buttonNode);
+            return;
+        }
+
+        // 解锁英雄（解锁成功会触发 hero-unlocked 事件自动刷新面板，此处再手动刷新确保立即生效）
+        const unlocked = this._levelManager.UnlockHero(heroType);
+        this.RefreshHeroPanel();
+
+        if (unlocked) {
+            // 解锁成功提示
+            this.showUnlockSuccessTip(heroType);
+        } else {
+            console.warn(`英雄 ${heroType} 解锁失败`);
+            this.showLockedHeroEffect(buttonNode);
+        }
+    }
+
+    /**
+     * 激励视频取消/没看完 - 不解锁，显示锁定提示
+     */
+    private onUnlockAdCancel(buttonNode: Node): void {
+        console.log("❌ 激励视频取消/没看完，不解锁英雄");
+        this._isUnlockAdShowing = false;
+        this.showLockedHeroEffect(buttonNode);
+    }
+
+    /**
+     * 解锁成功提示（简短Label提示）
+     */
+    private showUnlockSuccessTip(heroType: HeroType): void {
+        const heroName = this.getHeroDisplayName(heroType);
+        const canvasNode = this.node.parent;
+        if (!canvasNode) return;
+
+        const tipNode = new Node("UnlockSuccessTip");
+        tipNode.parent = canvasNode;
+        tipNode.setSiblingIndex(99998);
+
+        UIHelper.SetupCenterWidget(tipNode, 460, 80);
+
+        const tipBg = UIHelper.CreatePanelWithBackground(tipNode, new Color(0, 90, 0, 220));
+        tipBg.strokeColor = new Color(100, 220, 100, 220);
+        tipBg.lineWidth = 2;
+        tipBg.stroke();
+
+        const tipLabelNode = new Node("TipLabel");
+        tipLabelNode.parent = tipNode;
+        const tipLabel = tipLabelNode.addComponent(Label);
+        tipLabel.string = `🎉 解锁成功！${heroName}已可用！`;
+        tipLabel.fontSize = 26;
+        tipLabel.color = new Color(150, 255, 150);
+
+        // 游戏逻辑中的定时消失效果（非UI初始化，允许使用）
+        this.scheduleOnce(() => {
+            if (tipNode && tipNode.isValid) {
+                tipNode.destroy();
+            }
+        }, 1.5);
+    }
+
+    /**
      * 英雄按钮触摸移动
      */
     private onHeroButtonTouchMove(event: EventTouch): void {
+        // 锁定英雄点击候选：滑动距离超过阈值则取消广告触发；锁定英雄不参与拖拽
+        if (this._pendingLockedTap) {
+            const currentLocation = event.getUILocation();
+            const deltaX = currentLocation.x - this._pendingLockedTap.startX;
+            const deltaY = currentLocation.y - this._pendingLockedTap.startY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distance > HeroSelectionPanel.LOCKED_TAP_THRESHOLD) {
+                console.log(`🟡 锁定英雄滑动距离 ${distance.toFixed(1)} 超过阈值(${HeroSelectionPanel.LOCKED_TAP_THRESHOLD})，取消广告解锁`);
+                this._pendingLockedTap = null;
+            }
+            return;
+        }
+
         // 如果还没开始拖拽，检查拖动方向来决定是滚动还是拖拽
         if (!this._isDragging && this._selectedHeroType) {
             // 使用累积距离来判断拖拽方向
@@ -1508,7 +1653,26 @@ export class HeroSelectionPanel extends Component {
     /**
      * 英雄按钮触摸结束
      */
-    private onHeroButtonTouchCancelOrEnd(event: EventTouch): void {
+    private onHeroButtonTouchCancelOrEnd(heroType: HeroType, buttonNode: Node, event: EventTouch): void {
+        // 锁定英雄点击候选：结束触摸时判定是否为点击（未滑动超过阈值），是则触发广告解锁
+        if (this._pendingLockedTap) {
+            const pending = this._pendingLockedTap;
+            this._pendingLockedTap = null;
+
+            const currentLocation = event.getUILocation();
+            const deltaX = currentLocation.x - pending.startX;
+            const deltaY = currentLocation.y - pending.startY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distance > HeroSelectionPanel.LOCKED_TAP_THRESHOLD) {
+                console.log(`🟡 锁定英雄 ${pending.heroType} 触摸移动距离 ${distance.toFixed(1)} 超过阈值(${HeroSelectionPanel.LOCKED_TAP_THRESHOLD})，不触发广告解锁`);
+            } else {
+                console.log(`✅ 点击锁定英雄 ${pending.heroType}，触发广告解锁`);
+                this.tryUnlockHeroViaAd(pending.heroType, buttonNode);
+            }
+            return;
+        }
+
         // 简化日志：触摸结束
         if (this._isDragging) {
             // 如果正在拖拽，完成拖拽
@@ -1536,24 +1700,29 @@ export class HeroSelectionPanel extends Component {
 
     /**
      * 显示英雄锁定效果
+     * 不改变盒子大小（scale），使用透明度闪烁表示锁定
      */
     private showLockedHeroEffect(buttonNode: Node): void {
-        const originalScale = buttonNode.scale;
-
-        // 摇摆效果表示锁定
-        buttonNode.setScale(originalScale.x * 1.1, originalScale.y * 1.1);
-
-        this.scheduleOnce(() => {
-            if (buttonNode && buttonNode.isValid) {
-                buttonNode.setScale(originalScale.x * 0.95, originalScale.y * 0.95);
+        // 读取或添加UIOpacity组件（透明度闪烁不会改变盒子大小）
+        let opacity = buttonNode.getComponent(UIOpacity);
+        if (!opacity) {
+            opacity = buttonNode.addComponent(UIOpacity);
+            if (!opacity) {
+                console.error("无法添加UIOpacity组件到英雄按钮:", buttonNode.name);
+                return;
             }
-        }, 0.1);
+        }
 
+        // 短暂降低透明度后恢复
+        const originalOpacity = opacity.opacity;
+        opacity.opacity = 60;
+
+        // 使用Cocos Creator的调度系统而不是setTimeout
         this.scheduleOnce(() => {
-            if (buttonNode && buttonNode.isValid) {
-                buttonNode.setScale(originalScale);
+            if (opacity && opacity.node && opacity.node.isValid) {
+                opacity.opacity = originalOpacity;
             }
-        }, 0.2);
+        }, 0.15);
     }
 
 }
