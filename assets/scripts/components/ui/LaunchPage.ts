@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, EventTouch, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Vec2, Widget, resources } from 'cc';
+import { _decorator, Color, Component, EventTouch, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Widget, resources } from 'cc';
 import { GameManager } from '../../managers/GameManager';
 import { GameState } from '../../types/GameTypes';
 import { UIHelper } from '../../utils/UIHelper';
@@ -12,12 +12,12 @@ const AGE_BADGE_WIDTH = 110;              // 适龄标识宽（源图1317x1659�
 const AGE_BADGE_HEIGHT = 138;             // 适龄标识高（≥屏幕最小边720的1/10=72）
 const BADGE_TOP = 24;                     // 适龄标识距顶
 const BADGE_RIGHT = 24;                   // 适龄标识距右
-const LOGO_SIZE = 220;                    // 游戏Logo尺寸
-const LOGO_Y = 240;                       // Logo中心y（中部偏上）
-const BANNER_WIDTH = 560;                 // 名称横幅宽
-const BANNER_HEIGHT = 150;                // 名称横幅高
-const BANNER_STEP = 12;                   // 像素风阶梯角步长
-const BANNER_Y = 60;                      // 名称横幅中心y
+const TITLE_WIDTH = 560;                  // 像素标题位图宽（源图640x160等比缩小）
+const TITLE_HEIGHT = 140;                 // 像素标题位图高（等比 560/640*160）
+const TITLE_Y = 150;                      // 标题中心y（中部偏上）
+const SUBTITLE_WIDTH = 520;               // 副标题宽
+const SUBTITLE_HEIGHT = 30;               // 副标题高
+const SUBTITLE_Y = 40;                    // 副标题中心y（标题下方约25px）
 const HINT_Y = -140;                      // "点击任意启动"提示y
 const ADVICE_PANEL_WIDTH = 620;           // 健康忠告面板宽
 const ADVICE_PANEL_HEIGHT = 150;          // 健康忠告面板高
@@ -29,10 +29,6 @@ const DIALOG_HEIGHT = 780;                // 适龄提示弹窗高
 // 颜色常量
 const COLOR_BACKGROUND = new Color(18, 26, 42, 255);      // 启动页深蓝黑背景
 const COLOR_GOLD = new Color(255, 200, 60, 255);          // 金色边框/标题
-const COLOR_BANNER_FILL = new Color(24, 20, 38, 230);     // 名称横幅深色填充
-const COLOR_NAME_TEXT = new Color(255, 255, 255, 255);    // 游戏名白色
-const COLOR_NAME_OUTLINE = new Color(40, 30, 60, 255);    // 游戏名描边深色
-const COLOR_NAME_SHADOW = new Color(10, 8, 20, 180);      // 游戏名阴影
 const COLOR_SUBTITLE = new Color(150, 160, 180, 255);     // 副标题灰色
 const COLOR_HINT = new Color(255, 215, 0, 255);           // 提示金色
 const COLOR_PANEL_FILL = new Color(16, 20, 34, 210);      // 健康忠告面板半透明深色
@@ -81,8 +77,7 @@ export class LaunchPage extends Component {
     protected onLoad(): void {
         this.setupRootNode();
         this.createAgeRatingBadge();
-        this.createGameLogo();
-        this.createNameBanner();
+        this.createTitleSprite();
         this.createStartHint();
         this.createHealthAdvicePanel();
         this.createCopyrightLabel();
@@ -159,103 +154,57 @@ export class LaunchPage extends Component {
         this._ageBadgeNode = badgeNode;
     }
 
-    // ========== 2. 游戏Logo（中部偏上） ==========
+    // ========== 2. 像素风标题位图 + 副标题 ==========
 
-    private createGameLogo(): void {
-        const logoNode = new Node("GameLogo");
-        logoNode.parent = this.node;
+    private createTitleSprite(): void {
+        const titleNode = new Node("TitleSprite");
+        titleNode.parent = this.node;
 
-        const transform = logoNode.addComponent(UITransform);
-        transform.setContentSize(LOGO_SIZE, LOGO_SIZE);
+        const transform = titleNode.addComponent(UITransform);
+        transform.setContentSize(TITLE_WIDTH, TITLE_HEIGHT);
 
-        // 水平居中 + 垂直居中偏移
-        const widget = logoNode.addComponent(Widget);
+        // 水平居中 + 垂直居中偏移（中部偏上）
+        const widget = titleNode.addComponent(Widget);
         widget.isAlignHorizontalCenter = true;
         widget.isAlignVerticalCenter = true;
-        widget.verticalCenter = LOGO_Y;
+        widget.verticalCenter = TITLE_Y;
         widget.updateAlignment();
 
-        const sprite = logoNode.addComponent(Sprite);
+        const sprite = titleNode.addComponent(Sprite);
         sprite.type = Sprite.Type.SIMPLE;
         sprite.sizeMode = Sprite.SizeMode.CUSTOM;
 
-        resources.load("images/ui/game_logo/spriteFrame", SpriteFrame, (err, spriteFrame) => {
+        resources.load("images/ui/game_title_pixel/spriteFrame", SpriteFrame, (err, spriteFrame) => {
             if (err) {
-                console.error("游戏Logo加载失败:", err);
+                console.error("游戏标题位图加载失败:", err);
                 return;
             }
-            if (logoNode.isValid && sprite.isValid && spriteFrame) {
+            if (titleNode.isValid && sprite.isValid && spriteFrame) {
                 sprite.spriteFrame = spriteFrame;
             }
         });
-    }
 
-    // ========== 3. 游戏名称 + 像素风横幅 ==========
-
-    private createNameBanner(): void {
-        const bannerNode = new Node("NameBanner");
-        bannerNode.parent = this.node;
-
-        const transform = bannerNode.addComponent(UITransform);
-        transform.setContentSize(BANNER_WIDTH, BANNER_HEIGHT);
-
-        // 水平居中 + 垂直居中偏移
-        const widget = bannerNode.addComponent(Widget);
-        widget.isAlignHorizontalCenter = true;
-        widget.isAlignVerticalCenter = true;
-        widget.verticalCenter = BANNER_Y;
-        widget.updateAlignment();
-
-        // 像素风阶梯角边框：单一路径 fill + stroke
-        const graphics = bannerNode.addComponent(Graphics);
-        graphics.fillColor = COLOR_BANNER_FILL;
-        graphics.strokeColor = COLOR_GOLD;
-        graphics.lineWidth = 3;
-        const halfW = BANNER_WIDTH / 2;
-        const halfH = BANNER_HEIGHT / 2;
-        graphics.moveTo(-halfW + BANNER_STEP, halfH);
-        graphics.lineTo(-halfW, halfH - BANNER_STEP);
-        graphics.lineTo(-halfW, -halfH + BANNER_STEP);
-        graphics.lineTo(-halfW + BANNER_STEP, -halfH);
-        graphics.lineTo(halfW - BANNER_STEP, -halfH);
-        graphics.lineTo(halfW, -halfH + BANNER_STEP);
-        graphics.lineTo(halfW, halfH - BANNER_STEP);
-        graphics.lineTo(halfW - BANNER_STEP, halfH);
-        graphics.close();
-        graphics.fill();
-        graphics.stroke();
-
-        // 游戏名称
-        const nameNode = new Node("GameNameLabel");
-        nameNode.parent = bannerNode;
-        nameNode.setPosition(0, 25);
-        const nameTransform = nameNode.addComponent(UITransform);
-        nameTransform.setContentSize(BANNER_WIDTH - 40, 90);
-        const nameLabel = nameNode.addComponent(Label);
-        nameLabel.string = "柒婳爱趣玩儿";
-        nameLabel.fontSize = 64;
-        nameLabel.isBold = true;
-        nameLabel.color = COLOR_NAME_TEXT;
-        nameLabel.enableOutline = true;
-        nameLabel.outlineColor = COLOR_NAME_OUTLINE;
-        nameLabel.outlineWidth = 3;
-        nameLabel.enableShadow = true;
-        nameLabel.shadowColor = COLOR_NAME_SHADOW;
-        nameLabel.shadowOffset = new Vec2(3, -3);
-
-        // 副标题
+        // 副标题（标题下方）
         const subNode = new Node("SubTitleLabel");
-        subNode.parent = bannerNode;
-        subNode.setPosition(0, -38);
+        subNode.parent = this.node;
+
         const subTransform = subNode.addComponent(UITransform);
-        subTransform.setContentSize(BANNER_WIDTH - 40, 30);
+        subTransform.setContentSize(SUBTITLE_WIDTH, SUBTITLE_HEIGHT);
+
+        // 水平居中 + 垂直居中偏移（标题下方）
+        const subWidget = subNode.addComponent(Widget);
+        subWidget.isAlignHorizontalCenter = true;
+        subWidget.isAlignVerticalCenter = true;
+        subWidget.verticalCenter = SUBTITLE_Y;
+        subWidget.updateAlignment();
+
         const subLabel = subNode.addComponent(Label);
         subLabel.string = "CAT PROTECT PLAN";
         subLabel.fontSize = 20;
         subLabel.color = COLOR_SUBTITLE;
     }
 
-    // ========== 4. "点击任意启动"提示 ==========
+    // ========== 3. "点击任意启动"提示 ==========
 
     private createStartHint(): void {
         const hintNode = new Node("StartHint");
@@ -309,7 +258,7 @@ export class LaunchPage extends Component {
         graphics.fill();
     }
 
-    // ========== 5. 健康游戏忠告面板（底部） ==========
+    // ========== 4. 健康游戏忠告面板（底部） ==========
 
     private createHealthAdvicePanel(): void {
         const panelNode = new Node("HealthAdvicePanel");
@@ -361,7 +310,7 @@ export class LaunchPage extends Component {
         bodyLabel.verticalAlign = Label.VerticalAlign.CENTER;
     }
 
-    // ========== 6. 版权信息（忠告面板下方） ==========
+    // ========== 5. 版权信息（忠告面板下方） ==========
 
     private createCopyrightLabel(): void {
         const copyrightNode = new Node("CopyrightLabel");
